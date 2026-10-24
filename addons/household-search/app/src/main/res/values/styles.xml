@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.HouseholdSearch" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">#10151B</item>
+        <item name="android:colorAccent">#9ED9C4</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:colorControlHighlight">#466A60</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+    <style name="SearchButton" parent="android:style/Widget.Material.Button">
+        <item name="android:background">@drawable/focus_button</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingEnd">18dp</item>
+        <item name="android:layout_margin">4dp</item>
+    </style>
+</resources>
