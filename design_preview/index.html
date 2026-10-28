@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>cleanyourtv · design preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="viewport">
+      <div id="stage"></div>
+    </div>
+    <div id="devbar">
+      <span class="devbar-keys">
+        <kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> move · <kbd>Enter</kbd> OK · <kbd>Esc</kbd>/<kbd>Backspace</kbd> Back ·
+        <kbd>H</kbd> Home · <kbd>S</kbd> Settings key · type on Search
+      </span>
+      <span id="trail"></span>
+      <select id="jump"><option value="">Jump to…</option></select>
+      <button id="reset" title="Clear My list, seen, favorites and recent searches">Reset state</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
