@@ -1,0 +1,47 @@
+/* Design tokens, taken from the Figma frames (V1 Movies, Title preview C, Search). */
+:root {
+  --bg: #090e15;
+  --bg-raised: #0d141d;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.09);
+  --surface-3: rgba(255, 255, 255, 0.14);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.18);
+
+  --text-1: #f4f5f7;
+  --text-2: #adb5c0;
+  --text-3: #7d8999;
+  --ghost: #5e6878;
+
+  --accent: #c4ddf7;
+  --accent-soft: rgba(196, 221, 247, 0.14);
+  --on-accent: #101820;
+  --active: rgba(255, 255, 255, 0.91);
+  --good: #8fd9a8;
+  --good-soft: rgba(143, 217, 168, 0.16);
+  --star: #f2c46d;
+
+  /* TV title-safe area: 5% of 1920 × 1080. */
+  --safe-x: 96px;
+  --safe-y: 54px;
+
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 100px;
+
+  /* Type scale. Nothing below 18px: it is read from the couch. */
+  --t-display: 84px;
+  --t-h1: 44px;
+  --t-h2: 30px;
+  --t-h3: 26px;
+  --t-body: 24px;
+  --t-small: 20px;
+  --t-min: 18px;
+
+  --focus-ring: 0 0 0 4px var(--accent);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --fast: 140ms;
+  --slow: 320ms;
+}
