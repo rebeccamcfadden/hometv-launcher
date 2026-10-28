@@ -1,21 +1,91 @@
+# CleanYourTV: launcher rework
+
+This fork of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv) is building a new home screen for
+Android TV that is driven entirely by the remote. It brings together your apps and inputs, the household's movies
+and shows with where to watch them, a title preview, search, Pick for me and the weather. The debloat tools, the
+TV lists and the safety rules are upstream's and stay as they are.
+
+Unlike upstream, the launcher in this fork may use the network (catalogue, artwork, availability, weather) and
+take on new dependencies. Analytics and telemetry are still out, and Home must keep working offline. See
+[AGENTS.md](AGENTS.md#this-fork).
+
+| | |
+|---|---|
+| ![Home: greeting, clock, weather and the app row](docs/rework/prototype-home.jpg) | ![Movies: the household's watchlists as a grid, with filters and Pick for me](docs/rework/prototype-movies.jpg) |
+| *Home: greeting, clock, weather and the app row* | *Movies: the household's watchlists, filters and Pick for me* |
+| ![Title preview: Watch, My list, Seen, Favorite and Trailer, with tabs below](docs/rework/prototype-preview.jpg) | ![Search: the 6×6 keyboard, suggestions and results as you type](docs/rework/prototype-search.jpg) |
+| *Title preview: Watch, My list, Seen, Favorite, Trailer and tabs* | *Search: fuzzy matching, results as you type* |
+
+These come from the web prototype in [`design_preview/`](design_preview/), with mock data. Screenshots from the TV
+replace them as each screen lands.
+
+## Status
+
+| Step | What | Status |
+|---|---|---|
+| Design | The web prototype and its spec, [`design_preview/README.md`](design_preview/README.md) | Done (#1) |
+| M0 · Tooling | JDK 17, Android SDK, an Android TV 9 emulator; the current launcher built and run as a baseline | Next |
+| M1 · Foundation | New Home activity replacing the old UI; design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | Planned |
+| M2 · Home | Clock, greeting, weather, the app row with its hold-OK menu, Inputs, Shortcuts | Planned |
+| M3 · Data layer | Household store, mock catalogue behind an interface, image cache, offline behaviour | Planned |
+| M4 · Movies and TV Shows | List chips, grid, Filters drawer, empty states | Planned |
+| M5 · Title preview | Popup, actions, five tabs, rent/buy dialog, person page | Planned |
+| M6 · Search | Keyboard, fuzzy matching, suggestions, results, no matches | Planned |
+| M7 · Pick for me | Setup and results | Planned |
+| M8 · Finish | Stubs, docs, then the real TV | Planned |
+
+What is mocked or deferred, and why: [BACKLOG.md](BACKLOG.md).
+
+## Start here
+
+For people and coding agents, in this order:
+
+1. [AGENTS.md](AGENTS.md): the rules. Its "This fork" section wins over upstream's.
+2. [docs/rework.md](docs/rework.md): decisions, milestones, workflow, toolchain and the definition of done.
+3. [design_preview/README.md](design_preview/README.md): the spec, covering screens, behaviour and the visual
+   system. The prototype decides behaviour; Figma decides the look.
+4. [BACKLOG.md](BACKLOG.md): what is mocked or deferred. Add an entry whenever a feature ships with mock data.
+
+Pull requests follow the [template](.github/pull_request_template.md): screenshots or video, tests, and where
+the change was checked (emulator or TV).
+
+## Build and run
+
+The prototype needs Node 20 or newer:
+
+```sh
+cd design_preview
+npm install
+npm run dev      # http://localhost:5173, the keyboard stands in for the remote
+```
+
+The launcher needs JDK 17, Android SDK platform 34 and build-tools 34.0.0:
+
+```sh
+cd launcher
+./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease
+```
+
+Changes are tried on an Android TV 9 (API 28) emulator at 1920×1080 first, matching the TV the work is tested
+on; the setup is in [docs/rework.md](docs/rework.md#toolchain-and-emulator). A real TV comes only after the
+project lead says it is free, and `launcher/build-and-install.sh` installs it there with the Home guard intact.
+
+## Credits
+
+- [CleanYourTV](https://github.com/Gathin23/cleanyourtv) by Gathin and its contributors (MIT): the tools, the TV
+  lists, the safety rules and the launcher this one starts from.
+- [matheus-caldeira/cleanyourtv-ui](https://github.com/matheus-caldeira/cleanyourtv-ui) (MIT, with code from Free
+  My TV, also MIT): inspiration for the network features. Any file adapted from it says so at the top.
+
+---
+
+## Upstream CleanYourTV
+
+Everything from here down is upstream's README, as it was. Its [launcher section](#the-launcher) describes the
+launcher this fork replaces.
+
 <p align="center">
   <a href="https://cleanyour.tv"><img src="https://raw.githubusercontent.com/Gathin23/cleanyourtv/main/docs/banner.png" alt="CleanYourTV. Your TV, minus the ads. Strip the bloatware from any Android TV or Google TV over Wi-Fi and replace the ad-filled home screen with a clean launcher that looks like an Apple TV. No root, no cable, nothing uninstalled, and a one-line restore." width="800"></a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/Gathin23/cleanyourtv/stargazers"><img src="https://img.shields.io/github/stars/Gathin23/cleanyourtv?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Stars"></a>
-  <a href="https://github.com/Gathin23/cleanyourtv/pulls?q=is%3Amerged"><img src="https://img.shields.io/github/issues-search?query=repo%3AGathin23%2Fcleanyourtv%20is%3Apr%20is%3Amerged&style=flat&cacheSeconds=1800&label=merged%20PRs&color=cfffcf&labelColor=15181e" alt="Merged PRs"></a>
-  <a href="https://github.com/Gathin23/cleanyourtv/network/members"><img src="https://img.shields.io/github/forks/Gathin23/cleanyourtv?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Forks"></a>
-  <a href="https://github.com/Gathin23/cleanyourtv/graphs/contributors"><img src="https://img.shields.io/github/contributors/Gathin23/cleanyourtv?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Contributors"></a>
-  <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/README-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-cfffcf?style=flat&labelColor=15181e" alt="简体中文"></a>
-  <a href="README.vi.md"><img src="https://img.shields.io/badge/README-Ti%E1%BA%BFng%20Vi%E1%BB%87t-cfffcf?style=flat&labelColor=15181e" alt="Tiếng Việt"></a>
-  <a href="README.ja.md"><img src="https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-cfffcf?style=flat&labelColor=15181e" alt="日本語"></a>
-  <a href="https://buymeacoffee.com/gathint"><img src="https://img.shields.io/badge/support-%E2%9D%A4-ff5e8a?style=flat&labelColor=15181e" alt="Support, buy me a coffee"></a>
-  <a href="https://www.producthunt.com/products/cleanyourtv"><img src="https://img.shields.io/badge/Product%20Hunt-upvote%20%E2%96%B2-da552f?style=flat&logo=producthunt&logoColor=white&labelColor=15181e" alt="CleanYourTV on Product Hunt"></a>
-</p>
-
-<p align="center">
-  <a href="https://trendshift.io/repositories/310225"><img src="docs/trending-badge.png" alt="#1 trending repo of the week, via trendshift.io" width="360"></a>
 </p>
 
 <p align="center">
