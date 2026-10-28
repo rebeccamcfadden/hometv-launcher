@@ -24,8 +24,8 @@ replace them as each screen lands.
 | Step | What | Status |
 |---|---|---|
 | Design | The web prototype and its spec, [`design_preview/README.md`](design_preview/README.md) | Done (#1) |
-| M0 · Tooling | JDK 17, Android SDK, an Android TV 9 emulator; the current launcher built and run as a baseline | Next |
-| M1 · Foundation | New Home activity replacing the old UI; design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | Planned |
+| M0 · Tooling | JDK 17, Android SDK, an Android TV 9 emulator; the current launcher built and run as a baseline | In review |
+| M1 · Foundation | New Home activity replacing the old UI; design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | Next |
 | M2 · Home | Clock, greeting, weather, the app row with its hold-OK menu, Inputs, Shortcuts | Planned |
 | M3 · Data layer | Household store, mock catalogue behind an interface, image cache, offline behaviour | Planned |
 | M4 · Movies and TV Shows | List chips, grid, Filters drawer, empty states | Planned |
