@@ -1,26 +1,60 @@
-<!-- Thanks. One or two sentences on what this changes and the TV it was tried on is plenty. -->
+<!--
+Launcher rework PR. Read docs/rework.md first; one milestone, or one topic, per PR.
+Fill in every section. Write "n/a" where a section doesn't apply, and say why.
+-->
 
-**Tested on:** <!-- model, Android version -->
+## What and why
 
-### If this adds or changes a TV list
-- [ ] `examples/<brand>-<model>/debloat.txt`, header with model, Android version and firmware build
-- [ ] Only packages I actually disabled and lived with; anything I had to re-enable is noted
-- [ ] `examples/<brand>-<model>/tv.json` with the TV, OS, brand and notes; nothing changed outside my folder (the README tables are generated from it)
-- [ ] Nothing in the list uninstalls
+<!-- One or two sentences. -->
 
-### If this touches the launcher
-- [ ] Verified on a real TV, screenshot attached
-- [ ] D-pad checked from every edge (Up, Down, Left, Right)
-- [ ] No network, no background service, no new permission
-- [ ] New strings in `values/strings.xml` and the other `values-*` folders
-- [ ] Anything TV-specific is in `config.xml` or a theme, not in code
+**Milestone:** <!-- e.g. M2 · Home (docs/rework.md#milestones) -->
 
-### If this adds or changes a theme
-- [ ] `themes/<name>/config.json` and `themes/<name>/screenshot.jpg`: Home on a real TV with the theme, 1280×720 JPEG under 300 KB
-- [ ] A row in `themes/README.md` showing the screenshot
+**Spec:** <!-- the prototype screen(s) and Figma frame(s) this implements -->
 
-### If this adds a theme key (a switch)
-- [ ] A screenshot of the key on a real TV and its row in `docs/switches.md`
+**Differences from the prototype or Figma, and why:** <!-- or "none" -->
 
-### If this adds an add-on
-- [ ] `addons/<name>/screenshot.jpg`: the add-on on a real TV, 16:9 JPEG under 300 KB, shown in its row in `addons/README.md`
+## Real or mock
+
+- **Wired to a real source:** <!-- e.g. installed apps, TvInputManager, Open-Meteo -->
+- **Mock or fallback:** <!-- each one has an entry in BACKLOG.md -->
+- **BACKLOG.md entries added or removed:** <!-- or "none" -->
+
+## Tests
+
+| | Tests |
+|---|---|
+| Added | <!-- test class or file, and what it covers --> |
+| Changed | <!-- and why --> |
+| Not needed | <!-- what has no test, and why --> |
+
+**Commands run, with results:**
+<!-- Each exact command and whether it passed, e.g.
+`./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease` (in launcher/): passed, 0 lint errors
+`npm run build` (in design_preview/): passed
+`python -m unittest tests.test_agents_md`: passed -->
+
+## Where it was checked
+
+- [ ] Emulator: Android TV 9 (API 28), 1920×1080
+- [ ] Real TV, after the project lead said it was free: <!-- model, Android version, firmware build; or "not yet" -->
+- [ ] D-pad from every edge (Up, Down, Left, Right); OK and Back follow the spec's Back rules
+- [ ] Focus is always visible, and text and focus stay inside the title-safe area
+- [ ] With the network off, Home and local content still work
+
+## Screenshots or video
+
+<!-- Every visual change: a capture from the emulator or the TV, next to the prototype screen it implements.
+A short video for flows (focus movement, transitions, Back). No Wi-Fi names, account details or IPs. -->
+
+## Size, dependencies and permissions
+
+- **APK size:** <!-- before → after, in bytes -->
+- **New dependencies:** <!-- name, what it is for, size cost; or "none" -->
+- **New permissions:** <!-- name and why; or "none" -->
+
+## Safety
+
+- [ ] The TV safety rules, the Home guard, the protected packages and the safety checks in `tools/` are untouched,
+  or the project lead agreed to the change
+- [ ] No secrets or identifiers (TMDB key, coordinates, IPs, Wi-Fi names, serials) in code, commits or screenshots
+- [ ] No analytics or telemetry

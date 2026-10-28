@@ -9,13 +9,14 @@ this file repeats their rules in the form an agent needs, and links to them for 
 This is a fork of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv) whose launcher is being
 reworked. Where this file differs from upstream, it wins:
 
-- **Network-backed features are allowed** in the launcher and its tools: the `INTERNET` permission, catalogue
-  search, streaming availability and prices, artwork, cast and recommendations. Analytics and telemetry are still
-  out, and local content must keep working when the TV is offline.
+- **Network-backed features are allowed** in the launcher and its tools: the `INTERNET` permission, catalogue,
+  availability, prices, artwork and cast. Analytics and telemetry stay out, and local content must work offline.
 - **New dependencies are allowed** in the launcher and in `design_preview/` without an issue first. Prefer small,
   maintained ones, and name each in the PR with what it is for and its size cost.
 - The **TV safety rules** below (disable, never uninstall; back up first; the Home guard; protected packages;
   closing ADB) are unchanged.
+- **Rework:** `docs/rework.md` (decisions, milestones, workflow) and `BACKLOG.md` (mocks, deferred work); read
+  both first.
 
 Changes that rely on these belong in this fork, not upstream.
 
@@ -77,7 +78,7 @@ share their TV's list afterwards, follow [`docs/workflows/tv-list.md`](docs/work
 | Path | What it is |
 |---|---|
 | `PROMPT.md` | The prompt people paste into their agent. Brand-neutral; safety rules live here. |
-| `README.md` | Front page, with the TV table (generated from `examples/*/tv.json` by `tools/gen_tables.py`) and the Tools table. `README.zh-CN.md` and `README.vi.md` are translations. |
+| `README.md` | Front page, with the TV table (generated from `examples/*/tv.json` by `tools/gen_tables.py`) and the Tools table. |
 | `CONTRIBUTING.md` | The contributor guide for people. "Where does my idea go?" is the routing table. |
 | `SECURITY.md` | Private vulnerability reporting. |
 | `SHOWCASE.md` | Projects built on this repo that live in their own repositories. |
