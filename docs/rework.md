@@ -76,21 +76,49 @@ Raise these when they become relevant; don't settle them alone.
 
 ## Toolchain and emulator
 
-These are the planned commands; M0 confirms them, and this section is updated then.
+Confirmed on Windows 11 in M0 (2026-10-28).
 
 ```powershell
-winget install Microsoft.OpenJDK.17
-# Android command-line tools unpacked to %LOCALAPPDATA%\Android\Sdk\cmdline-tools\latest, then:
-sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "emulator" "system-images;android-28;android-tv;x86"
-avdmanager create avd -n tv28 -k "system-images;android-28;android-tv;x86" -d tv_1080p
-emulator -avd tv28
+winget install --id Microsoft.OpenJDK.17 --exact   # asks for administrator rights once
+# Android command-line tools: commandlinetools-win-*_latest.zip from https://dl.google.com/android/repository/,
+# unpacked to %LOCALAPPDATA%\Android\Sdk\cmdline-tools\latest. Its sdkmanager now hands over to the new
+# `android` CLI, which names packages with / where sdkmanager used ;
+$bin = "$env:LOCALAPPDATA\Android\Sdk\cmdline-tools\latest\bin"
+& "$bin\android.exe" sdk install platform-tools emulator platforms/android-34 build-tools/34.0.0 system-images/android-28/android-tv/x86
+# The new CLI can't choose a system image for a virtual device; avdmanager still can. --% keeps the ; intact.
+& "$bin\avdmanager.bat" --% create avd -n tv28 -k "system-images;android-28;android-tv;x86" -d tv_1080p
+& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd tv28 -no-snapshot-save -no-boot-anim
 ```
 
-Build and test from `launcher/`:
+The emulator runs with WHPX acceleration and boots in about a minute: Android 9 (API 28), 1920×1080. It has
+no HDMI or tuner inputs, so the Inputs rows can only be fully checked on the real TV.
 
-```sh
-./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease
+Build and test, from `launcher/`:
+
+```powershell
+$env:JAVA_HOME = 'C:\Program Files\Microsoft\jdk-17.0.21.21-hotspot'
+$env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
+.\gradlew.bat --no-daemon testReleaseUnitTest lintRelease assembleRelease
 ```
+
+The emulator image's stock launcher (`com.google.android.tvlauncher`) outranks a sideloaded one, so
+`set-home-activity` alone doesn't move Home on Android 9. On the emulator, follow the order the install script
+uses: start the new launcher, disable the stock one, then set the preference and check where Home resolves.
+
+```powershell
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+& $adb install -r app\build\outputs\apk\release\app-release.apk
+& $adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.HOME -n com.gathin.tvhome/.MainActivity
+& $adb shell pm disable-user --user 0 com.google.android.tvlauncher
+& $adb shell cmd package set-home-activity --user 0 com.gathin.tvhome/.MainActivity
+& $adb shell cmd package resolve-activity --brief -c android.intent.category.HOME -a android.intent.action.MAIN
+```
+
+Take screenshots with `adb shell screencap -p /sdcard/x.png` and then `adb pull`. PowerShell's `>` breaks binary
+output, so `adb exec-out screencap -p > x.png` gives an unreadable file.
+
+Baseline before any rework code: the current launcher builds in about 90 s with zero lint errors, the release
+APK is 509,545 B, and it runs as Home on the emulator.
 
 The real TV is a TCL BeyondTV on Android TV 9. Read its folders in `examples/` (`tcl-beyondtv` and the ones next
 to it) and the TV safety rules in AGENTS.md before touching it. Install only after the project lead says the TV
