@@ -7,19 +7,17 @@ this file repeats their rules in the form an agent needs, and links to them for 
 ## This fork
 
 This is a fork of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv) whose launcher is being
-reworked, and its structure is changing. Where this file differs from upstream, this file wins:
+reworked. Where this file differs from upstream, it wins:
 
 - **Network-backed features are allowed** in the launcher and its tools: the `INTERNET` permission, catalogue
   search, streaming availability and prices, artwork, cast and recommendations. Analytics and telemetry are still
-  out, and the launcher must keep working, with local content, when the TV is offline.
+  out, and local content must keep working when the TV is offline.
 - **New dependencies are allowed** in the launcher and in `design_preview/` without an issue first. Prefer small,
-  maintained libraries, and say in the PR what each one is for and what it adds to the APK or bundle size.
-- **`design_preview/`** is the web prototype of the new launcher UI, used to work out the flow between screens
-  with a keyboard standing in for the remote. Its designs live in Figma; its data is mock data.
+  maintained ones, and name each in the PR with what it is for and its size cost.
 - The **TV safety rules** below (disable, never uninstall; back up first; the Home guard; protected packages;
   closing ADB) are unchanged.
 
-Changes that rely on these differences belong in this fork, not in a pull request to upstream.
+Changes that rely on these belong in this fork, not upstream.
 
 ## First: which job are you doing?
 
@@ -87,7 +85,7 @@ share their TV's list afterwards, follow [`docs/workflows/tv-list.md`](docs/work
 | `examples/` | One folder per tested TV model: `debloat.txt`, `tv.json` (its row in the TV tables), sometimes a `README.md` and a `config.json`. Indexed in `examples/README.md`, whose table is generated too. |
 | `docs/` | `docs/TROUBLESHOOTING.md`, the module-card contract (`docs/modules.md`), `docs/devices/` for models with notes but no tested list, and the [workflows](#workflows). |
 | `launcher/` | The reference launcher, package `com.gathin.tvhome`: plain Java, AndroidX RecyclerView and DynamicAnimation, `minSdk` 26. In this fork it may use the network and new dependencies (see [This fork](#this-fork)). |
-| `design_preview/` | Web prototype of the reworked launcher UI: Vite and TypeScript, a 1920×1080 stage, arrow keys, Enter and Backspace as the remote's D-pad, OK and Back. Mock data in `src/data/`. Usage in `design_preview/README.md`. |
+| `design_preview/` | Web prototype of the reworked launcher UI (Vite, TypeScript, mock data); the keyboard stands in for the remote. Designs in Figma; see [its README](design_preview/README.md). |
 | `themes/` | One folder per theme: `config.json`, a required `screenshot.jpg`, optional wallpapers. Keys are documented in `themes/README.md`. |
 | `addons/` | Optional module-card apps, each its own Gradle project, never built into the launcher. |
 | `tools/` | The ADB client (`tv.py`) and the scripts, listed in the README's Tools table. Shell scripts have PowerShell twins. Each script's usage is in its first lines, and the larger ones have a guide beside them (`tools/*.md`): read it before running the script. |
@@ -106,7 +104,7 @@ The core stays small on purpose. Pick the smallest home that fits (CONTRIBUTING,
 | A small launcher switch that is off by default | A pull request here: see [`docs/workflows/launcher-switch.md`](docs/workflows/launcher-switch.md) |
 | A new look: colours, wallpaper, dock, columns, that existing config keys can carry | `themes/<name>/` |
 | A widget or tile that can be its own small app | `addons/<name>/`, as a module card that never touches `launcher/` |
-| Network-backed launcher features, new launcher dependencies, the reworked launcher UI | This fork: prototype the flow in `design_preview/` first, then build it in `launcher/` |
+| Network-backed launcher features, new launcher dependencies, the reworked launcher UI | This fork: prototype the flow in `design_preview/`, then build it in `launcher/` |
 | A port to another platform, a lower `minSdk`, Fire TV Home takeover | Your own repository, plus one row in `SHOWCASE.md` |
 | Safety rules in `PROMPT.md`, the Home-safety logic in the scripts, protected packages, CI and workflows, the APK size gate | Open an issue for the maintainer; do not change it in a PR |
 
@@ -137,7 +135,7 @@ use it and ends with the check to run.
 | Tests, as CI runs them | `python3 -m unittest discover -s tests -v` after `python3 -m venv tools/venv` and `tools/venv/bin/pip install -r tools/requirements.txt`. On `main`, CI sets `CLEANYOURTV_STRICT=1`, and its "README tables" job checks that the TV tables and counts are what `tools/gen_tables.py` writes. |
 | Launcher, if you touched `launcher/` | JDK 17, Android SDK platform 34, build-tools 34.0.0. In `launcher/`: `./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease`. Lint must stay at zero errors. |
 | APK size gate | `launcher/app/build/outputs/apk/release/app-release.apk` must be under 524,288 B (512 KB). Linux: `stat -c %s`, macOS: `stat -f %z`. |
-| Design preview, if you touched `design_preview/` | Node 20 or newer. In `design_preview/`: `npm install`, then `npm run build`, which type-checks and must finish with no errors. |
+| Design preview, if you touched `design_preview/` | Node 20+. In `design_preview/`: `npm install`, then `npm run build` (type-checks; no errors). |
 | README rows | A new list adds only its folder, with a `tv.json`: the TV tables, the brand line and the counts are generated after merging, so leave them alone. A theme has its row in `themes/README.md`; an add-on in `addons/README.md`. |
 | One topic per PR | A TV list never rides inside a launcher feature PR. A device's list plus small fixes for that same device can be one PR. |
 | Tested on | Say which TV, Android version and firmware you tested on, in the PR template's "Tested on" line. |
@@ -153,10 +151,8 @@ Never do these in a PR:
 - **No prebuilt APKs or binaries** in the repo, not even as CI artifacts. People build from source.
 - **No uninstalling.** No `pm uninstall` in a list or a script. `pm hide` or `pm block` only with the matching
   undo written in the list header.
-- **No analytics or telemetry in the launcher.** Network features are allowed in this fork, but cache what they
-  fetch, never block Home on the network, and keep local content working offline. Avoid heavy background polling,
-  blur and autoplaying video: it targets TVs with 1 GB of RAM.
-- **New launcher dependencies** are allowed in this fork; name each one and its size cost in the PR.
+- **No analytics or telemetry in the launcher.** Cache what the network supplies and never block Home on it. Avoid
+  heavy polling, blur and autoplaying video: it targets TVs with 1 GB of RAM.
 - **No changes to the safety rules** in `PROMPT.md`, the Home guard and other safety checks in
   `tools/disable.sh`, `tools/check.py` and `launcher/build-and-install.sh`, or the list of packages the TV
   needs, without the maintainer.
@@ -171,8 +167,7 @@ Never do these in a PR:
   workflow that builds or publishes releases is closed.
 - **No root, no getting around app-store protection, no private builds** others cannot reproduce from this repo.
 - **No extras added to the PROMPT flow** beyond debloating and the launcher.
-- **Don't relax `minSdk`** (26). In this fork the launcher may add the `INTERNET` permission; any other new
-  permission is named and justified in the PR.
+- **Don't relax `minSdk`** (26). Beyond `INTERNET`, name and justify any new launcher permission in the PR.
 - **Blur or crop** Wi-Fi names, people's names and cities (the top bar, a theme's `greeting_name`) before a
   screenshot goes anywhere public. No TV Settings screenshots that show accounts, emails or device names.
   From `tools/tv.py --probe`, `getprop` and backups, quote only the model, Android version and firmware build.
