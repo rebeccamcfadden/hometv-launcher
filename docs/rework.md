@@ -29,7 +29,7 @@ Settled with the project lead on 2026-10-28.
 
 | Area | Decision |
 |---|---|
-| The old launcher | Replaced outright. The old Home UI and its feature code are deleted, along with tests that only covered them. |
+| The old launcher | Replaced outright, in M1: the new activity becomes Home, and the old Home UI and its feature code are deleted, along with tests that only covered them. |
 | TV plumbing kept | Home and Input key accessibility helpers (`HomeKeyService`, `InputKeyService`), `SystemSettings` with the vendor fallback, the Inputs rules of `MainActivity.showInputs()`, the remote-key handling, the Home guard in the scripts. |
 | Carried into V1 | The hold-OK tile menu (Move, Remove, App info), restyled. |
 | Left for V2 | Themes and wallpapers, the clock screensaver, module cards and add-ons, Watch Next, festivals, sky and lunar calendars. Listed in [BACKLOG.md](../BACKLOG.md). |
@@ -44,6 +44,8 @@ Settled with the project lead on 2026-10-28.
 | Services ("Included") | Worked out from the installed apps, with a `config.xml` override. A settings screen is in the backlog. |
 | Region | SE. Searching SE and US together, with each result labelled, is in the backlog. |
 | Weather | Real, from Open-Meteo (no key), at a latitude and longitude set at build time. |
+| Clock and units | Follow the TV's settings: 12 or 24 hour, °C or °F. |
+| `addons/household-search/` | Removed; it was an earlier attempt at search, replaced by this rework. |
 | Secrets | The TMDB key, latitude and longitude go in a gitignored properties file read at build time, never in git. |
 | Home app row | The household's ordered favourites (by default the installed streaming apps), reordered with hold-OK Move. |
 | Wi-Fi dropdown | The header (network, internet, signal) is real. Saved and other networks open Wi-Fi settings, as the spec allows. |
@@ -56,24 +58,21 @@ Settled with the project lead on 2026-10-28.
 
 Raise these when they become relevant; don't settle them alone.
 
-- Clock format and units: 12 or 24 hour, °C or °F. Proposal: follow the TV's settings.
 - The name and location of the gitignored properties file (decided in M2 or M3, when the first value is read).
-- What happens to `addons/household-search/`, an earlier attempt at search that is on `main`.
-- When in the sequence the old UI is deleted: the plan puts it in M8, once the new UI covers Home.
 
 ## Milestones
 
 | | Scope | Done when |
 |---|---|---|
 | M0 · Tooling | JDK 17, SDK platform 34, build-tools 34.0.0, the emulator and the API 28 TV image; the CI size gate changed to report | The current launcher builds and runs as Home on the emulator, and this file's commands are confirmed |
-| M1 · Foundation | New Home activity; design tokens (colours, type, radii, focus); nav bar; screen stack with page, popup and dialog layers; Back rules; focus memory per row and grid; page transition; the three top-bar dropdowns; Settings button | Every nav item and dropdown works with the D-pad on the emulator, Back follows the spec's four rules, and pages are placeholders |
+| M1 · Foundation | New Home activity, made Home; the old Home UI, its feature code and the tests that only covered it deleted; design tokens (colours, type, radii, focus); nav bar; screen stack with page, popup and dialog layers; Back rules; focus memory per row and grid; page transition; the three top-bar dropdowns; Settings button | The new launcher is Home on the emulator; every nav item and dropdown works with the D-pad, Back follows the spec's four rules, and pages are placeholders |
 | M2 · Home | Greeting, date, clock, weather; the app row with its hold-OK menu; the scrolled state with Inputs, Shortcuts and hourly weather | Home matches the prototype, with real apps, inputs and weather, and works offline |
 | M3 · Data layer | Household store; catalogue interface with the mock source; offer rules; image loading and cache | Unit tests cover the store, offers and filters |
 | M4 · Movies and TV Shows | Header, list chips, grid, Filters drawer, empty states | Filters update the grid live; both empty states reachable |
 | M5 · Title preview | Popup over the page, actions, Overview, Episodes, Where to watch, Cast & crew, More like this; rent/buy dialog; person stub | Every tab and toggle works; Watch opens the service's app |
 | M6 · Search | Bar with ghost text, 6×6 keyboard, recents and suggestions, results preview, full results, no matches, typing from a hardware keyboard | Fuzzy matching ported with its tests; focus and Back match the prototype |
 | M7 · Pick for me | Setup and results | Reroll, Adjust filters and both buttons on the results bar work |
-| M8 · Finish | Music, Launcher settings, All Apps and Weather stubs; the old UI and its tests removed; docs; the real TV | A run on the TCL BeyondTV with the project lead |
+| M8 · Finish | Music, Launcher settings, All Apps and Weather stubs; docs; the real TV | A run on the TCL BeyondTV with the project lead |
 
 ## Toolchain and emulator
 

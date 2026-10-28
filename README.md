@@ -25,14 +25,14 @@ replace them as each screen lands.
 |---|---|---|
 | Design | The web prototype and its spec, [`design_preview/README.md`](design_preview/README.md) | Done (#1) |
 | M0 · Tooling | JDK 17, Android SDK, an Android TV 9 emulator; the current launcher built and run as a baseline | Next |
-| M1 · Foundation | New Home activity, design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | Planned |
+| M1 · Foundation | New Home activity replacing the old UI; design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | Planned |
 | M2 · Home | Clock, greeting, weather, the app row with its hold-OK menu, Inputs, Shortcuts | Planned |
 | M3 · Data layer | Household store, mock catalogue behind an interface, image cache, offline behaviour | Planned |
 | M4 · Movies and TV Shows | List chips, grid, Filters drawer, empty states | Planned |
 | M5 · Title preview | Popup, actions, five tabs, rent/buy dialog, person page | Planned |
 | M6 · Search | Keyboard, fuzzy matching, suggestions, results, no matches | Planned |
 | M7 · Pick for me | Setup and results | Planned |
-| M8 · Finish | Stubs, the old UI and its tests removed, docs, then the real TV | Planned |
+| M8 · Finish | Stubs, docs, then the real TV | Planned |
 
 What is mocked or deferred, and why: [BACKLOG.md](BACKLOG.md).
 
