@@ -57,7 +57,8 @@ milestones: [docs/rework.md](docs/rework.md).
 - **Wanted:** a screen in Launcher settings to tick the services the household pays for.
 
 ### Weather location on the TV
-- **V1:** latitude and longitude come from the gitignored build properties file.
+- **V1:** `latitude` and `longitude` come from the gitignored build properties file, `launcher/tv.properties`
+  (template: `launcher/tv.properties.example`, New York).
 - **Wanted:** pick the city on the TV. The weather add-on in `addons/weather/` already does this with
   Open-Meteo's geocoding.
 
@@ -93,6 +94,22 @@ From the old launcher; not in V1 by decision.
 - **Cold start:** Home took 2.8 s (`am start -W`, TotalTime) after a force stop on the TCL BeyondTV, 0.3 s for the
   activity itself. Measure it against 2.7 with `tools/bench.py` ([perf-ab](docs/workflows/perf-ab.md)) before M2
   adds the real Home page.
+
+## From M2
+
+- **All Apps:** V1 is a plain working grid styled from the tokens (Back, title and count, six columns of banner
+  tiles sorted by name; OK opens, hold-OK adds to or removes from Home, App info). Wanted: a proper design, which
+  may add search, hiding apps and sorting (the prototype's stub says "with hide and reorder").
+- **Weather page:** OK on the weather strip opens a "Not designed yet" stub. Wanted: the hourly and 7-day forecast.
+- **Weather icons:** the prototype has three (sun, moon, cloud), so rain, snow, fog and storms all show the cloud;
+  the words under the temperature say which. Wanted: icons for those, in Figma first.
+- **Empty app row:** with no favourites installed (or all removed) the row shows one "Add apps" tile that opens All
+  Apps. Not designed.
+- **Inputs on Home:** the tiles show the input's name only; the dropdown's "Connected" and "No device" states are
+  not on them (the design has no room for them). On the emulator only a Live TV row could be checked (a pushed
+  `live_tv_package`); the HDMI and AV rows wait for the TV.
+- **Tile menu:** Move, Remove from Home and App info, in the dropdowns' panel with no icons, under the tile or over
+  it where there is no room below. Not designed (the spec lists hold-OK menus as open).
 
 ## Not designed yet
 

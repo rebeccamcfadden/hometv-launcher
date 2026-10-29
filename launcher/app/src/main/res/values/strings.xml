@@ -72,7 +72,6 @@
     <string name="vpn_on">VPN on</string>
     <string name="page_not_built">Not built yet</string>
     <string name="page_not_designed">Not designed yet</string>
-    <string name="page_home_note">Greeting, clock and weather, your apps, then inputs, shortcuts and the hourly weather below them.</string>
     <string name="page_movies_note">Your collection from My list, Household and Friends, with filters and Pick for me.</string>
     <string name="page_tv_note">Your shows from My list, Household and Friends, with filters and Pick for me.</string>
     <string name="page_music_note">Spotify, YouTube Music and your playlists. Not part of V1.</string>

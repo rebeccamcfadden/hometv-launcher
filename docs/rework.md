@@ -59,12 +59,16 @@ Settled with the project lead on 2026-10-28.
 | Pull requests | Every PR asks the Copilot reviewer for a review. |
 | Settings key over apps | `QuickSettingsActivity` draws the same dropdown as Home (`MenuPanel`), so the remote's Settings key looks the same everywhere. |
 | Dropdowns and the D-pad | Decided after the first run on the TV (2026-10-29): a D-pad move past a dropdown's edge closes it and returns focus to its button; past the left, right or bottom edge it carries on one step, so → in the Wi-Fi menu lands on Inputs. Closing with Back alone felt clunky. The prototype and its README changed with it. |
+| All Apps | A plain working grid of the installed apps, styled from the tokens: OK opens an app, hold-OK adds it to or removes it from Home. The spec's stub would leave apps that aren't on the Home row with no way to open, and an app removed with hold-OK with no way back. A proper design is in the backlog. (2026-10-29) |
+| Build settings file | `launcher/tv.properties`, gitignored; `launcher/tv.properties.example` is the committed template, and the build reads the example while `tv.properties` is missing. It holds the weather location (New York by default), the temperature unit and, later, the TMDB key. (2026-10-29) Keys since M2: `latitude` and `longitude` in decimal degrees and `temperature_unit` (`C` or `F`), checked at build time and passed to the app as `BuildConfig` fields. |
+| Temperature unit | °C unless `tv.properties` says `temperature_unit=F`. The TV's language (en-US) would have given °F in New York, and Android 9 has no temperature setting. The clock follows the TV's 12/24-hour setting. (2026-10-29) |
+| Order of the PRs | Stacked: each milestone's branch starts from the one before, and the PRs merge in order. M1b, the cleanup, runs after M8, once every screen's config keys are known. Real-TV checks wait for one batch session with the project lead. (2026-10-29) |
 
 ## Open questions
 
 Raise these when they become relevant; don't settle them alone.
 
-- The name and location of the gitignored properties file (decided in M2 or M3, when the first value is read).
+- None open. Settle anything new with the project lead and add it to Decisions.
 
 ## Milestones
 

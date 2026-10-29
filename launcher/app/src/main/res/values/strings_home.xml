@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M2 · Home (docs/rework.md): Home's greeting and weather, the app row and its hold-OK menu, All Apps and the
+     Weather stub. -->
+<resources>
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_night">Good night</string>
+
+    <string name="home_inputs">Inputs</string>
+    <string name="home_shortcuts">Shortcuts</string>
+    <string name="all_apps">All Apps</string>
+    <string name="tv_settings_short">TV Settings</string>
+    <string name="home_add_apps">Add apps</string>
+    <string name="home_moving">Move with left and right, then OK to put it down</string>
+    <string name="home_added">Added to Home</string>
+    <string name="home_removed">Removed from Home</string>
+    <string name="tile_add_to_home">Add to Home</string>
+    <plurals name="all_apps_count">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <string name="back">Back</string>
+
+    <string name="weather">Weather</string>
+    <string name="weather_note">Hourly and 7-day forecast.</string>
+    <!-- The forecast under the clock: "Today · 12°C". -->
+    <string name="weather_today">Today · %1$s</string>
+    <string name="weather_tomorrow">Tomorrow · %1$s</string>
+    <!-- Under the temperature on the weather strip: "Partly cloudy · H:16° L:9°". -->
+    <string name="weather_summary">%1$s · H:%2$s L:%3$s</string>
+
+    <string name="wmo_clear">Clear</string>
+    <string name="wmo_mainly_clear">Mainly clear</string>
+    <string name="wmo_partly_cloudy">Partly cloudy</string>
+    <string name="wmo_overcast">Overcast</string>
+    <string name="wmo_fog">Fog</string>
+    <string name="wmo_drizzle">Drizzle</string>
+    <string name="wmo_freezing_drizzle">Freezing drizzle</string>
+    <string name="wmo_rain">Rain</string>
+    <string name="wmo_freezing_rain">Freezing rain</string>
+    <string name="wmo_snow">Snow</string>
+    <string name="wmo_snow_grains">Snow grains</string>
+    <string name="wmo_rain_showers">Rain showers</string>
+    <string name="wmo_snow_showers">Snow showers</string>
+    <string name="wmo_thunderstorm">Thunderstorm</string>
+    <string name="wmo_thunder_hail">Thunderstorm with hail</string>
+    <string name="wmo_unknown">Weather</string>
+</resources>

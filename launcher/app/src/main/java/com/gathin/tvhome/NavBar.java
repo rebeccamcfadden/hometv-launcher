@@ -44,6 +44,8 @@ final class NavBar {
         sections.setOrientation(LinearLayout.HORIZONTAL);
         int pad = Ui.px(6);
         sections.setPadding(pad, pad, pad, pad);
+        // The focused section scales up 5%; clipped to the padding, its outer side was cut flat.
+        sections.setClipToPadding(false);
         sections.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, 1));
         int[] labels = {R.string.nav_home, R.string.nav_movies, R.string.nav_tv, R.string.nav_music};
         Screen.Tab[] ids = {Screen.Tab.HOME, Screen.Tab.MOVIES, Screen.Tab.TV, Screen.Tab.MUSIC};
@@ -71,6 +73,7 @@ final class NavBar {
         LinearLayout device = new LinearLayout(ctx);
         device.setOrientation(LinearLayout.HORIZONTAL);
         device.setPadding(pad, pad, pad, pad);
+        device.setClipToPadding(false);
         device.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, 1));
         ImageView wifi = deviceIcon(ctx, R.drawable.ic_ui_wifi, R.string.wifi, KEY_WIFI, host::openNetwork);
         ImageView inputs = deviceIcon(ctx, R.drawable.ic_ui_input, R.string.inputs, KEY_INPUTS, host::openInputs);
@@ -85,7 +88,7 @@ final class NavBar {
         bar.addView(device, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        host.navModel().listen(model -> {
+        NavModel.Listener listener = model -> {
             wifi.setVisibility(model.networkShown ? View.VISIBLE : View.GONE);
             wifi.setImageResource(model.networkIcon);
             inputs.setVisibility(model.inputsShown ? View.VISIBLE : View.GONE);
@@ -95,6 +98,25 @@ final class NavBar {
                 ((LinearLayout.LayoutParams) icons[i].getLayoutParams()).leftMargin = shown++ == 0 ? 0 : Ui.px(8);
             }
             device.requestLayout();
+        };
+        // Listen only while on screen: the model lives as long as the activity, and pages pushed and popped (Pick
+        // for me, the person page) would otherwise stay reachable through it forever. Attaching again catches up.
+        host.navModel().listen(listener);
+        bar.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            private boolean listening = true;
+
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                if (listening) return;
+                listening = true;
+                host.navModel().listen(listener);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                listening = false;
+                host.navModel().unlisten(listener);
+            }
         });
 
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(72),

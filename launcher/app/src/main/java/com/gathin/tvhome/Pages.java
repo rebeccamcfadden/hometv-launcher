@@ -10,9 +10,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * The nav's pages. In M1 every one is a placeholder (design_preview/src/screens/placeholder.ts) on the shared page
- * furniture: the shade over the evening landscape and the nav. Later milestones replace them one by one
- * (docs/rework.md, Milestones).
+ * The nav's pages. Home is HomePage (M2); the others are still placeholders (design_preview/src/screens/placeholder.ts)
+ * on the shared page furniture: the shade over the evening landscape and the nav. Later milestones replace them one
+ * by one (docs/rework.md, Milestones).
  */
 final class Pages {
     private Pages() {}
@@ -28,7 +28,8 @@ final class Pages {
             case SEARCH:
                 return placeholder(ctx, host, tab, R.string.page_not_built, R.string.nav_search, R.string.page_search_note);
             default:
-                return placeholder(ctx, host, tab, R.string.page_not_built, R.string.nav_home, R.string.page_home_note);
+                // M2: Home is built (HomePage); the other tabs follow in their milestones.
+                return HomePage.create((MainActivity) ctx, host);
         }
     }
 

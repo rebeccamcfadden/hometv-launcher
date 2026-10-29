@@ -44,6 +44,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final NavModel nav = new NavModel();
     private Shell shell;
+    private Config config;
     private TvInputs inputs;
     private FrameLayout stage;
     private ImageView backdrop;
@@ -65,6 +66,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
     private final Runnable refreshInputs = this::refreshInputs;
     /** What the nav last showed, so each kind of event re-reads only its own half. */
     private int networkIcon = R.drawable.ic_ui_wifi;
+    private boolean internet;
     private boolean anyInputs;
     /** The default network's capabilities as last seen: only a change the icon shows refreshes it. */
     private boolean lastValidated, lastWifi, lastEthernet;
@@ -113,6 +115,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
         public void onInputRemoved(String inputId) {
             post(refreshInputs);
         }
+
+        /** A CEC device renamed itself, or an input's details changed. */
+        @Override
+        public void onInputUpdated(String inputId) {
+            post(refreshInputs);
+        }
     };
 
     /** A burst of events (a reconnect sends several) collapses into one refresh. */
@@ -126,6 +134,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
         super.onCreate(savedInstanceState);
         // config.xml, overlaid by config.json from a pushed theme or example (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
+        config = cfg;
         Ui.init(this, cfg.reducedMotion());
         // restore_key_services: after a force stop, put back the remote's accessibility helpers that Android took
         // off the list (needs WRITE_SECURE_SETTINGS, granted by build-and-install with RESTORE_KEY_SERVICES=1).
@@ -182,6 +191,16 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
         return nav;
     }
 
+    /** The configuration Home was built with, for the pages (Home's app row reads dock_apps and hidden_apps). */
+    Config config() {
+        return config;
+    }
+
+    /** The TV's inputs, shared by the Inputs dropdown and Home's Inputs row. */
+    TvInputs inputs() {
+        return inputs;
+    }
+
     // ---- The top bar --------------------------------------------------------------------------------------------
 
     /** The Wi-Fi dropdown: the network and its state, then Other networks and Wi-Fi settings. */
@@ -236,25 +255,34 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
     /** Whether there are inputs to list and which network icon to show, on every page's nav. */
     private void refreshNav() {
         if (isDestroyed()) return;
-        networkIcon = NetworkState.read(this).icon();
+        readNetwork();
         anyInputs = showInputs && inputs.any();
         applyNav();
     }
 
     private void refreshNetwork() {
         if (isDestroyed()) return;
-        networkIcon = NetworkState.read(this).icon();
+        readNetwork();
         applyNav();
+    }
+
+    /** The icon, and whether the internet is reachable, which Home's weather needs even when the icon is the same. */
+    private void readNetwork() {
+        NetworkState s = NetworkState.read(this);
+        networkIcon = s.icon();
+        internet = s.validated;
     }
 
     private void refreshInputs() {
         if (isDestroyed()) return;
         anyInputs = showInputs && inputs.any();
         applyNav();
+        // Home's Inputs row shows each port and CEC device, which can change while the nav's icon stays the same.
+        nav.inputsChanged();
     }
 
     private void applyNav() {
-        nav.set(anyInputs, showNetwork, networkIcon);
+        nav.set(anyInputs, showNetwork, networkIcon, internet);
     }
 
     void start(Intent i) {
