@@ -84,7 +84,7 @@ share their TV's list afterwards, follow [`docs/workflows/tv-list.md`](docs/work
 | `SHOWCASE.md` | Projects built on this repo that live in their own repositories. |
 | `CODE_OF_CONDUCT.md` | Includes the rule against publishing device identifiers, Wi-Fi names and IPs. |
 | `examples/` | One folder per tested TV model: `debloat.txt`, `tv.json` (its row in the TV tables), sometimes a `README.md` and a `config.json`. Indexed in `examples/README.md`, whose table is generated too. |
-| `docs/` | `docs/TROUBLESHOOTING.md`, the module-card contract (`docs/modules.md`), `docs/devices/` for models with notes but no tested list, and the [workflows](#workflows). |
+| `docs/` | `docs/TROUBLESHOOTING.md`, the module-card spec (`docs/specs/card.md`), `docs/devices/` for models with notes but no tested list, and the [workflows](#workflows). |
 | `launcher/` | The reference launcher, package `com.gathin.tvhome`: plain Java, AndroidX RecyclerView and DynamicAnimation, `minSdk` 26. In this fork it may use the network and new dependencies (see [This fork](#this-fork)). |
 | `design_preview/` | Web prototype of the reworked launcher UI (Vite, TypeScript, mock data); the keyboard stands in for the remote. Designs in Figma; see [its README](design_preview/README.md). |
 | `themes/` | One folder per theme: `config.json`, a required `screenshot.jpg`, optional wallpapers. Keys are documented in `themes/README.md`. |
@@ -102,7 +102,7 @@ The core stays small on purpose. Pick the smallest home that fits (CONTRIBUTING,
 | The change | Where it goes |
 |---|---|
 | A TV list, a fix, a translation, docs, a tool fix | A pull request here |
-| A small launcher switch that is off by default | A pull request here: see [`docs/workflows/launcher-switch.md`](docs/workflows/launcher-switch.md) |
+| A small launcher switch that is off by default | A pull request here, with its key in `config.xml` |
 | A new look: colours, wallpaper, dock, columns, that existing config keys can carry | `themes/<name>/` |
 | A widget or tile that can be its own small app | `addons/<name>/`, as a module card that never touches `launcher/` |
 | Network-backed launcher features, new launcher dependencies, the reworked launcher UI | This fork: prototype the flow in `design_preview/`, then build it in `launcher/` |
@@ -119,15 +119,15 @@ Step-by-step methods in `docs/workflows/`. Read the one that fits before you sta
 use it and ends with the check to run.
 
 - [`tv-list.md`](docs/workflows/tv-list.md): add a tested TV's debloat list with its `tv.json`, or update one.
-- [`launcher-switch.md`](docs/workflows/launcher-switch.md): add an off-by-default launcher switch, within the size gate.
-- [`translation.md`](docs/workflows/translation.md): add a launcher language, or fill strings missing from one.
-- [`theme.md`](docs/workflows/theme.md): add a theme from existing keys, with its screenshot from a real TV.
-- [`addon.md`](docs/workflows/addon.md): add a module-card app that never touches `launcher/`.
 - [`showcase.md`](docs/workflows/showcase.md): list a project that lives in its own repository.
 - [`press.md`](docs/workflows/press.md): add an article and update the four press counts.
 - [`docs-notes.md`](docs/workflows/docs-notes.md): add a troubleshooting entry or a `PROMPT.md` fix, keeping pinned facts.
 - [`perf-ab.md`](docs/workflows/perf-ab.md): an optional check of a launcher change for performance regressions with
   `tools/bench.py`, and measure an improvement or a failed check with traces, a report and flame charts.
+
+The switch, translation, theme and add-on workflows and the module-card how-to went with the old launcher; V2 may
+take them back from [upstream](https://github.com/Gathin23/cleanyourtv/tree/main/docs/workflows)
+([modules.md](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md)).
 
 ## Before opening a PR
 

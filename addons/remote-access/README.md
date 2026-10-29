@@ -4,7 +4,7 @@ Is this TV open to remote control right now? One screen says whether network deb
 port, the TV's address on your home network, and whether [Tailscale](https://tailscale.com) is installed and
 connected with its address. One button switches network debugging off: debugging switched on to set a TV up
 and then forgotten is the usual way a TV stays open. For the [Clean Your TV](../../README.md) launcher it declares
-a [module card](../../docs/modules.md): once you answer **Show card** its tile reads "Remote Access" with a red
+a [module card](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md): once you answer **Show card** its tile reads "Remote Access" with a red
 glow. On any other Android TV home it is an ordinary app.
 
 ![Remote Access on a TV](screenshot.jpg)

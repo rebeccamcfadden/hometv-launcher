@@ -24,9 +24,9 @@ the folders in the same order, alphabetical by "tv" (case ignored), so a brand's
 
 The tables live between <!-- tv-table:start ... --> and <!-- tv-table:end --> lines, the brand line
 between <!-- tv-brands:start ... --> and <!-- tv-brands:end -->; everything outside them is hand-written.
-The counts are the card's alt text ("N TV models · B brands · L languages · "), the "| **L languages** |"
-feature row and STATS in tools/readme_stats.py. Exit codes: 0 up to date (or written), 1 out of date
-(--check), 2 a tv.json or a marker is wrong.
+The counts are the card's alt text ("N TV models · B brands · ") and STATS in tools/readme_stats.py. The
+launcher in this fork is English only (docs/rework.md, Languages), so the card no longer counts languages.
+Exit codes: 0 up to date (or written), 1 out of date (--check), 2 a tv.json or a marker is wrong.
 """
 import argparse
 import json
@@ -157,11 +157,6 @@ def brand_lines(entries):
     return out
 
 
-def languages(root):
-    """English plus every translated strings.xml of the launcher."""
-    return len(list((root / "launcher/app/src/main/res").glob("values-*/strings.xml"))) + 1
-
-
 def between(text, name, body, path):
     """text with the lines between the `name` markers replaced by body (a list of lines), blank-padded."""
     lines = text.split("\n")
@@ -172,16 +167,13 @@ def between(text, name, body, path):
     return "\n".join(lines[:start[0] + 1] + [""] + body + [""] + lines[end[0]:])
 
 
-def counts(text, entries, root):
-    n, b, l = len(entries), len(brands(entries)), languages(root)
-    text = re.sub(r"\b\d+ TV models · \d+ brands · \d+ languages · ",
-                  f"{n} TV models · {b} brands · {l} languages · ", text)
-    return re.sub(r"^\| \*\*\d+ languages\*\* \|", f"| **{l} languages** |", text, flags=re.M)
+def counts(text, entries):
+    n, b = len(entries), len(brands(entries))
+    return re.sub(r"\b\d+ TV models · \d+ brands · ", f"{n} TV models · {b} brands · ", text)
 
 
-def stats(text, entries, root):
-    for value, label in ((len(entries), "TV MODELS"), (len(brands(entries)), "BRANDS"),
-                         (languages(root), "LANGUAGES")):
+def stats(text, entries):
+    for value, label in ((len(entries), "TV MODELS"), (len(brands(entries)), "BRANDS")):
         text = re.sub(rf'\("\d+", "{label}"\)', f'("{value}", "{label}")', text)
     return text
 
@@ -197,9 +189,9 @@ def render(root, texts=None):
     now = {p: (texts or {}).get(p) or (root / p).read_text(encoding="utf-8") for p in OWNED}
     readme = between(now["README.md"], "tv-brands", brand_lines(entries), "README.md")
     readme = between(readme, "tv-table", readme_rows(entries), "README.md")
-    readme = counts(readme, entries, root)
+    readme = counts(readme, entries)
     examples = between(now["examples/README.md"], "tv-table", examples_rows(entries), "examples/README.md")
-    stats_py = stats(now["tools/readme_stats.py"], entries, root)
+    stats_py = stats(now["tools/readme_stats.py"], entries)
     return {"README.md": readme, "examples/README.md": examples, "tools/readme_stats.py": stats_py}
 
 

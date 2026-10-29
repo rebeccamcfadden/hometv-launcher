@@ -64,17 +64,13 @@ Settled with the project lead on 2026-10-28.
 | Temperature unit | °C unless `tv.properties` says `temperature_unit=F`. The TV's language (en-US) would have given °F in New York, and Android 9 has no temperature setting. The clock follows the TV's 12/24-hour setting. (2026-10-29) |
 | Order of the PRs | Stacked: each milestone's branch starts from the one before, and the PRs merge in order. M1b, the cleanup, runs after M8, once every screen's config keys are known. Real-TV checks wait for one batch session with the project lead. (2026-10-29) |
 | Search, after review (2026-10-29) | Backspace is Back on every screen, Search included: on the full results it brings the keyboard back with the query kept, with the keyboard showing it goes Home, and only the on-screen ⌫ key deletes. Leaving Search for another tab (nav, Back, the remote's Home) clears the query, filter and full results; a title or person opened from it keeps them. Recent searches keep four, not five. Search has no guide line. The full results' six columns stay title-safe (96 px left, 98 px right); the start page's rows may still run off the right edge. The prototype and its README changed with it. |
+| M1b scope | Decided 2026-10-29. **Theme docs frozen:** `themes/README.md`, `docs/switches.md` and `docs/sky.md` stay as a V2 reference, marked as not read by the current launcher; only the tests that compare them with `config.xml` go. **Workflows retired:** `docs/workflows/translation.md`, `theme.md`, `launcher-switch.md`, `addon.md` and `docs/modules.md` are deleted and dropped from AGENTS.md, with a note that V2 may take them from upstream ([Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv)). **README:** the sections that describe the old launcher are rewritten for the new one. **`docs/card.jpg` and `docs/stats.png`:** redrawn with the tools, after fixing the language count. M1b runs now, before the real-TV run. |
+| Open questions, settled (2026-10-29) | `subscribed_services` stays on `tests/test_switches.py`'s "screenshots wanted" list until a TV screenshot exists. `.github/maintainer/MAINTAINER.md` allows the INTERNET permission for the fork's network features and pauses the 512 KB APK gate; `CONTRIBUTING.md` allows limited network access; `PROMPT.md` describes the new UI. The APK stays at about 1.6 MB for now, to be measured again once the mock artwork goes (BACKLOG.md, From M1). `LastOpened` stays, unread, with a BACKLOG entry for a future use. |
 
 ## Open questions
 
 Raise these when they become relevant; don't settle them alone.
 
-- **`subscribed_services` in `tests/test_switches.py`:** M3 added the key to the "screenshots wanted" list, which is
-  meant to shrink. Keep it there until a TV screenshot exists, or document it another way?
-- **`.github/maintainer/MAINTAINER.md`** still says "no INTERNET permission" and enforces the 512 KB APK gate. This
-  fork allows both (AGENTS.md, This fork); the policy file is a maintainer file, so it waits for the project lead.
-- **APK size:** about 1.6 MB from M4 on, almost all of it the bundled mock artwork (1.35 MB). The gate is
-  report-only in this fork; it drops back once artwork comes from the network (BACKLOG.md, Real catalogue).
 - **The remote's Settings key** on the TCL still goes to TCL's own handler, not the launcher's Settings dropdown.
   Check it in the real-TV run, then decide whether a key helper is worth it.
 
@@ -115,6 +111,9 @@ before any scripted check.
   Also PSS after visiting every page, with artwork loaded (M1: 11 MB).
 - `tools/tv.py --screenshot shots/<screen>.png` for each screen, a different file each time (for example `shots/home.png`, `shots/movies.png`), to replace the prototype images in README.md. Blur or crop names,
   cities and Wi-Fi names first.
+- A photo of the new Home on the TV, to replace `docs/new-home.jpg` (the README card's "after", which still shows
+  the old Home). Then redraw the card with `tools/readme_card.py Fredoka.ttf docs/card.jpg`, after adjusting its
+  crop and its blur box for the Wi-Fi name to the new photo.
 
 **After:** close ADB as AGENTS.md requires: USB and network debugging off, authorisations revoked, a reboot, then `tools/adb-closed.py <tv ip>` must report the port closed. Record the results and any new decisions here.
 

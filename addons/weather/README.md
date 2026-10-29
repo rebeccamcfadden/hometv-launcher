@@ -2,7 +2,7 @@
 
 The weather for one city, full screen on the TV: now (temperature, feels-like, conditions), the US air quality
 index as a coloured pill, and the next three days. For the [Clean Your TV](../../README.md) launcher it declares a
-[module card](../../docs/modules.md), so once you answer **Show card** its tile reads "Weather" with a
+[module card](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md), so once you answer **Show card** its tile reads "Weather" with a
 sky-blue glow; on any other Android TV home it is an ordinary app.
 
 ![The weather page](https://raw.githubusercontent.com/Sumyabazar1/cleanyourtv/pr-assets/addon-weather/addon-3-weather.png)

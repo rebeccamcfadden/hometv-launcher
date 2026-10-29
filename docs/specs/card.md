@@ -6,7 +6,8 @@ alphabetical grid. The launcher shows a card only after the TV owner has answere
 remembers that answer for the app's signing key.
 
 This document is the contract between a module (the app) and the launcher. The how-to for module
-authors is [`docs/modules.md`](../modules.md).
+authors is upstream's [`docs/modules.md`](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md). The reworked launcher in this fork doesn't read cards
+yet; they wait for V2 ([docs/rework.md](../rework.md)).
 
 ## Declaration
 

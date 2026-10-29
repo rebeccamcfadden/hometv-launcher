@@ -61,9 +61,8 @@ put() { echo "rm -f $DIR/$1 2>/dev/null; { o=\$(content write --uri $URI/$1 < $(
 del() { echo "rm -f $DIR/$1 2>/dev/null; content delete --uri $URI/$1 2>/dev/null"; }
 
 # The collection a theme can push. A push empties it before writing the theme's own pictures, and --reset has to
-# empty it too: the launcher's wallpaper picker (LauncherSettingsActivity.showWallpaperPicker) lists that folder
-# itself, and an on-TV pick of one of its pictures is read back from it (WallpaperRotation.chosen), so a reset
-# that left the pictures behind still shows the theme it just removed. Both paths use this one string.
+# empty it too, so a reset leaves none of the theme behind on the TV. (The old Home read the folder for its
+# wallpaper and its on-TV picker; the reworked launcher doesn't show wallpapers yet.) Both paths use this one string.
 CLEAR_WALLPAPERS="mkdir -p $DIR/wallpapers 2>/dev/null; rm -f $DIR/wallpapers/*.[jJ][pP][gG] $DIR/wallpapers/*.[jJ][pP][eE][gG] $DIR/wallpapers/*.[pP][nN][gG] $DIR/wallpapers/*.[wW][eE][bB][pP] 2>/dev/null; content delete --uri $URI/wallpapers 2>/dev/null"
 
 if [ "${1:-}" = --reset ]; then

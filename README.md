@@ -26,7 +26,7 @@ replace them as each screen lands.
 | Design | The web prototype and its spec, [`design_preview/README.md`](design_preview/README.md) | Done (#1) |
 | M0 · Tooling | JDK 17, Android SDK, an Android TV 9 emulator; the current launcher built and run as a baseline | Done (#4) |
 | M1 · Foundation | New Home activity replacing the old UI; design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | In review (#5) |
-| M1b · V1 cleanup | `Config` and `config.xml` cut to what the new launcher reads; old-UI docs, tools and tests; the README's old launcher sections | Planned, after M8 |
+| M1b · V1 cleanup | `Config` and `config.xml` cut to what the new launcher reads; old-UI docs, tools and tests; the README's old launcher sections | In review |
 | M2 · Home | Clock, greeting, weather, the app row with its hold-OK menu, Inputs, Shortcuts | In review (#6) |
 | M3 · Data layer | Household store, mock catalogue behind an interface, image cache, offline behaviour | In review (#7) |
 | M4 · Movies and TV Shows | List chips, grid, Filters drawer, empty states | In review (#8) |
@@ -82,15 +82,16 @@ project lead says it is free, and `launcher/build-and-install.sh` installs it th
 
 ## Upstream CleanYourTV
 
-Everything from here down is upstream's README, as it was. Its [launcher section](#the-launcher) describes the
-launcher this fork replaces.
+Everything from here down is upstream's README, with the parts about the launcher rewritten for this fork's new
+one ([What you get](#what-you-get), [The launcher](#the-launcher)). The debloat, the tools, the TV lists and the
+safety rules are upstream's.
 
 <p align="center">
   <a href="https://cleanyour.tv"><img src="https://raw.githubusercontent.com/Gathin23/cleanyourtv/main/docs/banner.png" alt="CleanYourTV. Your TV, minus the ads. Strip the bloatware from any Android TV or Google TV over Wi-Fi and replace the ad-filled home screen with a clean launcher that looks like an Apple TV. No root, no cable, nothing uninstalled, and a one-line restore." width="800"></a>
 </p>
 
 <p align="center">
-  <a href="docs/PRESS.md"><img src="docs/card.jpg" alt="260 TV models · 77 brands · 1 languages · 497 KB launcher. Featured in TechCrunch, TechRadar, Tom's Guide, Mashable, Android Authority, XDA, FlatpanelsHD, It's FOSS, Phandroid, GIGAZINE, Xataka, WinFuture, Frandroid, Macitynet, Techaeris, TechPP and 180 more: 196 articles from 32 countries. Before: stock Google TV home with a sponsored ad. After: the Clean Your TV launcher." width="800"></a>
+  <a href="docs/PRESS.md"><img src="docs/card.jpg" alt="260 TV models · 77 brands · 1.6 MB launcher. Featured in TechCrunch, TechRadar, Tom's Guide, Mashable, Android Authority, XDA, FlatpanelsHD, It's FOSS, Phandroid, GIGAZINE, Xataka, WinFuture, Frandroid, Macitynet, Techaeris, TechPP and 180 more: 196 articles from 32 countries. Before: stock Google TV home with a sponsored ad. After: upstream's Clean Your TV launcher, which this fork replaces." width="800"></a>
 </p>
 
 **The viral tweet:** [x.com/gathint/status/2111379569030939102](https://x.com/gathint/status/2111379569030939102)
@@ -100,7 +101,8 @@ It reached 7.4M views, people started doing the same to their own TVs, and their
 the lists here: 170+ TV models from 200+ contributors in four days. The repo was called tv-vibehack
 until the 19th; old links work.
 
-**Themes, switches and add-ons:** [cleanyour.tv/addons](https://cleanyour.tv/addons)
+**Themes, switches and add-ons** for upstream's launcher: [cleanyour.tv/addons](https://cleanyour.tv/addons). The
+reworked launcher in this fork doesn't read themes or module cards yet; they wait for V2.
 
 **Official links:** the website is [cleanyour.tv](https://cleanyour.tv) and the code, launcher and
 tools live only in this repo. Other domains using the name, such as cleanyourtv.com, are not run by
@@ -115,7 +117,7 @@ developer options, allow your computer once, and the rest is standard Android to
 |---|---|
 | **Back&nbsp;up** | The list of installed packages and settings. |
 | **Disable** | The manufacturer's telemetry, ad services, content rows and preloaded junk, with `pm disable-user`. Nothing is uninstalled, so a restore script can undo every step. |
-| **Install** | A small native launcher, made the default home screen. |
+| **Install** | This fork's launcher, made the default home screen: Home, Movies, TV Shows, Search and Pick for me, all driven by the remote. |
 
 **No root, no cable, nothing uninstalled, and a one-line restore if you change your mind.**
 
@@ -137,38 +139,33 @@ Any of these work: Claude Code (on [0G Private Computer](https://pc.0g.ai) or an
 |---|---|
 | **1. On the TV** | Settings → Device Preferences → About → press OK on **Build** seven times → back → Developer options → **USB debugging** on. If you see a Network or ADB debugging toggle, turn that on too. Keep the TV on. |
 | **2. On your computer** | Paste [`PROMPT.md`](PROMPT.md) into your assistant and fill in your TV model. |
-| **3. Follow along** | Accept "Allow USB debugging?" on the TV, then answer the checklist: which apps you use, the dock size and app order, whether to keep the voice assistant, Chromecast and updates. |
+| **3. Follow along** | Accept "Allow USB debugging?" on the TV, then answer the checklist: which apps you use and their order on Home, whether to keep the voice assistant, Chromecast and updates. |
 
 The assistant backs up, debloats, builds and installs the launcher, and checks each step with
 screenshots pulled from the TV. With this repo as context it takes about fifteen minutes.
 
 ## What you get
 
-A home screen that looks like an Apple TV and gets out of the way:
+A home screen built for the remote, with your apps and inputs up front and the household's movies and shows one
+press away:
 
-| Part | What it looks like |
+| Part | What it does |
 |---|---|
-| **A pitch-black home** | A dock of your four favourite apps in a rounded band, where Apple TV puts it. |
-| **A top shelf** | Names the focused app in large type, with an ambient glow in a colour taken from its artwork. |
-| **The rest of your apps in a grid** | Slides up when you press Down. |
-| **One floating glass highlight** | Springs from tile to tile. The focused tile lifts and shows its name. |
-| **Three frosted buttons** | Inputs (HDMI ports under the names you gave them in the TV's settings, AV, Live TV), Wi-Fi or Ethernet with the network name, Settings. |
-| **A greeting, a thin clock and the date** | In [Outfit](https://fonts.google.com/specimen/Outfit), and a matching Clock screensaver. Set `show_stats` in config or a theme for one line under the clock: CPU, free memory and free storage. It stays off unless you turn it on, and it refreshes only while Home is on screen. |
-| **Themes and module cards** | Themes change colours, wallpaper, dock and columns without a rebuild, and module cards let other apps plug a tile in, only with your say-so. |
+| **Home** | A greeting, the date, a large clock that follows the TV's 12 or 24-hour setting, today's and tomorrow's weather, and a row of your apps. Down slides the page up to Inputs (Live TV and each HDMI port, under the names the TV gives them), Shortcuts (All Apps, Launcher settings, TV Settings) and an hourly forecast. |
+| **The nav bar** | Home, Movies, TV Shows, Music and Search on the left; Wi-Fi, Inputs and Settings on the right. Wi-Fi and Inputs open dropdowns, which close again when the D-pad moves past their edge. Music is a placeholder in V1. |
+| **Movies and TV Shows** | The household's watchlists as a grid of title cards, with list chips and a Filters drawer (availability, review score, genre, length, watch state) that updates the grid as you change it. |
+| **Title preview** | Watch on the service that has it, My list, Seen, Favorite and Trailer, with tabs for the overview, episodes, where to watch, cast and crew, and more like this. |
+| **Search** | A 6×6 on-screen keyboard, or a real one, with typo-tolerant matching, suggestions and results as you type. |
+| **Pick for me** | Choose lists, movies or shows and a few filters, and it finds four picks for tonight, with Reroll. |
+| **All Apps** | Every installed app. Hold OK to put one on Home or take it off; on Home, hold OK on a tile to move it, remove it or open App info. |
+
+The clock, the apps, the inputs and the weather (from Open-Meteo, kept for when the TV is offline) are real. The
+catalogue, which service has a title, the prices and the Household and Friends lists are mock data for now; what is
+mocked, and what will replace it, is in [BACKLOG.md](BACKLOG.md). The pictures at the top of this page come from the
+web prototype, until screenshots from a real TV replace them.
 
 And a TV that stops working against you: no sponsored rows, no "Discover" nags, no analytics
 phoning home, no apps you never asked for.
-
-| | |
-|---|---|
-| ![The top shelf names the focused app over an ambient glow in its colour](docs/focus-2-up-netflix.png) | ![The Inputs popup: HDMI ports with what is connected, AV and Live TV](docs/inputs-menu.jpg) |
-| *Top shelf and ambient glow* | *Inputs: HDMI with connection state, AV, Live TV* |
-| ![The grid with the glass highlight on a tile and its name beneath](docs/focus-1-fancode.png) | ![The Clock screensaver: a thin clock drifting over the glow](docs/clock-screensaver.png) |
-| *The grid, one glass highlight, the tile's name* | *Clock screensaver, drifts so nothing burns in* |
-| ![The aurora theme: a wallpaper and tinted pills, pushed without a rebuild](themes/aurora/screenshot.jpg) | ![Six columns and a six-app dock from a theme's config.json](themes/six-columns/screenshot.jpg) |
-| *Aurora theme, pushed with `tools/theme.sh`* | *Six columns and a six-app dock, same launcher* |
-| ![Moving a tile: held OK, chose Move, the tile is picked up and the others dim](docs/tile-move.jpg) | ![The App library: installed apps, one press adds an app back to Home](docs/app-library.jpg) |
-| *With `tile_menu`, hold OK on a tile, Move: arrows carry it, Back puts it down* | *App library: one press puts a removed app back on Home* |
 
 ## Supported TVs
 
@@ -485,7 +482,7 @@ tools/disable.sh examples/xiaomi-mi-tv-4a/debloat.txt        # apply a debloat l
 tools/restore.sh examples/xiaomi-mi-tv-4a/debloat.txt        # undo it, stock launcher back
 tools/venv/bin/python -I tools/check.py examples/xiaomi-mi-tv-4a/debloat.txt   # what a firmware update undid
 TV_HOST=192.168.1.50 launcher/build-and-install.sh           # build the launcher and make it Home
-tools/theme.sh themes/aurora                                 # push a theme; --reset removes it
+tools/theme.sh examples/<your tv>                            # push that TV's config.json; --reset removes it
 ```
 
 | Tool | What it does |
@@ -498,14 +495,13 @@ tools/theme.sh themes/aurora                                 # push a theme; --r
 | [`tools/check.py`](tools/check.py) | Compares the TV with the list that was applied, for what a firmware update undid; `--fix` puts it back. |
 | [`tools/adb-closed.py`](tools/adb-closed.py) | Checks that the TV's network ADB port is closed once debugging is off: exits 0 when nothing answers, 1 while it is still open, 2 when the check itself could not run. No `nc` needed. |
 | [`tools/privacy.py`](tools/privacy.py) | Audits the TV for voice, ACR and telemetry candidates and prints the evidence for each; `--write` turns the findings into a list `disable.sh` and `restore.sh` already understand. |
-| [`tools/theme.sh`](tools/theme.sh) | Push a folder from [`themes/`](themes/) to the launcher and restart Home. |
-| [`tools/manage.py`](tools/manage.py) | List every add-on, theme and switch with its screenshot, see what is on the TV, and install, update or remove one by running its creator's own script. |
+| [`tools/theme.sh`](tools/theme.sh) | Push a folder's `config.json` to the launcher and restart Home: the per-TV keys an [`examples/`](examples/) folder carries, or a theme from [`themes/`](themes/), whose look the reworked launcher doesn't read yet. |
+| [`tools/manage.py`](tools/manage.py) | List every add-on, theme and switch with its screenshot, see what is on the TV, and install, update or remove one by running its creator's own script. Themes and module cards are for upstream's launcher until V2. |
 | [`tools/bench.py`](tools/bench.py) | Measures the launcher that answers HOME: key latency, how far the focus moved, janky frames, cold start, return to Home, and the idle CPU and PSS it costs. Changes nothing on the TV and writes the raw per-key numbers to JSON; no extra install. |
 | [`tools/trace.py`](tools/trace.py), [`trace_report.py`](tools/trace_report.py) | Records Perfetto traces of the launcher (return to Home, cold start, D-pad) and reports where its time goes, per run and before against after. Optional: needs [`requirements-perf.txt`](tools/requirements-perf.txt). [Guide](tools/trace.md). |
 | [`tools/flamechart.py`](tools/flamechart.py) | Draws a before/after flame chart from those traces, for a pull request: one lane per thread on a shared time scale, the work a change targets in magenta with its total. Optional, like the trace tools. [Guide](tools/flamechart.md). |
 | [`tools/screendiff.py`](tools/screendiff.py) | Compares a before and an after screenshot pixel by pixel, leaving out the clock or anything you mask, and writes the pair with your Wi-Fi name blurred. Optional, like the trace tools. [Guide](tools/screendiff.md). |
-| [`tools/race_calendar.py`](tools/race_calendar.py) | Writes this season's F1 calendar into a theme for race-weekend mode, from the free Jolpica API. |
-| [`launcher/build-and-install.sh`](launcher/build-and-install.sh) | Builds a shrunk release (about 497 KB), installs it, switches Home, and rolls back if Home does not land on it. |
+| [`launcher/build-and-install.sh`](launcher/build-and-install.sh) | Builds a shrunk release (about 1.6 MB, most of it the mock artwork), installs it, switches Home, and rolls back if Home does not land on it. |
 
 The scripts never leave the TV without a Home app: they only disable a stock launcher they recognise,
 and skip the Home app in a list until another launcher answers HOME. Details below.
@@ -577,8 +573,10 @@ apps), which is why the report names that loss per package instead of calling it
 
 ## The launcher
 
-A small native home screen for Android TV: **about 497 KB**, plain Java, built for TVs with 1 GB of RAM.
-No blur, no video, no network permission, no background services.
+This fork's home screen for Android TV: plain Java and Android Views, built for TVs with 1 GB of RAM. The release is
+about 1.6 MB, most of it the mock artwork bundled until the real catalogue arrives. It goes online for the weather
+only, keeps what it fetched, and works offline; no analytics, no blur, no video, and no polling while Home is
+hidden. English only.
 
 The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor in
 [`launcher/app/build.gradle`](launcher/app/build.gradle), and the install script asks the TV for
@@ -587,16 +585,13 @@ The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor
 
 | What | How it works |
 |---|---|
-| **Configure** | Dock order, hidden apps, Live TV app, 4 to 7 tiles per row, reduced motion. All in [`config.xml`](launcher/app/src/main/res/values/config.xml) |
-| **Settings on the TV** | Hold OK on Settings for launcher settings. Optional `launcher_settings_button` makes a normal click open them directly; TV settings remain on the settings page and their app tile. |
-| **Themes** | Background, wallpaper and layout from a `config.json` pushed over Wi-Fi, no rebuild. eight ship in [`themes/`](themes/), the built-in `default/` included |
-| **1 languages** | Follows the TV's language, with a fully mirrored right-to-left layout for Hebrew |
-| **App library** | Optional: browse every installed app and add or remove Home shortcuts. See [the app library guide](docs/app-library.md) |
-| **Tile menu** | Optional (`tile_menu`): hold OK on a tile for Move, Remove from Home and App info. Off, holding OK opens App info |
-| **Module cards** | Any TV app can offer its own tile; you approve each one once. See [`docs/modules.md`](docs/modules.md) |
-| **Add-ons** | Optional apps that plug in as module cards, kept in [`addons/`](addons/) and never built into the launcher |
-| **Clock screensaver** | A drifting clock over the glow, so nothing burns in |
-| **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone |
+| **Home** | Greeting, date, clock and weather for the location in `launcher/tv.properties`, then the app row. The row starts with the installed apps from `dock_apps`; hold OK on a tile to move it, remove it from Home or open App info, and Home keeps that order. |
+| **Inputs** | The nav's Inputs dropdown and Home's Inputs row: HDMI ports under their names, CEC devices on their port, AV and Live TV (`live_tv_package`). Sets that list their inputs another way are handled in [`config.xml`](launcher/app/src/main/res/values/config.xml). |
+| **Movies, TV Shows, Search, Pick for me** | Built on a catalogue interface; V1 plugs in the prototype's mock catalogue, so titles, artwork, availability and prices are illustrative. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. |
+| **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`. Watch opens that service's app. |
+| **Settings** | The nav's Settings icon opens the TV's settings; Home's Shortcuts row opens the launcher's own (below). |
+| **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone (below). |
+| **Left for V2** | Themes and wallpapers, the clock screensaver, module cards and add-ons, Watch Next, festivals and the sky: see [BACKLOG.md](BACKLOG.md#left-for-v2). |
 
 <details>
 <summary><b>Build it yourself</b></summary>
@@ -605,80 +600,39 @@ It needs JDK 17 and Android SDK platform 34. On macOS: `brew install openjdk@17 
 and `sdkmanager "platforms;android-34" "build-tools;34.0.0"`. On Linux the install script finds
 `~/Android/Sdk` and the `java` on your PATH.
 
+The weather's location and the temperature unit come from `launcher/tv.properties`, which is gitignored: copy
+[`launcher/tv.properties.example`](launcher/tv.properties.example) (New York, °C) and edit the copy.
+
 </details>
 
 <details>
 <summary><b>Configure</b></summary>
 
-[`config.xml`](launcher/app/src/main/res/values/config.xml) sets the dock order, hidden apps, the Live TV
-package, columns (tiles shrink from 5 up), rows under the dock, an optional VPN app for the network pill,
-and `reduced_motion` for TVs whose GPU cannot keep up. Themes set the same keys plus a background colour
-and a wallpaper.
+[`config.xml`](launcher/app/src/main/res/values/config.xml) holds what differs from TV to TV: the apps Home's row
+starts with (`dock_apps`) and the ones never shown (`hidden_apps`), the Live TV app and the quirks of a set's
+Inputs, an optional VPN app for the Wi-Fi dropdown, `reduced_motion` for TVs whose GPU cannot keep up,
+`subscribed_services`, and the remote-key switches. A `config.json` with the same keys, pushed with
+`tools/theme.sh`, overrides it without a rebuild; several [`examples/`](examples/) folders carry one. The old
+launcher's look and layout keys are not read any more; [themes/README.md](themes/README.md) keeps them for V2.
 
 </details>
 
 <details>
 <summary><b>Launcher settings and the default home</b></summary>
 
-- Click **Settings** for the TV's own settings. Hold OK on it and choose **Launcher settings**, or click it
-  straight away with `launcher_settings_button`. The launcher's own page has these rows, top to bottom:
-  - **Reorder apps**, only with `launcher_settings_button`: OK picks an app up, the arrows move it, Back
-    places it, and Back again finishes.
-  - **Apps per row** 4, 5, 6 or 7; **Rows below dock** 0 to 3, how many rows of tiles stay visible under the
-    dock band; **Dock band opacity** 100%, 70%, 50% or 30%. The last two only do anything while the dock is
-    its own row (`dock_row`, on by default).
-  - **Wallpaper**: one picture from the theme's collection (or its `wallpaper.jpg`), **None**, or **Theme
-    default**. A pick holds that picture and stops the rotation until you choose Theme default, press
-    Follow theme, or push the theme again.
-  - **Animations** on or off, and **Advanced effects** (tile lift, icon zoom and smooth ambient-colour
-    transitions; they may use more memory) once animations are on.
+- Open **Launcher settings** from Home: press Down to the Shortcuts row and choose it. It is also the last row of
+  the remote Settings key's dropdown (`settings_key_panel`), and `launcher_settings_button` makes the nav's
+  Settings icon open it. Until a new page is designed it is the old launcher's, with these rows, top to bottom:
+  - **Animations** on or off. Off, pages and dropdowns switch without moving, as with `reduced_motion`.
   - **Open on start**, only with `open_on_start_choice`: Off, or an app that opens instead of Home the first
     time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
-  - **Follow theme (reset on-TV choices)**, which clears every choice above. Pushing or resetting a theme
-    clears them too.
+  - **Follow theme (reset on-TV choices)**, which clears the choices above. Pushing or resetting a
+    `config.json` clears them too.
   - **Choose default home** opens Android's home picker, and **TV system settings** the TV's own settings
     page.
-- **Change the default home:** Launcher settings and the optional Default-home tile
-  (`show_home_settings_shortcut`) open Android's home picker. Choose the original launcher to stop using
-  CleanYourTV as Home, or CleanYourTV to return. The original launcher must be enabled; if the install
+- **Change the default home:** Launcher settings opens Android's home picker. Choose the original launcher to
+  stop using CleanYourTV as Home, or CleanYourTV to return. The original launcher must be enabled; if the install
   script disabled it, run the restore script below first. Some TVs provide no home picker.
-
-</details>
-
-<details>
-<summary><b>Languages</b></summary>
-
-English, German, Spanish, Catalan, French, Russian, Serbian (Latin), Polish, Czech, Italian, Portuguese,
-Turkish, Arabic, Hebrew, Simplified Chinese, Traditional Chinese (Taiwan), Thai, Finnish, Vietnamese,
-Bangla, Indonesian, Norwegian Bokmål, Dutch, Uzbek (Latin) and Ukrainian. The launcher follows the TV's language. Android 13+ can set it for the launcher
-alone: `tools/tv.py 'cmd locale set-app-locales com.gathin.tvhome --locales ca'`.
-
-Hebrew mirrors the layout: menu buttons on the left, date and clock on the right with the greeting above,
-dock and app rows starting on the right with matching remote navigation, the input selector's icons and
-labels on the right, and dates with the month prefix ב (for example, 19 באוקטובר). The Clock screensaver
-right-aligns its date and time. Russian covers every screen, including race weekends, festival greetings and the Shamsi date. Other
-languages keep their original layouts.
-
-</details>
-
-<details>
-<summary><b>Module cards</b></summary>
-
-Any TV app can declare its own tile (label, caption, glow). The launcher asks you once per app, keeps it
-hidden by default, and remembers the answer for that app's signing key and card name. Hold OK on Settings
-and choose Module cards to change your mind. How to make one: [`docs/modules.md`](docs/modules.md); the
-contract: [`docs/specs/card.md`](docs/specs/card.md).
-
-</details>
-
-<details>
-<summary><b>Clock screensaver</b></summary>
-
-Pick "Clock" in the TV's screensaver settings, or over ADB:
-
-```bash
-tools/tv.py 'settings put secure screensaver_components com.gathin.tvhome/.ClockDream; settings put secure screensaver_enabled 1'
-```
 
 </details>
 
@@ -688,25 +642,25 @@ tools/tv.py 'settings put secure screensaver_components com.gathin.tvhome/.Clock
 - An optional accessibility service keeps the remote's **Input** button working on Google TV
   (`INPUT_KEY_SERVICE=1` at install).
 - It can bring back other buttons only the stock launcher answered, such as the **YouTube** button
-  (`app_keys` and `input_key_keycodes`, in config.xml or a theme; `HOME_KEY_SERVICE=1` reads `app_keys` too).
+  (`app_keys` and `input_key_keycodes`, in config.xml or a pushed config.json; `HOME_KEY_SERVICE=1` reads
+  `app_keys` too).
 - A `hold:` prefix on an `app_keys` entry gives that button a second app: a normal press opens the
   unprefixed app, holding for half a second opens the hold one (by keycode or `hold:scan:...`).
 - In place of an app, an `app_keys` entry can name an action: `back`, `home`, `recents`, `mute`, `sleep`,
   `screensaver`, `settings` or `wifi`, so a spare colour button can mute the TV or, held, put it in standby.
 - `HOME_KEY_SERVICE=1` also fixes sticks whose Home key sends ALL_APPS, and opens Settings from the remote's
   **gear** button, even one Android does not map (scancodes or keycodes in config.xml).
-- With `settings_key_panel` the gear opens a [small quick settings panel](docs/quick-settings-panel.jpg)
-  over Home or any app: TV settings, Display, Network, Apps and Launcher settings.
+- With `settings_key_panel` the gear opens the launcher's quick settings dropdown over Home or any app: TV
+  settings, Picture, Network, Apps and Launcher settings.
 
 </details>
 
 <details>
-<summary><b>Navigation and artwork</b></summary>
+<summary><b>Navigation</b></summary>
 
-Up and Down move one row. The top buttons never fall through to tiles, and Down from them returns to the
-dock tile you came from. The last focused app is remembered, and installing or removing an app refreshes
-the tiles while Home is open. App banners load at xhdpi or better, so low-density TV UIs do not downsample
-them before the focus zoom.
+The D-pad moves to the nearest item in that direction, and every row and grid remembers where you were, so
+leaving and coming back lands on the same item. Back closes a dropdown, dialog or the title preview first, then
+goes back a page, then Home. Home's app row catches up with installed and removed apps each time it shows.
 
 </details>
 
@@ -895,6 +849,15 @@ before you debug the app.
 Not from this repo. Chromecast built-in stays for Android phones. For iPhones,
 [jqssun/android-airplay-server](https://github.com/jqssun/android-airplay-server) works; an install
 script for it is in [PR #84](https://github.com/Gathin23/cleanyourtv/pull/84).
+
+</details>
+
+<details>
+<summary><b>Does the launcher go online?</b></summary>
+
+For the weather: Open-Meteo, with no key and no account, for the location set when the launcher is built. The last
+forecast is kept, so Home still shows it while the TV is offline. The catalogue is mock data on the TV for now; a
+real one is in [BACKLOG.md](BACKLOG.md). There are no analytics and no telemetry.
 
 </details>
 

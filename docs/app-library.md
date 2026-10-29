@@ -1,5 +1,9 @@
 # App library
 
+> **Frozen for V2.** This is the old Home's App library. The reworked launcher in this fork has All Apps instead (hold
+> OK on an app to put it on Home or take it off) and doesn't read `app_library` or `app_library_selection`. This page
+> stays as a reference for V2 ([docs/rework.md](rework.md), M1b scope).
+
 ## Optional selection mode
 
 Set `"app_library_selection": true` along with `"app_library": true` in a theme,

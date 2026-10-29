@@ -1,5 +1,9 @@
 # Switches on a TV
 
+> **Frozen for V2.** The reworked launcher in this fork doesn't read most of these keys; the ones it reads are in
+> [`config.xml`](../launcher/app/src/main/res/values/config.xml). This page stays as a reference for V2
+> ([docs/rework.md](rework.md), M1b scope).
+
 Every key a theme can set (the Keys table in [`themes/README.md`](../themes/README.md)) gets a
 screenshot of what it does on a real TV. This table is where they are listed: the repo and
 [cleanyour.tv/addons#switches](https://cleanyour.tv/addons#switches) both show them from here.

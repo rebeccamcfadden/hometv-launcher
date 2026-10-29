@@ -5,6 +5,9 @@ so they are easy to find, build and review. The launcher in [`launcher/`](../lau
 depends on them: it is built, tested and size-checked without this folder, so an add-on can't make
 the core bigger or change how it behaves. You install an add-on only if you want it.
 
+The reworked launcher in this fork doesn't show module cards yet: they wait for V2
+([docs/rework.md](../docs/rework.md)). An add-on still installs and runs as its own app.
+
 ## Add-ons
 
 | Add-on | What it does | Author | Tested on | Permissions | Screenshot |
@@ -35,7 +38,7 @@ here. See the rules below.
 ## How an add-on works
 
 An add-on is a normal Android TV app with its own Gradle project in `addons/<name>/`. It declares a
-card with the existing module-card contract: the how-to is [`docs/modules.md`](../docs/modules.md)
+card with the existing module-card contract: the how-to is upstream's [`docs/modules.md`](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md)
 and the spec is [`docs/specs/card.md`](../docs/specs/card.md). The launcher finds the card, asks the
 TV owner once, and shows it as a tile with the add-on's label, caption and glow colour. Nothing else
 connects the two.
@@ -102,7 +105,7 @@ TV_HOST=<tv ip> tools/venv/bin/python -I tools/manage.py install weather
   an add-on. Open an issue first instead.
 - **No prebuilt APKs** in the repo. People build from source, as with the launcher.
 - **Permissions up front.** The add-on's README lists every permission it asks for and why, plus
-  any network access or background service. The rules in [`docs/modules.md`](../docs/modules.md)
+  any network access or background service. The rules in upstream's [`docs/modules.md`](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md)
   apply: no telemetry without an opt-in, no ads, your own art.
 - **Tested on a real TV.** Say which one in the README and in the table above.
 - **A screenshot.** `addons/<name>/screenshot.jpg`: the add-on on a real TV, its card in the grid or

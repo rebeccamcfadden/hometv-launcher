@@ -4,7 +4,7 @@ The TV's sources by the names the devices give themselves: "PlayStation 5" and "
 "HDMI 3". HDMI-CEC devices report their names to the TV, which lists each one as an input under its port; this
 screen shows those names (or the name you gave a port in the TV's settings), connected ones first in full
 brightness, and OK switches to one. Live TV comes last. For the [Clean Your TV](../../README.md) launcher it
-declares a [module card](../../docs/modules.md): once you answer **Show card** its tile reads "Sources" with a
+declares a [module card](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md): once you answer **Show card** its tile reads "Sources" with a
 green glow. On any other Android TV home it is an ordinary app. ("Inputs" is a name the launcher keeps for its own
 menu, hence Sources.)
 

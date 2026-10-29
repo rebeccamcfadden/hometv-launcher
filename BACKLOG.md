@@ -98,7 +98,8 @@ From the old launcher; not in V1 by decision.
 - Festivals, the sky and the lunar calendars.
 - The old Home's on-screen extras: the idle clock (`home_idle_clock_minutes`), the stats line (`show_stats`), the
   VPN badge on the network pill (`vpn_app` now shows its app and state in the Wi-Fi dropdown instead), the app
-  library dialog, reorder mode and dock editing. Their `config.xml` keys stay until M1b and do nothing.
+  library dialog, reorder mode and dock editing. Their `config.xml` keys went in M1b; the theme keys are described,
+  frozen, in `themes/README.md`.
 
 ## From M1
 
@@ -106,8 +107,16 @@ From the old launcher; not in V1 by decision.
   Follow theme, Default Home and TV settings. Wanted: the new page in the new UI, once it is designed.
 - **Network icon state:** the nav shows Wi-Fi, Ethernet or Wi-Fi crossed out when offline. The old pill could also
   tint by state (`wifi_status_color`, `wifi_status_warnings`); not designed for the new nav.
-- **Generated counts:** `tools/gen_tables.py` now writes "1 languages" in the README; `docs/card.jpg` and
-  `docs/stats.png` still say 25 (M1b).
+- **README card:** since M1b `tools/gen_tables.py` no longer counts languages, and `docs/card.jpg` and
+  `docs/stats.png` show TV models, brands and the launcher's size (1.6 MB, mostly mock artwork). The card's "after"
+  photo, `docs/new-home.jpg`, still shows the old Home: replace it with a TV photo of the new Home in the real-TV
+  run, then redraw the card ([docs/rework.md](docs/rework.md#real-tv-run)).
+- **APK size:** about 1.6 MB, almost all of it the bundled mock artwork (1.35 MB); the 512 KB gate is paused in this
+  fork. When the real catalogue replaces the bundled art, measure the APK again and decide whether the gate comes
+  back, and at what size (project lead, 2026-10-29).
+- **Last opened:** `LastOpened` notes when Home or All Apps last opened each app (on the TV only, no permission).
+  Nothing reads it since the old Home's "Last opened" line went in M1. Wanted: a use for it, for example ordering
+  All Apps or the Home row by recent use, once that is designed.
 - **Cold start:** Home took 2.8 s (`am start -W`, TotalTime) after a force stop on the TCL BeyondTV, 0.3 s for the
   activity itself. Measure it against 2.7 with `tools/bench.py` ([perf-ab](docs/workflows/perf-ab.md)) before M2
   adds the real Home page.

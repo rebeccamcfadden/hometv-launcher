@@ -2,7 +2,7 @@
 
 Dims the whole picture below what the TV's own settings allow, and warms it at night, over every app, Live
 TV and the home screen. For the [Clean Your TV](../../README.md) launcher it declares a
-[module card](../../docs/modules.md): once you answer **Show card** its tile reads "Brightness" with an amber
+[module card](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md): once you answer **Show card** its tile reads "Brightness" with an amber
 glow. On any other Android TV home it is an ordinary app.
 
 ![Brightness in night mode at 40 %, warm, over its own settings](screenshot.jpg)

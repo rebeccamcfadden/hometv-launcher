@@ -14,7 +14,7 @@ adapter on that port can drop the same way, so plan to do the whole session in o
 
 ---
 
-I want to debloat my Android TV and replace its launcher with a clean Apple TV style home screen.
+I want to debloat my Android TV and replace its launcher with a clean home screen driven by the remote.
 My TV model is: <MODEL NAME HERE>. Work on the real device, step by step, and verify everything you
 do with screenshots pulled from the TV. Ask me before anything that depends on my preferences.
 
@@ -162,21 +162,24 @@ Launcher
 - If you write the launcher yourself, make its theme explicitly opaque (`windowIsTranslucent`,
   `windowIsFloating` and `windowSwipeToDismiss` false): on some firmware `Theme.DeviceDefault` comes out
   translucent, the TV app keeps running under Home, and after an HDMI input the picture stays on screen.
-- Ask how many dock slots I want (4, 5, 6 or 7), which apps, and their order; keep four if I have no
-  preference. The reference launcher already supports this: use `columns` and `dock_apps` in
-  `launcher/app/src/main/res/values/config.xml` or a theme's `config.json`, without adding a new layout.
-- Design, Apple TV 4K style: pitch black background; a dock row at the bottom of the screen inside a
-  slightly lighter rounded band holding the apps I pick; the rest of the apps in a grid with the same
-  number of columns below that scrolls up when I press Down; one translucent "glass" highlight
-  that springs from tile to tile instead of per-tile borders; the focused tile scales up slightly and
-  shows its name underneath; above the dock, the focused dock app's name in large light type with an
-  ambient glow in a colour sampled from its banner; frosted pill buttons top right for Inputs, Wi-Fi
-  (showing the network name) and Settings; a greeting, a large thin clock and the date top left in a
-  downloaded open-licence typeface such as Outfit. Inputs opens a compact glass dropdown under the pill
-  listing the HDMI ports, AV and Live TV, switching via the TV input framework.
-- Make D-pad navigation deterministic: Up/Down move exactly one row, Up from the dock goes to the top
-  bar, the ends of the top bar don't fall through to tiles. Remember the last focused tile.
-- Keep it light: the TV has about 1 GB of RAM. No blur, no video, no network polling.
+- If you cloned this repo, install its launcher (`launcher/`) rather than writing one; its design is
+  `design_preview/README.md`. Ask which apps go on the Home row and in what order (`dock_apps` in
+  `launcher/app/src/main/res/values/config.xml` or a theme's `config.json`), and the city for the weather
+  (`latitude`, `longitude` and `temperature_unit` in `launcher/tv.properties`, copied from
+  `tv.properties.example`), without adding a new layout.
+- Design: a dark evening landscape behind a nav bar at the top (Home, Movies, TV Shows, Music and a search
+  icon; Wi-Fi, Inputs and Settings icons on the right, the first two opening small dropdowns). Home shows a
+  greeting, the date, a large clock and today's and tomorrow's weather above one row of app tiles; moving
+  Down reveals Inputs (Live TV and the HDMI ports, switching through the TV input framework), Shortcuts
+  (All Apps, Launcher settings, TV Settings) and an hourly weather strip. Movies and TV Shows show the
+  household's watchlists as a grid with filters and Pick for me; OK on a title opens a preview with Watch,
+  My list and the services that have it; Search has an on-screen keyboard and matches typos. The catalogue,
+  prices and watchlists are still mock data (`BACKLOG.md`); the apps, inputs, weather and the household's
+  own lists are real.
+- Make D-pad navigation deterministic: every move goes to the nearest item in that direction, rows and grids
+  remember their last focused item, and Back closes a dropdown or popup, then returns to the page before,
+  then to Home.- Keep it light: the TV has about 1 GB of RAM. No blur, no video, no heavy network polling; the weather is
+  fetched now and then and cached, and Home works with the network off.
 
 Verify
 - After each change, inject remote key presses over ADB, take a screenshot from the TV and look at it:
@@ -198,9 +201,9 @@ Verify
   for the current user, then ask me to press the real button; an injected key is not proof (see
   `docs/TROUBLESHOOTING.md`).
 - When done, give me a restore script, a build-and-install script, and a README that explains how to
-  re-enable any app and how to change the dock order or the wallpaper.
+  re-enable any app, how to change the apps on the Home row, and how to change the weather location.
 
 ---
 
-Expect to answer three or four checklist questions (which apps you use, the dock size and app order,
+Expect to answer three or four checklist questions (which apps you use, the Home row's apps and order, your city for the weather,
 whether to keep the voice assistant, Chromecast and firmware updates). Everything is reversible.

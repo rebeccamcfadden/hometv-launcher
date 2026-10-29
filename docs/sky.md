@@ -1,5 +1,8 @@
 # Sky
 
+> **Frozen for V2.** The reworked launcher in this fork doesn't read `sky_intensity`, `latitude` or `longitude`, and
+> has no sky backdrop. This page stays as a reference for V2 ([docs/rework.md](rework.md), M1b scope).
+
 An optional backdrop that follows the clock: night blues until dawn, a soft blue day, then a warm
 horizon that peaks at seven in the evening. It is off in the built-in configuration, so a
 launcher built from this repository behaves exactly like before until a theme turns it on.

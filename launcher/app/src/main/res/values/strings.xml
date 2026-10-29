@@ -8,8 +8,6 @@
     <string name="not_connected">No device</string>
     <string name="live_tv">Live TV</string>
     <string name="no_inputs">No inputs found</string>
-    <string name="festival_dussehra_greeting">Happy Dussehra</string>
-    <string name="festival_diwali_greeting">Happy Diwali</string>
     <string name="ethernet">Ethernet</string>
     <string name="offline">Offline</string>
     <string name="not_available">Not available on this TV</string>
@@ -36,24 +34,6 @@
     <string name="tile_move">Move</string>
     <string name="library_remove_shortcut">Remove from Home</string>
     <string name="library_app_info">App info</string>
-
-    <string name="race_practice_1">Practice 1</string>
-    <string name="race_practice_2">Practice 2</string>
-    <string name="race_practice_3">Practice 3</string>
-    <string name="race_sprint_qualifying">Sprint qualifying</string>
-    <string name="race_sprint">Sprint</string>
-    <string name="race_qualifying">Qualifying</string>
-    <string name="race_race">Race</string>
-    <string name="race_practice_1_short">FP1</string>
-    <string name="race_practice_2_short">FP2</string>
-    <string name="race_practice_3_short">FP3</string>
-    <string name="race_sprint_qualifying_short">SQ</string>
-    <string name="race_sprint_short">SPRINT</string>
-    <string name="race_qualifying_short">QUALI</string>
-    <string name="race_race_short">RACE</string>
-    <string name="race_countdown_minutes">%1$d min</string>
-    <string name="race_countdown_hours">%1$dh %2$dm</string>
-    <string name="race_countdown_days">%1$dd %2$dh</string>
     <!-- The new UI (docs/rework.md): nav, dropdowns and the placeholder pages. -->
     <string name="nav_home">Home</string>
     <string name="nav_movies">Movies</string>

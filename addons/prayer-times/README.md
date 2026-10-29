@@ -2,7 +2,7 @@
 
 Today's five prayer times and sunrise for one city, full screen on the TV, with the next prayer highlighted and a
 countdown to it, plus today's Gregorian and Hijri dates. Each prayer has its Arabic and English name. For the
-[Clean Your TV](../../README.md) launcher it declares a [module card](../../docs/modules.md), so once you answer
+[Clean Your TV](../../README.md) launcher it declares a [module card](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md), so once you answer
 **Show card** its tile reads "Prayer Times" with a green glow; on any other Android TV home it is an ordinary app.
 
 ![The prayer times page](https://raw.githubusercontent.com/majnioui/cleanyourtv-contrib/pr-assets/addon-prayer-times/prayer-times.png)

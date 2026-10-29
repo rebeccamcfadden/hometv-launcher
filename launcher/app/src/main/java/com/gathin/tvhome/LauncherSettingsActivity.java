@@ -24,8 +24,7 @@ import java.util.List;
  */
 public final class LauncherSettingsActivity extends Activity {
     /** On-TV choices the old Home's rows saved; Follow theme still clears them. */
-    private static final String[] OLD_CHOICES = {"columns", Config.ROWS_BELOW_DOCK_KEY, "advanced_effects",
-            Config.WALLPAPER_CHOICE_KEY, Config.DOCK_OPACITY_KEY};
+    private static final String[] OLD_CHOICES = Config.OLD_CHOICES;
     private SharedPreferences choices;
     private TextView animationsChoice;
     private TextView followThemeChoice;

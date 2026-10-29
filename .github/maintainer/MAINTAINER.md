@@ -1,12 +1,12 @@
 # How CleanYourTV PRs are reviewed
 
 CleanYourTV (Gathin23/cleanyourtv) is a prompt plus tools that debloat Android TV / Google TV / Fire TV over
-ADB and a tiny native launcher (`launcher/`, plain Java, ~497 KB, for 1 GB TVs). Contributors mostly add
+ADB and a native launcher (`launcher/`, plain Java, for 1 GB TVs). This fork (rebeccamcfadden/cleanyourtv) is reworking the launcher; see `docs/rework.md`. Contributors mostly add
 tested TV lists under `examples/<tv>/`, translations, docs, small launcher options, themes, add-ons and tools.
 
 ## The policy: a small core plus a well-indexed hub
 The main repo stays small and simple: the prompt, tested TV lists, the safety rules and a small, stable
-launcher under the APK size gate (`.github/workflows/ci.yml`, currently 524,288 B). Bigger ideas live next to
+launcher. The APK size gate (`.github/workflows/ci.yml`, 524,288 B) is paused in this fork while the launcher bundles mock artwork: CI reports the size but does not fail on it, and the PR states it. Bigger ideas live next to
 it, and every one of them gets a home. Pick the smallest home that fits (CONTRIBUTING, "Where does my idea go?"):
 
 | The idea | Where it goes | Verdict |
@@ -15,14 +15,14 @@ it, and every one of them gets a home. Pick the smallest home that fits (CONTRIB
 | A small launcher switch: **off by default**, strings in **every** locale (or config-only), small | merged here | merge / merge-with-fix |
 | A new look (colours, wallpaper, dock style) that existing config keys can carry | `themes/<name>/` with a real-TV screenshot | theme |
 | A feature that can be its own small app (card, widget, screensaver, stats) | `addons/<name>/`, a module card that never touches `launcher/` | addon |
-| A big in-launcher rewrite, new permissions or network access, an old-Android port (lower minSdk), Fire TV Home takeover, an alternative launcher, a change of the default for every TV | the contributor's fork plus one row in SHOWCASE.md | showcase |
+| A big in-launcher rewrite outside the fork's rework, new permissions other than INTERNET, an old-Android port (lower minSdk), Fire TV Home takeover, an alternative launcher, a change of the default for every TV | the contributor's fork plus one row in SHOWCASE.md | showcase |
 | Safety rules or PROMPT.md, CI/workflows, the APK gate, protected packages | the maintainer | hold |
 
 - showcase, addon and theme are kind closes (or, for theme, a move): thank the author for something specific,
   say where it fits and why the core stays small. They are not a judgement of the work. Never rework a big
   feature into a small one; offer the showcase row instead.
 - The core takes a switch only if it changes nothing until a theme or config.xml turns it on, has its strings in
-  every locale (or no settings row), and fits the size budget (a few hundred bytes to ~1 KB; the gate is hard).
+  every locale (or no settings row), and keeps the APK size in the PR (the gate is paused, see above).
   A changed default for every TV is a rework (put the new value in a theme or that TV's example config).
 - Launcher bug fixes that correct wrong behaviour need no flag; tested on a device, they can merge.
 - Changes to the Home/launch path (Home key, boot, return to Home, the install scripts) usually need a run on a
@@ -70,8 +70,10 @@ it, and every one of them gets a home. Pick the smallest home that fits (CONTRIB
 - `pm hide`/`pm block` needs the matching unhide/unblock undo in the header.
 
 ## Scope and taste
-- The launcher stays small, offline and fast: no INTERNET permission, no network features (self-update,
-  crypto, weather APIs were refused), no heavy libraries, no prebuilt binaries in the repo (not even as CI
+- The launcher stays small and fast, and Home works offline. The INTERNET permission is allowed in this fork for
+  the features `AGENTS.md` ("This fork") lists: weather, catalogue search, streaming availability and prices,
+  artwork, cast and recommendations. What it fetches is cached and never blocks Home; no analytics or telemetry,
+  no self-update, no crypto, no heavy background polling, no prebuilt binaries in the repo (not even as CI
   artifacts).
 - Changes to the safety rules in PROMPT.md, the Home-safety logic in the scripts, the China TCL rule,
   CI/workflows or the APK size gate need the maintainer: **hold**.
@@ -110,8 +112,9 @@ review.
 - When two open PRs build the same helper or fix, pick one as its home and ask the other author to fold their
   part in (rework, not hold). If another PR already fixes the same thing more completely, close the narrower one.
 - Contributor PRs whose main content is a new CI workflow that builds or publishes releases: **close** kindly.
-- A launcher PR that adds the INTERNET permission or network access → **showcase**; if it carries a TV list, ask
-  for the list as its own PR in the same comment.
+- A launcher PR that adds network access for something outside the fork's list (analytics, telemetry, self-update)
+  → **close** kindly; network features on the list are judged on their merits. If it carries a TV list, ask for the
+  list as its own PR in the same comment.
 
 ## Learned from the 21–22 Oct rounds (reviewed)
 - A translation PR that moves hard-coded strings into resources is welcome; unrelated build changes riding along

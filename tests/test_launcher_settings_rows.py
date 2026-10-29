@@ -8,8 +8,8 @@ TV shows - is still there.
 
 The launcher rework (docs/rework.md, M1) trimmed the screen to five rows: Animations, Open on start,
 Follow theme, Default Home and TV settings. The rows it removed (reorder, columns, rows below the dock,
-dock opacity, wallpaper, advanced effects) and the check on their numbers went with them; the README
-may still describe them until the rework's doc cleanup, which this one-way check allows.
+dock opacity, wallpaper, advanced effects) and the check on their numbers went with them, and the README
+section was rewritten for the five rows in M1b.
 """
 import re
 import unittest

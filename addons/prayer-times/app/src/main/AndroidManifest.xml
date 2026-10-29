@@ -19,7 +19,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-            <!-- Module card for the Clean Your TV launcher (docs/modules.md). -->
+            <!-- Module card for the Clean Your TV launcher (upstream's docs/modules.md). -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="com.gathin.tvhome.category.DOCK_CARD" />

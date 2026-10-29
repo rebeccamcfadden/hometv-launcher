@@ -31,7 +31,7 @@
             <meta-data android:name="android.service.dream" android:resource="@xml/dream" />
         </service>
 
-        <!-- The card on cleanyourtv's Home (docs/modules.md): the slideshow at once, Back to leave. -->
+        <!-- The card on cleanyourtv's Home (upstream's docs/modules.md): the slideshow at once, Back to leave. -->
         <activity
             android:name=".SlideshowActivity"
             android:exported="true"
