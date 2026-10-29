@@ -2,8 +2,7 @@ package com.gathin.tvhome;
 
 /**
  * What a screen can ask of the launcher around it: the Shell and the Data, and opening the screens and apps other
- * screens lead to. MainActivity implements it and screens receive it. Until their milestones land, openTitle,
- * openPerson and openPick show a toast naming the milestone (docs/rework.md, Milestones).
+ * screens lead to. MainActivity implements it and screens receive it.
  */
 interface Router {
     Shell shell();

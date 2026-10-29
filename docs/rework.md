@@ -69,7 +69,54 @@ Settled with the project lead on 2026-10-28.
 
 Raise these when they become relevant; don't settle them alone.
 
-- None open. Settle anything new with the project lead and add it to Decisions.
+- **`subscribed_services` in `tests/test_switches.py`:** M3 added the key to the "screenshots wanted" list, which is
+  meant to shrink. Keep it there until a TV screenshot exists, or document it another way?
+- **`.github/maintainer/MAINTAINER.md`** still says "no INTERNET permission" and enforces the 512 KB APK gate. This
+  fork allows both (AGENTS.md, This fork); the policy file is a maintainer file, so it waits for the project lead.
+- **APK size:** about 1.6 MB from M4 on, almost all of it the bundled mock artwork (1.35 MB). The gate is
+  report-only in this fork; it drops back once artwork comes from the network (BACKLOG.md, Real catalogue).
+- **The remote's Settings key** on the TCL still goes to TCL's own handler, not the launcher's Settings dropdown.
+  Check it in the real-TV run, then decide whether a key helper is worth it.
+
+## Real-TV run
+
+One session with the project lead on the TCL BeyondTV (Android TV 9) once the stack is merged or built from its top.
+Nothing here starts before the project lead says the TV is free, and the project lead tries the launcher by hand
+before any scripted check.
+
+**Before:**
+
+1. Back up into `backup/<date>-pre-v1/`: the package list, the disabled list, `getprop`, settings and a
+   `ROLLBACK.txt` naming the Home before the install (CleanYourTV-UI, `io.cleanyourtv.ui`, stays enabled as the
+   fallback).
+2. Build from the top of the stack and install with `launcher\build-and-install.ps1 -TvHost <tv ip> -StockLauncher
+   none`. Confirm Home with `dumpsys activity activities | grep mFocusedApp`.
+3. Push nothing in `config.json` unless the run needs it, and remove it afterwards.
+
+**By hand, with the real remote:**
+
+| Area | Check |
+|---|---|
+| Home | Clock follows the TV's 12/24-hour setting; weather for the `tv.properties` location in °C; the app row shows installed apps; hold-OK menu moves and removes a tile; Back and Backspace put a moved tile down |
+| Home, scrolled | Inputs: Live TV and each HDMI open their source, with CEC devices named; Shortcuts open All Apps, Launcher settings and TV Settings; hourly weather |
+| Keys | Home from inside an app returns to Home; Back on Home stays on Home; the Input key, if a helper is on; the Settings key opens the quick-settings dropdown only where it reaches the launcher (`settings_key_panel`). On the TCL it may still go to TCL's handler: note what it does (Open questions) rather than fail it |
+| Nav and dropdowns | The Wi-Fi and Inputs dropdowns open on OK and close on a D-pad move past their edge; the Settings icon opens the TV's settings, with no dropdown |
+| Movies and TV Shows | Chips, the Filters drawer, both empty states; the grid scrolls smoothly with artwork |
+| Title preview | Every tab; Watch opens an installed service (Netflix, Prime Video, YouTube); the rent/buy dialog opens its app; Trailer opens YouTube; My list and Seen update the library |
+| Search | On-screen keyboard; typo tolerance; a Bluetooth or remote keyboard types, and Backspace goes back (full results → keyboard → Home), if one is at hand; leaving Search for another tab clears it |
+| Pick for me | Setup, Find 4 picks, Reroll, Adjust filters, Title details, Open in |
+| Offline | Wi-Fi off: Home, the clock and the cached weather stay; every page still works; the Wi-Fi icon says offline |
+
+**Scripted, after the project lead's go:**
+
+- `tools/bench.py --keys 36 --series 3` with `TV_HOST` set, for key latency, jank and PSS. Its cold start is `am start -W`'s
+  WaitTime, while the M1 baseline (2.8 s) and the old launcher's 2.7 s are TotalTime: compare like with like, by also
+  running `am start -W` after a force stop and reading TotalTime, or by benchmarking the old build the same way.
+  Also PSS after visiting every page, with artwork loaded (M1: 11 MB).
+- `tools/tv.py --screenshot shots/<screen>.png` for each screen, a different file each time (for example `shots/home.png`, `shots/movies.png`), to replace the prototype images in README.md. Blur or crop names,
+  cities and Wi-Fi names first.
+
+**After:** close ADB as AGENTS.md requires: USB and network debugging off, authorisations revoked, a reboot, then `tools/adb-closed.py <tv ip>` must report the port closed. Record the results and any new decisions here.
 
 ## Milestones
 
