@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M4 · Movies and TV Shows (docs/rework.md): the library pages and their Filters drawer. The filter options and the
+     summary words are plain English in LibraryFilters (pure Java, unit-tested), like Offers and TitleText. -->
+<resources>
+    <string name="library_context">Your collection · My list, Household &amp; Friends</string>
+    <string name="library_pick">Pick for me</string>
+    <plurals name="library_watchlists">
+        <item quantity="one">%1$d imported watchlist</item>
+        <item quantity="other">%1$d imported watchlists</item>
+    </plurals>
+    <plurals name="library_services">
+        <item quantity="one">%1$d service</item>
+        <item quantity="other">All %1$d services</item>
+    </plurals>
+    <string name="library_no_services">No services set up</string>
+    <string name="library_scope">%1$s · %2$s</string>
+    <string name="library_no_filters">No filters</string>
+    <string name="library_filters">Filters</string>
+    <string name="library_filters_n">Filters · %1$d</string>
+    <string name="library_lists_label">Imported watchlists</string>
+    <string name="library_all_lists">All lists</string>
+    <string name="library_chip">%1$s · %2$d</string>
+    <plurals name="library_movies_all">
+        <item quantity="one">%1$d movie · Across your services</item>
+        <item quantity="other">%1$d movies · Across your services</item>
+    </plurals>
+    <plurals name="library_shows_all">
+        <item quantity="one">%1$d show · Across your services</item>
+        <item quantity="other">%1$d shows · Across your services</item>
+    </plurals>
+    <!-- %1$d shown of %2$d on the list; the plural follows %2$d. -->
+    <plurals name="library_movies_filtered">
+        <item quantity="one">%1$d of %2$d movie · Filtered</item>
+        <item quantity="other">%1$d of %2$d movies · Filtered</item>
+    </plurals>
+    <plurals name="library_shows_filtered">
+        <item quantity="one">%1$d of %2$d show · Filtered</item>
+        <item quantity="other">%1$d of %2$d shows · Filtered</item>
+    </plurals>
+    <string name="library_empty_lists">Nothing on your lists yet</string>
+    <string name="library_empty_list">Nothing on %1$s yet</string>
+    <string name="library_empty_note">Add titles with + My list in any title preview, or import a watchlist in Settings.</string>
+    <plurals name="library_movies_hidden">
+        <item quantity="one">Your filters hide the only movie</item>
+        <item quantity="other">Your filters hide all %1$d movies</item>
+    </plurals>
+    <plurals name="library_shows_hidden">
+        <item quantity="one">Your filters hide the only show</item>
+        <item quantity="other">Your filters hide all %1$d shows</item>
+    </plurals>
+    <string name="library_clear_filters">Clear filters</string>
+    <string name="library_guide_left">Illustrative services, scores &amp; availability</string>
+    <string name="library_guide_right">OK for title details</string>
+
+    <string name="filters_title">Filters</string>
+    <string name="filters_note">%1$s · ← → changes a value</string>
+    <string name="filters_clear">Clear all</string>
+    <string name="filters_done">Done</string>
+</resources>

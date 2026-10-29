@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- View tags of Movies and TV Shows (M4). -->
+<resources>
+    <!-- The LibraryFilters.Def a Filters drawer row changes. -->
+    <item name="filters_def" type="id" />
+</resources>

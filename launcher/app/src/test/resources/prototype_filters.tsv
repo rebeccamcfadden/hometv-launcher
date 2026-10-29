@@ -1,0 +1,76 @@
+# Generated from design_preview (screens/filterDefs.ts, the list rule of screens/library.ts) with the store's defaults.
+# defs kind ids | pred kind def option label short passing-ids | list kind choice count ids | default kind choice shown-ids summary active
+defs	movie	availability:Availability,score:Review score,genre:Genre,runtime:Length,watch:Watch state
+pred	movie	availability	0	Everything		arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	availability	1	Included only	Included only	arrival,dune,past-lives,mitchells,coda,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,marvel-one-shots,carnival-of-souls
+pred	movie	availability	2	Included + rentals	Included + rentals	arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	score	0	Any score		arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	score	1	7.0 and above	Review 7.0+	arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,zone,anatomy,american-fiction,blade-runner-2049,interstellar,carnival-of-souls
+pred	movie	score	2	8.0 and above	Review 8.0+	dune,coda,budapest,oppenheimer,blade-runner-2049,interstellar
+pred	movie	genre	0	All genres		arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	genre	1	Action	Action	marvel-one-shots
+pred	movie	genre	2	Adventure	Adventure	dune,interstellar
+pred	movie	genre	3	Animation	Animation	mitchells
+pred	movie	genre	4	Comedy	Comedy	mitchells,knives-out,budapest,eeaao,poor-things,american-fiction
+pred	movie	genre	5	Crime	Crime	killers
+pred	movie	genre	6	Documentary	Documentary	
+pred	movie	genre	7	Drama	Drama	arrival,past-lives,coda,oppenheimer,killers,maestro,zone,anatomy,american-fiction,blade-runner-2049
+pred	movie	genre	8	Fantasy	Fantasy	
+pred	movie	genre	9	Food	Food	
+pred	movie	genre	10	History	History	oppenheimer,zone
+pred	movie	genre	11	Horror	Horror	carnival-of-souls
+pred	movie	genre	12	Music	Music	maestro
+pred	movie	genre	13	Musical	Musical	harvey-girls
+pred	movie	genre	14	Mystery	Mystery	moon,knives-out,anatomy
+pred	movie	genre	15	Romance	Romance	past-lives
+pred	movie	genre	16	Sci-fi	Sci-fi	arrival,dune,moon,eeaao,poor-things,the-arrival-1996,blade-runner-2049,interstellar
+pred	movie	genre	17	Thriller	Thriller	the-arrival-1996
+pred	movie	genre	18	Western	Western	harvey-girls
+pred	movie	runtime	0	Any length		arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	runtime	1	Under 90 minutes	Under 90 min	marvel-one-shots,carnival-of-souls
+pred	movie	runtime	2	Under 2 hours	Under 2h	arrival,past-lives,mitchells,coda,moon,budapest,zone,american-fiction,the-arrival-1996,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	runtime	3	Under 2½ hours	Under 2½h	arrival,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,poor-things,maestro,zone,american-fiction,the-arrival-1996,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	watch	0	Seen or not		arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	watch	1	Unwatched only	Unwatched	arrival,dune,past-lives,mitchells,coda,moon,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
+pred	movie	watch	2	Seen only	Seen	knives-out,budapest
+list	movie	all	16	arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction
+default	movie	all	arrival,dune,past-lives,mitchells,coda,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,zone,anatomy,american-fiction	Included only · Review 7.0+	2
+list	movie	my	6	arrival,dune,past-lives,oppenheimer,maestro,american-fiction
+default	movie	my	arrival,dune,past-lives,oppenheimer,american-fiction	Included only · Review 7.0+	2
+list	movie	household	6	coda,moon,budapest,eeaao,killers,zone
+default	movie	household	coda,budapest,eeaao,killers,zone	Included only · Review 7.0+	2
+list	movie	friends	4	mitchells,knives-out,poor-things,anatomy
+default	movie	friends	mitchells,knives-out,poor-things,anatomy	Included only · Review 7.0+	2
+defs	show	availability:Availability,score:Review score,genre:Genre,watch:Watch state
+pred	show	availability	0	Everything		severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
+pred	show	availability	1	Included only	Included only	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
+pred	show	availability	2	Included + rentals	Included + rentals	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
+pred	show	score	0	Any score		severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
+pred	show	score	1	7.0 and above	Review 7.0+	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
+pred	show	score	2	8.0 and above	Review 8.0+	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,the-crown,blue-planet,mrs-maisel,daredevil,carnivale
+pred	show	genre	0	All genres		severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
+pred	show	genre	1	Action	Action	daredevil,911,911-lone-star
+pred	show	genre	2	Adventure	Adventure	wheel-of-time
+pred	show	genre	3	Animation	Animation	larva-island
+pred	show	genre	4	Comedy	Comedy	the-bear,larva-island,mrs-maisel
+pred	show	genre	5	Crime	Crime	daredevil
+pred	show	genre	6	Documentary	Documentary	our-planet,microcosmos,blue-planet,marvel-assembled
+pred	show	genre	7	Drama	Drama	the-bear,last-of-us,shogun,fallout,the-crown,mrs-maisel,carnivale,911,911-lone-star
+pred	show	genre	8	Fantasy	Fantasy	wheel-of-time,carnival-row,carnivale
+pred	show	genre	9	History	History	shogun,the-crown
+pred	show	genre	10	Music	Music	
+pred	show	genre	11	Mystery	Mystery	dark,carnival-row
+pred	show	genre	12	Romance	Romance	
+pred	show	genre	13	Sci-fi	Sci-fi	severance,dark,last-of-us,fallout,peripheral
+pred	show	genre	14	Thriller	Thriller	severance,peripheral
+pred	show	watch	0	Seen or not		severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
+pred	show	watch	1	Unwatched only	Unwatched	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
+pred	show	watch	2	Seen only	Seen	
+list	show	all	12	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet
+default	show	all	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet	Included only · Review 7.0+	2
+list	show	my	5	severance,the-bear,fallout,wheel-of-time,blue-planet
+default	show	my	severance,the-bear,fallout,wheel-of-time,blue-planet	Included only · Review 7.0+	2
+list	show	household	4	last-of-us,shogun,our-planet,the-crown
+default	show	household	last-of-us,shogun,our-planet,the-crown	Included only · Review 7.0+	2
+list	show	friends	3	dark,microcosmos,peripheral
+default	show	friends	dark,microcosmos,peripheral	Included only · Review 7.0+	2

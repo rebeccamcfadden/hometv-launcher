@@ -20,9 +20,9 @@ final class Pages {
     static Screen create(Context ctx, NavBar.Host host, Screen.Tab tab) {
         switch (tab) {
             case MOVIES:
-                return placeholder(ctx, host, tab, R.string.page_not_built, R.string.nav_movies, R.string.page_movies_note);
             case TV:
-                return placeholder(ctx, host, tab, R.string.page_not_built, R.string.nav_tv, R.string.page_tv_note);
+                // M4: Movies and TV Shows are one page, parametrised by the tab.
+                return LibraryPage.create(ctx, host, tab);
             case MUSIC:
                 return placeholder(ctx, host, tab, R.string.page_not_designed, R.string.nav_music, R.string.page_music_note);
             case SEARCH:

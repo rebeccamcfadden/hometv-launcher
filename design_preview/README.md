@@ -168,7 +168,8 @@ decided after the first run on a real TV: closing with Back alone felt clunky.)
 
 - Title, "Your collection · My list, Household & Friends", and a **Pick for me** button.
 - Scope line ("3 imported watchlists · All 7 services") and the active filters with a **Filters · n** button.
-- List chips with counts: All lists, My list, Household, Friends.
+- List chips with counts: All lists, My list, Household, Friends. Up from any chip, and Right from the last one,
+  goes to **Pick for me**, so it comes before the nav and instead of the grid.
 - A four-column grid of title cards: art, name, service and "Included" or a price, runtime or seasons · rating ·
   score, and which list and genre it comes from.
 - **Filters drawer** (from the right): Availability, Review score, Genre, Length (movies only), Watch state. ←/→

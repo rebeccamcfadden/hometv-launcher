@@ -72,8 +72,6 @@
     <string name="vpn_on">VPN on</string>
     <string name="page_not_built">Not built yet</string>
     <string name="page_not_designed">Not designed yet</string>
-    <string name="page_movies_note">Your collection from My list, Household and Friends, with filters and Pick for me.</string>
-    <string name="page_tv_note">Your shows from My list, Household and Friends, with filters and Pick for me.</string>
     <string name="page_music_note">Spotify, YouTube Music and your playlists. Not part of V1.</string>
     <string name="page_search_note">Titles, people and genres as you type, with the remote\'s keyboard or any keyboard.</string>
 </resources>

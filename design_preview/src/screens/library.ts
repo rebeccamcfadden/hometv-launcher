@@ -145,5 +145,15 @@ export function libraryScreen(kind: Kind): Screen {
     el,
     defaultFocus: () => grid.querySelector<HTMLElement>('[data-focus]') ?? pickBtn,
     onShow: render,
+    // The list chips lead to Pick for me: Up from any chip, and Right from the last one, before the nav or the grid.
+    onKey(key, f) {
+      if (!f || !chipsEl.contains(f)) return false;
+      const all = [...chipsEl.querySelectorAll<HTMLElement>('[data-focus]')];
+      if (key === 'up' || (key === 'right' && all[all.length - 1] === f)) {
+        app.focus(pickBtn);
+        return true;
+      }
+      return false;
+    },
   };
 }

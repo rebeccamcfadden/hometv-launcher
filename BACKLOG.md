@@ -128,6 +128,21 @@ From the old launcher; not in V1 by decision.
 - **Tile menu:** Move, Remove from Home and App info, in the dropdowns' panel with no icons, under the tile or over
   it where there is no room below. Not designed (the spec lists hold-OK menus as open).
 
+## From M4
+
+- **Scope line:** "3 imported watchlists" counts the three mock lists, and "All N services" the household's
+  subscribed services (`subscribed_services` or the installed apps). Wanted: the real number of imported lists once
+  they come from TMDB (see Household and Friends lists).
+- **Empty list note:** says to "import a watchlist in Settings", which doesn't exist yet (see First run and setup
+  under Not designed yet).
+- **Filters and the chosen list** are kept per page while the launcher runs, and go back to the default
+  ("Included only · Review 7.0+", All lists) when Home restarts. Not designed: whether they should be stored.
+- **Genre options** are the mock catalogue's genres; TV Shows leave out Food, Musical, Western and Horror, as the
+  prototype does. Wanted: TMDB's movie and TV genre lists.
+- **Guide line:** "Illustrative services, scores & availability" stays while the data is mock.
+- **Long lists:** the grid builds a card for every title at once (16 at most in the mock). A real list of hundreds
+  needs a recycled grid or paging, with the artwork decoded as cards come into view.
+
 ## Not designed yet
 
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before
