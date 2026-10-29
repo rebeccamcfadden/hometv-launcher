@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- View tags the new UI's D-pad navigation reads (Focus, SpatialNav, Shell). -->
+<resources>
+    <item name="ui_focusable" type="id" />
+    <item name="ui_focus_group" type="id" />
+    <item name="ui_focus_key" type="id" />
+    <item name="ui_focus_default" type="id" />
+    <item name="ui_focus_ok" type="id" />
+    <item name="ui_nav" type="id" />
+    <item name="ui_still" type="id" />
+</resources>

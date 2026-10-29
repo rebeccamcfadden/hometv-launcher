@@ -67,6 +67,22 @@ function score(a: DOMRect, b: DOMRect, dir: Dir): number | null {
   return primary + secondary * 2.5 + align * 0.08;
 }
 
+/** The nearest item in `dir` under `root`, with no group memory or default: the next item along the nav. */
+export function nearest(root: Element, from: HTMLElement, dir: Dir): HTMLElement | null {
+  const a = from.getBoundingClientRect();
+  let best: HTMLElement | null = null;
+  let bestScore = Infinity;
+  for (const c of candidates(root)) {
+    if (c === from) continue;
+    const s = score(a, c.getBoundingClientRect(), dir);
+    if (s !== null && s < bestScore) {
+      bestScore = s;
+      best = c;
+    }
+  }
+  return best;
+}
+
 export function findNext(
   root: Element,
   from: HTMLElement,

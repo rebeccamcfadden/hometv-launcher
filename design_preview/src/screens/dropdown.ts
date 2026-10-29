@@ -17,7 +17,8 @@ export interface MenuRow {
 
 /**
  * The base launcher's glass dropdown: hangs under a top-bar button, grows inward from the right edge,
- * and closes on Back, on OK on a row, or on a click outside it.
+ * and closes on Back, on OK on a row, on a click outside it, or when the D-pad moves past its edge. Focus
+ * returns to the button, and a move past the left, right or bottom edge carries on one step from it.
  */
 export function dropdown(label: string, anchor: HTMLElement | null, rows: MenuRow[], opts: { header?: HTMLElement } = {}): Screen {
   let top = 130;
@@ -52,8 +53,22 @@ export function dropdown(label: string, anchor: HTMLElement | null, rows: MenuRo
 
   const catcher = h('div.menu-catcher');
   catcher.addEventListener('click', () => app.pop());
-  const el = h('div.screen.layer-dialog', catcher, h('div.menu', { style: `top:${top}px;right:${right}px` }, opts.header ?? null, rowEls));
-  return { label, el, layer: 'dialog', defaultFocus: () => el.querySelector<HTMLElement>('.menu-row') };
+  const panel = h('div.menu', { style: `top:${top}px;right:${right}px` }, opts.header ?? null, rowEls);
+  const el = h('div.screen.layer-dialog', catcher, panel);
+  return {
+    label,
+    el,
+    layer: 'dialog',
+    defaultFocus: () => el.querySelector<HTMLElement>('.menu-row'),
+    onKey(key) {
+      if (key !== 'up' && key !== 'down' && key !== 'left' && key !== 'right') return false;
+      if (app.moveWithin(panel, key)) return true;
+      app.pop();
+      if (anchor?.isConnected) app.focus(anchor);
+      if (key !== 'up') app.move(key);
+      return true;
+    },
+  };
 }
 
 /** The top-bar button a menu hangs from, on whichever page is showing. */

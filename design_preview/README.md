@@ -131,6 +131,8 @@ From [AGENTS.md](../AGENTS.md) and the design:
 ### Nav
 
 - Order: Home, Movies, TV Shows, Music, then a search icon; on the right, Wi-Fi, Inputs and Settings icons.
+- ←/→ on the nav stay on it and move to the next item: ← from Wi-Fi is always Search, never something on the page
+  below, and past either end nothing happens.
 - Landing on a section highlights it; OK switches to it (OK on the current page's section does nothing). Down
   enters the page. Landing back on the nav from a page puts focus on that page's own section.
 - Switching animates: the new page's content slides 90 px in from the side of the tab you switched towards and fades
@@ -139,8 +141,10 @@ From [AGENTS.md](../AGENTS.md) and the design:
 
 ### Top-bar dropdowns
 
-All three hang under their button, grow inward from the right, and close on Back, on OK on a row, or on a click
-outside. Focus returns to the button.
+All three hang under their button, grow inward from the right, and close on Back, on OK on a row, on a click
+outside, or when the D-pad moves past the menu's edge. Focus returns to the button; a move past the left, right or
+bottom edge carries on one step from the button, so → in the Wi-Fi menu lands on Inputs. (Closing on the D-pad was
+decided after the first run on a real TV: closing with Back alone felt clunky.)
 
 | Opened by | Rows |
 |---|---|

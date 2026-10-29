@@ -1,11 +1,15 @@
 """README: the Launcher settings section names every row the settings screen has.
 
 The rows are read from the screen, not from a list kept here. `activity_launcher_settings.xml` carries
-each row, and the three rows whose label the code writes (`wallpaperChoice`, `animationsChoice`,
-`advancedChoice`) take the string `LauncherSettingsActivity.refresh()` sets on them. So a row added to
-the screen without a README line fails in CI, while rewording a README line stays free as long as the
-row's own label - the text the TV shows - is still there. The numbers next to the rows (4 to 7, 0 to 3,
-the four dock opacities) come from the same two files.
+each row, and the rows whose label the code writes (`animationsChoice`, `openOnStartChoice`) take the
+string `LauncherSettingsActivity.refresh()` sets on them. So a row added to the screen without a README
+line fails in CI, while rewording a README line stays free as long as the row's own label - the text the
+TV shows - is still there.
+
+The launcher rework (docs/rework.md, M1) trimmed the screen to five rows: Animations, Open on start,
+Follow theme, Default Home and TV settings. The rows it removed (reorder, columns, rows below the dock,
+dock opacity, wallpaper, advanced effects) and the check on their numbers went with them; the README
+may still describe them until the rework's doc cleanup, which this one-way check allows.
 """
 import re
 import unittest
@@ -87,30 +91,6 @@ def missing_rows(section, rows):
     return [(row_id, label) for row_id, label in rows if label.lower() not in seen]
 
 
-def numbered(label, layout_text):
-    """The numbers under a label row, in the order the screen shows them (columns, rows below dock).
-
-    The choices sit in a horizontal row of their own, right after the caption, so only that one sibling
-    is read: the next caption on the page belongs to the next setting.
-    """
-    root = ET.fromstring(layout_text)
-    for parent in root.iter():
-        children = list(parent)
-        for index, view in enumerate(children):
-            if attr(view, "text") != "@string/" + label:
-                continue
-            numbers = []
-            for sibling in children[index + 1:]:
-                found = [child_text for child_text in
-                         (attr(child, "text") for child in sibling.iter()) if child_text.isdigit()]
-                if found:
-                    numbers.extend(found)
-                elif attr(sibling, "text"):
-                    break       # the next caption: the choices above are the whole row
-            return numbers
-    return []
-
-
 def detail_section(readme_text, summary):
     """The text inside one <details> block, or '' - so a row named three sections further down
     does not count as the settings page being documented."""
@@ -133,7 +113,7 @@ class ScreenRows(unittest.TestCase):
 
     def test_screen_rows_are_read(self):
         """The screen has its rows, and each one resolved to the label the TV shows."""
-        self.assertGreaterEqual(len(self.rows), 9, self.rows)
+        self.assertGreaterEqual(len(self.rows), 5, self.rows)
         labels = [label for _, label in self.rows]
         self.assertEqual(len(labels), len(set(labels)), labels)
         for row_id, label in self.rows:
@@ -142,18 +122,6 @@ class ScreenRows(unittest.TestCase):
     def test_readme_names_every_row(self):
         self.assertTrue(self.section, "README has no '%s' section" % SUMMARY)
         self.assertEqual(missing_rows(self.section, self.rows), [])
-
-    def test_readme_names_the_numbers_under_each_row(self):
-        columns = numbered("columns_label", self.layout_text)
-        under_dock = numbered("rows_below_dock_label", self.layout_text)
-        self.assertEqual(columns, ["4", "5", "6", "7"])
-        self.assertEqual(under_dock, ["0", "1", "2", "3"])
-        opacities = re.search(r"DOCK_OPACITIES\s*=\s*\{([0-9,\s]+)\}", self.activity_text).group(1)
-        opacities = [value.strip() for value in opacities.split(",") if value.strip()]
-        section = normalise(self.section)
-        self.assertIn("%s, %s, %s or %s" % tuple(columns), section)
-        self.assertIn("%s to %s" % (under_dock[0], under_dock[-1]), section)
-        self.assertIn("%s%%, %s%%, %s%% or %s%%" % tuple(opacities), section)
 
     def test_a_row_the_readme_leaves_out_is_reported(self):
         rows = [("reorderChoice", "Reorder apps"), ("walls", "Wallpaper")]
@@ -186,7 +154,6 @@ class ScreenRows(unittest.TestCase):
         layout = ('<ScrollView xmlns:android="http://schemas.android.com/apk/res/android">'
                   '<TextView android:text="Hi" android:textSize="34sp" /></ScrollView>')
         self.assertEqual(row_labels(layout, "", {}), [])
-        self.assertEqual(numbered("columns_label", layout), [])
 
 
 if __name__ == "__main__":

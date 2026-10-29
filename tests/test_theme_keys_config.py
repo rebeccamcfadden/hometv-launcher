@@ -16,9 +16,11 @@ or `wallpaper_rotation_minutes`, which no config.xml resource backs - those are 
 and the table is their only home.
 
 `latitude` and `longitude` are the two exceptions, with their reason in EXEMPT: they are config.xml
-lines a build sets, docs/sky.md documents them, and tests/test_sky_place_note.py requires the Keys
-table to keep naming neither (a theme cannot move the sun). A test here keeps that exemption honest by
-checking both are still read from config.xml by SkyView.java.
+lines a build sets (docs/sky.md documents them), and the Keys table names neither, because a theme
+cannot move the sun. A test here keeps that exemption honest by checking both are still in config.xml,
+still not read by Config.java (so no theme can set them) and still not in the table. The sky that read
+them was deleted in the launcher rework (docs/rework.md, M1); the kept WallpaperMood.java still takes
+them.
 
 Run from the repository root: python3 -m unittest discover -s tests -v
 """
@@ -34,7 +36,7 @@ MANIFEST = ROOT / "launcher" / "app" / "src" / "main" / "AndroidManifest.xml"
 JAVA_DIR = ROOT / "launcher" / "app" / "src" / "main" / "java" / "com" / "gathin" / "tvhome"
 CONFIG_JAVA = JAVA_DIR / "Config.java"
 SYSTEM_SETTINGS = JAVA_DIR / "SystemSettings.java"
-SKY_VIEW = JAVA_DIR / "SkyView.java"
+WALLPAPER_MOOD = JAVA_DIR / "WallpaperMood.java"
 
 # A key is lowercase to stay readable next to `config.xml`; `app_keys` qualifies, a backticked value such
 # as `false` or `#RRGGBB` does not.
@@ -210,15 +212,19 @@ class KeysTableCoversConfigXmlTest(unittest.TestCase):
                               f"package visibility hides it, so the fallback can never match")
 
     def test_the_exemption_is_still_right(self):
-        # latitude and longitude stay out of the table (tests/test_sky_place_note.py requires it), so
-        # they may only stay out while they are what that page describes: config.xml lines SkyView reads.
+        # latitude and longitude stay out of the table, so they may only stay out while they are what
+        # docs/sky.md describes: config.xml lines a build sets, which no theme can override.
         config = config_keys(self.config)
-        sky = SKY_VIEW.read_text(encoding="utf-8")
+        config_java = CONFIG_JAVA.read_text(encoding="utf-8")
+        mood = WALLPAPER_MOOD.read_text(encoding="utf-8")
         for name in EXEMPT:
             with self.subTest(key=name):
                 self.assertIn(name, config, f"`{name}` is gone from config.xml: drop its EXEMPT entry")
-                self.assertIn(f"R.string.{name}", sky, f"SkyView.java no longer reads `{name}`: is the "
-                                                      f"docs/sky.md page still right?")
+                self.assertNotIn(f'"{name}"', config_java,
+                                 f"Config.java reads a `{name}` theme key now: give it a row and drop its "
+                                 f"EXEMPT entry")
+                self.assertIn(name, mood, f"WallpaperMood.java no longer takes `{name}`: is the "
+                                          f"docs/sky.md page still right?")
                 self.assertNotIn(name, table_keys(self.text),
                                  f"`{name}` is in the Keys table now: drop its EXEMPT entry")
 

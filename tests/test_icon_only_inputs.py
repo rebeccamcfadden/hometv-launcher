@@ -6,8 +6,10 @@ icon_only_inputs does the same for Inputs with #556's own makeIconOnly, so it co
 APK and nothing at runtime unless it is on.
 
 The flag only works if every hop exists: config.xml defines it (off upstream, so existing installs are
-unchanged; a fork may turn it on), Config reads it and lets a theme override it, MainActivity applies it, and the theme table
-lists it. Each hop gets its own assertion, as in test_key_filter.py.
+unchanged; a fork may turn it on), Config reads it and lets a theme override it, and the theme table
+lists it. Each hop gets its own assertion, as in test_key_filter.py. The old Home screen that applied it
+(MainActivity's Inputs pill) was deleted in the launcher rework (docs/rework.md, M1), so these tests
+check only the key's plumbing, which stays until the rework's config cleanup.
 
 Run from the repository root: python3 -m unittest discover -s tests -v
 """
@@ -26,7 +28,6 @@ def read(relative):
 
 CONFIG_XML = read("launcher/app/src/main/res/values/config.xml")
 CONFIG_JAVA = read("launcher/app/src/main/java/com/gathin/tvhome/Config.java")
-MAIN = read("launcher/app/src/main/java/com/gathin/tvhome/MainActivity.java")
 THEMES_README = read("themes/README.md")
 
 
@@ -42,11 +43,6 @@ class TestIconOnlyInputsWiring(unittest.TestCase):
         self.assertIn('"icon_only_inputs"', CONFIG_JAVA,
                       'Config must accept a theme config.json "icon_only_inputs" override')
         self.assertIn("this.iconOnlyInputs = iconOnlyInputs", CONFIG_JAVA, "Config must store iconOnlyInputs")
-
-    def test_main_activity_applies_it_with_the_shared_helper(self):
-        self.assertIn("if (cfg.iconOnlyInputs) makeIconOnly((TextView) btnInputs);", MAIN,
-                      "MainActivity must make the Inputs pill icon-only with makeIconOnly, as #556 does for "
-                      "Wi-Fi and Settings")
 
     def test_theme_table_lists_it_off_by_default(self):
         row = next((line for line in THEMES_README.splitlines() if line.startswith("| `icon_only_inputs`")), "")

@@ -53,6 +53,12 @@ Settled with the project lead on 2026-10-28.
 | Toolchain | Installed system-wide: JDK 17 with winget, the Android SDK in `%LOCALAPPDATA%\Android\Sdk`. |
 | Branches | One feature branch per milestone, one PR into `main`; the project lead merges. |
 | Check-ins | After every milestone: emulator screenshots and a short summary, approved before the next starts. |
+| Staging the deletion | Split (decided 2026-10-28). M1 deletes the old Home's code, its translations and RTL layouts, and the tests that covered only those. M1b prunes `Config.java` and `config.xml`, the theme-visual tools and tests, the docs and the README's old launcher sections. Until then `Config` keeps every key, with its pure helpers (`Festival`, `RaceWeekend`, `Sun`, the `Wallpaper*` classes) dormant. |
+| `themes/` and `addons/` | Kept in the repo, unused by the new launcher, until V2. The `config.json` push (`tools/theme.sh`, `ThemeProvider`) stays: `examples/*/config.json` carries per-TV plumbing keys through it. |
+| Launcher settings | The old `LauncherSettingsActivity` stays, without its grid, dock and wallpaper rows, until the new page is designed. |
+| Pull requests | Every PR asks the Copilot reviewer for a review. |
+| Settings key over apps | `QuickSettingsActivity` draws the same dropdown as Home (`MenuPanel`), so the remote's Settings key looks the same everywhere. |
+| Dropdowns and the D-pad | Decided after the first run on the TV (2026-10-29): a D-pad move past a dropdown's edge closes it and returns focus to its button; past the left, right or bottom edge it carries on one step, so → in the Wi-Fi menu lands on Inputs. Closing with Back alone felt clunky. The prototype and its README changed with it. |
 
 ## Open questions
 
@@ -66,6 +72,7 @@ Raise these when they become relevant; don't settle them alone.
 |---|---|---|
 | M0 · Tooling | JDK 17, SDK platform 34, build-tools 34.0.0, the emulator and the API 28 TV image; the CI size gate changed to report | The current launcher builds and runs as Home on the emulator, and this file's commands are confirmed |
 | M1 · Foundation | New Home activity, made Home; the old Home UI, its feature code and the tests that only covered it deleted; design tokens (colours, type, radii, focus); nav bar; screen stack with page, popup and dialog layers; Back rules; focus memory per row and grid; page transition; the three top-bar dropdowns; Settings button | The new launcher is Home on the emulator; every nav item and dropdown works with the D-pad, Back follows the spec's four rules, and pages are placeholders |
+| M1b · V1 cleanup | `Config.java` and `config.xml` cut to the keys the new launcher reads, with their dormant helpers; theme-visual tools and tests; the docs (`docs/switches.md`, `docs/sky.md`, `docs/workflows/translation.md`, the module-card spec) and the README's old launcher sections; redraw `docs/card.jpg` and `docs/stats.png`, which still say 25 languages | Nothing in the repo describes or tests the old Home's UI |
 | M2 · Home | Greeting, date, clock, weather; the app row with its hold-OK menu; the scrolled state with Inputs, Shortcuts and hourly weather | Home matches the prototype, with real apps, inputs and weather, and works offline |
 | M3 · Data layer | Household store; catalogue interface with the mock source; offer rules; image loading and cache | Unit tests cover the store, offers and filters |
 | M4 · Movies and TV Shows | Header, list chips, grid, Filters drawer, empty states | Filters update the grid live; both empty states reachable |
@@ -117,8 +124,23 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 Take screenshots with `adb shell screencap -p /sdcard/x.png` and then `adb pull`. PowerShell's `>` breaks binary
 output, so `adb exec-out screencap -p > x.png` gives an unreadable file.
 
+Testing on the emulator, learned in M1:
+
+- Keys from `adb shell input keyevent` skip the accessibility key filter, so they never reach `HomeKeyService` or
+  `InputKeyService` (AGENTS.md: an injected key is not proof). The emulator's console (`adb emu event send`)
+  produced no key events either. To see a screen those helpers open, `adb root` (the image allows it) and then
+  `adb shell am start -n com.gathin.tvhome/.QuickSettingsActivity`; the helper's own key handling waits for the
+  real remote.
+- A test `config.json` pushed to `/sdcard/Android/data/com.gathin.tvhome/files/` switches config keys without a
+  rebuild, as `tools/theme.sh` does; `am force-stop com.gathin.tvhome` and start Home again to read it. For example
+  `{"live_tv_package":"com.lego.android.tvleanback"}` gives the Inputs icon a Live TV row on an emulator with no
+  inputs, and `{"settings_key_keycodes":[131],"settings_key_panel":true}` makes F1 the Settings key.
+- The Wi-Fi name needs `pm grant com.gathin.tvhome android.permission.ACCESS_FINE_LOCATION`, as the install script
+  does.
+
 Baseline before any rework code: the current launcher builds in about 90 s with zero lint errors, the release
-APK is 509,545 B, and it runs as Home on the emulator.
+APK is 509,545 B, and it runs as Home on the emulator. After M1 the release APK is 163,624 B and Home uses about
+25 MB (PSS) on the emulator.
 
 The real TV is a TCL BeyondTV on Android TV 9. Read its folders in `examples/` (`tcl-beyondtv` and the ones next
 to it) and the TV safety rules in AGENTS.md before touching it. Install only after the project lead says the TV

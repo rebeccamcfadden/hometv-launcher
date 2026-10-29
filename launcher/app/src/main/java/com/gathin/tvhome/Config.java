@@ -53,6 +53,11 @@ final class Config {
     static boolean settingsChanged(long seen, long current) {
         return seen != current;
     }
+
+    /** The new UI's reduced motion: reduced_motion, or Animations turned off in Launcher settings. */
+    boolean reducedMotion() {
+        return reducedMotion || !animations;
+    }
     private static final String THEME_REVISION_NAME = "theme_revision";
     private static final String THEME_SIGNATURE_KEY = "theme_signature";
 

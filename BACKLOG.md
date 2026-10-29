@@ -72,10 +72,27 @@ milestones: [docs/rework.md](docs/rework.md).
 From the old launcher; not in V1 by decision.
 
 - Themes and wallpapers pushed as `config.json`.
-- The clock screensaver.
+- The clock screensaver. Until it returns, a remote key mapped to `screensaver` (`app_keys`) starts the TV's own
+  screensaver only where the firmware has the system's "start now" shortcut; the launcher's clock fallback went
+  with the old Home in M1.
 - Module cards and the add-ons in `addons/`.
 - The Watch Next row.
 - Festivals, the sky and the lunar calendars.
+- The old Home's on-screen extras: the idle clock (`home_idle_clock_minutes`), the stats line (`show_stats`), the
+  VPN badge on the network pill (`vpn_app` now shows its app and state in the Wi-Fi dropdown instead), the app
+  library dialog, reorder mode and dock editing. Their `config.xml` keys stay until M1b and do nothing.
+
+## From M1
+
+- **Launcher settings page:** V1 opens the old `LauncherSettingsActivity`, cut to Animations, Open on start,
+  Follow theme, Default Home and TV settings. Wanted: the new page in the new UI, once it is designed.
+- **Network icon state:** the nav shows Wi-Fi, Ethernet or Wi-Fi crossed out when offline. The old pill could also
+  tint by state (`wifi_status_color`, `wifi_status_warnings`); not designed for the new nav.
+- **Generated counts:** `tools/gen_tables.py` now writes "1 languages" in the README; `docs/card.jpg` and
+  `docs/stats.png` still say 25 (M1b).
+- **Cold start:** Home took 2.8 s (`am start -W`, TotalTime) after a force stop on the TCL BeyondTV, 0.3 s for the
+  activity itself. Measure it against 2.7 with `tools/bench.py` ([perf-ab](docs/workflows/perf-ab.md)) before M2
+  adds the real Home page.
 
 ## Not designed yet
 

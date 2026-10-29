@@ -28,6 +28,9 @@ LINK = re.compile(r"\]\(([^)\s]+)\)")
 CODE = re.compile(r"(`+)(.+?)\1")
 SKIP_DIRS = {".git", "venv", "build", ".gradle", "__pycache__"}
 WRITTEN = {"result.json"}  # files a tool writes on a contributor's machine (tools/bench.py), not in a clone
+# Deleted on purpose by the launcher rework (docs/rework.md, M1: English only). docs/workflows/translation.md
+# still names them until the rework's doc cleanup retires that workflow; drop this set with it.
+RETIRED = {"launcher/app/src/main/res/xml/locales_config.xml", "tests/test_hebrew_resources.py"}
 
 
 def text():
@@ -90,7 +93,7 @@ class AgentsPathsTest(unittest.TestCase):
                     if source == "link":
                         target = (workflow.parent / path).resolve()
                         self.assertTrue(target.exists(), f"{workflow.name} links {path}, which does not exist")
-                    elif path in WRITTEN or any(path == p or path.startswith(p + "/") for p in ignored):
+                    elif path in WRITTEN or path in RETIRED or any(path == p or path.startswith(p + "/") for p in ignored):
                         continue
                     elif "/" not in path.rstrip("/"):
                         self.assertTrue((ROOT / path).exists() or path.rstrip("/") in names,

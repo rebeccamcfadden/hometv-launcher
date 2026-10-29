@@ -75,8 +75,7 @@
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/banner"
         android:theme="@style/Theme.TvHome"
-        android:allowBackup="false"
-        android:localeConfig="@xml/locales_config">
+        android:allowBackup="false">
 
         <activity
             android:name=".MainActivity"
@@ -170,14 +169,6 @@
             </intent-filter>
         </activity>
 
-        <!-- The same clock, started by Home itself after home_idle_clock_minutes without input. -->
-        <activity
-            android:name=".ClockActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
-
         <!-- stock_home_redirect at boot: HomeKeyService opens this invisible activity once, so the screen behind
              it sends a window event when it closes (HomeKeyService.probeAtBoot). -->
         <activity
@@ -187,19 +178,6 @@
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
-        <!-- Screensaver: pick it in Settings, or `settings put secure screensaver_components
-             com.gathin.tvhome/.ClockDream` over adb. -->
-        <service
-            android:name=".ClockDream"
-            android:label="@string/dream_name"
-            android:exported="true"
-            android:permission="android.permission.BIND_DREAM_SERVICE">
-            <intent-filter>
-                <action android:name="android.service.dreams.DreamService" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </service>
 
         <!-- tools/theme.sh writes the theme through this where the shell can't reach Android/data;
              see ThemeProvider. WRITE_SECURE_SETTINGS: the adb shell has it, ordinary apps don't. -->
