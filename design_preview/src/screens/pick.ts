@@ -280,11 +280,10 @@ function pickResults(s: PickState): Screen {
     icon: 'shuffle',
     small: true,
     key: 'reroll',
-    onOk: () => {
-      roll();
-      app.focus(cards.querySelector<HTMLElement>('[data-focus]'));
-    },
+    // Focus stays on Reroll, so it can be pressed again and again.
+    onOk: () => roll(),
   });
+  const adjust = button('Adjust filters', { small: true, key: 'adjust', onOk: () => app.back() });
 
   const el = h(
     'div.screen.screen--base.pick',
@@ -298,7 +297,7 @@ function pickResults(s: PickState): Screen {
           h('h1.page-title', 'Tonight could look like this'),
           h('div.page-context', `${picks.length} random matches · ${sourceText(s)} · All ${SUBSCRIBED_COUNT} services`),
         ),
-        h('div.pick-results-actions', button('Adjust filters', { small: true, key: 'adjust', onOk: () => app.back() }), reroll),
+        h('div.pick-results-actions', adjust, reroll),
       ),
       h('div.pick-filterline', filterText(s)),
       cards,
@@ -307,5 +306,19 @@ function pickResults(s: PickState): Screen {
     guide('Illustrative recommendations, scores, prices & availability', '← → Choose a pick · OK for details'),
   );
 
-  return { label: 'Picks', el, defaultFocus: () => cards.querySelector<HTMLElement>('[data-focus]') };
+  return {
+    label: 'Picks',
+    el,
+    defaultFocus: () => cards.querySelector<HTMLElement>('[data-focus]'),
+    // Up from a pick reaches Adjust filters or Reroll, whichever is nearer, before the nav.
+    onKey(key, f) {
+      if (key !== 'up' || !f || !cards.contains(f)) return false;
+      const fr = f.getBoundingClientRect();
+      const mid = (r: DOMRect) => r.left + r.width / 2;
+      const a = adjust.getBoundingClientRect();
+      const r = reroll.getBoundingClientRect();
+      app.focus(Math.abs(mid(a) - mid(fr)) < Math.abs(mid(r) - mid(fr)) ? adjust : reroll);
+      return true;
+    },
+  };
 }

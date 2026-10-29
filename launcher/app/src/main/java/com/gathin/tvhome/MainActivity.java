@@ -226,10 +226,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         shell.push(PersonPage.create(this, this, name));
     }
 
-    /** Stub until M7 builds Pick for me. */
+    /** M7: Pick for me's setup page, pushed over whichever page is showing, so Back returns to it. */
     @Override
     public void openPick(Kind kind) {
-        shell.toast(getString(R.string.router_pick_stub));
+        shell.push(PickSetupPage.create(this, kind));
     }
 
     /** Opens the offer's service app on its home screen; opening the title itself is in BACKLOG.md (deep links). */

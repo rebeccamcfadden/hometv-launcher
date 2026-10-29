@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M7, Pick for me (design_preview/src/screens/pick.ts). English only (docs/rework.md, Languages). The lines built
+     from the choices (filters, counts, offers) are in PickRules, so they are unit-tested. -->
+<resources>
+    <string name="pick_title">Pick for me</string>
+    <string name="pick_context">A little less scrolling. Four possibilities for tonight.</string>
+    <string name="pick_choose_from">Choose from</string>
+    <string name="pick_source_lists">My watchlists</string>
+    <string name="pick_source_services">My services</string>
+    <string name="pick_lists_label">Imported watchlists · Select one or more</string>
+    <string name="pick_hint">OK on a field steps through its options. TV Shows use episode length.</string>
+    <string name="pick_mood">What are you in the mood for?</string>
+    <string name="pick_movies">Movies</string>
+    <string name="pick_shows">TV Shows</string>
+    <string name="pick_guide_left">Illustrative filter setup · No ads. No promoted picks.</string>
+    <string name="pick_guide_right">Use arrows to choose · OK to select</string>
+    <string name="pick_no_matches">No matches. Loosen a filter first.</string>
+
+    <string name="pick_results_label">Picks</string>
+    <string name="pick_results_title">Tonight could look like this</string>
+    <string name="pick_adjust">Adjust filters</string>
+    <string name="pick_details">Title details</string>
+    <string name="pick_results_empty">Nothing matches now. Adjust the filters to find more.</string>
+    <string name="pick_results_guide_left">Illustrative recommendations, scores, prices &amp; availability</string>
+    <string name="pick_results_guide_right">← → Choose a pick · OK for details</string>
+</resources>

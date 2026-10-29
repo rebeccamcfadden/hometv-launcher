@@ -189,7 +189,9 @@ decided after the first run on a real TV: closing with Back alone felt clunky.)
   OK steps through (length, genre pair, review score, content rating, watch state, availability). A card on the
   right shows how many picks match ("4 picks, just for tonight") and the **Find picks** button.
 - **Results:** four random matches with a short blurb each, the filter line, Reroll, and Adjust filters (Back to
-  setup). A bar under the tiles shows the focused pick with **Title details** and **Open in <service>**.
+  setup). A bar under the tiles shows the focused pick with **Title details** and **Open in <service>**. Up from
+  a pick goes to Adjust filters or Reroll, whichever is nearer, before the nav. Reroll keeps focus, so it can be
+  pressed again and again.
 
 ### Title preview (Option C)
 

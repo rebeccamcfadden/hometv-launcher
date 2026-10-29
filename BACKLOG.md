@@ -179,6 +179,21 @@ From the old launcher; not in V1 by decision.
 - **No-matches screenshot:** `work/proto-shots/search-04-no-matches.png` shows Home, so that state was checked
   against `search.ts` rather than a picture.
 
+## From M7
+
+- **Pick for me's fields:** the six fields and their options are the prototype's fixed lists (three lengths, four
+  genre pairs, three scores, three ratings), not built from the catalogue's genres or the household's habits.
+  Wanted: options that follow the real catalogue once it lands, and a design for picking any genre.
+- **Episode length:** for TV Shows the length field reads the episodes' average runtime (the prototype passes every
+  show). Every mock show is under 90 minutes, so it changes nothing yet; a real catalogue may need a per-show
+  runtime instead of per-episode lists.
+- **Random, not ranked:** picks are four random matches, as in the prototype; nothing weighs score, recency or what
+  the household watches. The choices are not remembered between visits either: each Pick for me starts from the
+  prototype's defaults.
+- **Open in the service:** the results bar's main button opens an included pick's app on its home screen (see
+  Title deep links). A rental or purchase opens the title preview instead, so its rent and buy dialog asks before
+  leaving the launcher; the prototype's button opened the preview for every pick.
+
 ## Not designed yet
 
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before
