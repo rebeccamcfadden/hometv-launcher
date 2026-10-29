@@ -1,0 +1,44 @@
+# id	included	bestOffer	offerLabel	avail	meta	provenance	kindYear	byService
+arrival	true	prime/sub/0.00	Prime Video · Included	Included	1h 56m · PG-13 · 7.9/10	My list · Sci-fi	Movie · 2016	prime:i:::4K · HDR appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+dune	true	max/sub/0.00	Max · Included	Included	2h 46m · PG-13 · 8.5/10	My list · Sci-fi	Movie · 2024	max:i:::4K · HDR appletv::5.99:19.99:4K · Dolby Vision googletv::5.99:22.99:4K youtube::5.99:19.99:HD
+past-lives	true	hulu/sub/0.00	Hulu · Included	Included	1h 46m · PG-13 · 7.9/10	My list · Drama	Movie · 2023	hulu:i:::4K · HDR appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+mitchells	true	netflix/sub/0.00	Netflix · Included	Included	1h 54m · PG · 7.6/10	Friends · Animation	Movie · 2021	netflix:i:::4K · HDR
+coda	true	appletvplus/sub/0.00	Apple TV+ · Included	Included	1h 51m · PG-13 · 8.0/10	Household · Drama	Movie · 2021	appletvplus:i:::4K · HDR
+moon	false	appletv/rent/3.99	Apple TV · Rent $3.99	Rent $3.99	1h 37m · R · 7.8/10	Household · Sci-fi	Movie · 2009	appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+knives-out	true	netflix/sub/0.00	Netflix · Included	Included	2h 10m · PG-13 · 7.9/10	Friends · Mystery	Movie · 2019	netflix:i:::4K · HDR appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+budapest	true	disney/sub/0.00	Disney+ · Included	Included	1h 40m · R · 8.1/10	Household · Comedy	Movie · 2014	disney:i:::4K · HDR appletv::2.99:9.99:4K · Dolby Vision googletv::2.99:12.99:4K youtube::2.99:9.99:HD
+eeaao	true	hulu/sub/0.00	Hulu · Included	Included	2h 19m · R · 7.8/10	Household · Sci-fi	Movie · 2022	hulu:i:::4K · HDR appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+oppenheimer	true	prime/sub/0.00	Prime Video · Included	Included	3h 0m · R · 8.3/10	My list · Drama	Movie · 2023	prime:i:::4K · HDR appletv::5.99:19.99:4K · Dolby Vision googletv::5.99:22.99:4K youtube::5.99:19.99:HD
+killers	true	appletvplus/sub/0.00	Apple TV+ · Included	Included	3h 26m · R · 7.6/10	Household · Drama	Movie · 2023	appletvplus:i:::4K · HDR
+poor-things	true	hulu/sub/0.00	Hulu · Included	Included	2h 21m · R · 7.8/10	Friends · Comedy	Movie · 2023	hulu:i:::4K · HDR appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+maestro	true	netflix/sub/0.00	Netflix · Included	Included	2h 9m · R · 6.6/10	My list · Drama	Movie · 2023	netflix:i:::4K · HDR
+zone	true	max/sub/0.00	Max · Included	Included	1h 45m · PG-13 · 7.4/10	Household · Drama	Movie · 2023	max:i:::4K · HDR appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+anatomy	true	hulu/sub/0.00	Hulu · Included	Included	2h 31m · R · 7.7/10	Friends · Drama	Movie · 2023	hulu:i:::4K · HDR appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+american-fiction	true	prime/sub/0.00	Prime Video · Included	Included	1h 57m · R · 7.5/10	My list · Comedy	Movie · 2023	prime:i:::4K · HDR appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+severance	true	appletvplus/sub/0.00	Apple TV+ · Included	Included	2 seasons · TV-MA · 8.7/10	My list · Sci-fi	TV show · 2022	appletvplus:i:::4K · HDR
+the-bear	true	hulu/sub/0.00	Hulu · Included	Included	3 seasons · TV-MA · 8.5/10	My list · Comedy	TV show · 2022	hulu:i:::4K · HDR
+dark	true	netflix/sub/0.00	Netflix · Included	Included	3 seasons · TV-MA · 8.7/10	Friends · Sci-fi	TV show · 2017	netflix:i:::4K · HDR
+last-of-us	true	max/sub/0.00	Max · Included	Included	2 seasons · TV-MA · 8.7/10	Household · Drama	TV show · 2023	max:i:::4K · HDR
+shogun	true	hulu/sub/0.00	Hulu · Included	Included	1 season · TV-MA · 8.6/10	Household · Drama	TV show · 2024	hulu:i:::4K · HDR
+fallout	true	prime/sub/0.00	Prime Video · Included	Included	1 season · TV-MA · 8.3/10	My list · Sci-fi	TV show · 2024	prime:i:::4K · HDR
+our-planet	true	netflix/sub/0.00	Netflix · Included	Included	2 seasons · TV-G · 9.3/10	Household · Documentary	TV show · 2019	netflix:i:::4K · HDR
+microcosmos	true	youtube/free/0.00	YouTube · Free	Free	1 season · TV-G · 8.8/10	Friends · Documentary	TV show · 2019	youtube:f:::HD
+peripheral	true	prime/sub/0.00	Prime Video · Included	Included	1 season · TV-MA · 7.6/10	Friends · Sci-fi	TV show · 2022	prime:i:::4K · HDR
+the-crown	true	netflix/sub/0.00	Netflix · Included	Included	6 seasons · TV-MA · 8.6/10	Household · Drama	TV show · 2016	netflix:i:::4K · HDR
+wheel-of-time	true	prime/sub/0.00	Prime Video · Included	Included	3 seasons · TV-14 · 7.1/10	My list · Fantasy	TV show · 2021	prime:i:::4K · HDR
+blue-planet	true	max/sub/0.00	Max · Included	Included	1 season · TV-G · 9.3/10	My list · Documentary	TV show · 2017	max:i:::4K · HDR
+carnival-row	true	prime/sub/0.00	Prime Video · Included	Included	2 seasons · TV-MA · 7.7/10	Catalogue · Fantasy	TV show · 2019	prime:i:::4K · HDR
+the-arrival-1996	false	appletv/rent/2.99	Apple TV · Rent $2.99	Rent $2.99	1h 55m · PG-13 · 6.3/10	Catalogue · Sci-fi	Movie · 1996	appletv::2.99:7.99:HD
+blade-runner-2049	false	appletv/rent/3.99	Apple TV · Rent $3.99	Rent $3.99	2h 44m · R · 8.0/10	Catalogue · Sci-fi	Movie · 2017	appletv::3.99:12.99:4K · Dolby Vision googletv::3.99:15.99:4K youtube::3.99:12.99:HD
+interstellar	false	appletv/rent/3.99	Apple TV · Rent $3.99	Rent $3.99	2h 49m · PG-13 · 8.7/10	Catalogue · Sci-fi	Movie · 2014	appletv::3.99:9.99:4K · Dolby Vision googletv::3.99:12.99:4K youtube::3.99:9.99:HD
+marvel-one-shots	true	disney/sub/0.00	Disney+ · Included	Included	1h 0m · PG-13 · 6.9/10	Catalogue · Action	Movie · 2011	disney:i:::4K · HDR
+larva-island	true	netflix/sub/0.00	Netflix · Included	Included	1 season · TV-Y7 · 7.2/10	Catalogue · Animation	TV show · 2018	netflix:i:::4K · HDR
+carnival-of-souls	true	youtube/free/0.00	YouTube · Free	Free	1h 18m · NR · 7.0/10	Catalogue · Horror	Movie · 1962	youtube:f:::HD
+mrs-maisel	true	prime/sub/0.00	Prime Video · Included	Included	5 seasons · TV-MA · 8.7/10	Catalogue · Comedy	TV show · 2017	prime:i:::4K · HDR
+marvel-assembled	true	disney/sub/0.00	Disney+ · Included	Included	1 season · TV-PG · 7.4/10	Catalogue · Documentary	TV show · 2021	disney:i:::4K · HDR
+daredevil	true	disney/sub/0.00	Disney+ · Included	Included	3 seasons · TV-MA · 8.6/10	Catalogue · Action	TV show · 2015	disney:i:::4K · HDR
+harvey-girls	false	appletv/rent/2.99	Apple TV · Rent $2.99	Rent $2.99	1h 42m · NR · 6.8/10	Catalogue · Musical	Movie · 1946	appletv::2.99:9.99:HD
+carnival-eats	true	hulu/sub/0.00	Hulu · Included	Included	2 seasons · TV-G · 7.0/10	Catalogue · Food	TV show · 2014	hulu:i:::4K · HDR
+carnivale	true	max/sub/0.00	Max · Included	Included	2 seasons · TV-MA · 8.1/10	Catalogue · Drama	TV show · 2003	max:i:::4K · HDR
+911	true	hulu/sub/0.00	Hulu · Included	Included	3 seasons · TV-14 · 7.8/10	Catalogue · Drama	TV show · 2018	hulu:i:::4K · HDR
+911-lone-star	true	hulu/sub/0.00	Hulu · Included	Included	2 seasons · TV-14 · 7.4/10	Catalogue · Drama	TV show · 2020	hulu:i:::4K · HDR

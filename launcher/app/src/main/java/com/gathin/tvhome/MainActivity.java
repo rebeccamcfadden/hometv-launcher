@@ -1,7 +1,9 @@
 package com.gathin.tvhome;
 
 import android.app.Activity;
+import android.app.SearchManager;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentCallbacks2;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,6 +13,7 @@ import android.media.tv.TvInputManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -30,7 +33,7 @@ import java.util.List;
  * the Inputs, Wi-Fi and quick-settings dropdowns, the backdrop, and the checks kept from the old Home (Open on
  * start, restore_key_services, handle_view_inputs, settings changes).
  */
-public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
+public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, Router {
 
     /** Sent by QuickSettingsActivity: open Launcher settings from here, so Home rebuilds when they close. */
     static final String ACTION_LAUNCHER_SETTINGS = "com.gathin.tvhome.action.LAUNCHER_SETTINGS";
@@ -45,6 +48,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
     private final NavModel nav = new NavModel();
     private Shell shell;
     private Config config;
+    /** M3: the catalogue, services and household every screen reads (Router.data). */
+    private Data data;
     private TvInputs inputs;
     private FrameLayout stage;
     private ImageView backdrop;
@@ -148,6 +153,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
         showNetwork = cfg.showNetworkPill;
         vpnApp = cfg.vpnApp;
         inputs = new TvInputs(this, cfg, message -> shell.toast(getString(message)));
+        data = Data.create(this, cfg);
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Ui.BG);
@@ -199,6 +205,69 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
     /** The TV's inputs, shared by the Inputs dropdown and Home's Inputs row. */
     TvInputs inputs() {
         return inputs;
+    }
+
+    // ---- Router (M3): what screens ask of the launcher ---------------------------------------------------------
+
+    @Override
+    public Data data() {
+        return data;
+    }
+
+    /** Stub until M5 builds the title preview. */
+    @Override
+    public void openTitle(Title t) {
+        shell.toast(getString(R.string.router_title_stub, t.name));
+    }
+
+    /** Stub until M5 builds the person page. */
+    @Override
+    public void openPerson(String name) {
+        shell.toast(getString(R.string.router_person_stub, name));
+    }
+
+    /** Stub until M7 builds Pick for me. */
+    @Override
+    public void openPick(Kind kind) {
+        shell.toast(getString(R.string.router_pick_stub));
+    }
+
+    /** Opens the offer's service app on its home screen; opening the title itself is in BACKLOG.md (deep links). */
+    @Override
+    public void watch(Title t, Offer o) {
+        Offer offer = o != null ? o : data.bestOffer(t);
+        if (offer == null) {
+            shell.toast(getString(R.string.router_not_available));
+            return;
+        }
+        Intent i = data.services.launchIntent(offer.service);
+        if (i == null) {
+            shell.toast(getString(R.string.router_not_installed, data.table.name(offer.service)));
+            return;
+        }
+        start(i);
+    }
+
+    /** YouTube's TV app, searching "name year trailer": its search intent, else its results page. */
+    @Override
+    public void openTrailer(Title t) {
+        String query = t.name + " " + t.year + " trailer";
+        String youtube = data.table.packages(ServiceId.YOUTUBE).get(0);
+        Intent search = new Intent(Intent.ACTION_SEARCH).setPackage(youtube).putExtra(SearchManager.QUERY, query);
+        Intent results = new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(query))).setPackage(youtube);
+        for (Intent i : new Intent[]{search, results}) {
+            if (i.resolveActivity(getPackageManager()) != null) {
+                start(i);
+                return;
+            }
+        }
+        shell.toast(getString(R.string.router_no_trailer));
+    }
+
+    @Override
+    public void toast(CharSequence text) {
+        shell.toast(text);
     }
 
     // ---- The top bar --------------------------------------------------------------------------------------------
@@ -434,6 +503,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages {
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
+        // M3: the artwork cache is only a cache (the views on screen keep their images), so it goes on any real
+        // pressure, but not on UI_HIDDEN, the ordinary trip to an app.
+        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW && level != ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
+            Art.trim();
+        }
         if (!MemoryTrimPolicy.shouldRelease(level, started)) return;
         backdrop.setImageDrawable(null);
         backdropLoaded = false;

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- View tags the data layer's UI kit reads (Art, Kit). -->
+<resources>
+    <!-- The artwork an ImageView is waiting for, so a late decode never lands in a view that moved on. -->
+    <item name="art_key" type="id" />
+    <!-- A Kit button's or chip's parts and state, for setOn, setSelected and setLabel. -->
+    <item name="kit_label" type="id" />
+    <item name="kit_icon" type="id" />
+    <item name="kit_check" type="id" />
+    <item name="kit_icon_only" type="id" />
+</resources>

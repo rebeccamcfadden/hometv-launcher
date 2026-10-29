@@ -36,6 +36,9 @@ SCREENSHOT_WANTED = {
     "tile_menu", "top_menu", "vpn_app", "wallpaper", "wallpaper_captions", "wallpaper_dim",
     "wallpaper_moods", "wallpaper_order", "wallpaper_true_color", "wifi_label_width",
     "wifi_status_color",
+    # The reworked launcher's data layer (M3, docs/rework.md): nothing shows it until the Movies and TV Shows
+    # pages (M4), and docs/switches.md goes in M1b. Its screenshot comes from the real-TV run.
+    "subscribed_services",
 }
 
 

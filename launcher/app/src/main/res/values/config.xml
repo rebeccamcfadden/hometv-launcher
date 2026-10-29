@@ -418,4 +418,12 @@
          faint outer glow), rim (the crisp rim alone, no sheen, fill or glow, for a quiet focus over a wallpaper) or
          halo (the rim with a lighter outer glow). Can also be set with "glass_style": "rim" in a theme's config.json. -->
     <string name="glass_style" translatable="false">glass</string>
+
+    <!-- M3 (the new launcher's data layer): the streaming services the household pays for, so their titles read
+         "Included". Lowercase ids: netflix, prime, disney, max, appletvplus, hulu, youtube, appletv, googletv.
+         Empty (the default) works them out from the installed apps: every subscription service whose TV app is
+         installed, and YouTube. An id the launcher doesn't know is ignored, so ["none"] means no services. Can also be
+         set with "subscribed_services": ["netflix", "prime"] in a pushed config.json. -->
+    <string-array name="subscribed_services" translatable="false">
+    </string-array>
 </resources>

@@ -26,9 +26,9 @@ replace them as each screen lands.
 | Design | The web prototype and its spec, [`design_preview/README.md`](design_preview/README.md) | Done (#1) |
 | M0 · Tooling | JDK 17, Android SDK, an Android TV 9 emulator; the current launcher built and run as a baseline | Done (#4) |
 | M1 · Foundation | New Home activity replacing the old UI; design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | In review |
-| M1b · V1 cleanup | `Config` and `config.xml` cut to what the new launcher reads; old-UI docs, tools and tests; the README's old launcher sections | Next |
+| M1b · V1 cleanup | `Config` and `config.xml` cut to what the new launcher reads; old-UI docs, tools and tests; the README's old launcher sections | Planned, after M8 |
 | M2 · Home | Clock, greeting, weather, the app row with its hold-OK menu, Inputs, Shortcuts | In review |
-| M3 · Data layer | Household store, mock catalogue behind an interface, image cache, offline behaviour | Planned |
+| M3 · Data layer | Household store, mock catalogue behind an interface, image cache, offline behaviour | In review |
 | M4 · Movies and TV Shows | List chips, grid, Filters drawer, empty states | Planned |
 | M5 · Title preview | Popup, actions, five tabs, rent/buy dialog, person page | Planned |
 | M6 · Search | Keyboard, fuzzy matching, suggestions, results, no matches | Planned |

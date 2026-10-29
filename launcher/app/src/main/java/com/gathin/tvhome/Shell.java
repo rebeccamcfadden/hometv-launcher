@@ -182,6 +182,8 @@ final class Shell {
         if (v == null || s == null) return;
         v.requestFocus();
         focused = v;
+        // M3: scroll every ScrollBox above v so it is in view (the prototype's ensureVisible).
+        ScrollBox.reveal(v);
         s.lastFocus = v;
         s.lastFocusKey = Focus.key(v);
         String group = Focus.group(v);

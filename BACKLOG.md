@@ -8,7 +8,9 @@ milestones: [docs/rework.md](docs/rework.md).
 ## Data and accounts
 
 ### Real catalogue
-- **V1:** the mock catalogue from `design_preview/src/data`, behind an interface.
+- **V1:** the mock catalogue from `design_preview/src/data`, behind an interface (`Catalog`, with `MockCatalog`
+  ported title for title). Its artwork is 17 JPEGs bundled in the APK (`res/drawable-nodpi/art_*.jpg`, at most
+  960 px wide, about 1.35 MB), decoded at the size shown by `Art` into a memory cache only.
 - **Wanted:** TMDB for titles, artwork, cast, episodes, similar titles and search, cached on the TV so offline
   still works.
 - **Findings:** cleanyourtv-ui's `Tmdb.java` caches answers on disk for as long as the path deserves: search
@@ -44,6 +46,17 @@ milestones: [docs/rework.md](docs/rework.md).
 - **V1:** mock placeholders in the list chips and the grid.
 - **Wanted:** both come from the project lead's TMDB lists. Which list is which is decided when this is built.
 
+### Household seed
+- **V1:** on the first run, My list, Seen, Favorites, recent searches and recently viewed start from the
+  prototype's mock seed (`design_preview/src/core/store.ts`): My list holds the catalogue's titles on the mock "My
+  list", two titles are seen, one is a favourite, four searches and six titles are recent. After that every change
+  is kept on the TV (`Household`, SharedPreferences `household`).
+- **Wanted:** start empty, or from the TMDB account once sign-in exists (see TMDB sign-in and watchlist sync).
+
+### Trailers
+- **V1:** Trailer opens YouTube's TV app searching for "name year trailer"; without YouTube it says so.
+- **Wanted:** open the trailer itself, from TMDB's videos for the title.
+
 ### Title deep links
 - **V1:** "Watch on …", episode rows and Where to watch open the service's app on its home screen.
 - **Wanted:** open the title, or the episode, directly.
@@ -53,7 +66,11 @@ milestones: [docs/rework.md](docs/rework.md).
   month. No source for episode links was found yet.
 
 ### Choosing the household's services
-- **V1:** subscribed services come from the installed apps, with a `config.xml` override.
+- **V1:** subscribed services come from the installed apps, with an override: `subscribed_services` in
+  `config.xml` or a pushed `config.json`, a list of lowercase ids (`["netflix", "prime"]`; an unknown id is
+  ignored, so `["none"]` means none). Left empty, every subscription service whose TV app is installed counts,
+  and YouTube; the Apple TV app counts as Apple TV+, never as the Apple TV store. Read when Home starts, so an
+  app installed later counts after Home restarts.
 - **Wanted:** a screen in Launcher settings to tick the services the household pays for.
 
 ### Weather location on the TV
