@@ -2,8 +2,6 @@
 <!-- M3, the data layer: what MainActivity's Router says. English only (docs/rework.md, Languages). -->
 <resources>
     <!-- Router stubs until their milestones replace them (docs/rework.md, Milestones). -->
-    <string name="router_title_stub">The title preview for %1$s comes in M5</string>
-    <string name="router_person_stub">The page for %1$s comes in M5</string>
     <string name="router_pick_stub">Pick for me comes in M7</string>
     <string name="router_not_installed">%1$s is not installed</string>
     <string name="router_not_available">Not available on your services or stores</string>

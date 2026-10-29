@@ -143,6 +143,21 @@ From the old launcher; not in V1 by decision.
 - **Long lists:** the grid builds a card for every title at once (16 at most in the mock). A real list of hundreds
   needs a recycled grid or paging, with the artwork decoded as cards come into view.
 
+## From M5
+
+- **Watch and episodes open the service's app, not the title:** Watch, an included Where to watch card, an episode
+  and Rent or Buy in the dialog all open the service's app on its home screen (`Router.watch`); see Title deep
+  links. An episode card opens the show's best offer, not that episode.
+- **Rent/buy dialog:** Rent and Buy open the store's app; nothing is paid or recorded in the launcher, and the
+  dialog doesn't know whether the rental happened.
+- **Person page:** the prototype's stub (portrait with initials, "Person · not designed yet", the titles they are
+  in from the mock catalogue). Wanted: a design, photos and a filmography from the real catalogue.
+- **Cast portraits:** initials, as in the prototype; photos wait for the real catalogue.
+- **Watched episodes:** worked out from the mock next episode (`Title.nextSeason`/`nextEpisode`); nothing records
+  what was watched. Mark seen marks the whole title only.
+- **More like this:** the prototype's rule (shared genres, same kind, score) over the mock catalogue. Wanted:
+  recommendations from the real catalogue.
+
 ## Not designed yet
 
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before

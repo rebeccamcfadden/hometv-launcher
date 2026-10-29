@@ -214,16 +214,16 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         return data;
     }
 
-    /** Stub until M5 builds the title preview. */
+    /** M5: the title preview popup, over whatever page or popup is showing. */
     @Override
     public void openTitle(Title t) {
-        shell.toast(getString(R.string.router_title_stub, t.name));
+        shell.push(TitlePreview.create(this, this, t));
     }
 
-    /** Stub until M5 builds the person page. */
+    /** M5: the person page stub, pushed over the preview it was opened from. */
     @Override
     public void openPerson(String name) {
-        shell.toast(getString(R.string.router_person_stub, name));
+        shell.push(PersonPage.create(this, this, name));
     }
 
     /** Stub until M7 builds Pick for me. */
