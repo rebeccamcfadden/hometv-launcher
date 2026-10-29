@@ -13,12 +13,12 @@ import java.util.Set;
 
 /**
  * The household's state that outlives a screen (design_preview/src/core/store.ts): My list, Seen and Favorites (sets
- * of title ids), recent searches (up to 5, newest first, lower case, no repeats) and recently viewed titles (up to
+ * of title ids), recent searches (up to 4, newest first, lower case, no repeats) and recently viewed titles (up to
  * 10, newest first). Pure Java with its own small JSON reader and writer, so it is unit-tested on the JVM;
  * {@link Household} keeps it in SharedPreferences. The defaults are the prototype's mock seed (BACKLOG.md).
  */
 final class HouseholdState {
-    static final int MAX_RECENT = 5;
+    static final int MAX_RECENT = 4;
     static final int MAX_VIEWED = 10;
 
     private final Set<String> myList;

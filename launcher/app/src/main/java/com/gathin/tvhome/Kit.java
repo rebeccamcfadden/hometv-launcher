@@ -385,6 +385,15 @@ final class Kit {
      * {@link #RING_ROOM} outside the row.
      */
     static View row(Context ctx, CharSequence label, List<View> items) {
+        return row(ctx, label, items, RING_ROOM);
+    }
+
+    /**
+     * {@link #row} whose scrolling keeps the focused card revealPad design px inside the box's edges (at least
+     * {@link #RING_ROOM}). A row that runs off the screen's edge uses the safe margin, 96, so the focused card stays
+     * whole and inside the title-safe area (M6, Search's rows: the prototype's data-scroll-pad 96).
+     */
+    static View row(Context ctx, CharSequence label, List<View> items, float revealPad) {
         LinearLayout row = new LinearLayout(ctx);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setClipChildren(true);
@@ -400,7 +409,7 @@ final class Kit {
 
         // The reveal padding equals the box's padding, so coming back to the first card scrolls to 0 and it lines up
         // with the label again, and the last card stops with its ring inside the box.
-        ViewGroup box = ScrollBox.horizontal(ctx, RING_ROOM);
+        ViewGroup box = ScrollBox.horizontal(ctx, Math.max(RING_ROOM, revealPad));
         int room = Ui.px(RING_ROOM);
         box.setPadding(room, room, room, room);
         LinearLayout strip = new LinearLayout(ctx);

@@ -29,7 +29,7 @@ The 1920×1080 TV screen is scaled to fit the window. The keyboard stands in for
 |---|---|
 | Arrow keys | D-pad |
 | Enter | OK |
-| Esc, or Backspace when nothing is typed | Back |
+| Esc or Backspace | Back, on every screen (on Search, Backspace never deletes letters) |
 | H | Home (except on Search, where letters type) |
 | S | The remote's Settings key (except on Search) |
 | Letters, digits, space | Type on Search |
@@ -117,14 +117,19 @@ From [AGENTS.md](../AGENTS.md) and the design:
 1. Closes the top dialog or popup (dropdown, drawer, title preview).
 2. Otherwise returns to the previous page (Pick for me → Movies; person → title preview).
 3. On a top-level page other than Home it goes Home, with focus on Home in the nav.
-4. Search uses Back first to collapse the full results back to the keyboard.
+4. Search uses Back first to collapse the full results back to the keyboard, with the query kept. With the keyboard
+   showing, Back goes Home (rule 3), whatever is typed.
+5. A keyboard's Backspace is Back, on every screen, Search included; only Search's on-screen delete key deletes a
+   letter. Held down, it goes Back once.
 
 ### Focus
 
 - Moving with the D-pad picks the nearest item in that direction; moving up or down keeps left edges aligned so a
   column feels like a column.
 - Each row or grid remembers its last focused item, so leaving and coming back returns to the same item.
-- Each page keeps its focus and state when you switch tabs and come back.
+- Each page keeps its focus and state when you switch tabs and come back, except Search: leaving it for another
+  tab, by Back or by the remote's Home clears the query, the filter and the full results, so coming back shows the
+  empty page with focus as on the first visit. A title or person opened from Search keeps the search.
 - The first focus on a page: Home → the first app; Movies / TV Shows → the first title; Search → the "a" key;
   title preview → the Watch button; dropdowns → the first row; dialogs → the primary button.
 
@@ -214,16 +219,22 @@ decided after the first run on a real TV: closing with Back alone felt clunky.)
 - **Bar:** full width under the nav. While typing it shows the query and the ghost completion ("arvl → arrival")
   and a "› Results" hint.
 - **Left panel (440 px):** a list above the keyboard, then the 6×6 keyboard. The list is Recent searches (up to
-  five) when the bar is empty, and Suggestions (four, mixing titles, people and genres) while typing. Recent
+  four) when the bar is empty, and Suggestions (four, mixing titles, people and genres) while typing. Recent
   searches are saved when a result is opened.
 - **Empty state:** Recently viewed, From My list and Browse by genre, in rows that run off the right edge.
 - **Typing:** the results preview sits right of the panel: "N results", filter chips (All, Movies, TV shows,
   People, Included only) and a grid of cards that runs off the right edge. The preview can't be focused yet.
 - **Full results:** → from the keyboard's right edge slides the panel away and widens the same grid to six
   columns, with focus on the first result. Same cards, same size, same header, so it reads as the preview
-  expanding. Up from the chips reaches the search bar; OK on it, Back, or ← from the first column bring the
-  keyboard back with the query kept.
-- **No matches:** "No matches for “qzxv”", a tip, and Recently viewed.
+  expanding. The grid starts at the 96 px safe margin and its six columns end 98 px short of the right edge. Up
+  from the chips reaches the search bar; OK on it, Back (or Backspace), or ← from the first column bring the
+  keyboard back with the query kept. If the focused card goes (a filter chip, typing), focus moves to the first
+  result or the bar, never to the hidden keyboard.
+- **No matches:** "No matches for “qzxv”", a tip, and Recently viewed. An exact genre search ("drama", or Browse
+  by genre → Drama) shows No matches too, until real search data lands ([BACKLOG.md](../BACKLOG.md), From M6).
+- **Back and Backspace:** on the full results they collapse to the keyboard; with the keyboard showing they go
+  Home. Only the on-screen ⌫ key deletes. Leaving Search for another tab clears it (see Focus).
+- **No guide line:** Search has no footer, unlike the other pages; the panel and the results use the height.
 - In the prototype, typing on the computer's keyboard also types into the bar; on the TV, a remote or app with a
   keyboard should do the same.
 

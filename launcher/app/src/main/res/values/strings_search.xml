@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M6, Search (design_preview/src/screens/search.ts). English only (docs/rework.md, Languages). -->
+<resources>
+    <string name="search_placeholder">Search movies, shows, people and genres</string>
+    <!-- The ghost completion after the typed query: "arvl → arrival". -->
+    <string name="search_ghost">→ %1$s</string>
+    <string name="search_results_hint">Results</string>
+
+    <string name="search_recent">Recent searches</string>
+    <string name="search_suggestions">Suggestions</string>
+    <string name="search_no_suggestions">No suggestions yet</string>
+    <string name="search_tag_movie">Movie</string>
+    <string name="search_tag_show">TV show</string>
+    <string name="search_tag_person">Person</string>
+    <string name="search_tag_genre">Genre</string>
+
+    <string name="search_key_space">Space</string>
+    <string name="search_key_delete">Delete</string>
+    <string name="search_key_clear">Clear</string>
+
+    <string name="search_recently_viewed">Recently viewed</string>
+    <string name="search_from_my_list">From My list</string>
+    <string name="search_browse_genre">Browse by genre</string>
+
+    <plurals name="search_results_count">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
+    <string name="search_filter_all">All</string>
+    <string name="search_filter_movies">Movies</string>
+    <string name="search_filter_shows">TV shows</string>
+    <string name="search_filter_people">People</string>
+    <string name="search_filter_included">Included only</string>
+    <string name="search_filter_empty">Nothing under “%1$s”. Try All.</string>
+    <string name="search_person">Person</string>
+    <plurals name="search_person_titles">
+        <item quantity="one">%d title in the catalogue</item>
+        <item quantity="other">%d titles in the catalogue</item>
+    </plurals>
+
+    <string name="search_no_matches">No matches for “%1$s”</string>
+    <string name="search_no_matches_tip">Try fewer letters, or search for a person or a genre.</string>
+</resources>

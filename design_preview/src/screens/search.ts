@@ -7,7 +7,7 @@ import { byId } from '../data/catalog';
 import { isIncluded } from '../data/offers';
 import type { Title } from '../types';
 import { icon } from '../ui/icons';
-import { chip, guide, navBar, rowOf, smallCard } from '../ui/widgets';
+import { chip, navBar, rowOf, smallCard } from '../ui/widgets';
 import { personScreen } from './person';
 import { titlePreview } from './preview';
 
@@ -59,9 +59,9 @@ export function searchScreen(): Screen {
 
   const results = h('div.search-results', { 'data-scroll': 'y', 'data-scroll-pad': 40 });
   const viewport = h('div.search-viewport', results, h('div.bottom-fade-local'));
-  const guideEl = h('div');
 
-  const el = h('div.screen.screen--base.search', navBar('search'), bar, panel, viewport, guideEl);
+  // No guide line on Search (decided 2026-10-29): the panel and the results use the height.
+  const el = h('div.screen.screen--base.search', navBar('search'), bar, panel, viewport);
 
   function setQuery(q: string) {
     query = q.replace(/^\s+/, '').replace(/\s{2,}/g, ' ');
@@ -228,13 +228,6 @@ export function searchScreen(): Screen {
     bar.toggleAttribute('data-inert', !expanded);
     panel.toggleAttribute('data-inert', expanded);
     viewport.toggleAttribute('data-inert', !!query && hasMatches && !expanded);
-    replace(
-      guideEl,
-      guide(
-        'Illustrative titles, services and prices',
-        expanded ? 'OK for title details · OK on the search bar to edit' : query ? '↑ suggestions · → results' : 'Type or use the keyboard · ↑ recent searches',
-      ),
-    );
     app.refocus();
   }
 
@@ -242,8 +235,12 @@ export function searchScreen(): Screen {
     expanded = true;
     render();
     results.scrollTop = 0;
-    app.focus(results.querySelector<HTMLElement>('.results-grid [data-focus]') ?? results.querySelector<HTMLElement>('[data-focus]'));
+    app.focus(firstResult());
   }
+
+  /** The first card of the full results, else the first thing in them (a filter chip), else the search bar. */
+  const firstResult = () =>
+    results.querySelector<HTMLElement>('.results-grid [data-focus]') ?? results.querySelector<HTMLElement>('[data-focus]') ?? bar;
 
   function collapse() {
     expanded = false;
@@ -254,11 +251,35 @@ export function searchScreen(): Screen {
 
   render();
 
-  return {
+  // Set when Search is left for another tab: the next render puts the panel back without the slide.
+  let snap = false;
+
+  const screen: Screen = {
     label: 'Search',
     el,
-    defaultFocus: () => keyboard.querySelector<HTMLElement>('[data-default]'),
-    onShow: render,
+    // On the full results the keyboard is hidden, so focus that loses its card lands on a result or the bar.
+    defaultFocus: () => (expanded ? firstResult() : keyboard.querySelector<HTMLElement>('[data-default]')),
+    onShow() {
+      if (!snap) return render();
+      snap = false;
+      el.classList.add('is-snapping');
+      results.scrollTop = 0;
+      render();
+      void el.offsetWidth;
+      el.classList.remove('is-snapping');
+    },
+    // Leaving for another tab, Back to Home or the remote's Home forgets the search, so coming back shows the
+    // empty page with focus as on the first visit. A title or person pushed over Search keeps it. Drawn on the next
+    // onShow, so the page sliding out keeps its look.
+    onLeave() {
+      query = '';
+      filter = 'all';
+      expanded = false;
+      snap = true;
+      screen.memory?.clear();
+      screen.lastFocus = null;
+      screen.lastFocusKey = undefined;
+    },
     onText(ch) {
       if (!TYPEABLE.test(ch)) return false;
       if (expanded) {
@@ -269,11 +290,6 @@ export function searchScreen(): Screen {
       return true;
     },
     onKey(k, f) {
-      if (k === 'delete') {
-        if (!query) return false;
-        setQuery(query.slice(0, -1));
-        return true;
-      }
       if (k === 'back' && expanded) {
         collapse();
         return true;
@@ -291,4 +307,5 @@ export function searchScreen(): Screen {
       return false;
     },
   };
+  return screen;
 }

@@ -9,7 +9,7 @@ export type TabId = 'home' | 'movies' | 'tv' | 'music' | 'search';
  */
 export type Layer = 'screen' | 'popup' | 'dialog';
 
-export type Key = Dir | 'ok' | 'back' | 'delete';
+export type Key = Dir | 'ok' | 'back';
 
 export interface Screen {
   /** Shown in the stack read-out under the stage. */
@@ -25,6 +25,11 @@ export interface Screen {
   onFocus?(el: HTMLElement): void;
   /** Called each time the screen becomes the top of the stack. */
   onShow?(): void;
+  /**
+   * Called when a tab's page stops being the current tab (another tab, Back to Home, the remote's Home), not when
+   * something is pushed over it. Search forgets its query here.
+   */
+  onLeave?(): void;
   // Managed by the app.
   memory?: Map<string, HTMLElement>;
   lastFocus?: HTMLElement | null;
@@ -82,6 +87,8 @@ class App {
   goTab(id: TabId, opts: { focusNav?: boolean } = {}) {
     const s = this.tab(id);
     const prev = this.stack.length === 1 ? this.stack[0] : undefined;
+    const root = this.stack[0];
+    if (root && root !== s) root.onLeave?.();
     this.endTabTransition();
     this.stack = [s];
     this.render();
@@ -266,8 +273,10 @@ class App {
       e.preventDefault();
       this.back();
     } else if (e.key === 'Backspace') {
+      // Backspace is Back on every screen, Search included (only its on-screen delete key deletes). A held key
+      // goes Back once.
       e.preventDefault();
-      if (!s?.onKey?.('delete', this.focused)) this.back();
+      if (!e.repeat) this.back();
     } else if (e.key.length === 1) {
       if (s?.onText?.(e.key)) e.preventDefault();
       else this.remoteKeys[e.key.toLowerCase()]?.();

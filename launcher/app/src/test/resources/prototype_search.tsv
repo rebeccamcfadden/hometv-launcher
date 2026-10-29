@@ -1,0 +1,793 @@
+query	list	hits
+a	titles	title|Arrival|139.2|0;title|American Fiction|135.6|0;title|Anatomy of a Fall|135.2|0;title|The Arrival|107.6|4;title|Everything Everywhere All at Once|98.8|22;title|CODA|98.4|3;title|Dark|98.4|1;title|Maestro|97.2|1;title|Fallout|97.2|1;title|The Bear|96.8|6;title|Severance|96.4|5;title|Carnivàle|96.4|1;title|Past Lives|96|1;title|Our Planet|96|6;title|Carnival Row|95.2|1;title|Interstellar|95.2|10;title|Larva Island|95.2|1;title|Carnival Eats|94.8|1;title|Dune: Part Two|94.4|7;title|The Last of Us|94.4|5;title|The Peripheral|94.4|12;title|Blue Planet II|94.4|7;title|Marvel One-Shots|93.6|1;title|The Harvey Girls|93.6|5;title|9-1-1: Lone Star|93.6|14;title|Blade Runner 2049|93.2|2;title|Carnival of Souls|93.2|1;title|Marvel’s Daredevil|92.8|1;title|The Grand Budapest Hotel|90.4|6;title|The Marvelous Mrs. Maisel|90|5;title|Marvel Studios: Assembled|90|1;title|The Mitchells vs. the Machines|88|23
+a	people	person|Amy Adams|132.4|0;person|Adam Scott|132|0;person|Anna Sawai|132|0;person|Ayo Edebiri|131.6|0;person|Aaron Moten|131.6|0;person|Ana de Armas|131.2|0;person|Austin Butler|130.8|0;person|Abbi Jacobson|130.8|0;person|Anne Hathaway|130.8|0;person|Alex Borstein|130.8|0;person|Alastair Fothergill|128.4|0;person|Wes Anderson|101.2|4;person|Jeremy Allen White|98.8|7;person|Tzi Ma|91.6|5;person|Zendaya|91.2|4;person|Issa Rae|90.8|3;person|Greta Lee|90.4|4;person|Gary Carr|90.4|1;person|Siân Heder|90|2;person|Matt Damon|90|1;person|Emma Stone|90|3;person|Hank Green|90|1;person|Claire Foy|90|2;person|Matt Smith|90|1;person|John Magaro|89.6|6;person|Mike Rianda|89.6|7;person|Chris Evans|89.6|8;person|Ke Huy Quan|89.6|9;person|Daniel Kwan|89.6|1;person|Zach Cherry|89.6|1;person|Lisa Vicari|89.6|3;person|Craig Mazin|89.6|2;person|James Weiss|89.6|1;person|Jack Reynor|89.6|1;person|Charlie Cox|89.6|2;person|John Hodiak|89.6|9;person|Maya Rudolph|89.2|1;person|Emilia Jones|89.2|5;person|Sam Rockwell|89.2|1;person|Duncan Jones|89.2|4;person|Daniel Craig|89.2|1;person|Rian Johnson|89.2|2;person|Willem Dafoe|89.2|8;person|Mark Ruffalo|89.2|1;person|Swann Arlaud|89.2|2;person|Dan Erickson|89.2|1;person|Pedro Pascal|89.2|7;person|Bella Ramsey|89.2|4;person|Cosmo Jarvis|89.2|7;person|Rachel Kondo|89.2|1;person|Justin Marks|89.2|8;person|Ella Purnell|89.2|3;person|Peter Morgan|89.2|10;person|Rafe Judkins|89.2|1;person|Ryan Gosling|89.2|2;person|Judy Garland|89.2|6;person|Javier Bardem|88.8|1;person|Danny McBride|88.8|1;person|Marlee Matlin|88.8|1;person|Daniel Durant|88.8|1;person|Ralph Fiennes|88.8|1;person|Saoirse Ronan|88.8|1;person|Stephanie Hsu|88.8|5;person|Sandra Hüller|88.8|1;person|Louis Hofmann|88.8|10;person|Baran bo Odar|88.8|1;person|Jantje Friese|88.8|1;person|Graham Wagner|88.8|2;person|Olivia Colman|88.8|5;person|Rosamund Pike|88.8|3;person|Orlando Bloom|88.8|3;person|Charlie Sheen|88.8|2;person|Harrison Ford|88.8|1;person|Cillian Murphy|88.4|5;person|Lily Gladstone|88.4|7;person|Bradley Cooper|88.4|2;person|Carey Mulligan|88.4|1;person|Oliver Masucci|88.4|8;person|Neil Druckmann|88.4|11;person|Walton Goggins|88.4|1;person|Lindsay Crouse|88.4|5;person|Forest Whitaker|88|11;person|Martin Scorsese|88|1;person|Jonathan Glazer|88|3;person|Hiroyuki Sanada|88|10;person|Cara Delevingne|88|1;person|Rebecca Ferguson|87.6|6;person|Jamie Lee Curtis|87.6|1;person|Daniel Scheinert|87.6|1;person|Yorgos Lanthimos|87.6|8;person|Josha Stradowski|87.6|4;person|James Honeyborne|87.6|1;person|Jessica Chastain|87.6|6;person|Rachel Brosnahan|87.6|1;person|Michael Stuhlbarg|87.2|4;person|Timothée Chalamet|87.2|11;person|Christopher Nolan|87.2|15;person|Leonardo DiCaprio|87.2|4;person|Christian Friedel|87.2|7;person|Patricia Arquette|87.2|1;person|Ebon Moss-Bachrach|86.8|11;person|David Attenborough|86.8|1;person|Chloë Grace Moretz|86.8|8;person|Milo Machado-Graner|86.4|6;person|Matthew McConaughey|86.4|1;person|Geneva Robertson-Dworet|84.8|5
+a	genres	genre|Action|135.6|0;genre|Adventure|134.4|0;genre|Animation|134.4|0;genre|Drama|94|2;genre|Fantasy|93.2|1;genre|Musical|93.2|5;genre|Romance|93.2|3;genre|Documentary|91.6|8
+a	suggestions	title|Arrival|139.2|0;title|American Fiction|135.6|0;genre|Action|135.6|0;title|Anatomy of a Fall|135.2|0
+a	items-all	title|Arrival;title|American Fiction;title|Anatomy of a Fall;title|The Arrival;title|Everything Everywhere All at Once;title|CODA;title|Dark;title|Maestro;title|Fallout;title|The Bear;title|Severance;title|Carnivàle;title|Past Lives;title|Our Planet;title|Carnival Row;title|Interstellar;title|Larva Island;title|Carnival Eats;title|Dune: Part Two;title|The Last of Us;title|The Peripheral;title|Blue Planet II;title|Marvel One-Shots;title|The Harvey Girls;title|9-1-1: Lone Star;title|Blade Runner 2049;title|Carnival of Souls;title|Marvel’s Daredevil;title|The Grand Budapest Hotel;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|The Mitchells vs. the Machines;title|9-1-1;person|Amy Adams;person|Adam Scott;person|Anna Sawai;person|Ayo Edebiri;person|Aaron Moten;person|Ana de Armas;person|Austin Butler;person|Abbi Jacobson;person|Anne Hathaway;person|Alex Borstein;person|Alastair Fothergill;person|Wes Anderson;person|Jeremy Allen White;person|Tzi Ma;person|Zendaya;person|Issa Rae;person|Greta Lee;person|Gary Carr;person|Siân Heder;person|Matt Damon;person|Emma Stone;person|Hank Green;person|Claire Foy;person|Matt Smith;person|John Magaro;person|Mike Rianda;person|Chris Evans;person|Ke Huy Quan;person|Daniel Kwan;person|Zach Cherry;person|Lisa Vicari;person|Craig Mazin;person|James Weiss;person|Jack Reynor;person|Charlie Cox;person|John Hodiak;person|Maya Rudolph;person|Emilia Jones;person|Sam Rockwell;person|Duncan Jones;person|Daniel Craig;person|Rian Johnson;person|Willem Dafoe;person|Mark Ruffalo;person|Swann Arlaud;person|Dan Erickson;person|Pedro Pascal;person|Bella Ramsey;person|Cosmo Jarvis;person|Rachel Kondo;person|Justin Marks;person|Ella Purnell;person|Peter Morgan;person|Rafe Judkins;person|Ryan Gosling;person|Judy Garland;person|Javier Bardem;person|Danny McBride;person|Marlee Matlin;person|Daniel Durant;person|Ralph Fiennes;person|Saoirse Ronan;person|Stephanie Hsu;person|Sandra Hüller;person|Louis Hofmann;person|Baran bo Odar;person|Jantje Friese;person|Graham Wagner;person|Olivia Colman;person|Rosamund Pike;person|Orlando Bloom;person|Charlie Sheen;person|Harrison Ford;person|Cillian Murphy;person|Lily Gladstone;person|Bradley Cooper;person|Carey Mulligan;person|Oliver Masucci;person|Neil Druckmann;person|Walton Goggins;person|Lindsay Crouse;person|Forest Whitaker;person|Martin Scorsese;person|Jonathan Glazer;person|Hiroyuki Sanada;person|Cara Delevingne;person|Rebecca Ferguson;person|Jamie Lee Curtis;person|Daniel Scheinert;person|Yorgos Lanthimos;person|Josha Stradowski;person|James Honeyborne;person|Jessica Chastain;person|Rachel Brosnahan;person|Michael Stuhlbarg;person|Timothée Chalamet;person|Christopher Nolan;person|Leonardo DiCaprio;person|Christian Friedel;person|Patricia Arquette;person|Ebon Moss-Bachrach;person|David Attenborough;person|Chloë Grace Moretz;person|Milo Machado-Graner;person|Matthew McConaughey;person|Geneva Robertson-Dworet
+a	items-movie	title|Arrival;title|American Fiction;title|Anatomy of a Fall;title|The Arrival;title|Everything Everywhere All at Once;title|CODA;title|Maestro;title|Past Lives;title|Interstellar;title|Dune: Part Two;title|Marvel One-Shots;title|The Harvey Girls;title|Blade Runner 2049;title|Carnival of Souls;title|The Grand Budapest Hotel;title|The Mitchells vs. the Machines
+a	items-show	title|Dark;title|Fallout;title|The Bear;title|Severance;title|Carnivàle;title|Our Planet;title|Carnival Row;title|Larva Island;title|Carnival Eats;title|The Last of Us;title|The Peripheral;title|Blue Planet II;title|9-1-1: Lone Star;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|9-1-1
+a	items-person	person|Amy Adams;person|Adam Scott;person|Anna Sawai;person|Ayo Edebiri;person|Aaron Moten;person|Ana de Armas;person|Austin Butler;person|Abbi Jacobson;person|Anne Hathaway;person|Alex Borstein;person|Alastair Fothergill;person|Wes Anderson;person|Jeremy Allen White;person|Tzi Ma;person|Zendaya;person|Issa Rae;person|Greta Lee;person|Gary Carr;person|Siân Heder;person|Matt Damon;person|Emma Stone;person|Hank Green;person|Claire Foy;person|Matt Smith;person|John Magaro;person|Mike Rianda;person|Chris Evans;person|Ke Huy Quan;person|Daniel Kwan;person|Zach Cherry;person|Lisa Vicari;person|Craig Mazin;person|James Weiss;person|Jack Reynor;person|Charlie Cox;person|John Hodiak;person|Maya Rudolph;person|Emilia Jones;person|Sam Rockwell;person|Duncan Jones;person|Daniel Craig;person|Rian Johnson;person|Willem Dafoe;person|Mark Ruffalo;person|Swann Arlaud;person|Dan Erickson;person|Pedro Pascal;person|Bella Ramsey;person|Cosmo Jarvis;person|Rachel Kondo;person|Justin Marks;person|Ella Purnell;person|Peter Morgan;person|Rafe Judkins;person|Ryan Gosling;person|Judy Garland;person|Javier Bardem;person|Danny McBride;person|Marlee Matlin;person|Daniel Durant;person|Ralph Fiennes;person|Saoirse Ronan;person|Stephanie Hsu;person|Sandra Hüller;person|Louis Hofmann;person|Baran bo Odar;person|Jantje Friese;person|Graham Wagner;person|Olivia Colman;person|Rosamund Pike;person|Orlando Bloom;person|Charlie Sheen;person|Harrison Ford;person|Cillian Murphy;person|Lily Gladstone;person|Bradley Cooper;person|Carey Mulligan;person|Oliver Masucci;person|Neil Druckmann;person|Walton Goggins;person|Lindsay Crouse;person|Forest Whitaker;person|Martin Scorsese;person|Jonathan Glazer;person|Hiroyuki Sanada;person|Cara Delevingne;person|Rebecca Ferguson;person|Jamie Lee Curtis;person|Daniel Scheinert;person|Yorgos Lanthimos;person|Josha Stradowski;person|James Honeyborne;person|Jessica Chastain;person|Rachel Brosnahan;person|Michael Stuhlbarg;person|Timothée Chalamet;person|Christopher Nolan;person|Leonardo DiCaprio;person|Christian Friedel;person|Patricia Arquette;person|Ebon Moss-Bachrach;person|David Attenborough;person|Chloë Grace Moretz;person|Milo Machado-Graner;person|Matthew McConaughey;person|Geneva Robertson-Dworet
+a	items-included	title|Arrival;title|American Fiction;title|Anatomy of a Fall;title|Everything Everywhere All at Once;title|CODA;title|Dark;title|Maestro;title|Fallout;title|The Bear;title|Severance;title|Carnivàle;title|Past Lives;title|Our Planet;title|Carnival Row;title|Larva Island;title|Carnival Eats;title|Dune: Part Two;title|The Last of Us;title|The Peripheral;title|Blue Planet II;title|Marvel One-Shots;title|9-1-1: Lone Star;title|Carnival of Souls;title|Marvel’s Daredevil;title|The Grand Budapest Hotel;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|The Mitchells vs. the Machines;title|9-1-1
+ar	titles	title|Arrival|147.2|0,1;title|The Arrival|115.6|4,5;title|Dark|106.4|1,2;title|The Bear|104.8|6,7;title|Carnivàle|104.4|1,2;title|American Fiction|103.6|0,3;title|Carnival Row|103.2|1,2;title|Interstellar|103.2|10,11;title|Larva Island|103.2|1,2;title|Carnival Eats|102.8|1,2;title|Dune: Part Two|102.4|7,8;title|Blade Runner 2049|102.2|2,6;title|Marvel One-Shots|101.6|1,2;title|The Harvey Girls|101.6|5,6;title|9-1-1: Lone Star|101.6|14,15;title|Carnival of Souls|101.2|1,2;title|Marvel’s Daredevil|100.8|1,2;title|The Marvelous Mrs. Maisel|98|5,6;title|Marvel Studios: Assembled|98|1,2;title|Maestro|94.2|1,5
+ar	people	person|Issa Rae|101.8|3,5;person|Aaron Moten|100.6|0,2;person|Bella Ramsey|100.2|4,6;person|Sam Rockwell|99.2|1,4;person|Jack Reynor|98.6|1,5;person|Gary Carr|98.4|1,2;person|Maya Rudolph|98.2|1,5;person|Wes Anderson|98.2|4,8;person|Charlie Cox|97.6|2,3;person|Mark Ruffalo|97.2|1,2;person|Cosmo Jarvis|97.2|7,8;person|Justin Marks|97.2|8,9;person|Judy Garland|97.2|6,7;person|Marlee Matlin|96.8|1,2;person|Baran bo Odar|96.8|1,2;person|Charlie Sheen|96.8|2,3;person|Harrison Ford|96.8|1,2;person|Carey Mulligan|96.4|1,2;person|Martin Scorsese|96|1,2;person|Cara Delevingne|96|1,2;person|Geneva Robertson-Dworet|95.8|5,7;person|Leonardo DiCaprio|95.2|4,5;person|Alex Borstein|94.8|0,7;person|Ana de Armas|94.2|0,8;person|Ayo Edebiri|93.6|0,9;person|Austin Butler|92.8|0,12;person|Alastair Fothergill|92.4|0,7;person|Claire Foy|89|2,4;person|John Magaro|87.6|6,9;person|Saoirse Ronan|86.8|1,4;person|Sandra Hüller|86.8|1,4;person|Patricia Arquette|86.2|1,3;person|Dan Erickson|86.2|1,5;person|Ella Purnell|86.2|3,7;person|Forest Whitaker|86|11,14;person|Hank Green|86|1,6;person|Javier Bardem|85.8|1,5;person|Lindsay Crouse|85.4|5,9;person|Swann Arlaud|85.2|2,7;person|Ebon Moss-Bachrach|84.8|11,14;person|Rebecca Ferguson|84.6|6,10;person|Lisa Vicari|84.6|3,9;person|Josha Stradowski|84.6|4,8;person|Cillian Murphy|84.4|5,10;person|Christian Friedel|84.2|7,11;person|Siân Heder|84|2,9;person|Zach Cherry|83.6|1,8;person|Daniel Craig|83.2|1,8;person|Jantje Friese|82.8|1,8;person|Danny McBride|81.8|1,9;person|Daniel Durant|81.8|1,9;person|Chloë Grace Moretz|81.8|8,14;person|Rachel Brosnahan|81.6|1,8;person|Graham Wagner|80.8|2,12;person|Bradley Cooper|80.4|2,13;person|Jonathan Glazer|80|3,14;person|Jamie Lee Curtis|79.6|1,12;person|Daniel Scheinert|79.6|1,14;person|James Honeyborne|79.6|1,13;person|Milo Machado-Graner|79.4|6,14;person|Michael Stuhlbarg|79.2|4,15;person|David Attenborough|78.8|1,13
+ar	genres	genre|Documentary|99.6|8,9;genre|Adventure|98.4|0,7
+ar	suggestions	title|Arrival|147.2|0,1;title|The Arrival|115.6|4,5;title|Dark|106.4|1,2;title|The Bear|104.8|6,7
+ar	items-all	title|Arrival;title|The Arrival;title|Dark;title|The Bear;title|Carnivàle;title|American Fiction;title|Carnival Row;title|Interstellar;title|Larva Island;title|Carnival Eats;title|Dune: Part Two;title|Blade Runner 2049;title|Marvel One-Shots;title|The Harvey Girls;title|9-1-1: Lone Star;title|Carnival of Souls;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Maestro;title|Our Planet;title|Journey to the Microcosmos;title|Blue Planet II;person|Issa Rae;person|Aaron Moten;person|Bella Ramsey;person|Sam Rockwell;person|Jack Reynor;person|Gary Carr;person|Maya Rudolph;person|Wes Anderson;person|Charlie Cox;person|Mark Ruffalo;person|Cosmo Jarvis;person|Justin Marks;person|Judy Garland;person|Marlee Matlin;person|Baran bo Odar;person|Charlie Sheen;person|Harrison Ford;person|Carey Mulligan;person|Martin Scorsese;person|Cara Delevingne;person|Geneva Robertson-Dworet;person|Leonardo DiCaprio;person|Alex Borstein;person|Ana de Armas;person|Ayo Edebiri;person|Austin Butler;person|Alastair Fothergill;person|Claire Foy;person|John Magaro;person|Saoirse Ronan;person|Sandra Hüller;person|Patricia Arquette;person|Dan Erickson;person|Ella Purnell;person|Forest Whitaker;person|Hank Green;person|Javier Bardem;person|Lindsay Crouse;person|Swann Arlaud;person|Ebon Moss-Bachrach;person|Rebecca Ferguson;person|Lisa Vicari;person|Josha Stradowski;person|Cillian Murphy;person|Christian Friedel;person|Siân Heder;person|Zach Cherry;person|Daniel Craig;person|Jantje Friese;person|Danny McBride;person|Daniel Durant;person|Chloë Grace Moretz;person|Rachel Brosnahan;person|Graham Wagner;person|Bradley Cooper;person|Jonathan Glazer;person|Jamie Lee Curtis;person|Daniel Scheinert;person|James Honeyborne;person|Milo Machado-Graner;person|Michael Stuhlbarg;person|David Attenborough
+ar	items-movie	title|Arrival;title|The Arrival;title|American Fiction;title|Interstellar;title|Dune: Part Two;title|Blade Runner 2049;title|Marvel One-Shots;title|The Harvey Girls;title|Carnival of Souls;title|Maestro
+ar	items-show	title|Dark;title|The Bear;title|Carnivàle;title|Carnival Row;title|Larva Island;title|Carnival Eats;title|9-1-1: Lone Star;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Our Planet;title|Journey to the Microcosmos;title|Blue Planet II
+ar	items-person	person|Issa Rae;person|Aaron Moten;person|Bella Ramsey;person|Sam Rockwell;person|Jack Reynor;person|Gary Carr;person|Maya Rudolph;person|Wes Anderson;person|Charlie Cox;person|Mark Ruffalo;person|Cosmo Jarvis;person|Justin Marks;person|Judy Garland;person|Marlee Matlin;person|Baran bo Odar;person|Charlie Sheen;person|Harrison Ford;person|Carey Mulligan;person|Martin Scorsese;person|Cara Delevingne;person|Geneva Robertson-Dworet;person|Leonardo DiCaprio;person|Alex Borstein;person|Ana de Armas;person|Ayo Edebiri;person|Austin Butler;person|Alastair Fothergill;person|Claire Foy;person|John Magaro;person|Saoirse Ronan;person|Sandra Hüller;person|Patricia Arquette;person|Dan Erickson;person|Ella Purnell;person|Forest Whitaker;person|Hank Green;person|Javier Bardem;person|Lindsay Crouse;person|Swann Arlaud;person|Ebon Moss-Bachrach;person|Rebecca Ferguson;person|Lisa Vicari;person|Josha Stradowski;person|Cillian Murphy;person|Christian Friedel;person|Siân Heder;person|Zach Cherry;person|Daniel Craig;person|Jantje Friese;person|Danny McBride;person|Daniel Durant;person|Chloë Grace Moretz;person|Rachel Brosnahan;person|Graham Wagner;person|Bradley Cooper;person|Jonathan Glazer;person|Jamie Lee Curtis;person|Daniel Scheinert;person|James Honeyborne;person|Milo Machado-Graner;person|Michael Stuhlbarg;person|David Attenborough
+ar	items-included	title|Arrival;title|Dark;title|The Bear;title|Carnivàle;title|American Fiction;title|Carnival Row;title|Larva Island;title|Carnival Eats;title|Dune: Part Two;title|Marvel One-Shots;title|9-1-1: Lone Star;title|Carnival of Souls;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Maestro;title|Our Planet;title|Journey to the Microcosmos;title|Blue Planet II
+arv	titles	title|Arrival|115.2|0,1,4;title|The Arrival|113.6|4,5,8;title|Larva Island|111.2|1,2,3;title|Marvel One-Shots|109.6|1,2,3;title|The Harvey Girls|109.6|5,6,7;title|Marvel’s Daredevil|108.8|1,2,3;title|The Marvelous Mrs. Maisel|106|5,6,7;title|Marvel Studios: Assembled|106|1,2,3;title|Carnivàle|102.4|1,2,5;title|Carnival Row|101.2|1,2,5;title|Carnival Eats|100.8|1,2,5;title|Carnival of Souls|99.2|1,2,5
+arv	people	person|Cosmo Jarvis|105.2|7,8,9;person|Cara Delevingne|90|1,2,9
+arv	genres	
+arv	suggestions	title|Arrival|115.2|0,1,4;title|The Arrival|113.6|4,5,8;title|Larva Island|111.2|1,2,3;title|Marvel One-Shots|109.6|1,2,3
+arv	items-all	title|Arrival;title|The Arrival;title|Larva Island;title|Marvel One-Shots;title|The Harvey Girls;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls;person|Cosmo Jarvis;person|Cara Delevingne
+arv	items-movie	title|Arrival;title|The Arrival;title|Marvel One-Shots;title|The Harvey Girls;title|Carnival of Souls
+arv	items-show	title|Larva Island;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats
+arv	items-person	person|Cosmo Jarvis;person|Cara Delevingne
+arv	items-included	title|Arrival;title|Larva Island;title|Marvel One-Shots;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+arvl	titles	title|Arrival|114.2|0,1,4,6;title|The Arrival|112.6|4,5,8,10;title|Marvel One-Shots|108.6|1,2,3,5;title|Marvel’s Daredevil|107.8|1,2,3,5;title|Larva Island|107.2|1,2,3,8;title|The Marvelous Mrs. Maisel|105|5,6,7,9;title|Marvel Studios: Assembled|105|1,2,3,5;title|The Harvey Girls|103.6|5,6,7,14;title|Carnivàle|101.4|1,2,5,7;title|Carnival Row|100.2|1,2,5,7;title|Carnival Eats|99.8|1,2,5,7;title|Carnival of Souls|98.2|1,2,5,7
+arvl	people	
+arvl	genres	
+arvl	suggestions	title|Arrival|114.2|0,1,4,6;title|The Arrival|112.6|4,5,8,10;title|Marvel One-Shots|108.6|1,2,3,5;title|Marvel’s Daredevil|107.8|1,2,3,5
+arvl	items-all	title|Arrival;title|The Arrival;title|Marvel One-Shots;title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|The Harvey Girls;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+arvl	items-movie	title|Arrival;title|The Arrival;title|Marvel One-Shots;title|The Harvey Girls;title|Carnival of Souls
+arvl	items-show	title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats
+arvl	items-person	
+arvl	items-included	title|Arrival;title|Marvel One-Shots;title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+arrival	titles	title|Arrival|227.2|0,1,2,3,4,5,6;title|The Arrival|155.6|4,5,6,7,8,9,10;title|Carnival Row|20|0,1,2,3,4,5,6;title|Carnival of Souls|20|0,1,2,3,4,5,6;title|Carnival Eats|20|0,1,2,3,4,5,6
+arrival	people	
+arrival	genres	
+arrival	suggestions	title|Arrival|227.2|0,1,2,3,4,5,6;title|The Arrival|155.6|4,5,6,7,8,9,10;title|Carnival Row|20|0,1,2,3,4,5,6;title|Carnival of Souls|20|0,1,2,3,4,5,6
+arrival	items-all	title|Arrival;title|The Arrival;title|Carnival Row;title|Carnival of Souls;title|Carnival Eats
+arrival	items-movie	title|Arrival;title|The Arrival;title|Carnival of Souls
+arrival	items-show	title|Carnival Row;title|Carnival Eats
+arrival	items-person	
+arrival	items-included	title|Arrival;title|Carnival Row;title|Carnival of Souls;title|Carnival Eats
+arrivsl	titles	title|Arrival|30|0,1,2,3,4,5,6;title|The Arrival|30|4,5,6,7,8,9,10
+arrivsl	people	
+arrivsl	genres	
+arrivsl	suggestions	title|Arrival|30|0,1,2,3,4,5,6;title|The Arrival|30|4,5,6,7,8,9,10
+arrivsl	items-all	title|Arrival;title|The Arrival
+arrivsl	items-movie	title|Arrival;title|The Arrival
+arrivsl	items-show	
+arrivsl	items-person	
+arrivsl	items-included	title|Arrival
+arival	titles	title|Arrival|140.2|0,1,3,4,5,6;title|The Arrival|138.6|4,5,7,8,9,10;title|Carnivàle|127.4|1,2,4,5,6,7;title|Carnival Row|126.2|1,2,4,5,6,7;title|Carnival Eats|125.8|1,2,4,5,6,7;title|Carnival of Souls|124.2|1,2,4,5,6,7
+arival	people	
+arival	genres	
+arival	suggestions	title|Arrival|140.2|0,1,3,4,5,6;title|The Arrival|138.6|4,5,7,8,9,10;title|Carnivàle|127.4|1,2,4,5,6,7;title|Carnival Row|126.2|1,2,4,5,6,7
+arival	items-all	title|Arrival;title|The Arrival;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+arival	items-movie	title|Arrival;title|The Arrival;title|Carnival of Souls
+arival	items-show	title|Carnivàle;title|Carnival Row;title|Carnival Eats
+arival	items-person	
+arival	items-included	title|Arrival;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+arirval	titles	title|Arrival|30|0,1,2,3,4,5,6;title|The Arrival|30|4,5,6,7,8,9,10
+arirval	people	
+arirval	genres	
+arirval	suggestions	title|Arrival|30|0,1,2,3,4,5,6;title|The Arrival|30|4,5,6,7,8,9,10
+arirval	items-all	title|Arrival;title|The Arrival
+arirval	items-movie	title|Arrival;title|The Arrival
+arirval	items-show	
+arirval	items-person	
+arirval	items-included	title|Arrival
+the	titles	title|The Bear|154.8|0,1,2;title|The Crown|154.4|0,1,2;title|The Arrival|153.6|0,1,2;title|The Last of Us|152.4|0,1,2;title|The Peripheral|152.4|0,1,2;title|The Harvey Girls|151.6|0,1,2;title|The Wheel of Time|151.2|0,1,2;title|The Zone of Interest|150|0,1,2;title|The Grand Budapest Hotel|148.4|0,1,2;title|The Marvelous Mrs. Maisel|148|0,1,2;title|The Mitchells vs. the Machines|146|0,1,2;title|Killers of the Flower Moon|117.6|11,12,13;title|Journey to the Microcosmos|106.6|8,12,13;title|Everything Everywhere All at Once|102.8|5,6,11
+the	people	person|Timothée Chalamet|103.2|0,5,6;person|Matthew McConaughey|93.4|2,4,5;person|Christopher Nolan|93.2|5,8,9;person|Christopher Storer|92.8|5,8,9;person|Jonathan Glazer|89|4,5,13;person|Alastair Fothergill|87.4|4,12,13;person|Stephanie Hsu|83.8|1,4,8;person|Forest Whitaker|82|5,8,13
+the	genres	genre|Thriller|108.8|0,1,6
+the	suggestions	title|The Bear|154.8|0,1,2;title|The Crown|154.4|0,1,2;title|The Arrival|153.6|0,1,2;title|The Last of Us|152.4|0,1,2
+the	items-all	title|The Bear;title|The Crown;title|The Arrival;title|The Last of Us;title|The Peripheral;title|The Harvey Girls;title|The Wheel of Time;title|The Zone of Interest;title|The Grand Budapest Hotel;title|The Marvelous Mrs. Maisel;title|The Mitchells vs. the Machines;title|Killers of the Flower Moon;title|Journey to the Microcosmos;title|Everything Everywhere All at Once;title|Severance;person|Timothée Chalamet;person|Matthew McConaughey;person|Christopher Nolan;person|Christopher Storer;person|Jonathan Glazer;person|Alastair Fothergill;person|Stephanie Hsu;person|Forest Whitaker
+the	items-movie	title|The Arrival;title|The Harvey Girls;title|The Zone of Interest;title|The Grand Budapest Hotel;title|The Mitchells vs. the Machines;title|Killers of the Flower Moon;title|Everything Everywhere All at Once
+the	items-show	title|The Bear;title|The Crown;title|The Last of Us;title|The Peripheral;title|The Wheel of Time;title|The Marvelous Mrs. Maisel;title|Journey to the Microcosmos;title|Severance
+the	items-person	person|Timothée Chalamet;person|Matthew McConaughey;person|Christopher Nolan;person|Christopher Storer;person|Jonathan Glazer;person|Alastair Fothergill;person|Stephanie Hsu;person|Forest Whitaker
+the	items-included	title|The Bear;title|The Crown;title|The Last of Us;title|The Peripheral;title|The Wheel of Time;title|The Zone of Interest;title|The Grand Budapest Hotel;title|The Marvelous Mrs. Maisel;title|The Mitchells vs. the Machines;title|Killers of the Flower Moon;title|Journey to the Microcosmos;title|Everything Everywhere All at Once;title|Severance
+the arrival	titles	title|The Arrival|269.6|0,1,2,3,4,5,6,7,8,9,10
+the arrival	people	
+the arrival	genres	
+the arrival	suggestions	title|The Arrival|269.6|0,1,2,3,4,5,6,7,8,9,10
+the arrival	items-all	title|The Arrival
+the arrival	items-movie	title|The Arrival
+the arrival	items-show	
+the arrival	items-person	
+the arrival	items-included	
+marvel	titles	title|Marvel One-Shots|175.6|0,1,2,3,4,5;title|Marvel’s Daredevil|174.8|0,1,2,3,4,5;title|Marvel Studios: Assembled|172|0,1,2,3,4,5;title|The Marvelous Mrs. Maisel|142|4,5,6,7,8,9
+marvel	people	
+marvel	genres	
+marvel	suggestions	title|Marvel One-Shots|175.6|0,1,2,3,4,5;title|Marvel’s Daredevil|174.8|0,1,2,3,4,5;title|Marvel Studios: Assembled|172|0,1,2,3,4,5;title|The Marvelous Mrs. Maisel|142|4,5,6,7,8,9
+marvel	items-all	title|Marvel One-Shots;title|Marvel’s Daredevil;title|Marvel Studios: Assembled;title|The Marvelous Mrs. Maisel
+marvel	items-movie	title|Marvel One-Shots
+marvel	items-show	title|Marvel’s Daredevil;title|Marvel Studios: Assembled;title|The Marvelous Mrs. Maisel
+marvel	items-person	
+marvel	items-included	title|Marvel One-Shots;title|Marvel’s Daredevil;title|Marvel Studios: Assembled;title|The Marvelous Mrs. Maisel
+mrvl	titles	title|Marvel One-Shots|111.6|0,2,3,5;title|Marvel’s Daredevil|110.8|0,2,3,5;title|The Marvelous Mrs. Maisel|108|4,6,7,9;title|Marvel Studios: Assembled|108|0,2,3,5
+mrvl	people	
+mrvl	genres	
+mrvl	suggestions	title|Marvel One-Shots|111.6|0,2,3,5;title|Marvel’s Daredevil|110.8|0,2,3,5;title|The Marvelous Mrs. Maisel|108|4,6,7,9;title|Marvel Studios: Assembled|108|0,2,3,5
+mrvl	items-all	title|Marvel One-Shots;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled
+mrvl	items-movie	title|Marvel One-Shots
+mrvl	items-show	title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled
+mrvl	items-person	
+mrvl	items-included	title|Marvel One-Shots;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled
+dune	titles	title|Dune: Part Two|160.4|0,1,2,3;title|Blade Runner 2049|97.2|3,7,8,10
+dune	people	person|Duncan Jones|110.2|0,1,2,10
+dune	genres	
+dune	suggestions	title|Dune: Part Two|160.4|0,1,2,3;person|Duncan Jones|110.2|0,1,2,10;title|Blade Runner 2049|97.2|3,7,8,10
+dune	items-all	title|Dune: Part Two;title|Blade Runner 2049;person|Duncan Jones
+dune	items-movie	title|Dune: Part Two;title|Blade Runner 2049
+dune	items-show	
+dune	items-person	person|Duncan Jones
+dune	items-included	title|Dune: Part Two
+dnue	titles	title|Dune: Part Two|30|0,1,2,3
+dnue	people	person|Dominique McElligott|101|0,4,7,8;person|Denis Villeneuve|89.6|0,2,13,15
+dnue	genres	genre|Adventure|88.4|1,4,6,8
+dnue	suggestions	person|Dominique McElligott|101|0,4,7,8;person|Denis Villeneuve|89.6|0,2,13,15;genre|Adventure|88.4|1,4,6,8;title|Dune: Part Two|30|0,1,2,3
+dnue	items-all	title|Dune: Part Two;title|The Wheel of Time;title|Interstellar;person|Dominique McElligott;person|Denis Villeneuve
+dnue	items-movie	title|Dune: Part Two;title|Interstellar
+dnue	items-show	title|The Wheel of Time
+dnue	items-person	person|Dominique McElligott;person|Denis Villeneuve
+dnue	items-included	title|Dune: Part Two;title|The Wheel of Time
+dune part two	titles	title|Dune: Part Two|229.4|0,1,2,3,5,6,7,8,9,10,11,12,13
+dune part two	people	
+dune part two	genres	
+dune part two	suggestions	title|Dune: Part Two|229.4|0,1,2,3,5,6,7,8,9,10,11,12,13
+dune part two	items-all	title|Dune: Part Two
+dune part two	items-movie	title|Dune: Part Two
+dune part two	items-show	
+dune part two	items-person	
+dune part two	items-included	title|Dune: Part Two
+amy adams	titles	
+amy adams	people	person|Amy Adams|248.4|0,1,2,3,4,5,6,7,8
+amy adams	genres	
+amy adams	suggestions	person|Amy Adams|248.4|0,1,2,3,4,5,6,7,8
+amy adams	items-all	person|Amy Adams
+amy adams	items-movie	
+amy adams	items-show	
+amy adams	items-person	person|Amy Adams
+amy adams	items-included	
+amy	titles	title|Anatomy of a Fall|109.2|0,5,6
+amy	people	person|Amy Adams|148.4|0,1,2;person|Cillian Murphy|94.4|5,8,13;person|James Honeyborne|88.6|1,2,10;person|Matthew McConaughey|84.4|1,8,18;person|Bella Ramsey|84.2|4,8,11
+amy	genres	
+amy	suggestions	person|Amy Adams|148.4|0,1,2;title|Anatomy of a Fall|109.2|0,5,6;person|Cillian Murphy|94.4|5,8,13
+amy	items-all	title|Anatomy of a Fall;person|Amy Adams;person|Cillian Murphy;person|James Honeyborne;person|Matthew McConaughey;person|Bella Ramsey
+amy	items-movie	title|Anatomy of a Fall
+amy	items-show	
+amy	items-person	person|Amy Adams;person|Cillian Murphy;person|James Honeyborne;person|Matthew McConaughey;person|Bella Ramsey
+amy	items-included	title|Anatomy of a Fall
+adams	titles	
+adams	people	person|Adam Scott|137|0,1,2,3,5;person|Amy Adams|122.4|0,5,6,7,8;person|Ana de Armas|118.19999999999999|0,4,7,9,11
+adams	genres	
+adams	suggestions	person|Adam Scott|137|0,1,2,3,5;person|Amy Adams|122.4|0,5,6,7,8
+adams	items-all	person|Adam Scott;person|Amy Adams;person|Ana de Armas
+adams	items-movie	
+adams	items-show	
+adams	items-person	person|Adam Scott;person|Amy Adams;person|Ana de Armas
+adams	items-included	
+sci-fi	titles	
+sci-fi	people	
+sci-fi	genres	genre|Sci-fi|227.6|0,1,2,3,4,5
+sci-fi	suggestions	genre|Sci-fi|227.6|0,1,2,3,4,5
+sci-fi	items-all	title|Arrival;title|Dune: Part Two;title|Moon;title|Everything Everywhere All at Once;title|Poor Things;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral;title|The Arrival;title|Blade Runner 2049;title|Interstellar
+sci-fi	items-movie	title|Arrival;title|Dune: Part Two;title|Moon;title|Everything Everywhere All at Once;title|Poor Things;title|The Arrival;title|Blade Runner 2049;title|Interstellar
+sci-fi	items-show	title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral
+sci-fi	items-person	
+sci-fi	items-included	title|Arrival;title|Dune: Part Two;title|Everything Everywhere All at Once;title|Poor Things;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral
+scifi	titles	
+scifi	people	
+scifi	genres	genre|Sci-fi|140.6|0,1,2,4,5
+scifi	suggestions	genre|Sci-fi|140.6|0,1,2,4,5
+scifi	items-all	title|Arrival;title|Dune: Part Two;title|Moon;title|Everything Everywhere All at Once;title|Poor Things;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral;title|The Arrival;title|Blade Runner 2049;title|Interstellar
+scifi	items-movie	title|Arrival;title|Dune: Part Two;title|Moon;title|Everything Everywhere All at Once;title|Poor Things;title|The Arrival;title|Blade Runner 2049;title|Interstellar
+scifi	items-show	title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral
+scifi	items-person	
+scifi	items-included	title|Arrival;title|Dune: Part Two;title|Everything Everywhere All at Once;title|Poor Things;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral
+carnival row	titles	title|Carnival Row|277.2|0,1,2,3,4,5,6,7,8,9,10,11
+carnival row	people	
+carnival row	genres	
+carnival row	suggestions	title|Carnival Row|277.2|0,1,2,3,4,5,6,7,8,9,10,11
+carnival row	items-all	title|Carnival Row
+carnival row	items-movie	
+carnival row	items-show	title|Carnival Row
+carnival row	items-person	
+carnival row	items-included	title|Carnival Row
+carnivale	titles	title|Carnivàle|242.4|0,1,2,3,4,5,6,7,8;title|Carnival Eats|173.8|0,1,2,3,4,5,6,7,9;title|Carnival Row|30|0,1,2,3,4,5,6,7;title|Carnival of Souls|30|0,1,2,3,4,5,6,7
+carnivale	people	
+carnivale	genres	
+carnivale	suggestions	title|Carnivàle|242.4|0,1,2,3,4,5,6,7,8;title|Carnival Eats|173.8|0,1,2,3,4,5,6,7,9;title|Carnival Row|30|0,1,2,3,4,5,6,7;title|Carnival of Souls|30|0,1,2,3,4,5,6,7
+carnivale	items-all	title|Carnivàle;title|Carnival Eats;title|Carnival Row;title|Carnival of Souls
+carnivale	items-movie	title|Carnival of Souls
+carnivale	items-show	title|Carnivàle;title|Carnival Eats;title|Carnival Row
+carnivale	items-person	
+carnivale	items-included	title|Carnivàle;title|Carnival Eats;title|Carnival Row;title|Carnival of Souls
+carnivàle	titles	title|Carnivàle|242.4|0,1,2,3,4,5,6,7,8;title|Carnival Eats|173.8|0,1,2,3,4,5,6,7,9;title|Carnival Row|30|0,1,2,3,4,5,6,7;title|Carnival of Souls|30|0,1,2,3,4,5,6,7
+carnivàle	people	
+carnivàle	genres	
+carnivàle	suggestions	title|Carnivàle|242.4|0,1,2,3,4,5,6,7,8;title|Carnival Eats|173.8|0,1,2,3,4,5,6,7,9;title|Carnival Row|30|0,1,2,3,4,5,6,7;title|Carnival of Souls|30|0,1,2,3,4,5,6,7
+carnivàle	items-all	title|Carnivàle;title|Carnival Eats;title|Carnival Row;title|Carnival of Souls
+carnivàle	items-movie	title|Carnival of Souls
+carnivàle	items-show	title|Carnivàle;title|Carnival Eats;title|Carnival Row
+carnivàle	items-person	
+carnivàle	items-included	title|Carnivàle;title|Carnival Eats;title|Carnival Row;title|Carnival of Souls
+qzxv	titles	
+qzxv	people	
+qzxv	genres	
+qzxv	suggestions	
+qzxv	items-all	
+qzxv	items-movie	
+qzxv	items-show	
+qzxv	items-person	
+qzxv	items-included	
+zzzz	titles	
+zzzz	people	
+zzzz	genres	
+zzzz	suggestions	
+zzzz	items-all	
+zzzz	items-movie	
+zzzz	items-show	
+zzzz	items-person	
+zzzz	items-included	
+severance	titles	title|Severance|242.4|0,1,2,3,4,5,6,7,8
+severance	people	
+severance	genres	
+severance	suggestions	title|Severance|242.4|0,1,2,3,4,5,6,7,8
+severance	items-all	title|Severance
+severance	items-movie	
+severance	items-show	title|Severance
+severance	items-person	
+severance	items-included	title|Severance
+sevrance	titles	title|Severance|155.4|0,1,2,4,5,6,7,8
+sevrance	people	
+sevrance	genres	
+sevrance	suggestions	title|Severance|155.4|0,1,2,4,5,6,7,8
+sevrance	items-all	title|Severance
+sevrance	items-movie	
+sevrance	items-show	title|Severance
+sevrance	items-person	
+sevrance	items-included	title|Severance
+severence	titles	title|Severance|30|0,1,2,3,4,5,6,7,8
+severence	people	
+severence	genres	
+severence	suggestions	title|Severance|30|0,1,2,3,4,5,6,7,8
+severence	items-all	title|Severance
+severence	items-movie	
+severence	items-show	title|Severance
+severence	items-person	
+severence	items-included	title|Severance
+drama	titles	
+drama	people	
+drama	genres	genre|Drama|208|0,1,2,3,4
+drama	suggestions	genre|Drama|208|0,1,2,3,4
+drama	items-all	title|Arrival;title|Past Lives;title|CODA;title|Oppenheimer;title|Killers of the Flower Moon;title|Maestro;title|The Zone of Interest;title|Anatomy of a Fall;title|American Fiction;title|The Bear;title|The Last of Us;title|Shōgun;title|Fallout;title|The Crown;title|Blade Runner 2049;title|The Marvelous Mrs. Maisel;title|Carnivàle;title|9-1-1;title|9-1-1: Lone Star
+drama	items-movie	title|Arrival;title|Past Lives;title|CODA;title|Oppenheimer;title|Killers of the Flower Moon;title|Maestro;title|The Zone of Interest;title|Anatomy of a Fall;title|American Fiction;title|Blade Runner 2049
+drama	items-show	title|The Bear;title|The Last of Us;title|Shōgun;title|Fallout;title|The Crown;title|The Marvelous Mrs. Maisel;title|Carnivàle;title|9-1-1;title|9-1-1: Lone Star
+drama	items-person	
+drama	items-included	title|Arrival;title|Past Lives;title|CODA;title|Oppenheimer;title|Killers of the Flower Moon;title|Maestro;title|The Zone of Interest;title|Anatomy of a Fall;title|American Fiction;title|The Bear;title|The Last of Us;title|Shōgun;title|Fallout;title|The Crown;title|The Marvelous Mrs. Maisel;title|Carnivàle;title|9-1-1;title|9-1-1: Lone Star
+drma	titles	
+drma	people	person|Ana de Armas|114.2|4,8,9,10;person|Neil Druckmann|113.4|5,6,10,11
+drma	genres	genre|Drama|121|0,1,3,4
+drma	suggestions	genre|Drama|121|0,1,3,4;person|Ana de Armas|114.2|4,8,9,10;person|Neil Druckmann|113.4|5,6,10,11
+drma	items-all	title|Arrival;title|Past Lives;title|CODA;title|Oppenheimer;title|Killers of the Flower Moon;title|Maestro;title|The Zone of Interest;title|Anatomy of a Fall;title|American Fiction;title|The Bear;title|The Last of Us;title|Shōgun;title|Fallout;title|The Crown;title|Blade Runner 2049;title|The Marvelous Mrs. Maisel;title|Carnivàle;title|9-1-1;title|9-1-1: Lone Star;person|Ana de Armas;person|Neil Druckmann
+drma	items-movie	title|Arrival;title|Past Lives;title|CODA;title|Oppenheimer;title|Killers of the Flower Moon;title|Maestro;title|The Zone of Interest;title|Anatomy of a Fall;title|American Fiction;title|Blade Runner 2049
+drma	items-show	title|The Bear;title|The Last of Us;title|Shōgun;title|Fallout;title|The Crown;title|The Marvelous Mrs. Maisel;title|Carnivàle;title|9-1-1;title|9-1-1: Lone Star
+drma	items-person	person|Ana de Armas;person|Neil Druckmann
+drma	items-included	title|Arrival;title|Past Lives;title|CODA;title|Oppenheimer;title|Killers of the Flower Moon;title|Maestro;title|The Zone of Interest;title|Anatomy of a Fall;title|American Fiction;title|The Bear;title|The Last of Us;title|Shōgun;title|Fallout;title|The Crown;title|The Marvelous Mrs. Maisel;title|Carnivàle;title|9-1-1;title|9-1-1: Lone Star
+comedy	titles	
+comedy	people	
+comedy	genres	genre|Comedy|215.6|0,1,2,3,4,5
+comedy	suggestions	genre|Comedy|215.6|0,1,2,3,4,5
+comedy	items-all	title|The Mitchells vs. the Machines;title|Knives Out;title|The Grand Budapest Hotel;title|Everything Everywhere All at Once;title|Poor Things;title|American Fiction;title|The Bear;title|Larva Island;title|The Marvelous Mrs. Maisel
+comedy	items-movie	title|The Mitchells vs. the Machines;title|Knives Out;title|The Grand Budapest Hotel;title|Everything Everywhere All at Once;title|Poor Things;title|American Fiction
+comedy	items-show	title|The Bear;title|Larva Island;title|The Marvelous Mrs. Maisel
+comedy	items-person	
+comedy	items-included	title|The Mitchells vs. the Machines;title|Knives Out;title|The Grand Budapest Hotel;title|Everything Everywhere All at Once;title|Poor Things;title|American Fiction;title|The Bear;title|Larva Island;title|The Marvelous Mrs. Maisel
+documentary	titles	
+documentary	people	
+documentary	genres	genre|Documentary|253.60000000000002|0,1,2,3,4,5,6,7,8,9,10
+documentary	suggestions	genre|Documentary|253.60000000000002|0,1,2,3,4,5,6,7,8,9,10
+documentary	items-all	title|Our Planet;title|Journey to the Microcosmos;title|Blue Planet II;title|Marvel Studios: Assembled
+documentary	items-movie	
+documentary	items-show	title|Our Planet;title|Journey to the Microcosmos;title|Blue Planet II;title|Marvel Studios: Assembled
+documentary	items-person	
+documentary	items-included	title|Our Planet;title|Journey to the Microcosmos;title|Blue Planet II;title|Marvel Studios: Assembled
+dcoumentary	titles	
+dcoumentary	people	
+dcoumentary	genres	genre|Documentary|26|0,1,2,3,4,5,6,7,8,9,10
+dcoumentary	suggestions	genre|Documentary|26|0,1,2,3,4,5,6,7,8,9,10
+dcoumentary	items-all	
+dcoumentary	items-movie	
+dcoumentary	items-show	
+dcoumentary	items-person	
+dcoumentary	items-included	
+animation	titles	
+animation	people	
+animation	genres	genre|Animation|238.4|0,1,2,3,4,5,6,7,8
+animation	suggestions	genre|Animation|238.4|0,1,2,3,4,5,6,7,8
+animation	items-all	title|The Mitchells vs. the Machines;title|Larva Island
+animation	items-movie	title|The Mitchells vs. the Machines
+animation	items-show	title|Larva Island
+animation	items-person	
+animation	items-included	title|The Mitchells vs. the Machines;title|Larva Island
+thriller	titles	
+thriller	people	
+thriller	genres	genre|Thriller|230.8|0,1,2,3,4,5,6,7
+thriller	suggestions	genre|Thriller|230.8|0,1,2,3,4,5,6,7
+thriller	items-all	title|Severance;title|The Peripheral;title|The Arrival
+thriller	items-movie	title|The Arrival
+thriller	items-show	title|Severance;title|The Peripheral
+thriller	items-person	
+thriller	items-included	title|Severance;title|The Peripheral
+zendaya	titles	
+zendaya	people	person|Zendaya|221.2|0,1,2,3,4,5,6
+zendaya	genres	
+zendaya	suggestions	person|Zendaya|221.2|0,1,2,3,4,5,6
+zendaya	items-all	person|Zendaya
+zendaya	items-movie	
+zendaya	items-show	
+zendaya	items-person	person|Zendaya
+zendaya	items-included	
+chalamet	titles	
+chalamet	people	person|Timothée Chalamet|155.2|9,10,11,12,13,14,15,16
+chalamet	genres	
+chalamet	suggestions	person|Timothée Chalamet|155.2|9,10,11,12,13,14,15,16
+chalamet	items-all	person|Timothée Chalamet
+chalamet	items-movie	
+chalamet	items-show	
+chalamet	items-person	person|Timothée Chalamet
+chalamet	items-included	
+timothee	titles	
+timothee	people	person|Timothée Chalamet|185.2|0,1,2,3,4,5,6,7
+timothee	genres	
+timothee	suggestions	person|Timothée Chalamet|185.2|0,1,2,3,4,5,6,7
+timothee	items-all	person|Timothée Chalamet
+timothee	items-movie	
+timothee	items-show	
+timothee	items-person	person|Timothée Chalamet
+timothee	items-included	
+sandra	titles	
+sandra	people	person|Sandra Hüller|170.8|0,1,2,3,4,5
+sandra	genres	
+sandra	suggestions	person|Sandra Hüller|170.8|0,1,2,3,4,5
+sandra	items-all	person|Sandra Hüller
+sandra	items-movie	
+sandra	items-show	
+sandra	items-person	person|Sandra Hüller
+sandra	items-included	
+huller	titles	
+huller	people	person|Sandra Hüller|140.8|7,8,9,10,11,12
+huller	genres	
+huller	suggestions	person|Sandra Hüller|140.8|7,8,9,10,11,12
+huller	items-all	person|Sandra Hüller
+huller	items-movie	
+huller	items-show	
+huller	items-person	person|Sandra Hüller
+huller	items-included	
+hüller	titles	
+hüller	people	person|Sandra Hüller|140.8|7,8,9,10,11,12
+hüller	genres	
+hüller	suggestions	person|Sandra Hüller|140.8|7,8,9,10,11,12
+hüller	items-all	person|Sandra Hüller
+hüller	items-movie	
+hüller	items-show	
+hüller	items-person	person|Sandra Hüller
+hüller	items-included	
+villeneuve	titles	
+villeneuve	people	person|Denis Villeneuve|171.6|6,7,8,9,10,11,12,13,14,15
+villeneuve	genres	
+villeneuve	suggestions	person|Denis Villeneuve|171.6|6,7,8,9,10,11,12,13,14,15
+villeneuve	items-all	person|Denis Villeneuve
+villeneuve	items-movie	
+villeneuve	items-show	
+villeneuve	items-person	person|Denis Villeneuve
+villeneuve	items-included	
+vilenueve	titles	
+vilenueve	people	person|Denis Villeneuve|14|6,7,8,9,10,11,12,13,14
+vilenueve	genres	
+vilenueve	suggestions	person|Denis Villeneuve|14|6,7,8,9,10,11,12,13,14
+vilenueve	items-all	person|Denis Villeneuve
+vilenueve	items-movie	
+vilenueve	items-show	
+vilenueve	items-person	person|Denis Villeneuve
+vilenueve	items-included	
+moon	titles	title|Moon|204.4|0,1,2,3;title|Killers of the Flower Moon|125.6|22,23,24,25
+moon	people	person|Milo Machado-Graner|85.4|0,3,11,16;person|James Honeyborne|78.6|2,7,12,14
+moon	genres	
+moon	suggestions	title|Moon|204.4|0,1,2,3;title|Killers of the Flower Moon|125.6|22,23,24,25;person|Milo Machado-Graner|85.4|0,3,11,16;person|James Honeyborne|78.6|2,7,12,14
+moon	items-all	title|Moon;title|Killers of the Flower Moon;person|Milo Machado-Graner;person|James Honeyborne
+moon	items-movie	title|Moon;title|Killers of the Flower Moon
+moon	items-show	
+moon	items-person	person|Milo Machado-Graner;person|James Honeyborne
+moon	items-included	title|Killers of the Flower Moon
+past lives	titles	title|Past Lives|262|0,1,2,3,4,5,6,7,8,9
+past lives	people	
+past lives	genres	
+past lives	suggestions	title|Past Lives|262|0,1,2,3,4,5,6,7,8,9
+past lives	items-all	title|Past Lives
+past lives	items-movie	title|Past Lives
+past lives	items-show	
+past lives	items-person	
+past lives	items-included	title|Past Lives
+oppenheimer	titles	title|Oppenheimer|257.6|0,1,2,3,4,5,6,7,8,9,10
+oppenheimer	people	
+oppenheimer	genres	
+oppenheimer	suggestions	title|Oppenheimer|257.6|0,1,2,3,4,5,6,7,8,9,10
+oppenheimer	items-all	title|Oppenheimer
+oppenheimer	items-movie	title|Oppenheimer
+oppenheimer	items-show	
+oppenheimer	items-person	
+oppenheimer	items-included	title|Oppenheimer
+opennheimer	titles	title|Oppenheimer|20|0,1,2,3,4,5,6,7,8,9,10
+opennheimer	people	
+opennheimer	genres	
+opennheimer	suggestions	title|Oppenheimer|20|0,1,2,3,4,5,6,7,8,9,10
+opennheimer	items-all	title|Oppenheimer
+opennheimer	items-movie	title|Oppenheimer
+opennheimer	items-show	
+opennheimer	items-person	
+opennheimer	items-included	title|Oppenheimer
+maestro	titles	title|Maestro|227.2|0,1,2,3,4,5,6
+maestro	people	
+maestro	genres	
+maestro	suggestions	title|Maestro|227.2|0,1,2,3,4,5,6
+maestro	items-all	title|Maestro
+maestro	items-movie	title|Maestro
+maestro	items-show	
+maestro	items-person	
+maestro	items-included	title|Maestro
+x	titles	
+x	people	person|Charlie Cox|89.6|10;person|Alex Borstein|88.8|3
+x	genres	
+x	suggestions	person|Charlie Cox|89.6|10;person|Alex Borstein|88.8|3
+x	items-all	person|Charlie Cox;person|Alex Borstein
+x	items-movie	
+x	items-show	
+x	items-person	person|Charlie Cox;person|Alex Borstein
+x	items-included	
+1	titles	title|9-1-1|110|2;title|9-1-1: Lone Star|105.6|2
+1	people	
+1	genres	
+1	suggestions	title|9-1-1|110|2;title|9-1-1: Lone Star|105.6|2
+1	items-all	title|9-1-1;title|9-1-1: Lone Star
+1	items-movie	
+1	items-show	title|9-1-1;title|9-1-1: Lone Star
+1	items-person	
+1	items-included	title|9-1-1;title|9-1-1: Lone Star
+2	titles	title|Blade Runner 2049|105.2|13
+2	people	
+2	genres	
+2	suggestions	title|Blade Runner 2049|105.2|13
+2	items-all	title|Blade Runner 2049
+2	items-movie	title|Blade Runner 2049
+2	items-show	
+2	items-person	
+2	items-included	
+bad	titles	title|Blade Runner 2049|112.2|0,2,3
+bad	people	person|Javier Bardem|107.8|7,8,10;person|Bradley Cooper|107.4|0,2,3;person|Baran bo Odar|100.8|0,1,10
+bad	genres	
+bad	suggestions	title|Blade Runner 2049|112.2|0,2,3;person|Javier Bardem|107.8|7,8,10;person|Bradley Cooper|107.4|0,2,3
+bad	items-all	title|Blade Runner 2049;person|Javier Bardem;person|Bradley Cooper;person|Baran bo Odar
+bad	items-movie	title|Blade Runner 2049
+bad	items-show	
+bad	items-person	person|Javier Bardem;person|Bradley Cooper;person|Baran bo Odar
+bad	items-included	
+b	titles	title|Blue Planet II|136.4|0;title|Blade Runner 2049|135.2|0;title|The Bear|108.8|4;title|The Grand Budapest Hotel|102.4|10;title|Marvel Studios: Assembled|90|21
+b	people	person|Britt Lower|131.6|0;person|Bella Ramsey|131.2|0;person|Baran bo Odar|130.8|0;person|Bradley Cooper|130.4|0;person|Emily Blunt|101.6|6;person|Javier Bardem|100.8|7;person|Austin Butler|100.8|7;person|Orlando Bloom|100.8|8;person|Alex Borstein|100.8|5;person|Scott B. Smith|100.4|6;person|Rachel Brosnahan|99.6|7;person|Sterling K. Brown|99.2|12;person|Ayo Edebiri|89.6|7;person|Abbi Jacobson|88.8|1;person|Danny McBride|88.8|8;person|Robert De Niro|88.4|2;person|Rebecca Ferguson|87.6|2;person|James Honeyborne|87.6|11;person|Michael Stuhlbarg|87.2|13;person|Robert Downey Jr.|87.2|2;person|Ebon Moss-Bachrach|86.8|1;person|David Attenborough|86.8|11;person|Geneva Robertson-Dworet|84.8|9
+b	genres	
+b	suggestions	title|Blue Planet II|136.4|0;title|Blade Runner 2049|135.2|0;person|Britt Lower|131.6|0;person|Bella Ramsey|131.2|0
+b	items-all	title|Blue Planet II;title|Blade Runner 2049;title|The Bear;title|The Grand Budapest Hotel;title|Marvel Studios: Assembled;person|Britt Lower;person|Bella Ramsey;person|Baran bo Odar;person|Bradley Cooper;person|Emily Blunt;person|Javier Bardem;person|Austin Butler;person|Orlando Bloom;person|Alex Borstein;person|Scott B. Smith;person|Rachel Brosnahan;person|Sterling K. Brown;person|Ayo Edebiri;person|Abbi Jacobson;person|Danny McBride;person|Robert De Niro;person|Rebecca Ferguson;person|James Honeyborne;person|Michael Stuhlbarg;person|Robert Downey Jr.;person|Ebon Moss-Bachrach;person|David Attenborough;person|Geneva Robertson-Dworet
+b	items-movie	title|Blade Runner 2049;title|The Grand Budapest Hotel
+b	items-show	title|Blue Planet II;title|The Bear;title|Marvel Studios: Assembled
+b	items-person	person|Britt Lower;person|Bella Ramsey;person|Baran bo Odar;person|Bradley Cooper;person|Emily Blunt;person|Javier Bardem;person|Austin Butler;person|Orlando Bloom;person|Alex Borstein;person|Scott B. Smith;person|Rachel Brosnahan;person|Sterling K. Brown;person|Ayo Edebiri;person|Abbi Jacobson;person|Danny McBride;person|Robert De Niro;person|Rebecca Ferguson;person|James Honeyborne;person|Michael Stuhlbarg;person|Robert Downey Jr.;person|Ebon Moss-Bachrach;person|David Attenborough;person|Geneva Robertson-Dworet
+b	items-included	title|Blue Planet II;title|The Bear;title|The Grand Budapest Hotel;title|Marvel Studios: Assembled
+mr	titles	title|Maestro|105.2|0,5;title|Marvel One-Shots|104.6|0,2;title|Marvel’s Daredevil|103.8|0,2;title|The Marvelous Mrs. Maisel|101|4,6;title|Marvel Studios: Assembled|101|0,2;title|Journey to the Microcosmos|99.6|15,18;title|Oppenheimer|94.6|8,10;title|American Fiction|92.6|1,3
+mr	people	person|Mike Rianda|109.6|0,5;person|Maya Rudolph|109.2|0,5;person|Sam Rockwell|100.2|2,4;person|Mark Ruffalo|100.2|0,2;person|Justin Marks|100.2|7,9;person|Peter Morgan|100.2|6,8;person|Marlee Matlin|99.8|0,2;person|Cillian Murphy|99.4|8,10;person|Martin Scorsese|99|0,2;person|Jeremy Renner|98.8|4,7;person|Danny McBride|98.8|6,9;person|John Magaro|98.6|5,9;person|Chloë Grace Moretz|97.8|12,14;person|Michael Stuhlbarg|91.2|0,15;person|Ebon Moss-Bachrach|90.8|5,14;person|Milo Machado-Graner|90.4|0,14;person|Cosmo Jarvis|85.2|3,8;person|Graham Wagner|82.8|5,12;person|Jamie Lee Curtis|79.6|2,12;person|James Honeyborne|79.6|2,13
+mr	genres	genre|Mystery|101.2|0,5;genre|Documentary|87.6|4,9
+mr	suggestions	person|Mike Rianda|109.6|0,5;person|Maya Rudolph|109.2|0,5;title|Maestro|105.2|0,5;title|Marvel One-Shots|104.6|0,2
+mr	items-all	title|Maestro;title|Marvel One-Shots;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Journey to the Microcosmos;title|Oppenheimer;title|American Fiction;title|Moon;title|Knives Out;title|Anatomy of a Fall;title|Dark;title|Carnival Row;person|Mike Rianda;person|Maya Rudolph;person|Sam Rockwell;person|Mark Ruffalo;person|Justin Marks;person|Peter Morgan;person|Marlee Matlin;person|Cillian Murphy;person|Martin Scorsese;person|Jeremy Renner;person|Danny McBride;person|John Magaro;person|Chloë Grace Moretz;person|Michael Stuhlbarg;person|Ebon Moss-Bachrach;person|Milo Machado-Graner;person|Cosmo Jarvis;person|Graham Wagner;person|Jamie Lee Curtis;person|James Honeyborne
+mr	items-movie	title|Maestro;title|Marvel One-Shots;title|Oppenheimer;title|American Fiction;title|Moon;title|Knives Out;title|Anatomy of a Fall
+mr	items-show	title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Journey to the Microcosmos;title|Dark;title|Carnival Row
+mr	items-person	person|Mike Rianda;person|Maya Rudolph;person|Sam Rockwell;person|Mark Ruffalo;person|Justin Marks;person|Peter Morgan;person|Marlee Matlin;person|Cillian Murphy;person|Martin Scorsese;person|Jeremy Renner;person|Danny McBride;person|John Magaro;person|Chloë Grace Moretz;person|Michael Stuhlbarg;person|Ebon Moss-Bachrach;person|Milo Machado-Graner;person|Cosmo Jarvis;person|Graham Wagner;person|Jamie Lee Curtis;person|James Honeyborne
+mr	items-included	title|Maestro;title|Marvel One-Shots;title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Journey to the Microcosmos;title|Oppenheimer;title|American Fiction;title|Knives Out;title|Anatomy of a Fall;title|Dark;title|Carnival Row
+marvel's	titles	title|Marvel One-Shots|20|0,1,2,3,4,5;title|The Marvelous Mrs. Maisel|20|4,5,6,7,8,9,10,11;title|Marvel Studios: Assembled|20|0,1,2,3,4,5;title|Marvel’s Daredevil|20|0,1,2,3,4,5
+marvel's	people	
+marvel's	genres	
+marvel's	suggestions	title|Marvel One-Shots|20|0,1,2,3,4,5;title|The Marvelous Mrs. Maisel|20|4,5,6,7,8,9,10,11;title|Marvel Studios: Assembled|20|0,1,2,3,4,5;title|Marvel’s Daredevil|20|0,1,2,3,4,5
+marvel's	items-all	title|Marvel One-Shots;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Marvel’s Daredevil
+marvel's	items-movie	title|Marvel One-Shots
+marvel's	items-show	title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Marvel’s Daredevil
+marvel's	items-person	
+marvel's	items-included	title|Marvel One-Shots;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Marvel’s Daredevil
+marvel’s	titles	title|Marvel’s Daredevil|202.8|0,1,2,3,4,5,6,7;title|Marvel One-Shots|20|0,1,2,3,4,5;title|The Marvelous Mrs. Maisel|20|4,5,6,7,8,9,10,11;title|Marvel Studios: Assembled|20|0,1,2,3,4,5
+marvel’s	people	
+marvel’s	genres	
+marvel’s	suggestions	title|Marvel’s Daredevil|202.8|0,1,2,3,4,5,6,7;title|Marvel One-Shots|20|0,1,2,3,4,5;title|The Marvelous Mrs. Maisel|20|4,5,6,7,8,9,10,11;title|Marvel Studios: Assembled|20|0,1,2,3,4,5
+marvel’s	items-all	title|Marvel’s Daredevil;title|Marvel One-Shots;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled
+marvel’s	items-movie	title|Marvel One-Shots
+marvel’s	items-show	title|Marvel’s Daredevil;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled
+marvel’s	items-person	
+marvel’s	items-included	title|Marvel’s Daredevil;title|Marvel One-Shots;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled
+one-shots	titles	title|Marvel One-Shots|181.6|7,8,9,10,11,12,13,14,15
+one-shots	people	
+one-shots	genres	
+one-shots	suggestions	title|Marvel One-Shots|181.6|7,8,9,10,11,12,13,14,15
+one-shots	items-all	title|Marvel One-Shots
+one-shots	items-movie	title|Marvel One-Shots
+one-shots	items-show	
+one-shots	items-person	
+one-shots	items-included	title|Marvel One-Shots
+daredevil	titles	title|Marvel’s Daredevil|168.8|9,10,11,12,13,14,15,16,17
+daredevil	people	
+daredevil	genres	
+daredevil	suggestions	title|Marvel’s Daredevil|168.8|9,10,11,12,13,14,15,16,17
+daredevil	items-all	title|Marvel’s Daredevil
+daredevil	items-movie	
+daredevil	items-show	title|Marvel’s Daredevil
+daredevil	items-person	
+daredevil	items-included	title|Marvel’s Daredevil
+dardevil	titles	title|Marvel’s Daredevil|151.8|9,10,11,13,14,15,16,17
+dardevil	people	
+dardevil	genres	
+dardevil	suggestions	title|Marvel’s Daredevil|151.8|9,10,11,13,14,15,16,17
+dardevil	items-all	title|Marvel’s Daredevil
+dardevil	items-movie	
+dardevil	items-show	title|Marvel’s Daredevil
+dardevil	items-person	
+dardevil	items-included	title|Marvel’s Daredevil
+  arvl	titles	title|Arrival|114.2|0,1,4,6;title|The Arrival|112.6|4,5,8,10;title|Marvel One-Shots|108.6|1,2,3,5;title|Marvel’s Daredevil|107.8|1,2,3,5;title|Larva Island|107.2|1,2,3,8;title|The Marvelous Mrs. Maisel|105|5,6,7,9;title|Marvel Studios: Assembled|105|1,2,3,5;title|The Harvey Girls|103.6|5,6,7,14;title|Carnivàle|101.4|1,2,5,7;title|Carnival Row|100.2|1,2,5,7;title|Carnival Eats|99.8|1,2,5,7;title|Carnival of Souls|98.2|1,2,5,7
+  arvl	people	
+  arvl	genres	
+  arvl	suggestions	title|Arrival|114.2|0,1,4,6;title|The Arrival|112.6|4,5,8,10;title|Marvel One-Shots|108.6|1,2,3,5;title|Marvel’s Daredevil|107.8|1,2,3,5
+  arvl	items-all	title|Arrival;title|The Arrival;title|Marvel One-Shots;title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|The Harvey Girls;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+  arvl	items-movie	title|Arrival;title|The Arrival;title|Marvel One-Shots;title|The Harvey Girls;title|Carnival of Souls
+  arvl	items-show	title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats
+  arvl	items-person	
+  arvl	items-included	title|Arrival;title|Marvel One-Shots;title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+arvl 	titles	title|Arrival|114.2|0,1,4,6;title|The Arrival|112.6|4,5,8,10;title|Marvel One-Shots|108.6|1,2,3,5;title|Marvel’s Daredevil|107.8|1,2,3,5;title|Larva Island|107.2|1,2,3,8;title|The Marvelous Mrs. Maisel|105|5,6,7,9;title|Marvel Studios: Assembled|105|1,2,3,5;title|The Harvey Girls|103.6|5,6,7,14;title|Carnivàle|101.4|1,2,5,7;title|Carnival Row|100.2|1,2,5,7;title|Carnival Eats|99.8|1,2,5,7;title|Carnival of Souls|98.2|1,2,5,7
+arvl 	people	
+arvl 	genres	
+arvl 	suggestions	title|Arrival|114.2|0,1,4,6;title|The Arrival|112.6|4,5,8,10;title|Marvel One-Shots|108.6|1,2,3,5;title|Marvel’s Daredevil|107.8|1,2,3,5
+arvl 	items-all	title|Arrival;title|The Arrival;title|Marvel One-Shots;title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|The Harvey Girls;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+arvl 	items-movie	title|Arrival;title|The Arrival;title|Marvel One-Shots;title|The Harvey Girls;title|Carnival of Souls
+arvl 	items-show	title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats
+arvl 	items-person	
+arvl 	items-included	title|Arrival;title|Marvel One-Shots;title|Marvel’s Daredevil;title|Larva Island;title|The Marvelous Mrs. Maisel;title|Marvel Studios: Assembled;title|Carnivàle;title|Carnival Row;title|Carnival Eats;title|Carnival of Souls
+ar vl	titles	title|Marvel’s Daredevil|88.8|1,2,8,15,17
+ar vl	people	
+ar vl	genres	
+ar vl	suggestions	title|Marvel’s Daredevil|88.8|1,2,8,15,17
+ar vl	items-all	title|Marvel’s Daredevil
+ar vl	items-movie	
+ar vl	items-show	title|Marvel’s Daredevil
+ar vl	items-person	
+ar vl	items-included	title|Marvel’s Daredevil
+knives	titles	title|Knives Out|178|0,1,2,3,4,5
+knives	people	
+knives	genres	
+knives	suggestions	title|Knives Out|178|0,1,2,3,4,5
+knives	items-all	title|Knives Out
+knives	items-movie	title|Knives Out
+knives	items-show	
+knives	items-person	
+knives	items-included	title|Knives Out
+budapest	titles	title|The Grand Budapest Hotel|158.4|10,11,12,13,14,15,16,17
+budapest	people	
+budapest	genres	
+budapest	suggestions	title|The Grand Budapest Hotel|158.4|10,11,12,13,14,15,16,17
+budapest	items-all	title|The Grand Budapest Hotel
+budapest	items-movie	title|The Grand Budapest Hotel
+budapest	items-show	
+budapest	items-person	
+budapest	items-included	title|The Grand Budapest Hotel
+nolan	titles	
+nolan	people	person|Christopher Nolan|131.2|12,13,14,15,16
+nolan	genres	
+nolan	suggestions	person|Christopher Nolan|131.2|12,13,14,15,16
+nolan	items-all	person|Christopher Nolan
+nolan	items-movie	
+nolan	items-show	
+nolan	items-person	person|Christopher Nolan
+nolan	items-included	
+cillian	titles	
+cillian	people	person|Cillian Murphy|178.4|0,1,2,3,4,5,6
+cillian	genres	
+cillian	suggestions	person|Cillian Murphy|178.4|0,1,2,3,4,5,6
+cillian	items-all	person|Cillian Murphy
+cillian	items-movie	
+cillian	items-show	
+cillian	items-person	person|Cillian Murphy
+cillian	items-included	
+sci	titles	title|The Mitchells vs. the Machines|79|12,24,26
+sci	people	person|Daniel Scheinert|105.6|7,8,11;person|Scott B. Smith|100.4|0,1,11;person|Oliver Masucci|86.4|9,11,13;person|Lisa Vicari|83.6|2,7,10;person|Jessica Chastain|77.6|2,5,14
+sci	genres	genre|Sci-fi|151.6|0,1,2
+sci	suggestions	genre|Sci-fi|151.6|0,1,2;person|Daniel Scheinert|105.6|7,8,11;person|Scott B. Smith|100.4|0,1,11;title|The Mitchells vs. the Machines|79|12,24,26
+sci	items-all	title|The Mitchells vs. the Machines;title|Arrival;title|Dune: Part Two;title|Moon;title|Everything Everywhere All at Once;title|Poor Things;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral;title|The Arrival;title|Blade Runner 2049;title|Interstellar;person|Daniel Scheinert;person|Scott B. Smith;person|Oliver Masucci;person|Lisa Vicari;person|Jessica Chastain
+sci	items-movie	title|The Mitchells vs. the Machines;title|Arrival;title|Dune: Part Two;title|Moon;title|Everything Everywhere All at Once;title|Poor Things;title|The Arrival;title|Blade Runner 2049;title|Interstellar
+sci	items-show	title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral
+sci	items-person	person|Daniel Scheinert;person|Scott B. Smith;person|Oliver Masucci;person|Lisa Vicari;person|Jessica Chastain
+sci	items-included	title|The Mitchells vs. the Machines;title|Arrival;title|Dune: Part Two;title|Everything Everywhere All at Once;title|Poor Things;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral
+fi	titles	title|American Fiction|113.6|9,10;title|The Zone of Interest|103|10,12;title|The Wheel of Time|91.2|11,14
+fi	people	person|Ralph Fiennes|108.8|6,7;person|Jantje Friese|99.8|7,9;person|Christian Friedel|98.2|10,12;person|Alastair Fothergill|92.4|9,16;person|Forest Whitaker|92|0,9;person|Vincent D’Onofrio|86.2|13,15;person|Rafe Judkins|83.2|2,9;person|Jeffrey Wright|81.4|2,10
+fi	genres	genre|Sci-fi|113.6|4,5
+fi	suggestions	title|American Fiction|113.6|9,10;genre|Sci-fi|113.6|4,5;person|Ralph Fiennes|108.8|6,7;title|The Zone of Interest|103|10,12
+fi	items-all	title|American Fiction;title|The Zone of Interest;title|The Wheel of Time;title|Arrival;title|Dune: Part Two;title|Moon;title|Everything Everywhere All at Once;title|Poor Things;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral;title|The Arrival;title|Blade Runner 2049;title|Interstellar;person|Ralph Fiennes;person|Jantje Friese;person|Christian Friedel;person|Alastair Fothergill;person|Forest Whitaker;person|Vincent D’Onofrio;person|Rafe Judkins;person|Jeffrey Wright
+fi	items-movie	title|American Fiction;title|The Zone of Interest;title|Arrival;title|Dune: Part Two;title|Moon;title|Everything Everywhere All at Once;title|Poor Things;title|The Arrival;title|Blade Runner 2049;title|Interstellar
+fi	items-show	title|The Wheel of Time;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral
+fi	items-person	person|Ralph Fiennes;person|Jantje Friese;person|Christian Friedel;person|Alastair Fothergill;person|Forest Whitaker;person|Vincent D’Onofrio;person|Rafe Judkins;person|Jeffrey Wright
+fi	items-included	title|American Fiction;title|The Zone of Interest;title|The Wheel of Time;title|Arrival;title|Dune: Part Two;title|Everything Everywhere All at Once;title|Poor Things;title|Severance;title|Dark;title|The Last of Us;title|Fallout;title|The Peripheral
+horror	titles	
+horror	people	
+horror	genres	genre|Horror|215.6|0,1,2,3,4,5
+horror	suggestions	genre|Horror|215.6|0,1,2,3,4,5
+horror	items-all	title|Carnival of Souls
+horror	items-movie	title|Carnival of Souls
+horror	items-show	
+horror	items-person	
+horror	items-included	title|Carnival of Souls
+family	titles	
+family	people	
+family	genres	
+family	suggestions	
+family	items-all	
+family	items-movie	
+family	items-show	
+family	items-person	
+family	items-included	
+mitchells	titles	title|The Mitchells vs. the Machines|164|4,5,6,7,8,9,10,11,12
+mitchells	people	person|Michelle Yeoh|14|0,1,2,3,4,5,6,7
+mitchells	genres	
+mitchells	suggestions	title|The Mitchells vs. the Machines|164|4,5,6,7,8,9,10,11,12;person|Michelle Yeoh|14|0,1,2,3,4,5,6,7
+mitchells	items-all	title|The Mitchells vs. the Machines;person|Michelle Yeoh
+mitchells	items-movie	title|The Mitchells vs. the Machines
+mitchells	items-show	
+mitchells	items-person	person|Michelle Yeoh
+mitchells	items-included	title|The Mitchells vs. the Machines
+zone	titles	title|The Zone of Interest|128|4,5,6,7;title|Marvel One-Shots|30|7,8,9;title|9-1-1: Lone Star|30|7,8,9,10
+zone	people	person|Emilia Jones|24|7,8,9,10;person|Duncan Jones|24|7,8,9,10;person|James Honeyborne|24|6,7,8,9
+zone	genres	
+zone	suggestions	title|The Zone of Interest|128|4,5,6,7;title|Marvel One-Shots|30|7,8,9;title|9-1-1: Lone Star|30|7,8,9,10;person|Emilia Jones|24|7,8,9,10
+zone	items-all	title|The Zone of Interest;title|Marvel One-Shots;title|9-1-1: Lone Star;person|Emilia Jones;person|Duncan Jones;person|James Honeyborne
+zone	items-movie	title|The Zone of Interest;title|Marvel One-Shots
+zone	items-show	title|9-1-1: Lone Star
+zone	items-person	person|Emilia Jones;person|Duncan Jones;person|James Honeyborne
+zone	items-included	title|The Zone of Interest;title|Marvel One-Shots;title|9-1-1: Lone Star
+person:Amy Adams	titles	arrival
+person:Jeremy Renner	titles	arrival
+person:Forest Whitaker	titles	arrival
+person:Michael Stuhlbarg	titles	arrival
+person:Tzi Ma	titles	arrival
+person:Denis Villeneuve	titles	arrival;dune;blade-runner-2049
+person:Timothée Chalamet	titles	dune
+person:Zendaya	titles	dune
+person:Rebecca Ferguson	titles	dune
+person:Javier Bardem	titles	dune
+person:Austin Butler	titles	dune
+person:Greta Lee	titles	past-lives
+person:Teo Yoo	titles	past-lives
+person:John Magaro	titles	past-lives
+person:Celine Song	titles	past-lives
+person:Abbi Jacobson	titles	mitchells
+person:Danny McBride	titles	mitchells
+person:Maya Rudolph	titles	mitchells
+person:Mike Rianda	titles	mitchells
+person:Emilia Jones	titles	coda
+person:Troy Kotsur	titles	coda
+person:Marlee Matlin	titles	coda
+person:Daniel Durant	titles	coda
+person:Siân Heder	titles	coda
+person:Sam Rockwell	titles	moon
+person:Dominique McElligott	titles	moon
+person:Duncan Jones	titles	moon
+person:Daniel Craig	titles	knives-out
+person:Ana de Armas	titles	knives-out;blade-runner-2049
+person:Chris Evans	titles	knives-out
+person:Jamie Lee Curtis	titles	knives-out;eeaao
+person:Rian Johnson	titles	knives-out
+person:Ralph Fiennes	titles	budapest
+person:Tony Revolori	titles	budapest
+person:Saoirse Ronan	titles	budapest
+person:Willem Dafoe	titles	budapest;poor-things
+person:Wes Anderson	titles	budapest
+person:Michelle Yeoh	titles	eeaao
+person:Ke Huy Quan	titles	eeaao
+person:Stephanie Hsu	titles	eeaao
+person:Daniel Kwan	titles	eeaao
+person:Daniel Scheinert	titles	eeaao
+person:Cillian Murphy	titles	oppenheimer
+person:Emily Blunt	titles	oppenheimer
+person:Robert Downey Jr.	titles	oppenheimer
+person:Matt Damon	titles	oppenheimer
+person:Christopher Nolan	titles	oppenheimer;interstellar
+person:Leonardo DiCaprio	titles	killers
+person:Lily Gladstone	titles	killers
+person:Robert De Niro	titles	killers
+person:Martin Scorsese	titles	killers
+person:Emma Stone	titles	poor-things
+person:Mark Ruffalo	titles	poor-things
+person:Yorgos Lanthimos	titles	poor-things
+person:Bradley Cooper	titles	maestro
+person:Carey Mulligan	titles	maestro
+person:Christian Friedel	titles	zone
+person:Sandra Hüller	titles	zone;anatomy
+person:Jonathan Glazer	titles	zone
+person:Swann Arlaud	titles	anatomy
+person:Milo Machado-Graner	titles	anatomy
+person:Justine Triet	titles	anatomy
+person:Jeffrey Wright	titles	american-fiction
+person:Sterling K. Brown	titles	american-fiction
+person:Issa Rae	titles	american-fiction
+person:Cord Jefferson	titles	american-fiction
+person:Adam Scott	titles	severance
+person:Britt Lower	titles	severance
+person:Zach Cherry	titles	severance
+person:John Turturro	titles	severance
+person:Patricia Arquette	titles	severance
+person:Dan Erickson	titles	severance
+person:Jeremy Allen White	titles	the-bear
+person:Ayo Edebiri	titles	the-bear
+person:Ebon Moss-Bachrach	titles	the-bear
+person:Christopher Storer	titles	the-bear
+person:Louis Hofmann	titles	dark
+person:Lisa Vicari	titles	dark
+person:Oliver Masucci	titles	dark
+person:Baran bo Odar	titles	dark
+person:Jantje Friese	titles	dark
+person:Pedro Pascal	titles	last-of-us
+person:Bella Ramsey	titles	last-of-us
+person:Craig Mazin	titles	last-of-us
+person:Neil Druckmann	titles	last-of-us
+person:Hiroyuki Sanada	titles	shogun
+person:Cosmo Jarvis	titles	shogun
+person:Anna Sawai	titles	shogun
+person:Rachel Kondo	titles	shogun
+person:Justin Marks	titles	shogun
+person:Ella Purnell	titles	fallout
+person:Walton Goggins	titles	fallout
+person:Aaron Moten	titles	fallout
+person:Graham Wagner	titles	fallout
+person:Geneva Robertson-Dworet	titles	fallout
+person:David Attenborough	titles	our-planet;blue-planet
+person:Alastair Fothergill	titles	our-planet
+person:Hank Green	titles	microcosmos
+person:James Weiss	titles	microcosmos
+person:Chloë Grace Moretz	titles	peripheral
+person:Gary Carr	titles	peripheral
+person:Jack Reynor	titles	peripheral
+person:Scott B. Smith	titles	peripheral
+person:Claire Foy	titles	the-crown
+person:Olivia Colman	titles	the-crown
+person:Matt Smith	titles	the-crown
+person:Peter Morgan	titles	the-crown
+person:Rosamund Pike	titles	wheel-of-time
+person:Josha Stradowski	titles	wheel-of-time
+person:Rafe Judkins	titles	wheel-of-time
+person:James Honeyborne	titles	blue-planet
+person:Orlando Bloom	titles	carnival-row
+person:Cara Delevingne	titles	carnival-row
+person:Charlie Sheen	titles	the-arrival-1996
+person:Lindsay Crouse	titles	the-arrival-1996
+person:Ryan Gosling	titles	blade-runner-2049
+person:Harrison Ford	titles	blade-runner-2049
+person:Matthew McConaughey	titles	interstellar
+person:Anne Hathaway	titles	interstellar
+person:Jessica Chastain	titles	interstellar
+person:Rachel Brosnahan	titles	mrs-maisel
+person:Alex Borstein	titles	mrs-maisel
+person:Charlie Cox	titles	daredevil
+person:Vincent D’Onofrio	titles	daredevil
+person:Judy Garland	titles	harvey-girls
+person:John Hodiak	titles	harvey-girls
+genre:Action	titles	marvel-one-shots;daredevil;911;911-lone-star
+genre:Adventure	titles	dune;wheel-of-time;interstellar
+genre:Animation	titles	mitchells;larva-island
+genre:Comedy	titles	mitchells;knives-out;budapest;eeaao;poor-things;american-fiction;the-bear;larva-island;mrs-maisel
+genre:Crime	titles	killers;daredevil
+genre:Documentary	titles	our-planet;microcosmos;blue-planet;marvel-assembled
+genre:Drama	titles	arrival;past-lives;coda;oppenheimer;killers;maestro;zone;anatomy;american-fiction;the-bear;last-of-us;shogun;fallout;the-crown;blade-runner-2049;mrs-maisel;carnivale;911;911-lone-star
+genre:Fantasy	titles	wheel-of-time;carnival-row;carnivale
+genre:Food	titles	carnival-eats
+genre:History	titles	oppenheimer;zone;shogun;the-crown
+genre:Horror	titles	carnival-of-souls
+genre:Music	titles	maestro
+genre:Musical	titles	harvey-girls
+genre:Mystery	titles	moon;knives-out;anatomy;dark;carnival-row
+genre:Romance	titles	past-lives
+genre:Sci-fi	titles	arrival;dune;moon;eeaao;poor-things;severance;dark;last-of-us;fallout;peripheral;the-arrival-1996;blade-runner-2049;interstellar
+genre:Thriller	titles	severance;peripheral;the-arrival-1996
+genre:Western	titles	harvey-girls

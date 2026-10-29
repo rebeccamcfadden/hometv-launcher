@@ -158,6 +158,27 @@ From the old launcher; not in V1 by decision.
 - **More like this:** the prototype's rule (shared genres, same kind, score) over the mock catalogue. Wanted:
   recommendations from the real catalogue.
 
+## From M6
+
+- **Search source:** V1 searches the mock catalogue on the TV (`Fuzzy` and `SearchIndex`, ported from the
+  prototype and tested against its results). Wanted: TMDB search behind the same
+  results once the real catalogue lands (Real catalogue), with the local matching kept for what is cached offline.
+- **Genre suggestions:** OK searches for the genre's name, as the prototype does, and a genre that matches well
+  adds its titles to the results. There is no genre page or genre filter chip.
+- **Exact genre search:** searching a genre's exact name ("drama", or Browse by genre → Drama) shows No matches, as
+  in the prototype: a genre on its own counts as no match, so the results can't open. Deferred until real search
+  data lands ([Real catalogue](#real-catalogue)), which decides how genres are searched.
+- **Typing from a keyboard:** a hardware keyboard or a remote with keys types a–z, 0–9, space and `- : ' ’ & . ! ?`
+  (the prototype's set) into the bar, on the Search page only. Backspace is Back on every screen, Search included
+  (decided 2026-10-29): on the full results it brings the keyboard back with the query kept, with the keyboard
+  showing it goes Home, and only the on-screen ⌫ key deletes. Accented letters, the system's on-screen keyboard
+  (IME) and voice input are not used.
+- **Results preview:** while typing, the preview builds only the first three rows of cards (all it can show); the
+  full results build every card. Measured on the emulator: about 15 ms a key press, 30–55 ms to widen "a" (139
+  results). Check it on the TV.
+- **No-matches screenshot:** `work/proto-shots/search-04-no-matches.png` shows Home, so that state was checked
+  against `search.ts` rather than a picture.
+
 ## Not designed yet
 
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before

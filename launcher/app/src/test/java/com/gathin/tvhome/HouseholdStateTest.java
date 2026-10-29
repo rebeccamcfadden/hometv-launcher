@@ -61,16 +61,16 @@ public class HouseholdStateTest {
     public void recentSearchesAreTrimmedLowerCasedAndCapped() {
         HouseholdState s = fresh();
         assertTrue(s.pushRecent("  Arrival "));
-        assertEquals(Arrays.asList("arrival", "dune", "amy adams", "sci-fi", "carnival row"), s.recent());
+        assertEquals(Arrays.asList("arrival", "dune", "amy adams", "sci-fi"), s.recent());
         assertTrue(s.pushRecent("SCI-FI"));
-        assertEquals(Arrays.asList("sci-fi", "arrival", "dune", "amy adams", "carnival row"), s.recent());
+        assertEquals(Arrays.asList("sci-fi", "arrival", "dune", "amy adams"), s.recent());
         assertTrue(s.pushRecent("moon"));
-        assertEquals(5, s.recent().size());
+        assertEquals(4, s.recent().size());
         assertEquals("moon", s.recent().get(0));
-        assertFalse(s.recent().contains("carnival row"));
+        assertFalse(s.recent().contains("amy adams"));
         assertFalse(s.pushRecent("   "));
         assertFalse(s.pushRecent(null));
-        assertEquals(5, s.recent().size());
+        assertEquals(4, s.recent().size());
     }
 
     @Test
@@ -140,7 +140,7 @@ public class HouseholdStateTest {
     public void tooLongListsAreCutOnRead() {
         HouseholdState s = HouseholdState.fromJson(
                 "{\"recent\":[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\"]}", catalog);
-        assertEquals(Arrays.asList("1", "2", "3", "4", "5"), s.recent());
+        assertEquals(Arrays.asList("1", "2", "3", "4"), s.recent());
     }
 
     @Test

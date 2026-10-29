@@ -47,6 +47,8 @@ final class Shell {
     private View okTarget;
     private boolean okLongTried;
     private boolean okHeld;
+    /** The key whose character a screen took as typing, so its key-up is taken too (M6). */
+    private int typedKey = KeyEvent.KEYCODE_UNKNOWN;
 
     Shell(FrameLayout stage, Pages pages) {
         this.stage = stage;
@@ -91,6 +93,8 @@ final class Shell {
     void goTab(Screen.Tab id, boolean focusNav) {
         Screen s = tab(id);
         Screen prev = stack.size() == 1 ? stack.get(0) : null;
+        Screen root = stack.isEmpty() ? null : stack.get(0);
+        if (root != null && root != s) root.onLeave();
         endTransition();
         boolean animate = prev != null && prev.tab != null && prev != s && !Ui.reducedMotion();
         if (animate) leaving = prev;
@@ -231,7 +235,7 @@ final class Shell {
 
     // ---- Keys --------------------------------------------------------------------------------------------------
 
-    /** The D-pad, OK and Back. Returns false for every other key. */
+    /** The D-pad, OK, Back, Backspace and typing (M6). Returns false for every other key. */
     boolean dispatch(KeyEvent e) {
         int code = e.getKeyCode();
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
@@ -263,6 +267,27 @@ final class Shell {
         }
         if (code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE || code == KeyEvent.KEYCODE_BUTTON_B) {
             if (!down && !e.isCanceled()) back();
+            return true;
+        }
+        // A keyboard's Backspace is Back on every screen (app.ts onKeyDown), Search included: only its on-screen
+        // delete key deletes. One press is one Back; its repeats are ignored until the key is let go.
+        if (code == KeyEvent.KEYCODE_DEL) {
+            if (down && e.getRepeatCount() == 0) back();
+            return true;
+        }
+        // M6: typing from a hardware keyboard or a remote with keys (app.ts onKeyDown).
+        // A printable character goes to the top screen; only a screen that types (Search) takes it, and then its
+        // key-up is taken too. Characters with Ctrl, Alt or Meta are shortcuts, not typing.
+        if (down) {
+            int u = e.getUnicodeChar();
+            Screen s = top();
+            if (u > 0 && !Character.isISOControl(u) && Character.isBmpCodePoint(u) && !e.isCtrlPressed()
+                    && !e.isAltPressed() && !e.isMetaPressed() && s != null && s.onText((char) u)) {
+                typedKey = code;
+                return true;
+            }
+        } else if (code == typedKey) {
+            typedKey = KeyEvent.KEYCODE_UNKNOWN;
             return true;
         }
         return false;

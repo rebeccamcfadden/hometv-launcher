@@ -953,7 +953,13 @@
   transition: left var(--slow) var(--ease);
 }
 .search.is-expanded .search-viewport {
-  left: var(--safe-x);
+  /* The grid starts at the safe margin, in line with the bar, and its six columns end 98px short of the right edge. */
+  left: calc(var(--safe-x) - 8px);
+}
+/* Coming back to Search after leaving it for another tab: the panel is back in place at once, without the slide. */
+.search.is-snapping .search-panel,
+.search.is-snapping .search-viewport {
+  transition: none;
 }
 .search-results {
   position: absolute;

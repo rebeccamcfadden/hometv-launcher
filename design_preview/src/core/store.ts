@@ -10,6 +10,8 @@ interface Persisted {
 }
 
 const KEY = 'cleanyourtv-preview-v1';
+/** Recent searches kept, newest first: four fit the Search panel above the keyboard. */
+const MAX_RECENT = 4;
 
 const defaults = (): Persisted => ({
   myList: TITLES.filter((t) => t.lists.includes('my')).map((t) => t.id),
@@ -30,6 +32,8 @@ function load(): Persisted {
 }
 
 const data = load();
+// A list saved when five were kept is cut on read, as the TV does.
+data.recent = data.recent.slice(0, MAX_RECENT);
 const myList = new Set(data.myList);
 const seen = new Set(data.seen);
 const favorites = new Set(data.favorites);
@@ -65,7 +69,7 @@ export const store = {
   pushRecent(q: string) {
     const v = q.trim().toLowerCase();
     if (!v) return;
-    data.recent = [v, ...data.recent.filter((r) => r !== v)].slice(0, 5);
+    data.recent = [v, ...data.recent.filter((r) => r !== v)].slice(0, MAX_RECENT);
     save();
   },
   pushViewed(id: string) {

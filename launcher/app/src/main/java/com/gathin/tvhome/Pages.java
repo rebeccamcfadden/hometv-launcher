@@ -26,7 +26,8 @@ final class Pages {
             case MUSIC:
                 return placeholder(ctx, host, tab, R.string.page_not_designed, R.string.nav_music, R.string.page_music_note);
             case SEARCH:
-                return placeholder(ctx, host, tab, R.string.page_not_built, R.string.nav_search, R.string.page_search_note);
+                // M6: the Search page.
+                return SearchPage.create((MainActivity) ctx, host);
             default:
                 // M2: Home is built (HomePage); the other tabs follow in their milestones.
                 return HomePage.create((MainActivity) ctx, host);
