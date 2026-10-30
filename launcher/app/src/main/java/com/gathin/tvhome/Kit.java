@@ -145,6 +145,14 @@ final class Kit {
         }
     };
 
+    /**
+     * Tells accessibility services that v is selected while it is activated: a chip, the title preview's current tab,
+     * the nav's current section.
+     */
+    static void reportsSelected(View v) {
+        v.setAccessibilityDelegate(CHIP_A11Y);
+    }
+
     /** Changes a button's label, e.g. "My list" to "On My list". */
     static void setLabel(View button, CharSequence label) {
         TextView text = (TextView) button.getTag(R.id.kit_label);
@@ -205,7 +213,7 @@ final class Kit {
         c.setTag(R.id.kit_label, text);
         c.setTag(R.id.kit_check, tick);
         setSelected(c, selected);
-        c.setAccessibilityDelegate(CHIP_A11Y);
+        reportsSelected(c);
         Focus.make(c, group, key, isDefault, onOk);
         Ui.scaleOnFocus(c, 1.05f);
         return c;

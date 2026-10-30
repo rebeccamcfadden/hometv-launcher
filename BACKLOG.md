@@ -203,6 +203,19 @@ From the old launcher; not in V1 by decision.
   Title deep links). A rental or purchase opens the title preview instead, so its rent and buy dialog asks before
   leaving the launcher; the prototype's button opened the preview for every pick.
 
+## From V1 follow-ups
+
+- **Jank on Home's key moves:** the real TV measured 47% janky frames (337 of 712), movement p50 197 ms, response p50
+  21 ms. The emulator can't show where that goes: every frame there spends 80–100 ms issuing draw commands,
+  about 50 ms even with the backdrop, shades, hero, nav, lower rows, banners and labels all switched off, and
+  turning any single one off moved it by less than the noise. The UI thread is not the cost (animation 1 ms, layout
+  and recording under 0.2 ms per frame, no layout pass on a focus change). Wanted: a `tools/trace.py` run on the real
+  TV (hwui and gfx) to see whether the GPU's fill (backdrop, shade and, when scrolled, the dim layer, each full
+  screen) or the number of frames per move (140 ms scale and state fades, the 240 ms row slide) is the cost, then
+  the fix.
+- **Accessibility in the prototype:** the launcher now reports the current preview tab and nav section as selected
+  and reads Pick for me's fields with their value; the prototype has no ARIA roles or states to match.
+
 ## Not designed yet
 
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before

@@ -8,6 +8,10 @@
     <string name="pick_source_lists">My watchlists</string>
     <string name="pick_source_services">My services</string>
     <string name="pick_lists_label">Imported watchlists · Select one or more</string>
+    <!-- What accessibility services read for a field or chip: its label, then its value, e.g. "Movie length, Under 2
+         hours" or "Choose from, My watchlists". -->
+    <string name="pick_spoken">%1$s, %2$s</string>
+    <string name="pick_lists_spoken">Imported watchlists</string>
     <string name="pick_hint">OK on a field steps through its options. TV Shows use episode length.</string>
     <string name="pick_mood">What are you in the mood for?</string>
     <string name="pick_movies">Movies</string>

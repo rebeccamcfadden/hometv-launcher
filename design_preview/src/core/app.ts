@@ -237,7 +237,7 @@ class App {
       return;
     }
     if (s.onKey?.(dir, this.focused)) return;
-    const next = findNext(s.el, this.focused, dir, s.memory ?? new Map());
+    const next = this.intoNav(findNext(s.el, this.focused, dir, s.memory ?? new Map()));
     if (next) this.focus(next);
   }
 
@@ -245,9 +245,19 @@ class App {
   moveWithin(root: Element, dir: Dir): boolean {
     const s = this.top();
     if (!s || !this.focused) return false;
-    const next = findNext(root, this.focused, dir, s.memory ?? new Map());
+    const next = this.intoNav(findNext(root, this.focused, dir, s.memory ?? new Map()));
     if (next) this.focus(next);
     return !!next;
+  }
+
+  /**
+   * A move from the page into the nav lands on the page's own section (its tab, or Movies / TV Shows for Pick for
+   * me), not on the section or device icon used last or nearest: Up from Home after a look at Search is Home.
+   */
+  private intoNav(next: HTMLElement | null): HTMLElement | null {
+    const bar = next?.closest('.nav');
+    if (!bar || this.focused?.closest('.nav')) return next;
+    return bar.querySelector<HTMLElement>('.nav-left .is-active') ?? next;
   }
 
   private ok() {

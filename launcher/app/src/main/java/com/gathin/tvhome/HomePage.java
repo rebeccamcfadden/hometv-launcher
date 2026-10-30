@@ -394,7 +394,7 @@ final class HomePage extends Screen {
         if (info != null) {
             rows.add(new MenuPanel.Row(activity.getString(R.string.library_app_info), 0, () -> activity.start(info)));
         }
-        shell.push(TileMenu.create(shell, tile, rows));
+        shell.push(TileMenu.create(shell, tile, rows, hero));
         return true;
     }
 

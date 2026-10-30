@@ -61,6 +61,7 @@ final class NavBar {
         ImageView search = round(ctx, R.drawable.ic_ui_search, 64, 26, Ui.TEXT_1, Ui.ACTIVE);
         search.setContentDescription(ctx.getString(R.string.nav_search));
         search.setActivated(active == Screen.Tab.SEARCH);
+        Kit.reportsSelected(search);
         Focus.make(search, Shell.NAV_GROUP, Shell.navKey(Screen.Tab.SEARCH), active == Screen.Tab.SEARCH,
                 v -> open(host, Screen.Tab.SEARCH, v));
         Ui.scaleOnFocus(search, 1.05f);
@@ -138,6 +139,7 @@ final class NavBar {
         t.setBackground(Ui.states(Ui.round(0, Ui.RADIUS_PILL), Ui.round(Ui.ACTIVE, Ui.RADIUS_PILL),
                 Ui.round(Ui.ACCENT, Ui.RADIUS_PILL)));
         t.setActivated(isActive);
+        Kit.reportsSelected(t);
         Focus.make(t, Shell.NAV_GROUP, Shell.navKey(id), isActive, v -> open(host, id, v));
         Ui.scaleOnFocus(t, 1.05f);
         return t;

@@ -92,12 +92,19 @@ final class TvInputs {
         return rows(false);
     }
 
+    /** Home's Inputs row holds at most this many tiles and never scrolls; the rest are in the nav's Inputs menu. */
+    static final int HOME_TILES = 4;
+
     /**
      * Home's Inputs row: the dropdown's rows with Live TV first, or, where the source panel is the whole menu
      * (panelIsTheMenu), one row that opens it rather than ports the TV reports but cannot switch to.
      */
     List<MenuPanel.Row> homeRows() {
-        if (!panelIsTheMenu()) return rows(true);
+        if (!panelIsTheMenu()) {
+            List<MenuPanel.Row> rows = rows(true);
+            // Live TV and the first ports, by the menu's order (project lead, 2026-10-30).
+            return rows.size() > HOME_TILES ? new ArrayList<>(rows.subList(0, HOME_TILES)) : rows;
+        }
         List<MenuPanel.Row> rows = new ArrayList<>();
         rows.add(new MenuPanel.Row(activity.getString(R.string.inputs), R.drawable.ic_ui_input, this::openSourcePanel));
         return rows;

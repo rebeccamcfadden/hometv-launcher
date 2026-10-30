@@ -10,8 +10,9 @@ import java.util.List;
 
 /**
  * The hold-OK menu on an app tile (docs/rework.md: carried into V1, restyled): the dropdowns' glass panel, hung from
- * the tile instead of a nav button. It opens under the tile, or over it where the screen has no room below, and
- * closes on Back, on OK on a row, or when the D-pad moves past its edge; focus then goes back to the tile.
+ * the tile instead of a nav button. It opens under the tile, else over it, else beside it (MenuPlace), never over
+ * Home's greeting, date and clock, and closes on Back, on OK on a row, or when the D-pad moves past its edge; focus
+ * then goes back to the tile.
  */
 final class TileMenu {
     private TileMenu() {}
@@ -19,6 +20,11 @@ final class TileMenu {
     static final String LABEL = "Tile menu";
 
     static Screen create(Shell shell, View tile, List<MenuPanel.Row> rows) {
+        return create(shell, tile, rows, null);
+    }
+
+    /** As create, keeping the menu below the avoid view (Home's greeting, date and clock) while that view is showing. */
+    static Screen create(Shell shell, View tile, List<MenuPanel.Row> rows, View avoid) {
         FrameLayout root = new FrameLayout(shell.stage.getContext());
         View catcher = new View(root.getContext());
         catcher.setOnClickListener(v -> close(shell, tile));
@@ -35,14 +41,15 @@ final class TileMenu {
         int pw = panel.getMeasuredWidth(), ph = panel.getMeasuredHeight();
         float[] r = Focus.rectIn(tile, shell.stage);
         int gap = Ui.px(14);
-        int safeX = Ui.px(Ui.SAFE_X), safeY = Ui.px(Ui.SAFE_Y);
-        int left = Math.max(safeX, Math.min(Math.round(r[0]), stageW - safeX - pw));
-        boolean below = r[3] + gap + ph <= stageH - safeY;
-        int top = below ? Math.round(r[3]) + gap : Math.max(safeY, Math.round(r[1]) - gap - ph);
+        int ceiling = 0;
+        if (avoid != null && avoid.isShown() && avoid.getAlpha() > 0f) {
+            ceiling = Math.round(Focus.rectIn(avoid, shell.stage)[3]) + gap;
+        }
+        MenuPlace at = MenuPlace.of(r, pw, ph, stageW, stageH, Ui.px(Ui.SAFE_X), Ui.px(Ui.SAFE_Y), gap, ceiling);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
-        lp.leftMargin = left;
-        lp.topMargin = top;
+        lp.leftMargin = at.left;
+        lp.topMargin = at.top;
         root.addView(panel, lp);
 
         return new Screen(LABEL, root, Screen.Layer.DIALOG) {
@@ -61,12 +68,17 @@ final class TileMenu {
                 panel.setAlpha(0f);
                 panel.setScaleX(0.96f);
                 panel.setScaleY(0.96f);
-                panel.setTranslationY(below ? -Ui.px(8) : Ui.px(8));
+                // It grows out of the tile: down from under it, up from over it, sideways from beside it.
+                boolean sideways = at.side == MenuPlace.Side.RIGHT || at.side == MenuPlace.Side.LEFT;
+                int shift = Ui.px(8);
+                if (sideways) panel.setTranslationX(at.side == MenuPlace.Side.RIGHT ? -shift : shift);
+                else panel.setTranslationY(at.side == MenuPlace.Side.BELOW ? -shift : shift);
                 panel.post(() -> {
-                    panel.setPivotX(0);
-                    panel.setPivotY(below ? 0 : panel.getHeight());
-                    panel.animate().alpha(1f).scaleX(1f).scaleY(1f).translationY(0f).setDuration(200)
-                            .setInterpolator(Ui.EASE).start();
+                    panel.setPivotX(at.side == MenuPlace.Side.LEFT ? panel.getWidth() : 0);
+                    panel.setPivotY(at.side == MenuPlace.Side.ABOVE ? panel.getHeight()
+                            : sideways ? panel.getHeight() / 2f : 0);
+                    panel.animate().alpha(1f).scaleX(1f).scaleY(1f).translationX(0f).translationY(0f)
+                            .setDuration(200).setInterpolator(Ui.EASE).start();
                 });
             }
 

@@ -219,9 +219,24 @@ final class Shell {
     boolean moveWithin(View root, SpatialNav.Dir dir) {
         Screen s = top();
         if (s == null || focused == null) return false;
-        View next = findNext(root, focused, dir, s.memory);
+        View next = intoNav(s.view, findNext(root, focused, dir, s.memory));
         if (next != null) focus(next);
         return next != null;
+    }
+
+    /**
+     * A move from the page into the nav lands on the page's own section (its tab, or Movies / TV Shows for Pick for
+     * me), not on the section or device icon used last or nearest (app.ts intoNav): Up from Home after a look at
+     * Search is Home. Moves along the nav itself are left alone.
+     */
+    private View intoNav(View root, View next) {
+        if (next == null || focused == null) return next;
+        View bar = navBarOf(next, root);
+        if (bar == null || navBarOf(focused, root) != null) return next;
+        for (View v : Focus.candidates(bar)) {
+            if (NAV_GROUP.equals(Focus.group(v)) && v.isActivated()) return v;
+        }
+        return next;
     }
 
     void toast(CharSequence text) {
@@ -344,7 +359,7 @@ final class Shell {
             return;
         }
         if (s.onKey(Screen.Key.valueOf(dir.name()), focused)) return;
-        View next = findNext(s.view, focused, dir, s.memory);
+        View next = intoNav(s.view, findNext(s.view, focused, dir, s.memory));
         if (next == null) return;
         focus(next);
         stage.playSoundEffect(soundFor(dir));

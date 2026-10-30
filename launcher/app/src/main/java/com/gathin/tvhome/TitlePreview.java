@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -397,6 +398,7 @@ final class TitlePreview extends Screen {
                     Ui.round(Ui.ACCENT, Ui.RADIUS_PILL)));
             v.setTextColor(Ui.colors(Ui.TEXT_3, Ui.TEXT_1, Ui.ON_ACCENT));
             v.setContentDescription(v.getText());
+            Kit.reportsSelected(v);
             Focus.make(v, G_TABS, "tab-" + tab.name(), i == 0, null);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, Ui.px(52));
             lp.leftMargin = i == 0 ? 0 : Ui.px(8);
@@ -429,6 +431,8 @@ final class TitlePreview extends Screen {
             TextView v = tabViews.get(i);
             v.setActivated(on);
             v.setTypeface(on ? Ui.MEDIUM : Ui.REGULAR);
+            // Landing on a tab shows it, after its focus event went out: say again that it is now the selected one.
+            if (on) v.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED);
         }
         content.removeAllViews();
         seasonChips.clear();

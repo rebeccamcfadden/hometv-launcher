@@ -596,7 +596,7 @@ The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor
 | What | How it works |
 |---|---|
 | **Home** | Greeting, date, clock and weather for the location in `launcher/tv.properties`, then the app row. The row starts with the installed apps from `dock_apps`; hold OK on a tile to move it, remove it from Home or open App info, and Home keeps that order. |
-| **Inputs** | The nav's Inputs dropdown and Home's Inputs row: HDMI ports under their names, CEC devices on their port, AV and Live TV (`live_tv_package`). Sets that list their inputs another way are handled in [`config.xml`](launcher/app/src/main/res/values/config.xml). |
+| **Inputs** | The nav's Inputs dropdown and Home's Inputs row: HDMI ports under their names, CEC devices on their port, AV and Live TV (`live_tv_package`). Home's row shows the first four (Live TV first); the dropdown lists them all. Sets that list their inputs another way are handled in [`config.xml`](launcher/app/src/main/res/values/config.xml). |
 | **Movies, TV Shows, Search, Pick for me** | Built on a catalogue interface; V1 plugs in the prototype's mock catalogue, so titles, artwork, availability and prices are illustrative. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. |
 | **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`. Watch opens that service's app. |
 | **Settings** | The nav's Settings icon opens the TV's settings; Home's Shortcuts row opens the launcher's own (below). |

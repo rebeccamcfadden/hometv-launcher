@@ -39,6 +39,7 @@ final class PickSetupPage extends Screen {
     private final View[] moodChips = new View[2];
     private final TextView[] fieldLabels = new TextView[PickRules.IDS.length];
     private final TextView[] fieldValues = new TextView[PickRules.IDS.length];
+    private final View[] fieldViews = new View[PickRules.IDS.length];
     private final TextView count, countText, summaryLead, summaryFilters, note;
     private final View find;
 
@@ -75,6 +76,7 @@ final class PickSetupPage extends Screen {
                         state.source = src;
                         refresh();
                     });
+            spoken(sourceChips[i], R.string.pick_choose_from);
             addChip(sourceRow, sourceChips[i]);
         }
         left.addView(sourceRow);
@@ -87,6 +89,7 @@ final class PickSetupPage extends Screen {
                         state.toggle(list);
                         refresh();
                     });
+            spoken(listChips[i], R.string.pick_lists_spoken);
             addChip(listsRow, listChips[i]);
         }
         left.addView(listsRow);
@@ -120,6 +123,7 @@ final class PickSetupPage extends Screen {
                         state.kind = k;
                         refresh();
                     });
+            spoken(moodChips[i], R.string.pick_mood);
             addChip(moodRow, moodChips[i]);
         }
         right.addView(moodRow);
@@ -203,6 +207,9 @@ final class PickSetupPage extends Screen {
         for (int f = 0; f < PickRules.IDS.length; f++) {
             fieldLabels[f].setText(PickRules.label(f, state.kind));
             fieldValues[f].setText(PickRules.option(f, state.values[f]));
+            // Read out as "Movie length, Under 2 hours", and again after OK steps it.
+            fieldViews[f].setContentDescription(ctx.getString(R.string.pick_spoken, fieldLabels[f].getText(),
+                    fieldValues[f].getText()));
         }
         int matches = matches().size();
         int n = PickRules.pickCount(matches);
@@ -245,6 +252,7 @@ final class PickSetupPage extends Screen {
         v.addView(row, below(10));
         fieldLabels[f] = l;
         fieldValues[f] = value;
+        fieldViews[f] = v;
         Focus.make(v, "fields", "fld-" + PickRules.IDS[f], false, x -> {
             state.step(f);
             refresh();
@@ -317,6 +325,12 @@ final class PickSetupPage extends Screen {
         LinearLayout r = Kit.unclip(new LinearLayout(ctx));
         r.setOrientation(LinearLayout.HORIZONTAL);
         return r;
+    }
+
+    /** A chip read out with its row's label, e.g. "Choose from, My watchlists"; Kit reports it as selected. */
+    private void spoken(View chip, int rowLabel) {
+        chip.setContentDescription(ctx.getString(R.string.pick_spoken, ctx.getString(rowLabel),
+                chip.getContentDescription()));
     }
 
     /** .chips: 12 px apart. */
