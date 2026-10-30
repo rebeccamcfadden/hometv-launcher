@@ -25,7 +25,7 @@ public class PickRulesTest {
     private final MockCatalog catalog = new MockCatalog();
 
     /** The household's seed (store.ts defaults): My list from the MY titles, seen knives-out and budapest. */
-    private final HouseholdState seed = HouseholdState.defaults(catalog);
+    private final HouseholdState seed = HouseholdState.seed(catalog);
     private final PickRules.Household household = household(seed);
 
     private static PickRules.Household household(HouseholdState s) {

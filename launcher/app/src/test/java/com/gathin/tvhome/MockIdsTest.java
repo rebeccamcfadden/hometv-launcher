@@ -78,7 +78,7 @@ public class MockIdsTest {
                 return MockIds.migrate(mockId);
             }
         };
-        HouseholdState s = HouseholdState.defaults(tmdbIds);
+        HouseholdState s = HouseholdState.seed(tmdbIds);
         assertTrue(s.isSeen("movie:546554"));
         assertTrue(s.isFavorite("movie:329865"));
         assertEquals(Arrays.asList("movie:329865", "movie:693134", "movie:666277", "movie:776503", "movie:17431",

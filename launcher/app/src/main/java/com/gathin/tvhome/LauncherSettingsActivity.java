@@ -96,6 +96,16 @@ public final class LauncherSettingsActivity extends Activity {
             TextView prices = findViewById(R.id.priceNotice);
             prices.setText(notice);
             prices.setVisibility(View.VISIBLE);
+            // V2 Phase 3: the TMDB account, signed in on a temporary page over Home (AccountPage).
+            TextView account = findViewById(R.id.tmdbAccountChoice);
+            TmdbSession s = new TmdbSessionStore(this).load();
+            account.setText(getString(R.string.account_row_state,
+                    s != null ? s.username : getString(R.string.account_not_signed_in)));
+            account.setVisibility(View.VISIBLE);
+            account.setOnClickListener(v -> {
+                open(new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_TMDB_ACCOUNT));
+                finish();
+            });
         }
         refresh();
         animationsChoice.requestFocus();

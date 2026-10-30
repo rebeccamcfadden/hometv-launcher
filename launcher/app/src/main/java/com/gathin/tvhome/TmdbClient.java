@@ -105,6 +105,42 @@ final class TmdbClient {
         }
     }
 
+    /**
+     * One account call (AccountHttp), never cached and never logged: the answers are the household's own lists, and
+     * a v3 write carries the session id in its URL. Any HTTP status comes back with its body, so the caller can read
+     * TMDB's status code; only no answer at all throws. Blocking: call from a background thread.
+     */
+    static AccountHttp.Reply send(AccountHttp.Call call, String bearer) throws IOException {
+        HttpURLConnection c = (HttpURLConnection) new URL(call.url).openConnection();
+        c.setConnectTimeout(CONNECT_MS);
+        c.setReadTimeout(READ_MS);
+        c.setUseCaches(false);
+        c.setRequestMethod(call.method.name());
+        c.setRequestProperty("Accept", "application/json");
+        c.setRequestProperty("Authorization", "Bearer " + bearer);
+        try {
+            if (call.body != null) {
+                byte[] body = call.body.getBytes(StandardCharsets.UTF_8);
+                c.setDoOutput(true);
+                c.setRequestProperty("Content-Type", "application/json;charset=utf-8");
+                c.setFixedLengthStreamingMode(body.length);
+                try (java.io.OutputStream out = c.getOutputStream()) {
+                    out.write(body);
+                }
+            }
+            int code = c.getResponseCode();
+            InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+            if (in == null) return new AccountHttp.Reply(code, "");
+            try (InputStream body = in) {
+                return new AccountHttp.Reply(code, new String(DiskCache.readAll(body), StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            c.disconnect();
+            // The message can hold the URL, and with it a session id: only the kind of failure goes on.
+            throw new IOException(e.getClass().getSimpleName());
+        }
+    }
+
     private byte[] fetch(String url, boolean api) throws IOException {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(CONNECT_MS);

@@ -91,25 +91,46 @@ milestones: [docs/rework.md](docs/rework.md).
 
 ### TMDB sign-in and watchlist sync
 - **V1:** My list, Seen, Favorites, recent searches and recently viewed are stored on the TV only.
-- **Wanted:** sign in to TMDB on the TV and keep My list and the rest in step with the account.
-- **Findings:** cleanyourtv-ui signs in with TMDB's v3 flow. The TV shows a QR code (`Qr.java`, its own encoder
-  after Project Nayuki's, MIT) for a request token that the person approves on their phone. The session id is
-  then kept in the app's settings. Without an account, My list and Seen stay on the TV.
+- **V2 Phase 3:** signing in is optional, from a "TMDB account" row in Launcher settings, on a temporary page over
+  Home (`AccountPage`, "Temporary design") until the Figma design is chosen. TMDB's v4 flow: a request token shown as a
+  QR code for `themoviedb.org/auth/access` (version 14, about 460 px), polled every 5 s while the page is on screen
+  and for at most 15 minutes, then the access token turned into a v3 session (`/3/authentication/session/convert/4`),
+  because the watchlist and favourite writes exist only in v3 while v4 lists hold movies and shows and can be
+  private. My list follows the watchlist, Favorites the favourites and Seen a private TMDB list named "Seen", which
+  the launcher makes when the account has none (`tmdb_seen_list`, `create_seen_list`; docs/rework.md, Accounts,
+  2026-10-30), all both ways (`Accounts`, `AccountSync`): a full sync after signing in and when Home shows if the
+  last one is 10 minutes old, changes on the TV sent 5 s after the last one, nothing while Home is hidden. Changes
+  made offline or while signed out wait in a queue (`SyncLedger`, saved with the lists so a lost process keeps them)
+  and are retried; each title's last change wins (`ListMerge`). A sign-in to a new account takes the account's lists
+  and adds nothing from the TV; the same account again carries on with its queue. Signing out keeps the lists on the
+  TV. The tokens are in the private SharedPreferences file `tmdb_account`, never logged; account calls skip the disk
+  cache (`TmdbClient.send`).
+- **Still to come:** the sign-in and first-run designs, and whether a first run asks to sign in.
+- **Not seen yet:** a real approval (the project lead approves one on the TV), and so the session, the account's
+  name, making the Seen list and the sync against a real account. Checked on the emulator: the code and its QR
+  (decoded), TMDB's "not approved yet" answer (422, code 41), polling stopping while the page is hidden, offline,
+  expiry and New code.
 
 ### Household and Friends lists
 - **V1:** mock placeholders in the list chips and the grid.
 - **V2 Phase 1:** still the mock lists, on the TMDB ids of their titles (`MockIds`, `MockOverlay`), with the mock's
   next episode for the "Up next" badge where the real show has that episode.
-- **Wanted:** both come from the project lead's TMDB lists. Which list is which is decided when this is built.
+- **V2 Phase 3:** chosen on the TV (docs/rework.md, Accounts, 2026-10-30): once signed in, the account page's
+  "Choose lists" lists the account's TMDB lists, each Household, Friends or Not used (OK moves it on; one list per
+  role), saved on the TV (`ListChoices`). `tmdb_household_list` and `tmdb_friends_list` in `config.xml` (or a pushed
+  `config.json`) override the choice: a list number or themoviedb.org/list link (a public list is read without
+  signing in), or a list name in the signed-in account (`ListRef`). The TV only reads them, and keeps the last copy
+  for offline. A TV that never signed in and sets neither keeps the mock lists; once it has an account, a role with
+  no list is empty. All lists means My list, Household and Friends; the mock catalogue's own "My list" no longer
+  counts.
+- **Still to come:** the proper pane for Choose lists, with the new Launcher settings design.
 
 ### Household seed
-- **V1:** on the first run, My list, Seen, Favorites, recent searches and recently viewed start from the
-  prototype's mock seed (`design_preview/src/core/store.ts`): My list holds the catalogue's titles on the mock "My
-  list", two titles are seen, one is a favourite, four searches and six titles are recent. After that every change
-  is kept on the TV (`Household`, SharedPreferences `household`). With the real catalogue the seed and anything
-  stored before are TMDB ids (see Real catalogue).
-- **Wanted:** start empty, or from the TMDB account once sign-in exists (see TMDB sign-in and watchlist sync).
-
+- **V1:** on the first run, My list, Seen, Favorites, recent searches and recently viewed started from the
+  prototype's mock seed (`design_preview/src/core/store.ts`).
+- **V2 Phase 3:** a fresh install starts with all of them empty (`HouseholdState.defaults`; docs/rework.md, Accounts,
+  2026-10-30); a TV with saved lists keeps them as they are. Search hides "Recently viewed" and "From My list" while
+  they are empty. The prototype's seed (`HouseholdState.seed`) is only for the tests that compare with the prototype.
 ### Trailers
 - **V1:** Trailer opens YouTube's TV app searching for "name year trailer"; without YouTube it says so.
 - **V2 Phase 1:** with the real catalogue, Trailer opens TMDB's trailer for the title in YouTube's TV app (an official

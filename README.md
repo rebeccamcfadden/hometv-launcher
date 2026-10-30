@@ -42,7 +42,7 @@ catalogue, availability and prices were mock data; V2 makes them real (see [BACK
 | 0 · V1 wrap-up | Real-TV results, docs, V1 follow-ups found in testing | In progress |
 | 1 · Real catalogue | TMDB for titles, artwork, cast, episodes, More like this, trailers and search, cached on the TV | In progress |
 | 2 · Real availability | TMDB watch providers for SE, links that open the title, the household's services, real rent and buy prices | In review |
-| 3 · Accounts | TMDB sign-in by QR, My list and Seen synced, Household and Friends from TMDB lists | Planned |
+| 3 · Accounts | TMDB sign-in by QR, My list and Seen synced, Household and Friends from TMDB lists | In review |
 | 4 · On-TV settings | Weather city and unit, the new Launcher settings page, switching Wi-Fi | In progress |
 
 What is mocked or deferred, and why: [BACKLOG.md](BACKLOG.md).
@@ -170,9 +170,11 @@ press away:
 | **All Apps** | Every installed app. Hold OK to put one on Home or take it off; on Home, hold OK on a tile to move it, remove it or open App info. |
 
 The clock, the apps, the inputs and the weather (from Open-Meteo, kept for when the TV is offline) are real, and with
-a TMDB token so are the catalogue, which service has a title and some prices. The Household and Friends lists are
-mock data for now; what is mocked, and what will replace it, is in [BACKLOG.md](BACKLOG.md). The pictures at the top of this page come from the
-web prototype, until screenshots from a real TV replace them.
+a TMDB token so are the catalogue, which service has a title and its rent and buy prices, and the optional TMDB
+account, which keeps My list, Favorites and Seen in step with your TMDB watchlist, favorites and a private "Seen"
+list, and Household and Friends with the TMDB lists you choose. Before a TV has an account, the Household and Friends
+lists are mock data; what is mocked, and what will replace it, is in [BACKLOG.md](BACKLOG.md). The pictures at the
+top of this page come from the web prototype, until screenshots from a real TV replace them.
 
 And a TV that stops working against you: no sponsored rows, no "Discover" nags, no analytics
 phoning home, no apps you never asked for.
@@ -597,7 +599,8 @@ The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor
 |---|---|
 | **Home** | Greeting, date, clock and weather for the city chosen in Launcher settings (default: the location in `launcher/tv.properties`), then the app row. The row starts with the installed apps from `dock_apps`; hold OK on a tile to move it, remove it from Home or open App info, and Home keeps that order. |
 | **Inputs** | The nav's Inputs dropdown and Home's Inputs row: HDMI ports under their names, CEC devices on their port, AV and Live TV (`live_tv_package`). Home's row shows the first four (Live TV first); the dropdown lists them all. Sets that list their inputs another way are handled in [`config.xml`](launcher/app/src/main/res/values/config.xml). |
-| **Movies, TV Shows, Search, Pick for me** | Titles, artwork, cast, episodes, similar titles and search come from [TMDB](https://www.themoviedb.org) when the build has a TMDB token, and are cached on the TV so what was seen once still shows offline; without a token the launcher uses the prototype's mock catalogue. Where to watch is real for Sweden: which services stream, rent or sell a title, from JustWatch through TMDB, with rent and buy prices in kronor from Watchmode and Movie of the Night (optional keys in `tv.properties`, free plans only, kept a week) and Apple's iTunes; a store with no known price still shows, without one. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. |
+| **Movies, TV Shows, Search, Pick for me** | Titles, artwork, cast, episodes, similar titles and search come from [TMDB](https://www.themoviedb.org) when the build has a TMDB token, and are cached on the TV so what was seen once still shows offline; without a token the launcher uses the prototype's mock catalogue. Where to watch is real for Sweden: which services stream, rent or sell a title, from JustWatch through TMDB, with rent and buy prices in kronor from Watchmode and Movie of the Night (optional keys in `tv.properties`, free plans only, kept a week) and Apple's iTunes; a store with no known price still shows, without one. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV; a fresh install starts with all of them empty. |
+| **TMDB account** | Optional. Launcher settings' "TMDB account" row shows a QR code; approve it on your phone and My list, Favorites and Seen follow the account's watchlist, favorites and a private list named "Seen" (made when missing), both ways, with changes made offline sent later. The first sign-in takes the account's lists and adds nothing from the TV. Household and Friends are chosen on the TV with the account page's Choose lists, from your TMDB lists; `tmdb_household_list` and `tmdb_friends_list` in `config.xml` override that (a list number or link, or a list name). Syncs only while Home is on screen; signing out keeps the lists on the TV. |
 | **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`, Sweden's services included (Viaplay, SkyShowtime, SVT Play, TV4 Play and others). Watch opens the title itself in that service's app where Wikidata has its id (Netflix, Disney+, Apple TV, HBO Max, Prime Video, SVT Play), else the app. |
 | **Settings** | The nav's Settings icon opens the TV's settings; Home's Shortcuts row opens the launcher's own (below). |
 | **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone (below). |

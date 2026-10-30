@@ -437,8 +437,10 @@ final class SearchPage extends Screen {
         // The results area.
         body.removeAllViews();
         if (query.isEmpty()) {
-            body.addView(titleRow(R.string.search_recently_viewed, viewed(), "viewed"));
-            body.addView(titleRow(R.string.search_from_my_list, ids(data.household.myListIds()), "mine"));
+            // A fresh install starts with every list empty (V2 Phase 3): no heading over an empty row.
+            addViewed();
+            List<Title> mine = ids(data.household.myListIds());
+            if (!mine.isEmpty()) body.addView(titleRow(R.string.search_from_my_list, mine, "mine"));
             body.addView(genreRow());
             body.setPadding(0, 0, 0, Ui.px(120));
         } else if (!hasMatches) {
@@ -451,7 +453,7 @@ final class SearchPage extends Screen {
             LinearLayout.LayoutParams nlp = below(12);
             nlp.bottomMargin = Ui.px(40);
             body.addView(note, nlp);
-            body.addView(titleRow(R.string.search_recently_viewed, viewed(), "viewed"));
+            addViewed();
             body.setPadding(0, 0, 0, Ui.px(120));
         } else {
             List<SearchIndex.Hit> items = index.items(results, filter, data.services.subscribed());
@@ -663,6 +665,12 @@ final class SearchPage extends Screen {
     }
 
     // ---- The results area -----------------------------------------------------------------------------------------
+
+    /** Recently viewed, unless nothing was viewed yet (a fresh install). */
+    private void addViewed() {
+        List<Title> viewed = viewed();
+        if (!viewed.isEmpty()) body.addView(titleRow(R.string.search_recently_viewed, viewed, "viewed"));
+    }
 
     private List<Title> viewed() {
         return ids(data.household.viewed());

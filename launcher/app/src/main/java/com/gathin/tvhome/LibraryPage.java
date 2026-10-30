@@ -13,7 +13,6 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * Movies and TV Shows, one class for both (design_preview/src/screens/library.ts and the library styles in
@@ -270,8 +269,7 @@ final class LibraryPage extends Screen {
 
     /** Brings everything up to date with the household, the chosen list and the filters (library.ts, render). */
     void render() {
-        Predicate<String> my = data.household::inMyList;
-        List<Title> pool = LibraryLists.pool(data.catalog.all(), kind, my);
+        List<Title> pool = LibraryLists.pool(data.catalog.all(), kind, data.household);
         // The filters judge the titles on their details: load those not in yet (the cache first, then TMDB).
         data.catalog.want(ids(pool));
 
@@ -279,7 +277,7 @@ final class LibraryPage extends Screen {
         int[] counts = new int[choices.length];
         StringBuilder chipKey = new StringBuilder(list.name());
         for (int i = 0; i < choices.length; i++) {
-            counts[i] = LibraryLists.under(pool, choices[i], my).size();
+            counts[i] = LibraryLists.under(pool, choices[i], data.household).size();
             chipKey.append(',').append(counts[i]);
         }
         if (!chipKey.toString().equals(chipsBuilt)) {
@@ -293,7 +291,7 @@ final class LibraryPage extends Screen {
         Kit.setLabel(filtersButton, n == 0 ? ctx.getString(R.string.library_filters)
                 : ctx.getString(R.string.library_filters_n, n));
 
-        List<Title> chosen = LibraryLists.under(pool, list, my);
+        List<Title> chosen = LibraryLists.under(pool, list, data.household);
         List<Title> shown = filters.apply(chosen);
         listTitle.setText(listName(list));
         Resources r = ctx.getResources();

@@ -4,14 +4,23 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The household's state stored on the TV (docs/rework.md, Watchlists): {@link HouseholdState} kept as one JSON
  * string in the SharedPreferences file "household". Every change is saved at once (apply, off the main thread) and
- * tells the listeners. The first run starts from the prototype's mock seed (BACKLOG.md).
+ * tells the listeners. A fresh install starts with empty lists (BACKLOG.md, Household seed).
+ *
+ * <p>V2 Phase 3: a change to My list, Favorites or Seen is also told to the {@link Recorder} ({@link Accounts}, which
+ * queues it for the TMDB account), and {@link #applySynced} takes what a sync merged. Household and Friends come from
+ * TMDB lists when config.xml names them ({@link ImportedLists}), else from the catalogue's mock lists.
  */
-final class Household {
+final class Household implements ListMembership {
     static final String PREFS = "household";
     private static final String KEY = "state";
 
@@ -19,10 +28,23 @@ final class Household {
         void onHouseholdChanged();
     }
 
+    /** The TMDB account's side of a change made on the TV to a list it can keep. */
+    interface Recorder {
+        /** Whether a change to the list goes into the account's queue at all. */
+        boolean queues(SyncList list);
+
+        /** A change was saved, with its unsent copy ({@link #unsent}) when {@link #queues} said so. */
+        void onListChanged();
+    }
+
     private final SharedPreferences prefs;
     private final Catalog catalog;
     private final List<Listener> listeners = new ArrayList<>();
+    private final ImportedLists imported = new ImportedLists();
     private HouseholdState state;
+    private Recorder recorder;
+    /** Moves with every change made on the TV, so a sync that read the lists before it knows they moved on. */
+    private int version;
 
     Household(Context ctx, Catalog catalog) {
         this.prefs = ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -30,8 +52,18 @@ final class Household {
         this.state = HouseholdState.fromJson(prefs.getString(KEY, null), catalog);
     }
 
-    boolean inMyList(String id) {
+    void setRecorder(Recorder r) {
+        recorder = r;
+    }
+
+    @Override
+    public boolean inMyList(String id) {
         return state.inMyList(id);
+    }
+
+    @Override
+    public boolean isOn(Title t, ListId list) {
+        return list == ListId.MY ? inMyList(t.id) : imported.isOn(t, list);
     }
 
     boolean isSeen(String id) {
@@ -44,21 +76,34 @@ final class Household {
 
     /** Returns whether the title is on My list now. */
     boolean toggleMyList(String id) {
-        boolean on = state.toggleMyList(id);
-        changed();
-        return on;
+        return record(SyncList.MY_LIST, id, state.toggleMyList(id));
     }
 
     boolean toggleSeen(String id) {
-        boolean on = state.toggleSeen(id);
-        changed();
-        return on;
+        return record(SyncList.SEEN, id, state.toggleSeen(id));
     }
 
     boolean toggleFavorite(String id) {
-        boolean on = state.toggleFavorite(id);
+        return record(SyncList.FAVORITES, id, state.toggleFavorite(id));
+    }
+
+    private boolean record(SyncList list, String id, boolean on) {
+        version++;
+        // The change and its unsent copy for the account go into one save, so neither outlives the other.
+        if (recorder != null && recorder.queues(list)) state.queue(list, id, on, System.currentTimeMillis());
         changed();
+        if (recorder != null) recorder.onListChanged();
         return on;
+    }
+
+    /** Changes the TMDB account has not queued yet. */
+    List<SyncLedger.Op> unsent() {
+        return state.unsent();
+    }
+
+    /** The account queued (and saved) these changes. */
+    void queued(List<SyncLedger.Op> ops) {
+        if (state.dropUnsent(ops)) prefs.edit().putString(KEY, state.toJson()).apply();
     }
 
     List<String> myListIds() {
@@ -77,19 +122,59 @@ final class Household {
         return state.viewed();
     }
 
-    /** Every title id the household keeps, for the catalogue to load. */
+    /** Every title id the household keeps, the imported lists' too, for the catalogue to load. */
     List<String> titleIds() {
-        return state.titleIds();
+        Set<String> all = new LinkedHashSet<>(state.titleIds());
+        all.addAll(imported.allIds());
+        return new ArrayList<>(all);
     }
 
     void pushViewed(String id) {
         if (state.pushViewed(id)) changed();
     }
 
-    /** Back to the seed: the prototype's Reset state. */
+    // ---- The TMDB account (V2 Phase 3) ----------------------------------------------------------------------------
+
+    int version() {
+        return version;
+    }
+
+    /** My list, Favorites and Seen as they are now, for a sync. */
+    Map<SyncList, List<String>> syncedLists() {
+        Map<SyncList, List<String>> out = new EnumMap<>(SyncList.class);
+        for (SyncList l : SyncList.values()) if (l.writable) out.put(l, state.ids(l));
+        return out;
+    }
+
+    /**
+     * Takes the lists a sync merged, unless something changed on the TV since it read them ({@code readAt} is the
+     * {@link #version} then): that change is queued, and the next sync merges it. Returns whether they were taken.
+     */
+    boolean applySynced(Map<SyncList, List<String>> lists, int readAt) {
+        if (readAt != version) return false;
+        boolean any = false;
+        for (Map.Entry<SyncList, List<String>> e : lists.entrySet()) any |= state.setList(e.getKey(), e.getValue());
+        if (any) changed();
+        return true;
+    }
+
+    /** Household or Friends from a TMDB list: the ids last read, or null to go back to the mock list. */
+    void setImported(ListId list, Collection<String> ids) {
+        if (ids == null) {
+            if (!imported.fromTmdb(list)) return;
+            imported.clear(list);
+        } else {
+            if (imported.fromTmdb(list) && imported.ids(list).equals(new ArrayList<>(new LinkedHashSet<>(ids)))) return;
+            imported.set(list, ids);
+        }
+        notifyListeners();
+    }
+
+    /** Back to a fresh household: empty lists. */
     void reset() {
         prefs.edit().remove(KEY).apply();
         state = HouseholdState.defaults(catalog);
+        version++;
         notifyListeners();
     }
 

@@ -15,7 +15,8 @@ import java.util.Set;
  * The household's state that outlives a screen (design_preview/src/core/store.ts): My list, Seen and Favorites (sets
  * of title ids), recent searches (up to 4, newest first, lower case, no repeats) and recently viewed titles (up to
  * 10, newest first). Pure Java with its own small JSON reader and writer, so it is unit-tested on the JVM;
- * {@link Household} keeps it in SharedPreferences. The defaults are the prototype's mock seed (BACKLOG.md).
+ * {@link Household} keeps it in SharedPreferences. A fresh household starts with empty lists ({@link #defaults});
+ * the prototype's mock seed is {@link #seed} (BACKLOG.md).
  */
 final class HouseholdState {
     static final int MAX_RECENT = 4;
@@ -26,6 +27,12 @@ final class HouseholdState {
     private final Set<String> favorites;
     private final List<String> recent;
     private final List<String> viewed;
+    /**
+     * Changes to My list, Favorites or Seen that the TMDB account has not queued yet (V2 Phase 3). Kept in the same
+     * JSON as the lists, so one save holds both: a TV that loses the process before the account's worker has queued a
+     * change still has it here, and the next sync can't undo it ({@link Accounts}).
+     */
+    private final List<SyncLedger.Op> unsent = new ArrayList<>();
 
     private HouseholdState(Set<String> myList, Set<String> seen, Set<String> favorites, List<String> recent,
                            List<String> viewed) {
@@ -37,11 +44,26 @@ final class HouseholdState {
     }
 
     /**
-     * store.ts's defaults: My list holds the catalogue's titles on the MY list; seen knives-out and budapest;
-     * favourite arrival; four recent searches; six recently viewed. The ids are the catalogue's own
-     * ({@link Catalog#fromMockId}): the real catalogue's TMDB ids, without the mock titles TMDB doesn't have.
+     * A fresh household (BACKLOG.md, Household seed; docs/rework.md, Accounts, 2026-10-30): everything starts empty,
+     * My list, Seen, Favorites, recent searches and recently viewed. A TV with saved lists keeps them.
      */
     static HouseholdState defaults(Catalog catalog) {
+        HouseholdState s = seed(catalog);
+        s.myList.clear();
+        s.seen.clear();
+        s.favorites.clear();
+        s.recent.clear();
+        s.viewed.clear();
+        return s;
+    }
+
+    /**
+     * store.ts's defaults, the prototype's seed: My list holds the catalogue's titles on the MY list; seen knives-out
+     * and budapest; favourite arrival; four recent searches; six recently viewed. The ids are the catalogue's own
+     * ({@link Catalog#fromMockId}): the real catalogue's TMDB ids, without the mock titles TMDB doesn't have. Only
+     * the prototype comparisons in the tests start from it now.
+     */
+    static HouseholdState seed(Catalog catalog) {
         Set<String> my = new LinkedHashSet<>();
         for (Title t : catalog.all()) if (t.isOn(ListId.MY)) my.add(t.id);
         return new HouseholdState(my,
@@ -87,6 +109,12 @@ final class HouseholdState {
         if ((v = strings(m.get("favorites"))) != null) replace(s.favorites, migrate(catalog, v));
         if ((v = strings(m.get("recent"))) != null) replace(s.recent, cap(v, MAX_RECENT));
         if ((v = strings(m.get("viewed"))) != null) replace(s.viewed, cap(migrate(catalog, v), MAX_VIEWED));
+        if ((v = strings(m.get("unsent"))) != null) {
+            for (String op : v) {
+                SyncLedger.Op o = parseOp(op);
+                if (o != null) s.unsent.add(o);
+            }
+        }
         return s;
     }
 
@@ -116,7 +144,58 @@ final class HouseholdState {
         field(b, "favorites", favorites).append(',');
         field(b, "recent", recent).append(',');
         field(b, "viewed", viewed);
+        if (!unsent.isEmpty()) {
+            List<String> ops = new ArrayList<>();
+            for (SyncLedger.Op op : unsent) ops.add(op.list.name() + "|" + op.id + "|" + (op.present ? 1 : 0) + "|" + op.at);
+            field(b.append(','), "unsent", ops);
+        }
         return b.append('}').toString();
+    }
+
+    /** "MY_LIST|movie:1|1|1700000000000", as {@link #toJson} writes an unsent change; null when unreadable. */
+    private static SyncLedger.Op parseOp(String s) {
+        String[] p = s.split("\\|");
+        if (p.length != 4) return null;
+        try {
+            SyncList list = SyncList.valueOf(p[0]);
+            if (!list.writable || TmdbAccountApi.mediaType(p[1]) == null) return null;
+            return new SyncLedger.Op(list, p[1], "1".equals(p[2]), Long.parseLong(p[3]), 0, 0);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // ---- Changes for the TMDB account (V2 Phase 3) -----------------------------------------------------------------
+
+    /** Keeps a change for the account's queue; a newer change to the same title replaces it. Not TMDB ids: ignored. */
+    void queue(SyncList list, String id, boolean present, long at) {
+        if (!list.writable || TmdbAccountApi.mediaType(id) == null) return;
+        for (int i = unsent.size() - 1; i >= 0; i--) {
+            SyncLedger.Op op = unsent.get(i);
+            if (op.list == list && op.id.equals(id)) unsent.remove(i);
+        }
+        unsent.add(new SyncLedger.Op(list, id, present, at, 0, 0));
+        while (unsent.size() > SyncLedger.MAX_PENDING) unsent.remove(0);
+    }
+
+    /** The changes the account has not queued yet, oldest first. */
+    List<SyncLedger.Op> unsent() {
+        return Collections.unmodifiableList(new ArrayList<>(unsent));
+    }
+
+    /** The account queued these: they leave. A newer change to the same title made since stays. */
+    boolean dropUnsent(Collection<SyncLedger.Op> queued) {
+        boolean any = false;
+        for (SyncLedger.Op q : queued) {
+            for (int i = unsent.size() - 1; i >= 0; i--) {
+                SyncLedger.Op op = unsent.get(i);
+                if (op.list == q.list && op.id.equals(q.id) && op.present == q.present && op.at == q.at) {
+                    unsent.remove(i);
+                    any = true;
+                }
+            }
+        }
+        return any;
     }
 
     // ---- Reading -----------------------------------------------------------------------------------------------
@@ -155,6 +234,34 @@ final class HouseholdState {
         all.addAll(seen);
         all.addAll(favorites);
         return new ArrayList<>(all);
+    }
+
+    /** My list, Favorites or Seen in the order the titles were added, for the TMDB sync; empty for other lists. */
+    List<String> ids(SyncList list) {
+        Set<String> s = set(list);
+        return s == null ? Collections.<String>emptyList() : Collections.unmodifiableList(new ArrayList<>(s));
+    }
+
+    /** Replaces My list, Favorites or Seen with what the sync merged. Returns whether it changed. */
+    boolean setList(SyncList list, List<String> ids) {
+        Set<String> s = set(list);
+        if (s == null || new ArrayList<>(s).equals(ids)) return false;
+        s.clear();
+        s.addAll(ids);
+        return true;
+    }
+
+    private Set<String> set(SyncList list) {
+        switch (list) {
+            case MY_LIST:
+                return myList;
+            case FAVORITES:
+                return favorites;
+            case SEEN:
+                return seen;
+            default:
+                return null;
+        }
     }
 
     // ---- Changing ----------------------------------------------------------------------------------------------

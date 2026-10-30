@@ -21,9 +21,7 @@ final class PickRules {
     enum Source { LISTS, SERVICES }
 
     /** What the rules need to know about the household: My list and what has been seen. */
-    interface Household {
-        boolean inMyList(String id);
-
+    interface Household extends ListMembership {
         boolean isSeen(String id);
     }
 
@@ -186,7 +184,7 @@ final class PickRules {
 
     private static boolean onAnyList(Title t, Set<ListId> lists, Household h) {
         for (ListId l : lists) {
-            if (l == ListId.MY ? h.inMyList(t.id) : t.isOn(l)) return true;
+            if (h.isOn(t, l)) return true;
         }
         return false;
     }

@@ -16,11 +16,11 @@ public class HouseholdStateTest {
     private final MockCatalog catalog = new MockCatalog();
 
     private HouseholdState fresh() {
-        return HouseholdState.defaults(catalog);
+        return HouseholdState.seed(catalog);
     }
 
     @Test
-    public void defaultsAreThePrototypeSeed() {
+    public void seedIsThePrototypes() {
         HouseholdState s = fresh();
         assertEquals(Arrays.asList("arrival", "dune", "past-lives", "oppenheimer", "maestro", "american-fiction",
                 "severance", "the-bear", "fallout", "wheel-of-time", "blue-planet"), s.myListIds());
@@ -119,9 +119,54 @@ public class HouseholdStateTest {
         HouseholdState s = HouseholdState.fromJson("{\"myList\":[],\"favorites\":[]}", catalog);
         assertTrue(s.myListIds().isEmpty());
         assertFalse(s.isFavorite("arrival"));
-        // Keys that are missing keep their defaults, as {...defaults(), ...saved} does.
-        assertTrue(s.isSeen("knives-out"));
-        assertEquals(4, s.recent().size());
+        // Keys that are missing keep their defaults, as {...defaults(), ...saved} does: no seed for anything.
+        assertFalse(s.isSeen("knives-out"));
+        assertTrue(s.recent().isEmpty());
+        assertTrue(s.viewed().isEmpty());
+    }
+
+    @Test
+    public void aFreshHouseholdHasEmptyLists() {
+        HouseholdState s = HouseholdState.defaults(catalog);
+        assertTrue(s.myListIds().isEmpty());
+        assertTrue(s.ids(SyncList.SEEN).isEmpty());
+        assertTrue(s.ids(SyncList.FAVORITES).isEmpty());
+        assertTrue(s.recent().isEmpty());
+        assertTrue(s.viewed().isEmpty());
+        assertTrue(s.titleIds().isEmpty());
+    }
+
+    @Test
+    public void savedRecentsAreKept() {
+        HouseholdState back = HouseholdState.fromJson(fresh().toJson(), catalog);
+        assertEquals(fresh().recent(), back.recent());
+        assertEquals(fresh().viewed(), back.viewed());
+    }
+
+    @Test
+    public void savedListsAreKept() {
+        HouseholdState s = fresh();
+        s.toggleFavorite("dune");
+        HouseholdState back = HouseholdState.fromJson(s.toJson(), catalog);
+        assertEquals(fresh().myListIds(), back.myListIds());
+        assertTrue(back.isSeen("knives-out"));
+        assertTrue(back.isFavorite("dune"));
+    }
+
+    @Test
+    public void syncedListsReadAndReplace() {
+        HouseholdState s = fresh();
+        assertEquals(s.myListIds(), s.ids(SyncList.MY_LIST));
+        assertEquals(Arrays.asList("knives-out", "budapest"), s.ids(SyncList.SEEN));
+        assertEquals(Collections.singletonList("arrival"), s.ids(SyncList.FAVORITES));
+        assertTrue(s.ids(SyncList.HOUSEHOLD).isEmpty());
+        assertTrue(s.setList(SyncList.MY_LIST, Arrays.asList("tv:2", "movie:1")));
+        assertEquals(Arrays.asList("tv:2", "movie:1"), s.myListIds());
+        assertFalse("the same again changes nothing", s.setList(SyncList.MY_LIST, Arrays.asList("tv:2", "movie:1")));
+        assertFalse(s.setList(SyncList.FRIENDS, Collections.singletonList("movie:1")));
+        assertTrue(s.setList(SyncList.FAVORITES, Collections.<String>emptyList()));
+        assertFalse(s.isFavorite("arrival"));
+        assertEquals("the rest is untouched", 4, s.recent().size());
     }
 
     @Test
@@ -133,7 +178,7 @@ public class HouseholdStateTest {
         assertFalse(s.isSeen("knives-out"));
         assertEquals(Arrays.asList("aé", "b\n"), s.recent());
         assertTrue(s.viewed().isEmpty());
-        assertEquals(fresh().myListIds(), s.myListIds());
+        assertTrue(s.myListIds().isEmpty());
     }
 
     @Test
@@ -145,10 +190,10 @@ public class HouseholdStateTest {
 
     @Test
     public void anythingUnreadableGivesTheDefaults() {
-        String seed = fresh().toJson();
+        String empty = HouseholdState.defaults(catalog).toJson();
         for (String bad : Arrays.asList(null, "", "   ", "not json", "{", "{\"myList\":[\"a\"", "[1,2]", "\"text\"",
                 "{\"myList\":[\"a\"]} trailing", "{\"recent\":\"\\u12\"}", "{myList:[]}")) {
-            assertEquals(String.valueOf(bad), seed, HouseholdState.fromJson(bad, catalog).toJson());
+            assertEquals(String.valueOf(bad), empty, HouseholdState.fromJson(bad, catalog).toJson());
         }
     }
 
@@ -156,8 +201,8 @@ public class HouseholdStateTest {
     public void aKeyOfTheWrongTypeKeepsItsDefault() {
         HouseholdState s = HouseholdState.fromJson("{\"myList\":\"arrival\",\"seen\":[1,2],\"favorites\":[\"dune\"]}",
                 catalog);
-        assertEquals(fresh().myListIds(), s.myListIds());
-        assertTrue(s.isSeen("budapest"));
+        assertTrue(s.myListIds().isEmpty());
+        assertFalse(s.isSeen("budapest"));
         assertTrue(s.isFavorite("dune"));
         assertFalse(s.isFavorite("arrival"));
     }

@@ -85,6 +85,13 @@
             android:layout_marginTop="18dp"
             android:text="@string/tv_settings" />
 
+        <!-- V2 Phase 3: the optional TMDB account; opens the sign-in page over Home. Only with a TMDB token. -->
+        <TextView
+            android:id="@+id/tmdbAccountChoice"
+            style="@style/SettingsRow"
+            android:layout_marginTop="28dp"
+            android:visibility="gone" />
+
         <!-- About: TMDB's required notice, until the new Launcher settings page has its place (BACKLOG.md). -->
         <TextView
             android:id="@+id/tmdbNotice"

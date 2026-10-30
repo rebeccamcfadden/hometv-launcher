@@ -40,6 +40,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     static final String ACTION_LAUNCHER_SETTINGS = "com.gathin.tvhome.action.LAUNCHER_SETTINGS";
     /** The system input switcher, forwarded here by InputsRequestActivity while handle_view_inputs is on. */
     static final String ACTION_VIEW_INPUTS = "com.android.tv.action.VIEW_INPUTS";
+    /** V2 Phase 3: Launcher settings' TMDB account row opens the sign-in page here, over Home (AccountPage). */
+    static final String ACTION_TMDB_ACCOUNT = "com.gathin.tvhome.action.TMDB_ACCOUNT";
+    /** Survives the rebuild after a settings change, to open the sign-in page asked for in the same visit. */
+    private static final String KEY_OPEN_ACCOUNT = "open_account";
+    private boolean openAccountAfterRebuild;
 
     private static final String MENU_INPUTS = "Inputs";
     private static final String MENU_NETWORK = "Wi-Fi";
@@ -180,7 +185,14 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (tim != null) tim.registerCallback(inputCallback, handler);
 
         // Not after recreate(): the launch intent survives it and would open them again.
-        if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())) openInputsIfAsked(getIntent());
+        if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent()) && !openAccountIfAsked(getIntent())) {
+            openInputsIfAsked(getIntent());
+        }
+        // The TMDB account row was chosen in the same Launcher settings visit as a change that rebuilt Home.
+        if (savedInstanceState != null && savedInstanceState.getBoolean(KEY_OPEN_ACCOUNT)
+                && data.accounts.available()) {
+            openAccount();
+        }
     }
 
     @Override
@@ -433,6 +445,37 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         return true;
     }
 
+    /**
+     * The TMDB account row in Launcher settings: the sign-in page over Home, once it is on screen. When a setting was
+     * also changed in that visit, onResume is about to rebuild Home, which would drop the page: it opens after the
+     * rebuild instead ({@link #KEY_OPEN_ACCOUNT}), so the code isn't asked for twice either.
+     */
+    private boolean openAccountIfAsked(Intent intent) {
+        if (intent == null || !ACTION_TMDB_ACCOUNT.equals(intent.getAction())) return false;
+        setIntent(new Intent(Intent.ACTION_MAIN));
+        if (!data.accounts.available()) return true;
+        if (Config.settingsChanged(settingsRevision, settingsRevision())) {
+            openAccountAfterRebuild = true;
+            return true;
+        }
+        openAccount();
+        return true;
+    }
+
+    private void openAccount() {
+        afterLayout(() -> {
+            if (isFinishing()) return;
+            shell.closeDialogs();
+            shell.push(AccountPage.create(this, this));
+        });
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);
+        out.putBoolean(KEY_OPEN_ACCOUNT, openAccountAfterRebuild);
+    }
+
     /** Runs r once the stage has been laid out, so dropdowns can hang from their buttons on a cold start. */
     private void afterLayout(Runnable r) {
         if (stage.isLaidOut()) {
@@ -457,6 +500,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (openLauncherSettingsIfAsked(intent)) return;
+        if (openAccountIfAsked(intent)) return;
         if (openInputsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         shell.home();
@@ -494,8 +538,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStart() {
         super.onStart();
         started = true;
-        // V2 Phase 2: price lookups only while Home shows.
-        if (data != null) data.catalog.setVisible(true);
+        // V2 Phase 2: price lookups only while Home shows; V2 Phase 3: the TMDB account syncs only then too.
+        if (data != null) {
+            data.catalog.setVisible(true);
+            data.accounts.setVisible(true);
+        }
         if (!backdropLoaded) loadBackdrop();
     }
 
@@ -524,7 +571,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStop() {
         super.onStop();
         started = false;
-        if (data != null) data.catalog.setVisible(false);
+        if (data != null) {
+            data.catalog.setVisible(false);
+            data.accounts.setVisible(false);
+        }
     }
 
     /**

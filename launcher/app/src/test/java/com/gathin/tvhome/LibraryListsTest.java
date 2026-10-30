@@ -30,7 +30,7 @@ public class LibraryListsTest {
     }
 
     private final MockCatalog catalog = new MockCatalog();
-    private final HouseholdState household = HouseholdState.defaults(catalog);
+    private final HouseholdState household = HouseholdState.seed(catalog);
     private final Predicate<String> my = household::inMyList;
 
     private List<Title> under(Kind kind, LibraryLists.Choice c) {
@@ -87,12 +87,13 @@ public class LibraryListsTest {
     }
 
     @Test
-    public void removingAnImportedTitleFromMyListKeepsItUnderAllLists() {
-        // Arrival is on the imported My list too: the chip follows the TV's My list, All lists the imports as well.
+    public void removingATitleFromMyListTakesItOffAllListsUnlessImported() {
+        // V2 Phase 3: My list is the TV's own (the TMDB watchlist when signed in); the mock catalogue's "My list"
+        // flag no longer counts, so a household that starts empty doesn't see the mock picks under All lists.
         assertTrue(household.inMyList("arrival"));
         household.toggleMyList("arrival");
         assertEquals(5, under(Kind.MOVIE, LibraryLists.Choice.MY).size());
-        assertEquals(16, under(Kind.MOVIE, LibraryLists.Choice.ALL).size());
+        assertEquals(15, under(Kind.MOVIE, LibraryLists.Choice.ALL).size());
     }
 
     @Test

@@ -54,7 +54,7 @@ public class LibraryFiltersTest {
     }
 
     private final MockCatalog catalog = new MockCatalog();
-    private final HouseholdState household = HouseholdState.defaults(catalog);
+    private final HouseholdState household = HouseholdState.seed(catalog);
     private final Set<ServiceId> subscribed = OffersTest.PROTOTYPE;
 
     private LibraryFilters filters(Kind kind) {

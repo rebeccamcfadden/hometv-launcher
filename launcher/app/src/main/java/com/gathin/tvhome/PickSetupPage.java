@@ -285,6 +285,11 @@ final class PickSetupPage extends Screen {
             public boolean isSeen(String id) {
                 return data.household.isSeen(id);
             }
+
+            @Override
+            public boolean isOn(Title t, ListId list) {
+                return data.household.isOn(t, list);
+            }
         };
     }
 

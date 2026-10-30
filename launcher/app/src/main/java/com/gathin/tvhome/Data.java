@@ -12,28 +12,40 @@ final class Data {
     final Services services;
     final Household household;
     final ServiceTable table;
+    /** V2 Phase 3: the optional TMDB account, which keeps My list and Favorites in step (Accounts). */
+    final Accounts accounts;
     /** Loads the titles the household keeps; held here because the catalogue holds its listeners weakly. */
     private final Household.Listener wantHousehold;
 
-    private Data(Catalog catalog, Services services, Household household, ServiceTable table) {
+    private Data(Catalog catalog, Services services, Household household, ServiceTable table, Accounts accounts) {
         this.catalog = catalog;
         this.services = services;
         this.household = household;
         this.table = table;
+        this.accounts = accounts;
         wantHousehold = () -> {
             catalog.want(household.titleIds());
             catalog.keepPriced(household.myListIds());
         };
         household.addListener(wantHousehold);
         wantHousehold.onHouseholdChanged();
+        // The lists are priced in the background only for a signed-in account (Catalog.setListPricing).
+        accountChanged = () -> catalog.setListPricing(accounts.signedIn());
+        accounts.addListener(accountChanged);
+        accountChanged.run();
     }
+
+    /** Switches list pricing with the account; held here like wantHousehold. */
+    private final Runnable accountChanged;
 
     static Data create(Context ctx, Config cfg) {
         String token = BuildConfig.TMDB_TOKEN;
         Catalog catalog = token.isEmpty() ? new MockCatalog() : new TmdbCatalog(ctx, token);
         // The real catalogue names services as they are branded now; the mock one keeps the prototype's names.
         ServiceTable table = token.isEmpty() ? new ServiceTable() : ServiceTable.branded();
-        return new Data(catalog, Services.from(ctx, cfg, table), new Household(ctx, catalog), table);
+        Household household = new Household(ctx, catalog);
+        return new Data(catalog, Services.from(ctx, cfg, table), household, table,
+                new Accounts(ctx, household, token));
     }
 
     /** The offer a title's Watch button uses on this TV (Offers.bestOffer with the subscribed services). */

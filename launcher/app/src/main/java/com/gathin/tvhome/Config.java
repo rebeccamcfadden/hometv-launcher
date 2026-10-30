@@ -209,6 +209,13 @@ final class Config {
         return ctx.getExternalFilesDir(null);
     }
 
+    /** The pushed config.json as read for {@link #load}, or null; for settings kept outside Config (AccountConfig). */
+    static JSONObject overlay(Context ctx) {
+        File dir = dir(ctx);
+        File file = dir != null ? new File(dir, FILE_NAME) : null;
+        return readOverlay(ctx, file, Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()));
+    }
+
     static Config load(Context ctx) {
         Resources res = ctx.getResources();
         List<String> dock = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.dock_apps)));
