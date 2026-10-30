@@ -18,7 +18,3 @@ export function placeholder(label: string, note: string, opts: { tab?: 'music' }
   );
   return { label, el, defaultFocus: () => back ?? el.querySelector<HTMLElement>('[data-default]') };
 }
-
-/** Opened from the Home shortcut and from the quick-settings dropdown's last row. */
-export const launcherSettings = () =>
-  placeholder('Launcher settings', 'Theme, rows, the dock and the switches in docs/switches.md.');

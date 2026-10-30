@@ -62,8 +62,10 @@ class App {
     this.goTab('home');
   }
 
-  onChange(fn: () => void) {
+  /** Calls `fn` whenever the stack changes; returns a function that stops it. */
+  onChange(fn: () => void): () => void {
     this.listeners.push(fn);
+    return () => (this.listeners = this.listeners.filter((x) => x !== fn));
   }
 
   get trail(): string[] {
@@ -72,6 +74,11 @@ class App {
 
   top(): Screen | undefined {
     return this.stack[this.stack.length - 1];
+  }
+
+  /** Whether the screen is anywhere in the stack, shown or not. */
+  has(s: Screen): boolean {
+    return this.stack.includes(s);
   }
 
   tab(id: TabId): Screen {

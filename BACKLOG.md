@@ -330,9 +330,16 @@ From the old launcher; not in V1 by decision.
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before
 it is built.
 
-- Offline, loading and error states (the launcher still works offline: it just has no designed state for it; see
-  Real catalogue for what shows meanwhile).
-- First run and setup: importing watchlists, choosing services.
+- Offline, loading and error states: designed (06-states A, with Search and Home's weather offline added on
+  2026-10-30) and built in the prototype; not built in the launcher. Search and Home's weather while loading are
+  not designed.
+- First run and setup: the checklist (01-setup B) and its panes (r2-setup-checklist) are built in the prototype; not
+  in the launcher. When it shows is open.
+- Launcher settings in the new UI: the split (05-settings A), the round-2 Account, Streaming services, Stores and
+  Weather panes, and the Settings icon's quick-settings dropdown (final-quick-settings) are built in the prototype;
+  the launcher still has the old Launcher settings activity, and its nav Settings icon opens the TV's settings.
+  Home row apps (with reordering) has no design; the prototype's is a stand-in.
+- The sleep timer (quick settings): its warning before the TV turns off, and how the launcher turns the TV off.
 - Removing a recent search.
 - Voice search.
 - Progress on started titles.

@@ -33,6 +33,23 @@ const P = {
   home: 'M4 11l8-7 8 7v9h-5.5v-6h-5v6H4z',
   picture: 'M3.5 5h17v11.5h-17zM8 20h8M12 16.5V20',
   lock: 'M6.5 11h11v9h-11zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+  // V2 states, settings and setup (from the 06, 05 and 01 design files).
+  wifiOff: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01M3.5 3.5l17 17',
+  retry: 'M20 11a8 8 0 1 0-2.3 5.7M20 4.5V11h-6.5',
+  alert: 'M12 3.5l9.5 16.5h-19zM12 10v4.5M12 17.5h.01',
+  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5a7.5 7.5 0 0 1 15 0',
+  info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01',
+  power: 'M12 3v8M6.3 6.3a8 8 0 1 0 11.4 0',
+  motion: 'M4 12h3M4 7h6M4 17h6M14 7l6 5-6 5',
+  apps: 'M5 5h4v4H5zM10 5h4v4h-4zM15 5h4v4h-4zM5 10h4v4H5zM10 10h4v4h-4zM15 10h4v4h-4zM5 15h4v4H5zM10 15h4v4h-4zM15 15h4v4h-4z',
+  tag: 'M3.5 12.5v-8h8l9 9-8 8zM8 8h.01',
+  cart: 'M3 4.5h2.5l2.2 10h10.1l2.2-7H6.6M9 19.5h.01M17 19.5h.01',
+  phone: 'M8 3h8v18H8zM11.5 17.5h1',
+  list: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+  sync: 'M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2M20 4v4h-4M4 20v-4h4',
+  pin: 'M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  sound: 'M4 9.5h4l5-4v13l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11',
+  timer: 'M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2M9.5 2.5h5',
 };
 
 export type IconName = keyof typeof P;

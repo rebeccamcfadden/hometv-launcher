@@ -1,6 +1,6 @@
 import { store } from '../core/store';
 import { GENRES } from '../data/catalog';
-import { isIncluded } from '../data/offers';
+import { isIncluded, offersOf } from '../data/offers';
 import type { Kind, Title } from '../types';
 
 export interface FilterDef {
@@ -24,7 +24,7 @@ export function filterDefs(kind: Kind): FilterDef[] {
       options: ['Everything', 'Included only', 'Included + rentals'],
       short: ['', 'Included only', 'Included + rentals'],
       kinds: ['movie', 'show'],
-      test: (t, i) => i === 0 || (i === 1 ? isIncluded(t) : isIncluded(t) || t.offers.some((o) => o.type === 'rent')),
+      test: (t, i) => i === 0 || (i === 1 ? isIncluded(t) : isIncluded(t) || offersOf(t).some((o) => o.type === 'rent')),
     },
     {
       id: 'score',

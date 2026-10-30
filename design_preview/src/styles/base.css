@@ -112,6 +112,37 @@ body {
     animation: none;
   }
 }
+/* Launcher settings' Motion. Reduced keeps the fades only: no slides, rises or scale-ups. Off: nothing moves. */
+#stage[data-motion='off'] *,
+#stage[data-motion='off'] *::before,
+#stage[data-motion='off'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+#stage[data-motion='reduced'] .is-focused,
+#stage[data-motion='reduced'] .is-focused * {
+  transform: none !important;
+}
+#stage[data-motion='reduced'] .screen.is-entering > :not(.nav),
+#stage[data-motion='reduced'] .popup,
+#stage[data-motion='reduced'] .drawer,
+#stage[data-motion='reduced'] .menu {
+  animation-name: fade-in;
+}
+#stage[data-motion='reduced'] .screen.is-leaving > :not(.nav) {
+  animation-name: fade-out;
+}
+/* Home's scroll and Search's panel are slides too: they jump, and their fades stay. */
+#stage[data-motion='reduced'] .home-content,
+#stage[data-motion='reduced'] .search-panel,
+#stage[data-motion='reduced'] .search-viewport {
+  transition-property: opacity;
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
 .screen--base {
   background:
     linear-gradient(rgba(9, 14, 21, 0.86), rgba(9, 14, 21, 0.9)),

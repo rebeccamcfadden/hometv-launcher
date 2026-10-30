@@ -1,4 +1,4 @@
-type Child = Node | string | number | null | undefined | false | Child[];
+export type Child = Node | string | number | null | undefined | false | Child[];
 type AttrValue = string | number | boolean | null | undefined;
 export type Attrs = Record<string, AttrValue> & { html?: string; style?: string };
 

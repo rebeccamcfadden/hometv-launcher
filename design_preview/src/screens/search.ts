@@ -2,12 +2,13 @@ import { app, type Screen } from '../core/app';
 import { h, highlight, initials, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { search, titlesInGenre, type Hit } from '../core/fuzzy';
+import { net } from '../core/net';
 import { store } from '../core/store';
-import { byId } from '../data/catalog';
+import { byId, TITLES } from '../data/catalog';
 import { isIncluded } from '../data/offers';
 import type { Title } from '../types';
 import { icon } from '../ui/icons';
-import { chip, navBar, rowOf, smallCard } from '../ui/widgets';
+import { button, chip, navBar, rowOf, smallCard } from '../ui/widgets';
 import { personScreen } from './person';
 import { titlePreview } from './preview';
 
@@ -117,8 +118,22 @@ export function searchScreen(): Screen {
     return row;
   };
 
+  /**
+   * Offline (06-states A): the keyboard, recent searches and the rows of titles saved on the TV still work; results
+   * come from the saved titles only (those on the lists and those viewed), and say so. People need the internet.
+   */
+  const savedIds = () => new Set([...TITLES.filter((t) => t.lists.length).map((t) => t.id), ...store.myListIds(), ...store.viewed()]);
+  const offlinePill = (text: string) => h('span.offline-pill', h('span', { html: icon('wifiOff', 24) }), text);
+
   function render() {
-    const res = query ? search(query) : null;
+    const offline = net.isOffline();
+    const nothingSaved = net.get() === 'offline-empty';
+    let res = query ? search(query) : null;
+    if (res && offline) {
+      const saved = nothingSaved ? new Set<string>() : savedIds();
+      res = { ...res, titles: res.titles.filter((x) => saved.has(x.title!.id)), people: [], genres: [] };
+      res.suggestions = res.suggestions.filter((x) => x.kind === 'title' && saved.has(x.title!.id));
+    }
     hasMatches = !!res && (res.titles.length > 0 || res.people.length > 0);
 
     // Bar
@@ -128,7 +143,11 @@ export function searchScreen(): Screen {
     replace(ghost, !expanded && top && top.label.toLowerCase() !== query.toLowerCase() ? `→ ${top.label.toLowerCase()}` : '');
     replace(
       hint,
-      !expanded && hasMatches ? h('span.pill', h('span', { html: icon('chevRight', 20) }), 'Results') : '',
+      offline
+        ? offlinePill(nothingSaved ? 'Offline' : 'Offline · saved titles only')
+        : !expanded && hasMatches
+          ? h('span.pill', h('span', { html: icon('chevRight', 20) }), 'Results')
+          : '',
     );
 
     // Left panel list
@@ -147,7 +166,18 @@ export function searchScreen(): Screen {
     }
 
     // Results area
-    if (!query) {
+    if (nothingSaved && (!query || !hasMatches)) {
+      replace(
+        results,
+        h(
+          'div.state',
+          h('div.state-icon', { html: icon('wifiOff', 48) }),
+          h('div.empty-title', query ? `No saved titles match “${query}”` : 'You’re offline, and nothing is saved yet'),
+          h('div.empty-note.state-note', 'Search needs the internet once to fetch the catalogue. Recent searches still work.'),
+          h('div.state-actions', button('Wi-Fi settings', { icon: 'wifi', key: 'search-wifi', onOk: () => app.toast('Opening Wi-Fi settings…') })),
+        ),
+      );
+    } else if (!query) {
       const viewed = store.viewed().map((id) => byId.get(id)).filter((t): t is Title => !!t);
       const mine = store.myListIds().map((id) => byId.get(id)).filter((t): t is Title => !!t);
       replace(
@@ -174,8 +204,8 @@ export function searchScreen(): Screen {
         results,
         h(
           'div.no-matches',
-          h('div.nm-title', `No matches for “${query}”`),
-          h('div.nm-note', 'Try fewer letters, or search for a person or a genre.'),
+          h('div.nm-title', offline ? `No saved titles match “${query}”` : `No matches for “${query}”`),
+          h('div.nm-note', offline ? 'Offline, Search looks only at the titles saved on this TV. The full catalogue needs the internet.' : 'Try fewer letters, or search for a person or a genre.'),
           titleRow('Recently viewed', viewed, 'viewed'),
         ),
       );
@@ -200,7 +230,7 @@ export function searchScreen(): Screen {
         results,
         h(
           'div.results-head',
-          h('span.results-count', `${items.length} result${items.length === 1 ? '' : 's'}`),
+          h('span.results-count', `${items.length} result${items.length === 1 ? '' : 's'}${offline ? ' from saved titles' : ''}`),
           h(
             'div.chips',
             FILTERS.map(([f, label]) =>
@@ -250,6 +280,7 @@ export function searchScreen(): Screen {
   }
 
   render();
+  net.on(render);
 
   // Set when Search is left for another tab: the next render puts the panel back without the slide.
   let snap = false;

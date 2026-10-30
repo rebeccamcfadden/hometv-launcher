@@ -3,8 +3,8 @@ import { h, imgUrl, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { store } from '../core/store';
 import { LIST_NAMES, TITLES } from '../data/catalog';
-import { bestOffer, isIncluded, isIncludedOffer, offerLabel, price } from '../data/offers';
-import { SERVICES, SUBSCRIBED_COUNT } from '../data/services';
+import { availability, bestOffer, subscribedCount, isIncluded, isIncludedOffer, offerLabel, paidAction } from '../data/offers';
+import { SERVICES } from '../data/services';
 import type { Kind, ListId, Title } from '../types';
 import { icon } from '../ui/icons';
 import { button, chip, guide, navBar, provenance, titleMeta } from '../ui/widgets';
@@ -84,7 +84,7 @@ const shuffle = <T>(a: T[]) => {
 };
 
 const sourceText = (s: PickState) =>
-  s.source === 'services' ? `Everything included on your ${SUBSCRIBED_COUNT} services` : [...s.lists].map((l) => LIST_NAMES[l]).join(' + ') || 'No lists';
+  s.source === 'services' ? `Everything included on your ${subscribedCount()} services` : [...s.lists].map((l) => LIST_NAMES[l]).join(' + ') || 'No lists';
 
 const filterText = (s: PickState) =>
   [s.kind === 'movie' ? 'Movies' : 'TV Shows', ...FIELDS.map((f) => f.options[s.values[f.id] ?? 0]).filter((v) => !/^Any/.test(v))].join(' · ');
@@ -238,7 +238,7 @@ function pickResults(s: PickState): Screen {
     replace(
       barActions,
       button('Title details', { group: 'bar', key: 'details', onOk: () => app.push(titlePreview(t)) }),
-      button(o && isIncludedOffer(o) ? `Open in ${name}` : o ? `${o.type === 'rent' ? 'Rent' : 'Buy'} on ${name} · ${price(o.price ?? 0)}` : 'Unavailable', {
+      button(o && isIncludedOffer(o) ? `Open in ${name}` : o ? paidAction(o) : 'Unavailable', {
         icon: 'play',
         primary: true,
         group: 'bar',
@@ -262,7 +262,7 @@ function pickResults(s: PickState): Screen {
             h(
               'div.card-row',
               h('div.card-name', t.name),
-              h('div.card-provider', h('div', o ? SERVICES[o.service].name : ''), h('div.card-avail', o && isIncludedOffer(o) ? 'Included' : o ? `${price(o.price ?? 0)} ${o.type}` : '')),
+              h('div.card-provider', h('div', o ? SERVICES[o.service].name : ''), h('div.card-avail', availability(o))),
             ),
             h('div.card-meta', titleMeta(t)),
             h('div.card-sub', provenance(t)),
@@ -295,7 +295,7 @@ function pickResults(s: PickState): Screen {
         h(
           'div',
           h('h1.page-title', 'Tonight could look like this'),
-          h('div.page-context', `${picks.length} random matches · ${sourceText(s)} · All ${SUBSCRIBED_COUNT} services`),
+          h('div.page-context', `${picks.length} random matches · ${sourceText(s)} · All ${subscribedCount()} services`),
         ),
         h('div.pick-results-actions', adjust, reroll),
       ),

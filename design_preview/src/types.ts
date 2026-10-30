@@ -6,18 +6,32 @@ export type ServiceId =
   | 'disney'
   | 'max'
   | 'appletvplus'
-  | 'hulu'
+  | 'viaplay'
   | 'youtube'
   | 'appletv'
-  | 'googletv';
+  | 'viaplaystore'
+  | 'sfanytime'
+  | 'amazonvideo'
+  | 'rakuten';
 
 /** sub = included with a subscription the household has. */
 export type OfferType = 'sub' | 'free' | 'rent' | 'buy';
 
+/** Picture qualities a store prices separately. */
+export type Quality = 'SD' | 'HD' | '4K';
+
 export interface Offer {
   service: ServiceId;
   type: OfferType;
-  price?: number;
+  /**
+   * Rent and buy only: the price in kronor per picture quality, as the launcher's PricedOffer keeps it. Missing when
+   * no price source priced the store (most Swedish stores today): the offer then reads just "Rent" or "Buy", and the
+   * store's app shows the price.
+   */
+  prices?: Partial<Record<Quality, number>>;
+  /** The prices are per season (a show), so the cheapest reads "from". */
+  seasonal?: boolean;
+  /** Subscription and free offers: the picture quality, e.g. "4K · HDR". */
   quality?: string;
 }
 

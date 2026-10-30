@@ -1,50 +1,203 @@
-import type { Offer, ServiceId, Title } from '../types';
-import { SERVICES } from './services';
+import type { Offer, OfferType, Quality, ServiceId, Title } from '../types';
+import { settings } from '../core/settings';
+import { DEFAULT_PRICE_SOURCE, PICK_SERVICES, PRICE_SOURCE, SERVICES } from './services';
 
-export const price = (n: number) => `$${n.toFixed(2)}`;
+// Offer rules. Prices are Swedish kronor, as the launcher's real catalogue has them (V2 Phase 2): a rent or buy
+// offer keeps a price per picture quality, and a store no price source priced has none at all.
 
-export const isIncludedOffer = (o: Offer) =>
-  o.type === 'free' || (o.type === 'sub' && SERVICES[o.service].subscribed);
+/** "39 kr". */
+export const kr = (n: number) => `${n} kr`;
 
-export const isIncluded = (t: Title) => t.offers.some(isIncludedOffer);
+const QUALITIES: Quality[] = ['SD', 'HD', '4K'];
+
+const amounts = (o: Offer) => QUALITIES.map((q) => o.prices?.[q]).filter((p): p is number => p !== undefined);
+
+/** The cheapest price of a rent or buy offer in any quality; undefined when no source priced it. */
+export function cheapest(o: Offer): number | undefined {
+  const all = amounts(o);
+  return all.length ? Math.min(...all) : undefined;
+}
+
+/** The quality of the cheapest price (the best of equal ones). */
+export function cheapestQuality(o: Offer): Quality | undefined {
+  const min = cheapest(o);
+  return min === undefined ? undefined : [...QUALITIES].reverse().find((q) => o.prices?.[q] === min);
+}
+
+/** Several prices (qualities that cost different amounts, or one per season): the cheapest then reads "from". */
+export const isFrom = (o: Offer) => !!o.seasonal || new Set(amounts(o)).size > 1;
+
+/** "39 kr", "from 49 kr", or undefined without a price. */
+export function priceLabel(o: Offer): string | undefined {
+  const min = cheapest(o);
+  if (min === undefined) return undefined;
+  return isFrom(o) ? `from ${kr(min)}` : kr(min);
+}
+
+const verb = (type: OfferType) => (type === 'rent' ? 'Rent' : 'Buy');
+
+/** "Rent 39 kr", "Buy from 99 kr", or just "Rent" when the store's price isn't known (its app shows it). */
+export function paid(o: Offer): string {
+  const p = priceLabel(o);
+  return p ? `${verb(o.type)} ${p}` : verb(o.type);
+}
+
+/** A button that rents or buys: "Rent on SF Anytime · 39 kr", "Buy on Amazon Video · from 139 kr", "Rent on Rakuten TV". */
+export function paidAction(o: Offer): string {
+  const p = priceLabel(o);
+  return `${verb(o.type)} on ${SERVICES[o.service].name}${p ? ` · ${p}` : ''}`;
+}
+
+/** The household has the service: ticked in Launcher settings (free YouTube always counts). */
+export const isSubscribed = (id: ServiceId) =>
+  !!SERVICES[id].free || PICK_SERVICES.some((p) => p.catalog === id && settings.get().services.includes(p.id));
+
+/** How many services are ticked, for "All 8 services". */
+export const subscribedCount = () => settings.get().services.length;
+
+/**
+ * The title's offers the household can use: every one except those of stores unticked in Launcher settings, whose
+ * prices are left out everywhere.
+ */
+export const offersOf = (t: Title) =>
+  t.offers.filter((o) => !SERVICES[o.service].store || SERVICES[o.service].free || settings.get().stores.includes(o.service));
+
+export const isIncludedOffer = (o: Offer) => o.type === 'free' || (o.type === 'sub' && isSubscribed(o.service));
+
+export const isIncluded = (t: Title) => offersOf(t).some(isIncludedOffer);
+
+/** The cheapest offer of a type: a priced one beats an unpriced one, which is only picked when none is priced. */
+function cheapestOf(t: Title, type: OfferType): Offer | undefined {
+  let best: Offer | undefined;
+  for (const o of offersOf(t)) {
+    if (o.type !== type) continue;
+    const p = cheapest(o);
+    const b = best && cheapest(best);
+    if (!best || (p !== undefined && (b === undefined || p < b))) best = o;
+  }
+  return best;
+}
 
 /** The offer the Watch button uses: included first, then the cheapest rental, then the cheapest purchase. */
 export function bestOffer(t: Title): Offer | undefined {
-  const inc = t.offers.find(isIncludedOffer);
-  if (inc) return inc;
-  const byPrice = (a: Offer, b: Offer) => (a.price ?? 0) - (b.price ?? 0);
-  return t.offers.filter((o) => o.type === 'rent').sort(byPrice)[0] ?? t.offers.filter((o) => o.type === 'buy').sort(byPrice)[0];
+  return offersOf(t).find(isIncludedOffer) ?? cheapestOf(t, 'rent') ?? cheapestOf(t, 'buy');
 }
 
+/** The library card's second provider line: "Included", "Free", "Rent 39 kr", "Buy from 99 kr" or just "Rent". */
+export function availability(o: Offer | undefined): string {
+  if (!o) return '';
+  if (o.type === 'free') return 'Free';
+  if (o.type === 'sub') return isIncludedOffer(o) ? 'Included' : 'Subscription';
+  return paid(o);
+}
+
+/** "Prime Video · Included", "YouTube · Free", "SF Anytime · Rent 39 kr", "Not available". */
 export function offerLabel(o: Offer | undefined): string {
-  if (!o) return 'Not available';
-  const name = SERVICES[o.service].name;
-  if (o.type === 'sub') return `${name} · Included`;
-  if (o.type === 'free') return `${name} · Free`;
-  return `${name} · ${o.type === 'rent' ? 'Rent' : 'Buy'} ${price(o.price ?? 0)}`;
+  return o ? `${SERVICES[o.service].name} · ${availability(o)}` : 'Not available';
 }
 
-/** One entry per service, with its rent and buy prices merged. */
+/**
+ * The line on search and row cards: "Prime Video · Included" when a service the household has includes it; else
+ * the cheapest rental across the stores, "Rent from 39 kr · 3 stores", else "Buy from 99 kr · 2 stores" (one store:
+ * "SF Anytime · Rent 39 kr"); a show's season "Buy a season from 199 kr". Quality is left to Where to watch.
+ */
+export function cardLine(t: Title): string {
+  const o = bestOffer(t);
+  if (!o) return t.offers.length ? 'Not on your services' : 'Not available';
+  const offers = offersOf(t);
+  if (isIncludedOffer(o)) return offerLabel(o);
+  const stores = new Set(offers.filter((x) => x.type === o.type).map((x) => x.service)).size;
+  const min = cheapest(o);
+  const count = stores > 1 ? ` · ${stores} stores` : '';
+  if (o.seasonal) return `${verb(o.type)} a season${min === undefined ? '' : ` from ${kr(min)}`}${count}`;
+  if (stores === 1) return offerLabel(o);
+  return `${verb(o.type)}${min === undefined ? '' : ` from ${kr(min)}`}${count}`;
+}
+
+/** One entry per service, with its rent and buy offers merged: the title preview's Where to watch cards. */
 export interface ServiceOffers {
   service: ServiceId;
   included: boolean;
   free: boolean;
-  rent?: number;
-  buy?: number;
+  rent?: Offer;
+  buy?: Offer;
+  /** Subscription and free offers: the picture quality ("4K · HDR"). */
   quality: string;
 }
 
+export const watchable = (s: ServiceOffers) => s.included || s.free;
+
+/** Rentals with a price first, by price; then purchases with a price, by price; then stores with no price. */
+function storeRank(s: ServiceOffers): [number, number] {
+  const r = s.rent && cheapest(s.rent);
+  if (r !== undefined) return [0, r];
+  const b = s.buy && cheapest(s.buy);
+  if (b !== undefined) return [1, b];
+  return [2, 0];
+}
+
+/** Included and free services first, in the offers' order; then the stores, cheapest first. */
 export function offersByService(t: Title): ServiceOffers[] {
   const map = new Map<ServiceId, ServiceOffers>();
-  for (const o of t.offers) {
-    const e = map.get(o.service) ?? { service: o.service, included: false, free: false, quality: o.quality ?? 'HD' };
-    if (o.type === 'sub' && SERVICES[o.service].subscribed) e.included = true;
+  for (const o of offersOf(t)) {
+    const e = map.get(o.service) ?? { service: o.service, included: false, free: false, quality: o.quality ?? '' };
+    if (o.type === 'sub' && isSubscribed(o.service)) e.included = true;
     if (o.type === 'free') e.free = true;
-    if (o.type === 'rent') e.rent = o.price;
-    if (o.type === 'buy') e.buy = o.price;
+    if (o.type === 'rent') e.rent = o;
+    if (o.type === 'buy') e.buy = o;
     map.set(o.service, e);
   }
-  return [...map.values()].sort((a, b) => Number(b.included || b.free) - Number(a.included || a.free));
+  const all = [...map.values()];
+  const inc = all.filter(watchable);
+  const stores = all.filter((s) => !watchable(s)).map((s, i) => ({ s, i, r: storeRank(s) }));
+  stores.sort((a, b) => a.r[0] - b.r[0] || a.r[1] - b.r[1] || a.i - b.i);
+  return [...inc, ...stores.map((x) => x.s)];
+}
+
+/**
+ * The store Where to watch tags "Cheapest": the cheapest rental, else the cheapest purchase, once two or more
+ * stores have a price. Undefined otherwise.
+ */
+export function cheapestStore(list: ServiceOffers[]): ServiceId | undefined {
+  const priced = list.filter((s) => !watchable(s) && storeRank(s)[0] < 2);
+  if (priced.length < 2) return undefined;
+  return priced.reduce((a, b) => {
+    const [ra, pa] = storeRank(a);
+    const [rb, pb] = storeRank(b);
+    return rb < ra || (rb === ra && pb < pa) ? b : a;
+  }).service;
+}
+
+/** A store card's line for one quality, or for several that cost the same ("HD · 4K"). */
+export interface PriceLine {
+  quality: string;
+  rent?: number;
+  buy?: number;
+}
+
+/** A store's prices, one line per quality, SD first; a quality whose prices match the line above joins it. */
+export function priceLines(s: ServiceOffers): PriceLine[] {
+  const lines: PriceLine[] = [];
+  for (const q of QUALITIES) {
+    const rent = s.rent?.prices?.[q];
+    const buy = s.buy?.prices?.[q];
+    if (rent === undefined && buy === undefined) continue;
+    const last = lines[lines.length - 1];
+    if (last && last.rent === rent && last.buy === buy) last.quality += ` · ${q}`;
+    else lines.push({ quality: q, rent, buy });
+  }
+  return lines;
+}
+
+/** The qualities a store prices, SD first. */
+export const qualitiesOf = (s: ServiceOffers): Quality[] =>
+  QUALITIES.filter((q) => s.rent?.prices?.[q] !== undefined || s.buy?.prices?.[q] !== undefined);
+
+/** The caption under Where to watch: "Availability: JustWatch · Prices: Apple", naming the sources that priced it. */
+export function attribution(t: Title): string {
+  const sources = new Set<string>();
+  for (const o of offersOf(t)) if (cheapest(o) !== undefined) sources.add(PRICE_SOURCE[o.service] ?? DEFAULT_PRICE_SOURCE);
+  return `Availability: JustWatch${sources.size ? ` · Prices: ${[...sources].join(' / ')}` : ''}`;
 }
 
 export function runtimeLabel(min: number): string {

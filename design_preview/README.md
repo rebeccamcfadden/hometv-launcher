@@ -31,12 +31,26 @@ The 1920×1080 TV screen is scaled to fit the window. The keyboard stands in for
 | Enter | OK |
 | Esc or Backspace | Back, on every screen (on Search, Backspace never deletes letters) |
 | H | Home (except on Search, where letters type) |
-| S | The remote's Settings key (except on Search) |
-| Letters, digits, space | Type on Search |
+| S | The remote's Settings key (except on Search): on the TV it opens the TV maker's own panel; here the base launcher's stand-in |
+| Letters, digits, space | Type on Search, and in Launcher settings › Weather › Change city |
 
 The mouse works too: a click is focus + OK. The bar under
-the stage shows the screen stack (what Back returns through), a **Jump to** menu, and **Reset state**, which
-clears My list, Seen, Favorites and recent searches (kept in `localStorage`).
+the stage shows the screen stack (what Back returns through), a **State** menu, an **Account** menu, a **Jump to**
+menu, and **Reset state**, which clears My list, Seen, Favorites, recent searches and Launcher settings (kept in
+`localStorage`).
+
+The **State** menu simulates the network and the catalogue, so each loading, offline and error state can be
+reviewed (see [Loading, offline and errors](#loading-offline-and-errors)): Online; Loading (Movies and TV Shows);
+Loading (title preview); Offline, lists saved; Offline, nothing saved; Error in the Where to watch tab; Error in the
+Cast & crew tab. Open screens change in place, with focus kept where it can be. Two URL parameters do the same from a
+link: `?state=offline` (any id from `src/core/net.ts`) and `?jump=moon` (any Jump to entry's id from `src/main.ts`,
+for example `quick`, `settings`, `settings-account`, `settings-services`, `settings-stores`, `settings-weather`,
+`settings-apps`, `setup`, `arrival`, `interstellar`, `daredevil`).
+
+The **Account** menu (or `?account=in`) steps the mocked TMDB sign-in, so each state of the Account pane can be
+reviewed (see [Account](#account)): Signed out, Getting a code, Waiting (QR), Approved on the phone, Signed in, Code
+expired, Couldn’t reach TMDB. Without it the pane runs by itself: Sign in fetches a code in about a second, and the
+code waits for 15 minutes until the menu approves it; approval imports for a few seconds and signs in.
 
 ## Figma
 
@@ -58,6 +72,24 @@ the Episodes, Cast & crew and More like this tabs, the Inputs, Wi-Fi and quick-s
 page stub, the empty and no-match states of Movies and TV Shows, the focusable search bar on the full results,
 and the Seen icon (an eye, so it no longer matches My list's tick).
 
+### V2 designs
+
+The V2 screens with no Figma frame yet were drawn as HTML mockups (rendered at 1920×1080) and the project lead chose
+one option for each (2026-10-30). The prototype builds these:
+
+| Design | What it is | Here |
+|---|---|---|
+| 06-states A, "inline" | Skeletons while loading, an amber offline pill over cached content, offline with nothing saved, a preview loading, errors with Retry inside the failing tab | [Loading, offline and errors](#loading-offline-and-errors) |
+| 07-prices A, "cards" | Where to watch cards with kronor, a line per picture quality and a Cheapest tag; "Rent from 39 kr · 3 stores" on cards; the rent/buy dialog with an HD/4K switch | [Prices](#prices) |
+| 05-settings A, "split" | Launcher settings: sections on the left, the focused section's pane on the right | [Launcher settings](#launcher-settings) |
+| 01-setup B, "checklist" | First run: one page of setup rows with their guessed values and a help pane | [First run](#first-run) |
+| r2-account A, with B's Choose lists | The TMDB sign-in inside the Account pane: QR, steps and countdown; signed in; Choose lists with a Household / Friends / Not used switch per list | [Account](#account) |
+| r2-services B, "tiles" | Streaming services as a grid of tiles with ticks and Installed / No app / Free | [Streaming services and stores](#streaming-services-and-stores) |
+| r2-services A, "rows" (stores) | Stores for rent and buy as checkbox rows, each saying which app it opens | [Streaming services and stores](#streaming-services-and-stores) |
+| r2-weather A, "summary" | The place, Change city (keyboard and matches in the pane), Use default, the unit; B's now showing / quick picks as the empty match list | [Weather](#weather) |
+| r2-setup-checklist | First run's rows open the same panes in a cut-down split with Back to checklist / Next | [First run](#first-run) |
+| final-quick-settings | The nav's Settings icon opens a quick-settings dropdown (5A and 5C combined) | [Top-bar dropdowns](#top-bar-dropdowns) |
+
 ## Product decisions
 
 - **V1 is lists-only.** Movies and TV Shows show the household's imported watchlists (My list, Household,
@@ -75,12 +107,26 @@ and the Seen icon (an eye, so it no longer matches My list's tick).
   highlighted in suggestions and results, and the top suggestion is shown as grey ghost text in the bar.
 - **Nav switches on OK.** Moving along Home, Movies, TV Shows, Music and Search only highlights a section; OK
   switches to it. Switching on focus alone was tried and dropped.
-- **Top-bar buttons keep the base launcher's behaviour**, except Wi-Fi: Inputs opens the base's Inputs dropdown;
-  Settings opens the TV's system settings; the remote's Settings key opens the base's quick-settings panel.
-  Wi-Fi gets a new dropdown (the base opens Wi-Fi settings directly).
+- **Top-bar buttons:** Inputs opens the base's Inputs dropdown; Wi-Fi gets a new dropdown (the base opens Wi-Fi
+  settings directly); **Settings opens a quick-settings dropdown** (decided 2026-10-30, design final-quick-settings,
+  5A + 5C combined), with TV settings and Launcher settings on top. This replaces the earlier decision that the
+  Settings icon opens the TV's settings with no menu. The remote's Settings key keeps the TV maker's own panel.
+- **Launcher settings is a split page** (5A): sections left, the focused section's pane right. The quick-settings
+  dropdown reaches it and its busiest panes in one step; First run reuses the same panes.
+- **Segmented controls select on OK.** Moving along two or three options (Motion, the unit, a list's role) only
+  highlights; OK selects. The same holds for every row of choices in the prototype.
+- **Cheapest rule** (confirmed 2026-10-30): rentals with a price first, cheapest first; then purchases with a price;
+  stores with no price last.
 - **Paid titles ask before leaving the launcher.** Renting or buying opens the store's app, after a dialog.
 - **Network features are allowed** in this fork (see [AGENTS.md](../AGENTS.md#this-fork)), for catalogue
   search, availability, prices, artwork and cast. Analytics and telemetry are not.
+- **Prices are in Swedish kronor** (V2 region SE), per store and per picture quality, as the launcher's real data has
+  them. A store that no price source prices still shows, as "Rent · Buy" without an amount; its app shows the price.
+- **Service names follow current branding:** "HBO Max"; Apple's subscription is "Apple TV" and its store the
+  "Apple TV Store" (which opens in the Apple TV app); Amazon's store is "Amazon Video" (in the Prime Video app) and
+  Viaplay's the "Viaplay Store".
+- **Nothing waits on the network.** A page shows its shape at once and fills in; problems are said where the missing
+  data would be, and focus always lands on something real (design 06-states A).
 
 ## Requirements for the TV build
 
@@ -108,14 +154,17 @@ From [AGENTS.md](../AGENTS.md) and the design:
 
 | Layer | Used for | Behaviour |
 |---|---|---|
-| Page | Home, Movies, TV Shows, Music, Search, Pick for me, person | Full screen with the nav at the top |
+| Page | Home, Movies, TV Shows, Music, Search, Pick for me, person, Launcher settings, First run | Full screen; the top-level pages have the nav at the top |
 | Popup | Title preview | Over the page it came from; a 58% dark scrim covers the whole page, nav included |
-| Dialog | Filters drawer, rent/buy dialog, dropdown menus | Over whatever is showing, which stays visible |
+| Dialog | Filters drawer, rent/buy dialog, dropdown menus (quick settings included) | Over whatever is showing, which stays visible |
 
 ### Back
 
 1. Closes the top dialog or popup (dropdown, drawer, title preview).
-2. Otherwise returns to the previous page (Pick for me → Movies; person → title preview).
+2. Otherwise returns to the previous page (Pick for me → Movies; person → title preview; Launcher settings → the
+   page that opened it, with focus on the button or row that opened it; First run → Home). Inside Launcher settings,
+   Back first leaves a pane's sub-state (Choose lists, Change city, an app being moved), then the pane (focus to its
+   section), then the page.
 3. On a top-level page other than Home it goes Home, with focus on Home in the nav.
 4. Search uses Back first to collapse the full results back to the keyboard, with the query kept. With the keyboard
    showing, Back goes Home (rule 3), whatever is typed.
@@ -130,60 +179,72 @@ From [AGENTS.md](../AGENTS.md) and the design:
 - Each page keeps its focus and state when you switch tabs and come back, except Search: leaving it for another
   tab, by Back or by the remote's Home clears the query, the filter and the full results, so coming back shows the
   empty page with focus as on the first visit. A title or person opened from Search keeps the search.
-- The first focus on a page: Home → the first app; Movies / TV Shows → the first title; Search → the "a" key;
-  title preview → the Watch button; dropdowns → the first row; dialogs → the primary button.
+- The first focus on a page: Home → the first app; Movies / TV Shows → the first title (the selected list chip while
+  loading); Search → the "a" key; title preview → the Watch button; dropdowns → the first row (quick settings: TV settings);
+  dialogs → the primary button; Launcher settings → the first section, or, opened from a quick-settings row or a
+  First run row, that section's pane on its first control; First run → the first row, and back from a step → the
+  next row not done.
 
 ### Nav
 
-- Order: Home, Movies, TV Shows, Music, then a search icon; on the right, Wi-Fi, Inputs and Settings icons.
+- Order: Home, Movies, TV Shows, Music, then a search icon; on the right, Wi-Fi, Inputs and Settings icons. Offline,
+  the Wi-Fi icon is crossed out on every page.
 - ←/→ on the nav stay on it and move to the next item: ← from Wi-Fi is always Search, never something on the page
   below, and past either end nothing happens.
 - Landing on a section highlights it; OK switches to it (OK on the current page's section does nothing). Down
   enters the page. Landing back on the nav from a page puts focus on that page's own section, regardless of
   which section or icon was used last or is nearest; Pick for me's section is Movies or TV Shows.
 - Switching animates: the new page's content slides 90 px in from the side of the tab you switched towards and fades
-  in (360 ms); the old content slides 60 px the other way and fades out (240 ms). The nav stays still. With
-  reduced motion, pages switch without animating.
+  in (360 ms); the old content slides 60 px the other way and fades out (240 ms). The nav stays still. With the
+  system's reduced motion, pages switch without animating; Launcher settings' Motion (Reduced, Off) is described
+  under [Launcher settings](#launcher-settings).
 
 ### Top-bar dropdowns
 
-All three hang under their button, grow inward from the right, and close on Back, on OK on a row, on a click
-outside, or when the D-pad moves past the menu's edge. Focus returns to the button; a move past the left, right or
-bottom edge carries on one step from the button, so → in the Wi-Fi menu lands on Inputs. (Closing on the D-pad was
-decided after the first run on a real TV: closing with Back alone felt clunky.)
+All three hang under their button, which stays highlighted while its menu is open, grow inward from the right, and
+close on Back, on OK on a row, on a click outside, or when the D-pad moves past the menu's edge. Focus returns to
+the button; a move past the left, right or bottom edge carries on one step from the button, so → in the Wi-Fi menu
+lands on Inputs. (Closing on the D-pad was decided after the first run on a real TV: closing with Back alone felt
+clunky.) Rows are 72 px; the panel is opaque (no blur).
 
 | Opened by | Rows |
 |---|---|
 | Inputs icon | HDMI 1–3 and named HDMI-CEC devices with a green "Connected" mark, then AV, then Live TV, divided |
-| Wi-Fi icon | Header with the network, "Connected · Internet OK · Strong signal"; saved networks; Other networks; Wi-Fi settings |
-| Remote Settings key | TV system settings, Picture, Network, Apps ("Re-enable"), Launcher settings |
-| Settings icon | No menu: opens the TV's system settings |
+| Wi-Fi icon | Header with the network, "Connected · Internet OK · Strong signal" (offline: an amber "Connected · No internet"); saved networks; Other networks; Wi-Fi settings |
+| Settings icon | Quick settings (design final-quick-settings), 600 px wide, four groups divided: **TV settings** (the TV's settings) and **Launcher settings** › (the split page); **Picture, Sound, Network & Wi-Fi, Inputs** (the TV's own pages; a toast here); **TMDB account** (status), **Streaming services** ("8 ticked"), **Weather** ("New York · °C"), each with a chevron, opening that section's pane; **Motion** (Full / Reduced / Off) and **Sleep timer** (Off, 30, 60, 90, 120 min), where OK steps the value in place, the menu stays open, and small dots show the position |
+| Remote's Settings key | The TV maker's own panel, untouched by the launcher. The preview's S key shows the base launcher's stand-in: TV system settings, Picture, Network, Apps ("Re-enable"), Launcher settings |
 
 ## Screens
 
 ### Home
 
 - **Resting:** greeting ("Good evening"), date, a large clock with AM/PM, today's and tomorrow's forecast, and a
-  row of seven app tiles (Netflix, YouTube, Prime Video, Disney+, Max, Apple TV+, Spotify).
+  row of seven app tiles (Netflix, YouTube, Prime Video, Disney+, HBO Max, Apple TV, Spotify), which Launcher
+  settings' Home row apps changes. The forecast and the weather strip are for Launcher settings' place, in its unit.
 - **Scrolled:** moving down from the apps slides the page up to Inputs (Live TV, HDMI 1–3: at most four tiles,
-  never scrolling; any others are in the nav's Inputs menu), Shortcuts (All Apps,
-  Launcher settings, TV Settings) and an hourly Weather strip, and dims the background. Launcher settings opens the
-  same page as the last row of the quick-settings dropdown. (The Figma frame still shows an Explore shortcut here;
+  never scrolling; any others are in the nav's Inputs menu), Shortcuts (All Apps, Launcher settings, TV Settings) and an hourly Weather strip, and dims the background (with Motion set to Reduced,
+  the page jumps instead of sliding; the dimming still fades). Launcher settings opens the same page as the Settings
+  icon's Launcher settings row. (The Figma frame still shows an Explore shortcut here;
   it was replaced because Explore is parked.)
+- **Offline:** apps, inputs and the clock work without the internet. The weather keeps the last forecast, with an
+  amber "Offline · updated 19:52" in place of the conditions; with no forecast saved, the strip and the line under
+  the clock say a quiet "Weather unavailable offline".
 
 ### Movies and TV Shows (V1)
 
 - Title, "Your collection · My list, Household & Friends", and a **Pick for me** button.
-- Scope line ("3 imported watchlists · All 7 services") and the active filters with a **Filters · n** button.
+- Scope line ("3 imported watchlists · All 8 services") and the active filters with a **Filters · n** button.
 - List chips with counts: All lists, My list, Household, Friends. Up from any chip, and Right from the last one,
   goes to **Pick for me**, so it comes before the nav and instead of the grid.
-- A four-column grid of title cards: art, name, service and "Included" or a price, runtime or seasons · rating ·
-  score, and which list and genre it comes from.
+- A four-column grid of title cards: art, name, service and "Included", "Free" or a price ("Rent 39 kr", "Buy from
+  99 kr", or just "Rent" for a store with no known price), runtime or seasons · rating · score, and which list and
+  genre it comes from.
 - **Filters drawer** (from the right): Availability, Review score, Genre, Length (movies only), Watch state. ←/→
   changes a value, and the grid behind updates live. Clear all and Done. The default is "Included only · Review
   7.0+".
 - **Empty states:** a list with nothing on it ("add titles with + My list…"), and filters that hide everything
   (with Clear filters).
+- **Loading, offline and errors:** see [Loading, offline and errors](#loading-offline-and-errors).
 
 ### Pick for me
 
@@ -201,22 +262,22 @@ decided after the first run on a real TV: closing with Back alone felt clunky.)
 - **Header:** title (84 px), then year · genres · runtime (or seasons) · rating badge · ★ score.
 - **Actions,** on the right of the header:
   - **Watch:** "Watch on Prime Video" when included; for shows, "Watch S1 E3 on …" (the next episode); otherwise
-    "Rent on Apple TV · $3.99". The offer used is the included one, else the cheapest rental, else the cheapest
-    purchase.
+    "Rent on SF Anytime · 39 kr" ("· from 49 kr" when the store's qualities cost different amounts, no amount when
+    the store has no known price). The offer used is the included one, else the cheapest rental, else the cheapest
+    purchase; a priced offer beats one with no price.
   - **My list, Mark seen, Favorite:** toggles that show an "on" state and a short confirmation. Icon-only until
     focused, then they show their label.
   - **Trailer:** opens the trailer (YouTube) outside the launcher.
 - **Tabs:** Overview, Episodes (shows only), Where to watch, Cast & crew, More like this. Landing on a tab shows
   it; the content area is a fixed height so the card never jumps.
-  - **Overview:** synopsis; "Included on Prime Video · Rent from $3.99 elsewhere"; starring; director or creator.
+  - **Overview:** synopsis; "Included on Prime Video · Rent from 29 kr elsewhere"; starring; director or creator.
   - **Episodes:** seasons stacked on the left (landing on one shows its episodes); episodes in a row with
     runtime, watched ticks and an "Up next" badge.
-  - **Where to watch:** one card per service, included ones first, with "Included" or the rent and buy prices
-    and the quality. OK on an included service opens it; on a paid one, the rent/buy dialog.
+  - **Where to watch:** one card per service; see [Prices](#prices). OK on an included service opens it; on a
+    store, the rent/buy dialog.
   - **Cast & crew:** round portraits (initials for now) with role; OK opens the person.
   - **More like this:** similar titles; OK opens their preview on top.
-- **Rent/buy dialog:** "Arrival on Apple TV", the quality, a Rent and a Buy button with prices, Cancel, and a note
-  that payment finishes in that app.
+- **Rent/buy dialog:** see [Prices](#prices).
 
 ### Search
 
@@ -243,10 +304,176 @@ decided after the first run on a real TV: closing with Back alone felt clunky.)
 - **No guide line:** Search has no footer, unlike the other pages; the panel and the results use the height.
 - In the prototype, typing on the computer's keyboard also types into the bar; on the TV, a remote or app with a
   keyboard should do the same.
+- **Offline** (06-states A): the keyboard, recent searches and the Recently viewed and From My list rows work. The bar
+  shows an amber "Offline · saved titles only" pill; results come from the titles saved on the TV (those on the lists
+  and those viewed), the count says "18 results from saved titles", and people are left out. No match reads "No
+  saved titles match “…”" with a note that the full catalogue needs the internet. With nothing saved: an amber
+  "Offline" pill and, beside the keyboard, "You’re offline, and nothing is saved yet" with **Wi-Fi settings**;
+  recent searches still work.
+- **Card line:** each card's third line says how to watch it: "Prime Video · Included", "YouTube · Free", or the
+  cheapest way to pay across the stores, "Rent from 39 kr · 4 stores" (else "Buy from 99 kr · 2 stores"; one store:
+  "Apple TV Store · Rent 29 kr", or "Rakuten TV · Rent" when its price isn't known; a show's seasons: "Buy a season
+  from 199 kr · 2 stores"). Quality is left to Where to watch. The title preview's More like this and the person
+  page use the same cards.
+
+### Prices
+
+V2 design 07-prices A. Mock prices in kronor, shaped like the launcher's real data (`PricedOffer`): each store's rent
+and buy offers carry a price per picture quality (SD, HD, 4K), or none at all when no price source priced the store.
+
+- **Ticks:** a title is Included only on the streaming services ticked in Launcher settings, and prices come only
+  from the ticked stores: an unticked store's offers are left out everywhere (cards, Watch, Where to watch).
+- **Where to watch:** one card per service, one D-pad stop each. Included and free services first ("With your
+  subscription", "Free with ads", the quality), then the stores, cheapest first: rentals with a price, cheapest
+  first, then purchases with a price, then the stores with no price (confirmed 2026-10-30). When two or more stores
+  have a price, the first gets a green **Cheapest** tag and its deciding price is green.
+- **A line per quality:** "Rent **49 kr** · Buy **149 kr**   HD", and a second line for 4K only when it costs
+  something different (a quality that costs the same joins the line: "HD · 4K"). A store that only sells 4K shows
+  "Buy 169 kr   4K". A show's season prices add "Per season".
+- **No known price:** the card reads "Rent · Buy" and "Price shown in the app"; its dialog has the same buttons
+  without amounts ("Price in the app").
+- **Credit:** under the row, "Availability: JustWatch · Prices: Apple / Watchmode", naming only the price sources
+  that priced this title (mock: Apple for the Apple TV Store, Watchmode for the rest). Offline it adds "Saved today
+  19:52, prices may be out of date".
+- **Rent/buy dialog:** "Moon on Apple TV Store", an **HD / 4K** switch when the store prices both (OK switches; the
+  note says "4K costs 10–30 kr more here"), two big price buttons (Rent · HD 49 kr, "48 hours to finish once
+  started"; Buy · HD 149 kr, "Yours to keep in Apple TV"), Cancel, and a line that says payment finishes in the
+  store's app and names a cheaper store when there is one ("SF Anytime has it for 39 kr (HD)."). The switch is not
+  shown for a store with one quality. First focus: the Rent button. OK on a price opens the store's app (a toast).
+- **Names:** stores open in their app: the Apple TV Store in Apple TV, Amazon Video in Prime Video, the Viaplay
+  Store in Viaplay. Mock stores: the Apple TV Store (dearer 4K), Amazon Video (4K to buy only), SF Anytime (HD,
+  cheapest), the Viaplay Store (HD) and Rakuten TV (no known price). There is no Google TV store: TMDB lists none
+  for Sweden.
+
+### Loading, offline and errors
+
+V2 design 06-states A. Reviewed with the dev bar's **State** menu. On the TV these follow the network and the
+catalogue's cache.
+
+| State | What shows | First focus |
+|---|---|---|
+| Loading (Movies, TV Shows) | The page at once: title, scope line, filters and list chips with their counts; eight skeleton cards (not focusable); "Loading artwork and details…" in place of the count | The selected list chip |
+| Offline, lists saved | The scope line becomes an amber pill, "Offline · showing your lists as saved today 19:52"; the count says "· prices may be out of date"; everything else works from the saved copy. The nav's Wi-Fi icon is crossed out | The first title |
+| Offline, nothing saved | An amber "Offline" pill; the list chips without counts; a crossed-out Wi-Fi circle, "You’re offline, and nothing is saved yet", a note that apps, inputs and the clock on Home still work, and **Wi-Fi settings** and **Try again** (which says "Trying…" for a moment, then "Still offline") | Wi-Fi settings |
+| Loading (title preview) | The title and the Watch button (known from the card that opened it) are real; the art is a plain gradient, the details, the other action buttons and every tab's content are skeletons. Tabs still switch | Watch |
+| Error in a tab | Inside the failing tab only (Where to watch, or Cast & crew): an amber box, "Couldn’t load where to watch", "TMDB didn’t answer. The rest of the page is from the saved copy.", and **Retry**. Retry moves focus to the tab, shows the tab's skeleton, then its content | Watch; Retry when the tab is entered with ↓ |
+| Back online | When the network comes back (the State menu from an error or offline to Online), a failed tab, or the tab showing, loads again by itself: its skeleton for a moment, then its content, with no Retry. Focus stays where it was, or moves to the tab if Retry goes | Unchanged |
+| Search offline | See [Search](#search) | The "a" key |
+| Home's weather offline | See [Home](#home) | Unchanged |
+| Settings offline | Account's Sign in, New code and Try again end on "Couldn’t reach TMDB"; Sync now says it syncs when back online; Weather shows the last forecast with "Offline · updated 19:52", and Change city keeps the quick picks but can't search | Unchanged |
+
+- Switching the State menu changes open screens in place; focus stays where it was when that item still exists,
+  and otherwise goes to the screen's first focus above.
+- Skeletons are static grey blocks, with no shimmer, to stay light on a 1 GB TV.
+- Trailer, offline, says it needs the internet.
+
+### Launcher settings
+
+V2 design 05-settings A, with the round-2 panes. Opened from the Settings icon's Launcher settings row (or one of its
+TMDB account, Streaming services and Weather rows, straight into that pane), from Home's Shortcuts → Launcher
+settings, and from the remote's Settings key stand-in. A full page without the nav: the title, "Back closes · changes
+save at once", the section list on the left (470 px, each row with its icon and current value in grey) and the pane
+on the right.
+
+- **Sections and values:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing in…", "Code
+  expired", or the username), Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"), Weather (the
+  city), Home row apps (7), Motion (Full), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values
+  update live.
+- **Moving:** landing on a section shows its pane at once, as a preview. → or OK enters the pane, on its first control
+  (the selected option in a segmented control), and the pane's border brightens. ← from the pane's left edge
+  returns to the section. Back leaves a sub-state first (Choose lists, Change city, an app being moved), then the pane,
+  then closes the page. ↑/↓ on the list stay on it.
+- **Highlight:** the focused section has the accent fill; while the pane has focus, its section stays lit (white at
+  10%, bold).
+- **Segmented controls** (Motion, Open on start, the unit, a list's role): moving only highlights an option; OK
+  selects it, and it gets the accent ring.
+
+#### Account
+
+r2-account A, with r2-account B's Choose lists. The whole TMDB sign-in happens in the pane; the list stays usable.
+
+| State | Pane | First focus |
+|---|---|---|
+| Signed out | "Sign in to TMDB", three benefits (lists in step; Household and Friends; your password stays with TMDB), **Sign in with your phone**, "Not signed in, My list and Seen are kept on this TV only." | Sign in |
+| Getting a code | The QR's 486 px place held by a dashed box with a turning arc, "Getting a code from TMDB…"; the three steps; **Cancel** | Cancel |
+| Waiting | The QR (486 px) beside the steps (1 current), a countdown ("14:32 left on this code") with a bar, **Cancel** and **New code**, and "← goes to the sections and keeps this code waiting." The section reads "Waiting…" in amber; leaving for another section keeps the code. Closing Launcher settings stops it | Cancel |
+| Approved | A green "Approved on your phone" in the QR's place, "Signing in…", steps 1–2 ticked, "Importing your lists… 3 of 5" with a green bar | Unchanged (often the list) |
+| Signed in | Avatar and username, "Signed in to TMDB", My list · Seen · Favorites counts, Household, Friends, Last synced; **Sync now**, **Choose lists**, **Sign out** (asks first) | Sync now |
+| Code expired | The QR dimmed under "Code expired", "That code has expired", **New code**, Cancel | New code |
+| Couldn’t reach TMDB | "No code" in amber, "Couldn’t reach TMDB", **Try again**, Wi-Fi settings. Offline, Sign in lands here | Try again |
+| Choose lists | A sub-state of Signed in, with a back crumb: one row per TMDB list (name, titles, updated) with a Household / Friends / Not used switch. Giving a list a role takes it from the list that had it | The first list's role |
+
+The QR is a look-alike (finder and alignment patterns over seeded noise); it doesn't scan. The dev bar's Account
+menu steps the states.
+
+#### Streaming services and stores
+
+- **Streaming services** (r2-services B, tiles): "What does the household pay for?", "8 of 11 ticked", and a
+  four-column grid of wordmark tiles with a corner tick and a caption: the name, then Free / Free tier and Installed
+  (green) or No app. Netflix, Prime Video, Disney+, HBO Max, Apple TV, Viaplay, SkyShowtime, SVT Play, TV4 Play,
+  Tele2 Play, Telia Play, then **+7 More services**, which opens a second grid (Hayu, MUBI, Crunchyroll, BritBox,
+  Pluto TV, Plex, Cineast) and becomes "Fewer services". It stays open while anything in it is ticked. OK ticks or
+  unticks any tile, free ones included; installed apps start ticked. Ticks change Included and "All 8 services" at once.
+- **Stores for rent and buy** (r2-services A, rows): "Where may we show prices from?", one checkbox row each for the
+  Apple TV Store, Amazon Video, Viaplay Store, SF Anytime and Rakuten TV, saying which app renting opens ("Opens in
+  the Prime Video app") and Installed or No app. All start ticked. A note says prices are in kronor and Google Play
+  isn't sold in Sweden.
+
+#### Weather
+
+r2-weather A, with r2-weather B's "now showing / quick picks".
+
+- **Summary:** "Weather on Home", a card with the place (English name, then the local name, region and country) and
+  the weather there now; **Place**: **Change city** and **Use default (New York)**; **Temperature**: °C / °F /
+  TV default (°C), where TV default follows the TV's region (Sweden here). Changes reach Home at once.
+- **Change city** (a sub-state, with a back crumb): a search bar with ghost completion, the 6×6 keyboard on the left
+  and the matches on the right. With nothing typed the list shows **Now showing** (green) and **Quick picks**
+  (New York, the default, and recent places). Typing finds places by their English or local name, accents ignored,
+  Sweden first: "gothe" lists three Gothenburgs; "göteb" finds "Göteborg → Gothenburg" with a note that the TV asks in
+  English and Swedish. OK on a match sets the place and returns to the summary on Change city; Back returns
+  without changing it. Offline, the list keeps the quick picks and says searching needs the internet.
+
+#### The other panes
+
+- **Home row apps:** not drawn in the design. Home's row as small tiles in order ("On Home · 7 of 7"), then the other
+  apps. OK on a tile on Home picks it up, as Home's hold-OK Move does: it lifts with arrows on its sides, ← → move
+  it, OK puts it down, ↓ takes it off Home (one must stay) and Back puts it back where it was. OK on another app adds
+  it at the end, already picked up to place (the row holds seven). Home's row follows at once.
+- **Motion and Open on start** share one pane ("Motion and start"): Full / Reduced / Off and Home / Last app /
+  Live TV. Reduced drops slides, rises and focus scale-ups and keeps the fades (Home's scroll jumps; its dimming
+  fades); Off stops every animation. The prototype applies Motion; Open on start is only saved.
+- **Default Home:** "This launcher is Home", "The remote’s Home button opens it", and **Choose Home app** (Android's
+  Home app setting).
+- **TV settings:** a note and **Open TV settings**, Picture, Network, Apps.
+- **About:** "Clean your TV launcher", version and catalogue cache lines, the TMDB notice ("This product uses the
+  TMDB API but is not endorsed or certified by TMDB.") beside a placeholder for TMDB's logo, the Open-Meteo,
+  JustWatch and Apple credits, and **Open-source licences** (a stub page) and **Clear cache** (asks first).
+- Choices are kept in `localStorage`; Reset state clears them. The sleep timer is not kept.
+
+### First run
+
+V2 designs 01-setup B and r2-setup-checklist. Shown on demand from the dev bar (Jump to → First run). A page without
+the nav: "First run", "Set up your Home screen", and four rows, each with its number, title, a line under it, the
+current value and a pill: Sign in to TMDB (Optional), Streaming services ("8 ticked", "Netflix, Prime Video +6",
+Suggested), Stores for rent and buy ("Apple TV Store, Amazon Video +3", Suggested), Weather city ("New York · TV
+default", Default). Below them **Start using Home** and "The same pages are in Launcher settings."; on the right a
+help pane for the focused row.
+
+- **OK on a row** opens the same split and panes as Launcher settings, cut down to these four sections ("Sign in to
+  TMDB", "Streaming services", "Stores for rent and buy", "Weather city"), titled "Set up your Home screen", with
+  "First run · Back returns to the checklist" and a footer under the pane: "Step 2 of 4 · changes save at once",
+  **Back to checklist** and **Next: Stores** (the last step: **Done**). Focus starts in the pane.
+- Back from the split (or Back to checklist) returns to the checklist with every section that was opened ticked (a
+  green check in place of its number, no pill) and focus on the next row not done, or Start when all are.
+- When every row is ticked the page reads "You’re all set" and the help pane for Start says "Your Home screen is set
+  up.", with the Settings icon hint.
+- **Start using Home** goes Home; so does Back.
+- Focus: the first row; ↓ from the last row reaches Start; → on a row stays (the help pane has nothing to focus), and
+  ← and → on Start stay on it.
 
 ### Stubs
 
-Music, Launcher settings, All Apps, Weather and the person page are placeholders. The person page lists
+Music, All Apps, Weather, Open-source licences and the person page are placeholders. The person page lists
 the titles the person appears in.
 
 ## Visual system
@@ -260,8 +487,10 @@ From `src/styles/tokens.css`, taken from the Figma frames.
 | Text | `#F4F5F7`, secondary `#ADB5C0`, tertiary `#7D8999`, ghost `#5E6878` |
 | Accent / focus | `#C4DDF7`; text on accent `#101820`; selected chips use the accent at 14% with an accent border |
 | Active nav item | white at 91% with dark text |
-| Included / connected | `#8FD9A8` (badge background at 16%) |
+| Included / connected | `#8FD9A8` (badge background at 16%); also the Cheapest tag and its price |
 | Score star | `#F2C46D` |
+| Offline and errors | the star's amber: pill background at 12%, error box at 8% with a 30% border |
+| Skeletons | white at 6–7%, radius 8 (art keeps its card's radius), static |
 | Type (Inter) | 84 title, 44 page heading, 30, 26, 24 body, 20 small, 18 minimum |
 | Radii | 8, 12, 16, 24, pills 100 |
 | Focus | accent fill, or a 4 px accent ring on cards and art, with a 3–8% scale-up |
@@ -272,16 +501,20 @@ width with 243 px art.
 
 ## What is mock, and open questions for the build
 
-- **Data source:** where catalogue, availability, prices, artwork and cast come from, and how they are cached.
+- **Data source:** where catalogue, availability, prices, artwork and cast come from, and how they are cached. The
+  prices and states here are shaped like the launcher's V2 data (TMDB availability for Sweden, prices per quality);
+  the values are made up.
 - **Deep links:** "Watch on …" and Episodes assume each service can open a title or episode directly.
-- **Setup:** importing watchlists and choosing the household's services is not designed, yet every list and
-  "Included" label depends on it.
+- **Setup:** the checklist and its panes are built. When First run shows (first start only, or until signed in) is
+  open; a row counts as done once its pane has been opened.
+- **Sign-in:** TMDB's approval link is too long to type, so the QR is the only way in; whether to host a short
+  redirect is open. The code is polled only while Launcher settings is open.
 - **Wi-Fi switching:** joining a saved network from the dropdown may need system permissions a launcher lacks;
   fall back to opening Wi-Fi settings.
 - **Not designed yet:** hold-OK menus (the base uses them for tile Move / Remove / App info and a Settings
-  menu), offline / loading / error states, first run, the screensaver, removing recent searches, voice search,
-  progress on started titles, sorting lists, a person page design, and right-to-left layouts (the base supports
-  Hebrew).
+  menu), the screensaver, removing recent searches, voice search, progress on started titles, sorting lists, a
+  person page design, Search and Home's weather while loading, the Home row apps pane (built here without a design),
+  the sleep timer's warning before it turns the TV off, and right-to-left layouts (the base supports Hebrew).
 
 ## Prototype code
 
@@ -291,10 +524,15 @@ width with 243 px art.
 | `src/core/focus.ts` | Spatial D-pad navigation; `data-group` remembers focus per row or grid |
 | `src/core/fuzzy.ts` | Search matching: subsequences with word-start and run bonuses; 1–2 typo tolerance for words of 4+ letters |
 | `src/core/store.ts` | Household state: My list, Seen, Favorites, recent searches, recently viewed |
-| `src/data/` | Mock catalogue, services, and offer rules (`bestOffer`, `offersByService`) |
-| `src/screens/` | One module per screen; `dropdown.ts` holds the top-bar menus |
-| `src/ui/` | Nav, buttons, chips, cards and icons |
+| `src/core/settings.ts` | Launcher settings the prototype acts on (Motion, Open on start, Home row apps, ticked services and stores, weather place and unit, sleep timer) |
+| `src/core/account.ts` | The mocked TMDB sign-in and lists, behind the Account pane and the dev bar's Account menu |
+| `src/core/net.ts` | The simulated network and data state behind the dev bar's State menu |
+| `src/data/` | Mock catalogue, services (and the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |
+| `src/screens/` | One module per screen; `dropdown.ts` holds the top-bar menus, `quickSettings.ts` the Settings icon's, `rent.ts` the rent/buy dialog, `settings.ts` Launcher settings, `setup.ts` First run |
+| `src/screens/panes/` | Launcher settings' panes, shared with First run: account, services and stores, weather, Home row apps, and the rest |
+| `src/ui/` | Nav, buttons, chips, segmented controls, cards (and their skeletons), icons, and the look-alike QR |
 | `src/styles/` | `tokens.css` (the visual system), `base.css`, `screens.css` |
 | `public/img/` | Artwork exported from the Figma file |
 
-In development builds, `window.app` exposes the screen stack in the browser console.
+In development builds, `window.app` exposes the screen stack and `window.net` the data state in the browser console
+(`net.set('offline')`).

@@ -1,18 +1,23 @@
 import { app, type Screen } from '../core/app';
-import { h } from '../core/dom';
+import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
-import { HOME_APPS } from '../data/services';
+import { net, SAVED_AT } from '../core/net';
+import { deg, settings } from '../core/settings';
+import { placeById } from '../data/places';
+import { HOME_APPS, OTHER_APPS } from '../data/services';
 import { icon, type IconName } from '../ui/icons';
 import { navBar } from '../ui/widgets';
-import { launcherSettings, placeholder } from './placeholder';
+import { placeholder } from './placeholder';
+import { launcherSettings } from './settings';
 
-const HOURS: [string, IconName, string][] = [
-  ['9 PM', 'moon', '14°'],
-  ['10 PM', 'moon', '14°'],
-  ['11 PM', 'cloud', '13°'],
-  ['12 AM', 'cloud', '13°'],
-  ['1 AM', 'moon', '12°'],
-  ['2 AM', 'moon', '12°'],
+/** The hourly strip, as offsets from the place's temperature now (mock). */
+const HOURS: [string, IconName, number][] = [
+  ['9 PM', 'moon', 0],
+  ['10 PM', 'moon', 0],
+  ['11 PM', 'cloud', -1],
+  ['12 AM', 'cloud', -1],
+  ['1 AM', 'moon', -2],
+  ['2 AM', 'moon', -2],
 ];
 
 export function homeScreen(): Screen {
@@ -32,12 +37,27 @@ export function homeScreen(): Screen {
   tick();
   setInterval(tick, 15_000);
 
-  const apps = HOME_APPS.map((a, i) =>
-    focusable(
-      h('div.app', h('div.app-tile', h('span', { style: `font-weight:${a.weight}` }, a.mark)), h('div.app-name', a.name)),
-      { group: 'apps', key: `app-${a.id}`, isDefault: i === 0, onOk: () => app.toast(`Opening ${a.name}…`) },
-    ),
-  );
+  // The row follows Launcher settings' Home row apps.
+  const appsRow = h('div.home-apps');
+  let painted = '';
+  const paintApps = () => {
+    // Only when the row changed, so other settings don't reset focus on it.
+    if (painted === settings.get().homeApps.join()) return;
+    painted = settings.get().homeApps.join();
+    const all = [...HOME_APPS, ...OTHER_APPS];
+    const shown = settings.get().homeApps.map((id) => all.find((a) => a.id === id)).filter((a) => !!a);
+    replace(
+      appsRow,
+      shown.map((a, i) =>
+        focusable(
+          h('div.app', h('div.app-tile', h('span', { style: `font-weight:${a.weight}` }, a.mark)), h('div.app-name', a.name)),
+          { group: 'apps', key: `app-${a.id}`, isDefault: i === 0, onOk: () => app.toast(`Opening ${a.name}…`) },
+        ),
+      ),
+    );
+  };
+  paintApps();
+  settings.on(paintApps);
 
   const tile = (label: string, ic: IconName, key: string, onOk: () => void, group: string) =>
     focusable(h('div.home-tile', h('span', { html: icon(ic, 28) }), h('span', label)), { group, key, onOk, isDefault: key === 'in-live' });
@@ -57,17 +77,49 @@ export function homeScreen(): Screen {
     tile('TV Settings', 'settings', 'sc-settings', () => app.toast('Opening Android TV Settings…'), 'shortcuts'),
   ];
 
-  const weather = focusable(
-    h(
-      'div.weather',
-      h('div.weather-now', h('div.weather-label', 'Weather'), h('div.weather-temp', '14°'), h('div.weather-desc', 'Partly cloudy · H:16° L:9°')),
+  // The weather follows Launcher settings' place and unit. Offline it shows the last forecast with when it was
+  // fetched, or, with none saved, a quiet "Weather unavailable offline" (06-states A).
+  const weather = focusable(h('div.weather'), {
+    group: 'weather',
+    key: 'weather',
+    onOk: () => app.push(placeholder('Weather', 'Hourly and 7-day forecast.')),
+  });
+  const forecast = h('div.home-forecast');
+  const paintWeather = () => {
+    const p = placeById(settings.get().place);
+    if (net.get() === 'offline-empty') {
+      replace(weather, h('div.weather-none', h('span', { html: icon('wifiOff', 28) }), 'Weather unavailable offline'));
+      replace(forecast, h('span.weather-quiet', 'Weather unavailable offline'));
+      return;
+    }
+    const offline = net.isOffline();
+    replace(
+      weather,
+      h(
+        'div.weather-now',
+        h('div.weather-label', p.name),
+        h('div.weather-temp', deg(p.temp)),
+        offline
+          ? h('div.weather-desc.weather-stale', `Offline · updated ${SAVED_AT.replace('today ', '')}`)
+          : h('div.weather-desc', `${p.desc} · H:${deg(p.temp + 2)} L:${deg(p.temp - 5)}`),
+      ),
       h(
         'div.weather-hours',
-        HOURS.map(([t, ic, deg]) => h('div.weather-hour', h('div', t), h('span', { html: icon(ic, 24) }), h('b', deg))),
+        HOURS.map(([t, ic, d]) => h('div.weather-hour', h('div', t), h('span', { html: icon(ic, 24) }), h('b', deg(p.temp + d)))),
       ),
-    ),
-    { group: 'weather', key: 'weather', onOk: () => app.push(placeholder('Weather', 'Hourly and 7-day forecast.')) },
-  );
+    );
+    replace(
+      forecast,
+      h('span', { html: icon('sun', 24) }),
+      `Today · ${deg(p.temp + 2)}`,
+      h('span.sep'),
+      h('span', { html: icon('cloud', 24) }),
+      `Tomorrow · ${deg(p.temp)}`,
+    );
+  };
+  paintWeather();
+  settings.on(paintWeather);
+  net.on(paintWeather);
 
   const content = h(
     'div.home-content',
@@ -77,17 +129,10 @@ export function homeScreen(): Screen {
       h(
         'div.home-clock',
         h('div', time, ampm),
-        h(
-          'div.home-forecast',
-          h('span', { html: icon('sun', 24) }),
-          'Today · 58°F',
-          h('span.sep'),
-          h('span', { html: icon('cloud', 24) }),
-          'Tomorrow · 56°F',
-        ),
+        forecast,
       ),
     ),
-    h('div.home-apps', apps),
+    appsRow,
     h(
       'div.home-lower',
       h('div.home-group', h('div.home-heading', 'Inputs'), h('div.home-tiles', inputs)),
@@ -101,7 +146,7 @@ export function homeScreen(): Screen {
   return {
     label: 'Home',
     el,
-    defaultFocus: () => apps[0],
+    defaultFocus: () => appsRow.querySelector<HTMLElement>('.app') ?? el.querySelector<HTMLElement>('.home-tile'),
     onFocus(f) {
       const lower = ['inputs', 'shortcuts', 'weather'].includes(f.dataset.group ?? '');
       el.classList.toggle('is-scrolled', lower);

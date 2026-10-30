@@ -1,10 +1,12 @@
 import { app, type Screen } from '../core/app';
 import { h, replace } from '../core/dom';
+import { net, SAVED_AT } from '../core/net';
 import { store } from '../core/store';
 import { LIST_NAMES, TITLES } from '../data/catalog';
-import { SUBSCRIBED_COUNT } from '../data/services';
+import { subscribedCount } from '../data/offers';
 import type { Kind, ListId, Title } from '../types';
-import { button, chip, guide, libraryCard, navBar } from '../ui/widgets';
+import { icon } from '../ui/icons';
+import { button, chip, guide, libraryCard, libraryCardSkeleton, navBar } from '../ui/widgets';
 import { activeCount, applyFilters, defaultFilters, filterDefs, summary } from './filterDefs';
 import { filtersDrawer } from './filters';
 import { pickSetup } from './pick';
@@ -26,6 +28,10 @@ export function libraryScreen(kind: Kind): Screen {
   const pool = () => TITLES.filter((t) => t.kind === kind && inList(t, 'all'));
 
   const chipsEl = h('div.chips');
+  const scopeEl = h('span.lib-scope-slot');
+  const guideEl = guide('Illustrative services, scores & availability', 'OK for title details');
+  /** Try again on the offline page is checking: its label says so for a moment. */
+  let retrying = false;
   const filterSummary = h('span.lib-filter-summary');
   const filterBtnSlot = h('span');
   const listTitle = h('div.lib-list-title');
@@ -33,13 +39,16 @@ export function libraryScreen(kind: Kind): Screen {
   const grid = h('div.lib-grid');
 
   const render = () => {
-    const all = pool();
+    const state = net.get();
+    // Offline with nothing saved yet: no lists to count or show (06-states A).
+    const empty = state === 'offline-empty';
+    const all = empty ? [] : pool();
     const choices: ListChoice[] = ['all', 'my', 'household', 'friends'];
     replace(
       chipsEl,
       h('span.chips-label', 'Imported watchlists'),
       choices.map((c) =>
-        chip(`${c === 'all' ? 'All lists' : LIST_NAMES[c]} · ${all.filter((t) => inList(t, c)).length}`, {
+        chip(`${c === 'all' ? 'All lists' : LIST_NAMES[c]}${empty ? '' : ` · ${all.filter((t) => inList(t, c)).length}`}`, {
           selected: c === list,
           group: 'lists',
           key: `list-${c}`,
@@ -68,12 +77,62 @@ export function libraryScreen(kind: Kind): Screen {
     const inChosen = all.filter((t) => inList(t, list));
     const shown = applyFilters(defs, filters, inChosen);
     replace(listTitle, list === 'all' ? 'All lists' : LIST_NAMES[list]);
+    const count = shown.length === inChosen.length ? `${shown.length} ${noun}` : `${shown.length} of ${inChosen.length} ${noun}`;
     replace(
       listStatus,
-      shown.length === inChosen.length ? `${shown.length} ${noun} · Across your services` : `${shown.length} of ${inChosen.length} ${noun} · Filtered`,
+      state === 'loading'
+        ? 'Loading artwork and details…'
+        : empty
+          ? ''
+          : state === 'offline'
+            ? `${count} · prices may be out of date`
+            : shown.length === inChosen.length
+              ? `${count} · Across your services`
+              : `${count} · Filtered`,
     );
+    // Offline, the scope line becomes the amber pill: with the time of the saved copy, or just "Offline".
+    replace(
+      scopeEl,
+      net.isOffline()
+        ? h('span.offline-pill', h('span', { html: icon('wifiOff', 24) }), empty ? 'Offline' : `Offline · showing your lists as saved ${SAVED_AT}`)
+        : h('span.lib-scope-text', `3 imported watchlists · All ${subscribedCount()} services`),
+    );
+    replace(guideEl.lastElementChild!, empty ? '' : 'OK for title details');
 
-    if (!inChosen.length) {
+    if (empty) {
+      // Focus lands on Wi-Fi settings, something real (06-states A, frame 3).
+      replace(
+        grid,
+        h(
+          'div.state',
+          h('div.state-icon', { html: icon('wifiOff', 48) }),
+          h('div.empty-title', 'You’re offline, and nothing is saved yet'),
+          h('div.empty-note.state-note', `${heading} needs the internet once to fetch your lists. Apps, inputs and the clock on Home work without it.`),
+          h(
+            'div.state-actions',
+            button('Wi-Fi settings', { icon: 'wifi', key: 'wifi-settings', isDefault: true, onOk: () => app.toast('Opening Wi-Fi settings…') }),
+            button(retrying ? 'Trying…' : 'Try again', {
+              icon: 'retry',
+              key: 'try-again',
+              onOk: () => {
+                if (retrying) return;
+                retrying = true;
+                render();
+                window.setTimeout(() => {
+                  retrying = false;
+                  if (net.get() !== 'offline-empty') return;
+                  render();
+                  app.toast('Still offline. Check the Wi-Fi.');
+                }, 1200);
+              },
+            }),
+          ),
+        ),
+      );
+    } else if (state === 'loading') {
+      // The page's shape at once: skeleton cards, none focusable, so focus waits on the list chips.
+      replace(grid, Array.from({ length: 8 }, libraryCardSkeleton));
+    } else if (!inChosen.length) {
       replace(
         grid,
         h(
@@ -121,7 +180,7 @@ export function libraryScreen(kind: Kind): Screen {
     ),
     h(
       'div.lib-scope',
-      h('span.lib-scope-text', `3 imported watchlists · All ${SUBSCRIBED_COUNT} services`),
+      scopeEl,
       h('span.lib-filters', filterSummary, filterBtnSlot),
     ),
     chipsEl,
@@ -135,19 +194,33 @@ export function libraryScreen(kind: Kind): Screen {
     navBar(kind === 'movie' ? 'movies' : 'tv'),
     page,
     h('div.bottom-fade'),
-    guide('Illustrative services, scores & availability', 'OK for title details'),
+    guideEl,
   );
 
   render();
+  net.on(() => {
+    render();
+    app.refocus();
+  });
 
   return {
     label: heading,
     el,
-    defaultFocus: () => grid.querySelector<HTMLElement>('[data-focus]') ?? pickBtn,
+    defaultFocus: () =>
+      net.get() === 'loading'
+        ? chipsEl.querySelector<HTMLElement>('.chip.is-selected')
+        : (grid.querySelector<HTMLElement>('[data-default]') ?? grid.querySelector<HTMLElement>('[data-focus]') ?? pickBtn),
     onShow: render,
     // The list chips lead to Pick for me: Up from any chip, and Right from the last one, before the nav or the grid.
     onKey(key, f) {
-      if (!f || !chipsEl.contains(f)) return false;
+      if (!f) return false;
+      // Offline with nothing saved: ← and → stay on Wi-Fi settings and Try again rather than jump up to the chips.
+      const actions = f.closest('.state-actions');
+      if (actions && (key === 'left' || key === 'right')) {
+        app.moveWithin(actions, key);
+        return true;
+      }
+      if (!chipsEl.contains(f)) return false;
       const all = [...chipsEl.querySelectorAll<HTMLElement>('[data-focus]')];
       if (key === 'up' || (key === 'right' && all[all.length - 1] === f)) {
         app.focus(pickBtn);

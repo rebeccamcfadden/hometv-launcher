@@ -1,13 +1,20 @@
 import { app, STAGE_W, type Screen } from '../core/app';
 import { h } from '../core/dom';
 import { focusable } from '../core/focus';
+import { net } from '../core/net';
 import { icon, type IconName } from '../ui/icons';
 
 export interface MenuRow {
   label: string;
   icon?: IconName;
-  /** Right-hand note, e.g. "Connected" or "Re-enable". */
-  status?: string;
+  /** Right-hand note, e.g. "Connected" or "Re-enable"; a function for a value that changes while the menu is open. */
+  status?: string | (() => string);
+  /** A chevron after the status: the row opens a Launcher settings pane. */
+  chevron?: boolean;
+  /** Small position dots after the status, for a value that OK steps through: [how many, which is on]. */
+  dots?: () => [number, number];
+  /** OK steps the value in place and the menu stays open (Motion, Sleep timer). */
+  cycle?: () => void;
   /** Draws the status with the green dot, as the base launcher does for connected inputs. */
   good?: boolean;
   /** A line between groups, drawn above this row. */
@@ -20,7 +27,12 @@ export interface MenuRow {
  * and closes on Back, on OK on a row, on a click outside it, or when the D-pad moves past its edge. Focus
  * returns to the button, and a move past the left, right or bottom edge carries on one step from it.
  */
-export function dropdown(label: string, anchor: HTMLElement | null, rows: MenuRow[], opts: { header?: HTMLElement } = {}): Screen {
+export function dropdown(
+  label: string,
+  anchor: HTMLElement | null,
+  rows: MenuRow[],
+  opts: { header?: HTMLElement; className?: string } = {},
+): Screen {
   let top = 130;
   let right = 96;
   if (anchor) {
@@ -30,32 +42,47 @@ export function dropdown(label: string, anchor: HTMLElement | null, rows: MenuRo
     right = Math.round(STAGE_W - (a.right - s.left) / app.scale);
   }
 
-  const rowEls = rows.map((r, i) => [
-    r.divider ? h('div.menu-divider') : null,
-    focusable(
-      h(
-        'div.menu-row',
-        r.icon ? h('span.menu-icon', { html: icon(r.icon, 28) }) : null,
-        h('span.menu-label', r.label),
-        r.status ? h(`span.menu-status${r.good ? '.is-good' : ''}`, r.good ? h('span.menu-dot') : null, r.status) : null,
-      ),
+  const statusOf = (r: MenuRow) => {
+    const text = typeof r.status === 'function' ? r.status() : r.status;
+    const dots = r.dots?.();
+    if (!text && !r.chevron && !dots) return null;
+    return h(
+      `span.menu-status${r.good ? '.is-good' : ''}`,
+      r.good ? h('span.menu-dot') : null,
+      text ?? null,
+      dots ? h('span.dots', Array.from({ length: dots[0] }, (_, k) => h(`i${k === dots[1] ? '.on' : ''}`))) : null,
+      r.chevron ? h('span.chev', { html: icon('chevRight', 22) }) : null,
+    );
+  };
+
+  const rowEls = rows.map((r, i) => {
+    const el: HTMLElement = focusable(
+      h('div.menu-row', r.icon ? h('span.menu-icon', { html: icon(r.icon, 28) }) : null, h('span.menu-label', r.label), statusOf(r)),
       {
         group: 'menu',
         key: `m-${i}`,
         isDefault: i === 0,
         onOk: () => {
+          if (r.cycle) {
+            r.cycle();
+            el.querySelector('.menu-status')?.replaceWith(statusOf(r) ?? '');
+            return;
+          }
           app.pop();
           r.onOk?.();
         },
       },
-    ),
-  ]);
+    );
+    return [r.divider ? h('div.menu-divider') : null, el];
+  });
 
   const catcher = h('div.menu-catcher');
   catcher.addEventListener('click', () => app.pop());
-  const panel = h('div.menu', { style: `top:${top}px;right:${right}px` }, opts.header ?? null, rowEls);
+  const panel = h(`div.menu${opts.className ? `.${opts.className}` : ''}`, { style: `top:${top}px;right:${right}px` }, opts.header ?? null, rowEls);
   const el = h('div.screen.layer-dialog', catcher, panel);
-  return {
+  // The button it hangs from stays highlighted while the menu is open.
+  anchor?.classList.add('is-open');
+  const screen: Screen = {
     label,
     el,
     layer: 'dialog',
@@ -69,6 +96,12 @@ export function dropdown(label: string, anchor: HTMLElement | null, rows: MenuRo
       return true;
     },
   };
+  const stop = app.onChange(() => {
+    if (app.has(screen)) return;
+    anchor?.classList.remove('is-open');
+    stop();
+  });
+  return screen;
 }
 
 /** The top-bar button a menu hangs from, on whichever page is showing. */
@@ -103,10 +136,16 @@ export function inputsMenu(anchor: HTMLElement | null): Screen {
  * internet state on top, other saved networks to switch to, and the full Wi-Fi settings.
  */
 export function wifiMenu(anchor: HTMLElement | null): Screen {
+  // Offline (the dev bar's data state): connected to the router, but no internet behind it.
+  const offline = net.isOffline();
   const header = h(
     'div.menu-header',
-    h('span.menu-header-icon', { html: icon('wifi', 34) }),
-    h('div', h('div.menu-header-title', 'Home Wi-Fi'), h('div.menu-header-sub', h('span.menu-dot'), 'Connected · Internet OK · Strong signal')),
+    h(`span.menu-header-icon${offline ? '.is-warn' : ''}`, { html: icon(offline ? 'wifiOff' : 'wifi', 34) }),
+    h(
+      'div',
+      h('div.menu-header-title', 'Home Wi-Fi'),
+      h('div.menu-header-sub', h(`span.menu-dot${offline ? '.is-warn' : ''}`), offline ? 'Connected · No internet' : 'Connected · Internet OK · Strong signal'),
+    ),
   );
   return dropdown(
     'Wi-Fi',
