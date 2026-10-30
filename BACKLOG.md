@@ -74,16 +74,36 @@ milestones: [docs/rework.md](docs/rework.md).
 - **Wanted:** a screen in Launcher settings to tick the services the household pays for.
 
 ### Weather location on the TV
-- **V1:** `latitude` and `longitude` come from the gitignored build properties file, `launcher/tv.properties`
-  (template: `launcher/tv.properties.example`, New York).
-- **Wanted:** pick the city on the TV. The weather add-on in `addons/weather/` already does this with
-  Open-Meteo's geocoding.
+- **V2 (Phase 4):** `latitude`, `longitude` and `temperature_unit` still come from the gitignored build properties
+  file, `launcher/tv.properties` (template: `launcher/tv.properties.example`, New York), as the default. Launcher
+  settings has two rows over them: **Weather location** searches Open-Meteo's geocoding as the typing pauses (no
+  key; only the typed name is sent, in the TV's language) and keeps the chosen place's name, region, country and
+  position on the TV; "Use default" goes back to `tv.properties`. **Temperature unit** is Default, °C or °F. Home
+  fetches the weather for the new place or unit as soon as it is back in front; the cached answer is kept per
+  request, so the old place's weather never shows for the new one. The logic is in `WeatherPlace`,
+  `WeatherSettings` and `WeatherPrefs`, unit-tested.
+- **Waits for design:** the picker is a plain Android dialog (a text field with the TV's keyboard and a list of
+  matches) in the old-style settings screen, until the new Launcher settings page and its pickers are designed
+  (see [Launcher settings page](#from-m1)).
+- **Findings:** Open-Meteo matches names in the language it is asked in. On an English TV "Göteborg" finds only
+  Göteborgnuten (Svalbard) and a park; the city is "Gothenburg". In Swedish both names find it.
 
 ### Wi-Fi networks
-- **V1:** the dropdown's header is real; saved networks and other networks open Wi-Fi settings.
-- **Wanted:** list and join networks from the dropdown. Android 10 and later stop a normal app from listing
-  saved networks or switching between them. Android 9, which the test TV runs, is looser, but check which
-  permissions it asks for before building this.
+- **V2 (Phase 4):** the dropdown lists the TV's other saved networks under the header (a lock for a secured one,
+  "Saved" on the right), and OK switches to one with a "Switching to …" toast, as the prototype's `wifiMenu` does.
+  Other networks and Wi-Fi settings stay the last rows. On Android 10 and later, with Wi-Fi off or on Ethernet,
+  there is no list and the dropdown is as before; a switch the TV refuses opens Wi-Fi settings.
+  New permission: `CHANGE_WIFI_STATE` (normal, granted at install).
+- **Findings (Android 9 emulator, targetSdk 34):** `getConfiguredNetworks()` lists the networks saved in the TV's
+  settings with `ACCESS_WIFI_STATE` alone; without location access the connected network's name is hidden
+  (`<unknown ssid>`) but its id is not, so the header names it from the saved list. `enableNetwork(id, true)` needs
+  `CHANGE_WIFI_STATE` (without it: `SecurityException`); with it, Android logs "does not have permission to update
+  configuration" and then "Allowing uid … with insufficient permissions to connect", and connects. The saved
+  network itself is not changed. Scan results need location access and location on (`getScanResults()` empty and
+  `startScan()` false without it). From Android 10 both calls are refused for apps targeting it.
+- **Waits for design:** joining a new network (choosing from a scan and typing a password) from the dropdown;
+  Other networks opens Wi-Fi settings for that. A failed switch is not reported back: Android falls back to a
+  network it can reach, and the header shows it the next time the dropdown opens.
 
 ## Left for V2
 
@@ -104,7 +124,8 @@ From the old launcher; not in V1 by decision.
 ## From M1
 
 - **Launcher settings page:** V1 opens the old `LauncherSettingsActivity`, cut to Animations, Open on start,
-  Follow theme, Default Home and TV settings. Wanted: the new page in the new UI, once it is designed.
+  Follow theme, Default Home and TV settings; V2 Phase 4 added Weather location and Temperature unit as plain rows.
+  Wanted: the new page in the new UI, with designed pickers; the lead is drafting it in Figma.
 - **Network icon state:** the nav shows Wi-Fi, Ethernet or Wi-Fi crossed out when offline. The old pill could also
   tint by state (`wifi_status_color`, `wifi_status_warnings`); not designed for the new nav.
 - **README card:** since M1b `tools/gen_tables.py` no longer counts languages, and `docs/card.jpg` and

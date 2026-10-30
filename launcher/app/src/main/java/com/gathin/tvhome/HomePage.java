@@ -722,12 +722,12 @@ final class HomePage extends Screen {
         ilp.rightMargin = Ui.px(12);
         forecast.addView(i, ilp);
         TextView t = Ui.line(activity, 22, Ui.TEXT_2, Ui.REGULAR);
-        t.setText(activity.getString(label, degrees(day.max) + (BuildConfig.FAHRENHEIT ? "F" : "C")));
+        t.setText(activity.getString(label, Weather.degrees(day.max, weatherStore.fahrenheit())));
         forecast.addView(t);
     }
 
     private static String degrees(int t) {
-        return t + "\u00B0";
+        return Weather.degrees(t);
     }
 
     private static int iconRes(Weather.Icon icon) {

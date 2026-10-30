@@ -23,6 +23,8 @@ final class NetworkState {
     String ssid;
     /** 0 to 4, or -1 when not on Wi-Fi. */
     int level = -1;
+    /** The Wi-Fi network's id among the saved ones, or -1. */
+    int networkId = -1;
 
     /** The network Android last reported lost; skipped while getAllNetworks() still lists it. */
     private static volatile Network lostNetwork;
@@ -61,6 +63,7 @@ final class NetworkState {
                 if (info != null) {
                     s.level = WifiManager.calculateSignalLevel(info.getRssi(), 5);
                     s.ssid = NetworkWords.ssid(info.getSSID());
+                    s.networkId = info.getNetworkId();
                 }
             }
         } catch (RuntimeException ignored) {

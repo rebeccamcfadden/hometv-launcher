@@ -81,22 +81,39 @@ final class Menus {
         }
     }
 
+    interface Switcher {
+        void connect(SavedNetworks.Net net);
+    }
+
     /**
-     * The VPN app when vpn_app names one that is installed (the base's network pill opened it), then Other networks
-     * and Wi-Fi settings. Listing and joining saved networks needs more than a launcher may do from Android 10, so
-     * both open the TV's Wi-Fi settings for now (BACKLOG.md, Wi-Fi networks).
+     * The VPN app when vpn_app names one that is installed (the base's network pill opened it), the other saved
+     * networks to switch to where Android lets the launcher (up to Android 9; see SavedNetworks), then Other networks
+     * and Wi-Fi settings. Joining a new network waits for its design (BACKLOG.md, Wi-Fi networks), so Other networks
+     * opens the TV's Wi-Fi settings.
      */
-    static List<MenuPanel.Row> network(Context ctx, NetworkState s, String vpnApp, Opener open) {
+    static List<MenuPanel.Row> network(Context ctx, NetworkState s, String vpnApp, Opener open,
+                                       List<SavedNetworks.Net> saved, Switcher switcher) {
         List<MenuPanel.Row> rows = new ArrayList<>();
         Intent vpn = vpnApp.isEmpty() ? null : launchIntent(ctx, vpnApp);
         if (vpn != null) {
             rows.add(new MenuPanel.Row(label(ctx, vpnApp), R.drawable.ic_ui_lock, () -> open.open(vpn))
                     .status(ctx.getString(s.vpn ? R.string.vpn_on : R.string.vpn_off), s.vpn));
         }
+        // On Ethernet the TV ignores Wi-Fi, so switching there would do nothing visible.
+        if (!s.ethernet) {
+            boolean first = true;
+            for (SavedNetworks.Net n : SavedNetworks.others(saved, s.networkId, s.ssid)) {
+                MenuPanel.Row row = new MenuPanel.Row(n.ssid, n.secured ? R.drawable.ic_ui_lock : R.drawable.ic_ui_wifi,
+                        () -> switcher.connect(n)).status(ctx.getString(R.string.wifi_saved), false);
+                if (first && !rows.isEmpty()) row.divider();
+                first = false;
+                rows.add(row);
+            }
+        }
         Intent wifi = SystemSettings.intent(ctx, Settings.ACTION_WIFI_SETTINGS);
         MenuPanel.Row others = new MenuPanel.Row(ctx.getString(R.string.other_networks), R.drawable.ic_ui_wifi,
                 () -> open.open(new Intent(wifi)));
-        if (vpn != null) others.divider();
+        if (!rows.isEmpty()) others.divider();
         rows.add(others);
         rows.add(new MenuPanel.Row(ctx.getString(R.string.wifi_settings), R.drawable.ic_ui_settings,
                 () -> open.open(new Intent(wifi))));

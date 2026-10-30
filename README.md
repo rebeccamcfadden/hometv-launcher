@@ -162,7 +162,7 @@ press away:
 | Part | What it does |
 |---|---|
 | **Home** | A greeting, the date, a large clock that follows the TV's 12 or 24-hour setting, today's and tomorrow's weather, and a row of your apps. Down slides the page up to Inputs (Live TV and each HDMI port, under the names the TV gives them), Shortcuts (All Apps, Launcher settings, TV Settings) and an hourly forecast. |
-| **The nav bar** | Home, Movies, TV Shows, Music and Search on the left; Wi-Fi, Inputs and Settings on the right. Wi-Fi and Inputs open dropdowns, which close again when the D-pad moves past their edge. Music is a placeholder in V1. |
+| **The nav bar** | Home, Movies, TV Shows, Music and Search on the left; Wi-Fi, Inputs and Settings on the right. Wi-Fi and Inputs open dropdowns, which close again when the D-pad moves past their edge; on Android 9 the Wi-Fi dropdown also switches between saved networks. Music is a placeholder in V1. |
 | **Movies and TV Shows** | The household's watchlists as a grid of title cards, with list chips and a Filters drawer (availability, review score, genre, length, watch state) that updates the grid as you change it. |
 | **Title preview** | Watch on the service that has it, My list, Seen, Favorite and Trailer, with tabs for the overview, episodes, where to watch, cast and crew, and more like this. |
 | **Search** | A 6×6 on-screen keyboard, or a real one, with typo-tolerant matching, suggestions and results as you type. |
@@ -595,7 +595,7 @@ The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor
 
 | What | How it works |
 |---|---|
-| **Home** | Greeting, date, clock and weather for the location in `launcher/tv.properties`, then the app row. The row starts with the installed apps from `dock_apps`; hold OK on a tile to move it, remove it from Home or open App info, and Home keeps that order. |
+| **Home** | Greeting, date, clock and weather for the city chosen in Launcher settings (default: the location in `launcher/tv.properties`), then the app row. The row starts with the installed apps from `dock_apps`; hold OK on a tile to move it, remove it from Home or open App info, and Home keeps that order. |
 | **Inputs** | The nav's Inputs dropdown and Home's Inputs row: HDMI ports under their names, CEC devices on their port, AV and Live TV (`live_tv_package`). Home's row shows the first four (Live TV first); the dropdown lists them all. Sets that list their inputs another way are handled in [`config.xml`](launcher/app/src/main/res/values/config.xml). |
 | **Movies, TV Shows, Search, Pick for me** | Built on a catalogue interface; V1 plugs in the prototype's mock catalogue, so titles, artwork, availability and prices are illustrative. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. |
 | **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`. Watch opens that service's app. |
@@ -610,8 +610,9 @@ It needs JDK 17 and Android SDK platform 34. On macOS: `brew install openjdk@17 
 and `sdkmanager "platforms;android-34" "build-tools;34.0.0"`. On Linux the install script finds
 `~/Android/Sdk` and the `java` on your PATH.
 
-The weather's location and the temperature unit come from `launcher/tv.properties`, which is gitignored: copy
-[`launcher/tv.properties.example`](launcher/tv.properties.example) (New York, °C) and edit the copy.
+The weather's default location and temperature unit come from `launcher/tv.properties`, which is gitignored: copy
+[`launcher/tv.properties.example`](launcher/tv.properties.example) (New York, °C) and edit the copy. Both can be
+changed on the TV too, in Launcher settings.
 
 </details>
 
@@ -638,6 +639,8 @@ launcher's look and layout keys are not read any more; [themes/README.md](themes
     time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
   - **Follow theme (reset on-TV choices)**, which clears the choices above. Pushing or resetting a
     `config.json` clears them too.
+  - **Weather location**: search for a city (Open-Meteo's place search) or go back to the default from
+    `tv.properties`. **Temperature unit**: the default, °C or °F. Neither is cleared by Follow theme.
   - **Choose default home** opens Android's home picker, and **TV system settings** the TV's own settings
     page.
 - **Change the default home:** Launcher settings opens Android's home picker. Choose the original launcher to

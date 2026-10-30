@@ -272,13 +272,25 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
     // ---- The top bar --------------------------------------------------------------------------------------------
 
-    /** The Wi-Fi dropdown: the network and its state, then Other networks and Wi-Fi settings. */
+    /** The Wi-Fi dropdown: the network and its state, the other saved networks, then Other networks and Wi-Fi settings. */
     @Override
     public void openNetwork(View anchor) {
         if (shell.isOpen(MENU_NETWORK)) return;
         NetworkState s = NetworkState.read(this);
+        List<SavedNetworks.Net> saved = WifiNetworks.saved(this);
+        if (s.wifi && s.ssid == null) s.ssid = SavedNetworks.nameOf(saved, s.networkId);
         shell.push(Dropdown.create(shell, MENU_NETWORK, anchor, Menus.networkHeader(this, s),
-                Menus.network(this, s, vpnApp, this::start)));
+                Menus.network(this, s, vpnApp, this::start, saved, this::connectWifi)));
+    }
+
+    /** OK on a saved network: ask Android to switch, or open Wi-Fi settings where the TV refuses (BACKLOG.md). */
+    private void connectWifi(SavedNetworks.Net net) {
+        if (WifiNetworks.connect(this, net.id)) {
+            shell.toast(getString(R.string.wifi_switching, net.ssid));
+        } else {
+            shell.toast(getString(R.string.wifi_switch_refused));
+            start(SystemSettings.intent(this, Settings.ACTION_WIFI_SETTINGS));
+        }
     }
 
     /** The Inputs dropdown, or the TV's own source panel where that is the whole menu. */

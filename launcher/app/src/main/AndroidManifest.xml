@@ -8,9 +8,13 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Home's weather from Open-Meteo (WeatherStore). Nothing else goes out: no analytics, no telemetry. -->
+    <!-- Home's weather from Open-Meteo (WeatherStore) and its place search in Launcher settings
+         (WeatherPlacePicker). Nothing else goes out: no analytics, no telemetry. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- The Wi-Fi dropdown's switch to another saved network (WifiNetworks.connect, WifiManager.enableNetwork) up to
+         Android 9. Protection level normal, granted at install; nothing is added, changed or forgotten. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <!-- Needed since Android 10 to read the Wi-Fi network name for the network pill. Never requested at
          runtime: build-and-install grants it with pm grant, so lint's Android 12 "ask for COARSE with
          FINE" rule does not apply here. -->

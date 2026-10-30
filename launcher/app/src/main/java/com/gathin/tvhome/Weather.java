@@ -235,6 +235,16 @@ final class Weather {
         return h + (hour < 12 ? " AM" : " PM");
     }
 
+    /** "12°", as the clock area and the hourly strip show a temperature. */
+    static String degrees(int t) {
+        return t + "\u00B0";
+    }
+
+    /** "12°C" or "54°F", with the unit (the forecast under the clock). */
+    static String degrees(int t, boolean fahrenheit) {
+        return t + WeatherSettings.unitSymbol(fahrenheit);
+    }
+
     private static int round(double v) {
         return (int) Math.round(v);
     }

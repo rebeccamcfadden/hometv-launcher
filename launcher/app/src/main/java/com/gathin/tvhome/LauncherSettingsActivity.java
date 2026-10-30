@@ -20,7 +20,8 @@ import java.util.List;
 /**
  * Remote-friendly settings owned by the launcher; system settings stay one row away. Kept from the old launcher
  * until the new Launcher settings page is designed (docs/rework.md), without the rows for the old Home's grid, dock
- * and wallpapers.
+ * and wallpapers. V2 Phase 4 adds the weather place and unit here as plain rows until that design lands; their logic
+ * is in WeatherPlace, WeatherSettings and WeatherPrefs so the new page can reuse it.
  */
 public final class LauncherSettingsActivity extends Activity {
     /** On-TV choices the old Home's rows saved; Follow theme still clears them. */
@@ -29,6 +30,8 @@ public final class LauncherSettingsActivity extends Activity {
     private TextView animationsChoice;
     private TextView followThemeChoice;
     private TextView openOnStartChoice;
+    private TextView weatherPlaceChoice;
+    private TextView temperatureUnitChoice;
     private boolean animations;
 
     @Override
@@ -51,6 +54,19 @@ public final class LauncherSettingsActivity extends Activity {
             openOnStartChoice.setVisibility(View.VISIBLE);
             openOnStartChoice.setOnClickListener(v -> showOpenOnStartPicker());
         }
+        weatherPlaceChoice = findViewById(R.id.weatherPlaceChoice);
+        weatherPlaceChoice.setOnClickListener(v ->
+                WeatherPlacePicker.show(this, WeatherPrefs.load(this).place != null, place -> {
+                    WeatherPrefs.setPlace(this, place);
+                    changed();
+                    refresh();
+                    if (place != null) {
+                        Toast.makeText(this, getString(R.string.weather_place_saved, place.label()),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }));
+        temperatureUnitChoice = findViewById(R.id.temperatureUnitChoice);
+        temperatureUnitChoice.setOnClickListener(v -> showUnitPicker());
         followThemeChoice = findViewById(R.id.followThemeChoice);
         followThemeChoice.setOnClickListener(v -> {
             if (!hasOnTvChoices()) return;
@@ -69,6 +85,27 @@ public final class LauncherSettingsActivity extends Activity {
                 open(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
         refresh();
         animationsChoice.requestFocus();
+    }
+
+    /** Default (tv.properties' temperature_unit), °C or °F. Home's weather is fetched again in the new unit. */
+    private void showUnitPicker() {
+        WeatherSettings s = WeatherPrefs.load(this);
+        String[] labels = {
+                getString(R.string.temperature_unit_default, WeatherSettings.unitSymbol(s.defaultFahrenheit)),
+                WeatherSettings.unitSymbol(false),
+                WeatherSettings.unitSymbol(true)};
+        int checked = s.fahrenheitChoice == null ? 0 : s.fahrenheitChoice ? 2 : 1;
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.temperature_unit_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    if (which == checked) return;
+                    WeatherPrefs.setFahrenheit(this, which == 0 ? null : which == 2);
+                    changed();
+                    refresh();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     /** Off, then every app with a TV entry point by name. Saved at once; it is read on the next boot. */
@@ -133,6 +170,12 @@ public final class LauncherSettingsActivity extends Activity {
         animationsChoice.setText(getString(R.string.animations_state,
                 getString(animations ? R.string.on : R.string.off)));
         openOnStartChoice.setText(getString(R.string.open_on_start_state, openOnStartLabel()));
+        WeatherSettings weather = WeatherPrefs.load(this);
+        weatherPlaceChoice.setText(getString(R.string.weather_place_state, weather.place != null
+                ? weather.place.label() : getString(R.string.weather_place_default_state)));
+        String unit = WeatherSettings.unitSymbol(weather.fahrenheit);
+        temperatureUnitChoice.setText(getString(R.string.temperature_unit_state, weather.fahrenheitChoice != null
+                ? unit : getString(R.string.temperature_unit_default, unit)));
         followThemeChoice.setSelected(!hasOnTvChoices());
     }
 

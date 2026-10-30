@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- V2 Phase 4, on-TV settings: the weather place and unit in Launcher settings, and the Wi-Fi dropdown's saved
+     networks. -->
+<resources>
+    <string name="weather_place_state">Weather location: %1$s</string>
+    <string name="weather_place_default_state">Default (from tv.properties)</string>
+    <string name="weather_place_title">Weather location</string>
+    <string name="weather_place_hint">City or town</string>
+    <string name="weather_place_type">Type a city or town; the matches show here.</string>
+    <string name="weather_place_searching">Searching…</string>
+    <string name="weather_place_pick">Choose a place</string>
+    <string name="weather_place_none">No places match “%1$s”</string>
+    <string name="weather_place_offline">Can\'t search: no internet</string>
+    <string name="weather_place_failed">Search failed; try again later</string>
+    <string name="weather_place_default">Use default</string>
+    <string name="weather_place_saved">Weather for %1$s</string>
+    <string name="weather_place_hint_row">Home\'s weather. The search sends only what you type to Open-Meteo.</string>
+    <string name="temperature_unit_state">Temperature unit: %1$s</string>
+    <string name="temperature_unit_title">Temperature unit</string>
+    <string name="temperature_unit_default">Default (%1$s, from tv.properties)</string>
+
+    <string name="wifi_saved">Saved</string>
+    <string name="wifi_switching">Switching to %1$s…</string>
+    <string name="wifi_switch_refused">This TV did not let the launcher switch networks</string>
+</resources>

@@ -4,9 +4,10 @@
 # never ends up in git. While tv.properties is missing the build reads this example instead.
 
 # Where the weather on Home is for, in decimal degrees (north and east are positive). Open-Meteo, no key needed.
-# The default is New York.
+# The default is New York. Launcher settings on the TV can choose another place, which then wins over these.
 latitude=40.7128
 longitude=-74.0060
 
 # C for Celsius or F for Fahrenheit. Android TV has no temperature setting, so the launcher can't ask the TV.
+# Launcher settings on the TV can override it too.
 temperature_unit=C

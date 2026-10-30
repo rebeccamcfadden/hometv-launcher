@@ -6,6 +6,8 @@ import android.os.Looper;
 import android.util.AtomicFile;
 import android.util.Log;
 
+import androidx.annotation.WorkerThread;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -20,7 +22,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 /**
- * Home's weather from Open-Meteo (no key), for the location and unit in launcher/tv.properties (BuildConfig). The
+ * Home's weather from Open-Meteo (no key), for the place and unit chosen in Launcher settings or else those in
+ * launcher/tv.properties (BuildConfig; see WeatherSettings). The
  * last good answer is kept in the app's files and shown at once; Home asks for a fresh one when it comes into view
  * and the answer is over 30 minutes old. Nothing polls in the background, and nothing waits on the network: offline
  * Home shows the cached answer, or no weather at all when there has never been one.
@@ -50,10 +53,20 @@ final class WeatherStore {
     private boolean retryAfter;
     private boolean loaded;
 
+    private final boolean fahrenheit;
+
     WeatherStore(Context ctx, Listener listener) {
         this.file = new File(ctx.getFilesDir(), FILE);
         this.listener = listener;
-        query = query(BuildConfig.WEATHER_LATITUDE, BuildConfig.WEATHER_LONGITUDE, BuildConfig.FAHRENHEIT);
+        // The place and unit chosen in Launcher settings, else tv.properties'. Home is rebuilt when they change.
+        WeatherSettings s = WeatherPrefs.load(ctx);
+        fahrenheit = s.fahrenheit;
+        query = query(s.latitude, s.longitude, s.fahrenheit);
+    }
+
+    /** Whether the temperatures are in °F. */
+    boolean fahrenheit() {
+        return fahrenheit;
     }
 
     /** The Open-Meteo request; the cache is only used for the same one, so a new location starts fresh. */
@@ -151,7 +164,9 @@ final class WeatherStore {
         }, "weather-fetch").start();
     }
 
-    private static String download(String url) {
+    /** A small JSON answer over HTTPS, or null when offline or refused. Blocks: never on the main thread. */
+    @WorkerThread
+    static String download(String url) {
         HttpURLConnection c = null;
         try {
             c = (HttpURLConnection) new URL(url).openConnection();
