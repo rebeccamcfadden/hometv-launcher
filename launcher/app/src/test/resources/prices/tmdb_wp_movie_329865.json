@@ -1,0 +1,267 @@
+{
+ "id": 329865,
+ "results": {
+  "SE": {
+   "link": "https://www.themoviedb.org/movie/329865-arrival/watch?locale=SE",
+   "rent": [
+    {
+     "provider_id": 2,
+     "provider_name": "Apple TV Store",
+     "display_priority": 5
+    },
+    {
+     "provider_id": 76,
+     "provider_name": "Viaplay",
+     "display_priority": 6
+    },
+    {
+     "provider_id": 35,
+     "provider_name": "Rakuten TV",
+     "display_priority": 12
+    },
+    {
+     "provider_id": 423,
+     "provider_name": "Blockbuster",
+     "display_priority": 13
+    },
+    {
+     "provider_id": 426,
+     "provider_name": "SF Anytime",
+     "display_priority": 14
+    },
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 36
+    }
+   ],
+   "buy": [
+    {
+     "provider_id": 2,
+     "provider_name": "Apple TV Store",
+     "display_priority": 5
+    },
+    {
+     "provider_id": 76,
+     "provider_name": "Viaplay",
+     "display_priority": 6
+    },
+    {
+     "provider_id": 35,
+     "provider_name": "Rakuten TV",
+     "display_priority": 12
+    },
+    {
+     "provider_id": 423,
+     "provider_name": "Blockbuster",
+     "display_priority": 13
+    },
+    {
+     "provider_id": 426,
+     "provider_name": "SF Anytime",
+     "display_priority": 14
+    },
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 36
+    }
+   ]
+  },
+  "US": {
+   "link": "https://www.themoviedb.org/movie/329865-arrival/watch?locale=US",
+   "flatrate": [
+    {
+     "provider_id": 2303,
+     "provider_name": "Paramount Plus Premium",
+     "display_priority": 16
+    },
+    {
+     "provider_id": 2616,
+     "provider_name": "Paramount Plus Essential",
+     "display_priority": 17
+    },
+    {
+     "provider_id": 386,
+     "provider_name": "Peacock Premium",
+     "display_priority": 18
+    },
+    {
+     "provider_id": 582,
+     "provider_name": "Paramount+ Amazon Channel",
+     "display_priority": 28
+    },
+    {
+     "provider_id": 633,
+     "provider_name": "Paramount+ Roku Premium Channel",
+     "display_priority": 64
+    },
+    {
+     "provider_id": 387,
+     "provider_name": "Peacock Premium Plus",
+     "display_priority": 214
+    }
+   ],
+   "free": [
+    {
+     "provider_id": 191,
+     "provider_name": "Kanopy",
+     "display_priority": 37
+    }
+   ],
+   "rent": [
+    {
+     "provider_id": 2784,
+     "provider_name": "JustWatch TV Store",
+     "display_priority": 8
+    },
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 10
+    },
+    {
+     "provider_id": 2,
+     "provider_name": "Apple TV Store",
+     "display_priority": 11
+    },
+    {
+     "provider_id": 3,
+     "provider_name": "Google Play Movies",
+     "display_priority": 22
+    },
+    {
+     "provider_id": 192,
+     "provider_name": "YouTube",
+     "display_priority": 23
+    },
+    {
+     "provider_id": 7,
+     "provider_name": "Fandango At Home",
+     "display_priority": 39
+    },
+    {
+     "provider_id": 331,
+     "provider_name": "FlixFling",
+     "display_priority": 96
+    },
+    {
+     "provider_id": 538,
+     "provider_name": "Plex",
+     "display_priority": 126
+    }
+   ],
+   "buy": [
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 10
+    },
+    {
+     "provider_id": 2,
+     "provider_name": "Apple TV Store",
+     "display_priority": 11
+    },
+    {
+     "provider_id": 3,
+     "provider_name": "Google Play Movies",
+     "display_priority": 22
+    },
+    {
+     "provider_id": 192,
+     "provider_name": "YouTube",
+     "display_priority": 23
+    },
+    {
+     "provider_id": 7,
+     "provider_name": "Fandango At Home",
+     "display_priority": 39
+    }
+   ]
+  },
+  "GB": {
+   "link": "https://www.themoviedb.org/movie/329865-arrival/watch?locale=GB",
+   "flatrate": [
+    {
+     "provider_id": 8,
+     "provider_name": "Netflix",
+     "display_priority": 0
+    },
+    {
+     "provider_id": 29,
+     "provider_name": "Sky Go",
+     "display_priority": 15
+    },
+    {
+     "provider_id": 591,
+     "provider_name": "Now TV Cinema",
+     "display_priority": 58
+    },
+    {
+     "provider_id": 1796,
+     "provider_name": "Netflix Standard with Ads",
+     "display_priority": 85
+    }
+   ],
+   "rent": [
+    {
+     "provider_id": 2,
+     "provider_name": "Apple TV Store",
+     "display_priority": 7
+    },
+    {
+     "provider_id": 35,
+     "provider_name": "Rakuten TV",
+     "display_priority": 8
+    },
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 10
+    },
+    {
+     "provider_id": 130,
+     "provider_name": "Sky Store",
+     "display_priority": 19
+    },
+    {
+     "provider_id": 224,
+     "provider_name": "BFI Player",
+     "display_priority": 22
+    },
+    {
+     "provider_id": 192,
+     "provider_name": "YouTube",
+     "display_priority": 24
+    }
+   ],
+   "buy": [
+    {
+     "provider_id": 2,
+     "provider_name": "Apple TV Store",
+     "display_priority": 7
+    },
+    {
+     "provider_id": 35,
+     "provider_name": "Rakuten TV",
+     "display_priority": 8
+    },
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 10
+    },
+    {
+     "provider_id": 130,
+     "provider_name": "Sky Store",
+     "display_priority": 19
+    },
+    {
+     "provider_id": 192,
+     "provider_name": "YouTube",
+     "display_priority": 24
+    }
+   ]
+  }
+ }
+}

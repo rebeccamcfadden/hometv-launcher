@@ -14,7 +14,8 @@ import java.util.List;
 /**
  * The rent/buy dialog (design_preview/src/screens/confirm.ts and preview.ts, purchase; screens.css .dialog): paid
  * titles ask before leaving the launcher. "Arrival on Apple TV", the quality and the app it opens, a note that
- * payment finishes in that app, and Rent and Buy buttons with their prices, then Cancel. A dialog over whatever
+ * payment finishes in that app, and Rent and Buy buttons with their prices (none for a store no source priced), then
+ * Cancel. A dialog over whatever
  * shows (the title preview), behind its own scrim. First focus is the first button; Rent or Buy closes the dialog
  * and opens the store's app (Router.watch with that offer); Cancel and Back close it.
  */
@@ -44,7 +45,9 @@ final class RentDialog {
         title.setText(ctx.getString(R.string.preview_dialog_title, t.name, service));
         box.addView(title);
         TextView body = Ui.text(ctx, Ui.T_BODY, Ui.TEXT_2, Ui.REGULAR);
-        body.setText(ctx.getString(R.string.preview_dialog_body, s.quality, service));
+        String app = router.data().table.appName(s.service);
+        body.setText(s.quality == null || s.quality.isEmpty() ? ctx.getString(R.string.prices_dialog_body, app)
+                : ctx.getString(R.string.preview_dialog_body, s.quality, app));
         box.addView(body, below(16));
         TextView note = Ui.text(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
         note.setText(R.string.preview_dialog_note);
@@ -53,14 +56,14 @@ final class RentDialog {
 
         List<View> buttons = new ArrayList<>();
         if (s.rent != null) {
-            buttons.add(Kit.button(ctx, ctx.getString(R.string.preview_rent, Offers.price(s.rent.price)), 0, Kit.PRIMARY,
+            buttons.add(Kit.button(ctx, label(ctx, s.rent), 0, Kit.PRIMARY,
                     false, GROUP, "rent", true, v -> {
                         shell.pop();
                         router.watch(t, s.rent);
                     }));
         }
         if (s.buy != null) {
-            buttons.add(Kit.button(ctx, ctx.getString(R.string.preview_buy, Offers.price(s.buy.price)), 0,
+            buttons.add(Kit.button(ctx, label(ctx, s.buy), 0,
                     buttons.isEmpty() ? Kit.PRIMARY : Kit.NORMAL, false, GROUP, "buy", buttons.isEmpty(), v -> {
                         shell.pop();
                         router.watch(t, s.buy);
@@ -99,6 +102,14 @@ final class RentDialog {
                 }
             }
         };
+    }
+
+    /** "Rent · 39 kr", "Buy · from 99 kr", or just "Rent" for a store whose price isn't known (its app shows it). */
+    private static String label(Context ctx, Offer o) {
+        String price = Offers.price(o);
+        boolean rent = o.type == OfferType.RENT;
+        if (price == null) return ctx.getString(rent ? R.string.prices_rent : R.string.prices_buy);
+        return ctx.getString(rent ? R.string.preview_rent : R.string.preview_buy, price);
     }
 
     private static LinearLayout.LayoutParams below(float top) {

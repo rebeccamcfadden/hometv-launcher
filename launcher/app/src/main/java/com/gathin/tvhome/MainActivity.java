@@ -233,7 +233,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         shell.push(PickSetupPage.create(this, kind));
     }
 
-    /** Opens the offer's service app on its home screen; opening the title itself is in BACKLOG.md (deep links). */
+    /**
+     * Opens the offer's service app: on the title itself when the catalogue has a link for it (V2 Phase 2, from
+     * Wikidata) and the installed app takes it, else on the app's home screen.
+     */
     @Override
     public void watch(Title t, Offer o) {
         Offer offer = o != null ? o : data.bestOffer(t);
@@ -246,7 +249,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             shell.toast(getString(R.string.router_not_installed, data.table.name(offer.service)));
             return;
         }
-        start(i);
+        Intent link = data.services.linkIntent(offer.service, data.catalog.link(t, offer.service));
+        start(link != null ? link : i);
     }
 
     /**
@@ -490,6 +494,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStart() {
         super.onStart();
         started = true;
+        // V2 Phase 2: price lookups only while Home shows.
+        if (data != null) data.catalog.setVisible(true);
         if (!backdropLoaded) loadBackdrop();
     }
 
@@ -518,6 +524,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStop() {
         super.onStop();
         started = false;
+        if (data != null) data.catalog.setVisible(false);
     }
 
     /**

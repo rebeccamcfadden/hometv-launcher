@@ -20,6 +20,30 @@ final class Offers {
         return String.format(Locale.US, "$%.2f", n);
     }
 
+    /** Whether the offer has a price: every mock rent or buy offer, and a real one a price source priced. */
+    static boolean isPriced(Offer o) {
+        return o.money != null || (!o.real && o.price > 0);
+    }
+
+    /** The price as it reads: "$3.99" (mock), "39 kr", "from 49 kr"; null when it has none. */
+    static String price(Offer o) {
+        if (o.money != null) return o.from ? o.money.formatFrom() : o.money.format();
+        return isPriced(o) ? price(o.price) : null;
+    }
+
+    /** The cheapest amount alone, without "from": "39 kr", "$3.99"; null when it has none. */
+    static String amount(Offer o) {
+        if (o.money != null) return o.money.format();
+        return isPriced(o) ? price(o.price) : null;
+    }
+
+    /** "Rent 39 kr", "Buy from 99 kr", or just "Rent" for a store whose price isn't known. */
+    static String paid(Offer o) {
+        String verb = o.type == OfferType.RENT ? "Rent" : "Buy";
+        String p = price(o);
+        return p == null ? verb : verb + " " + p;
+    }
+
     /** FREE, or SUB on a service the household has. */
     static boolean isIncludedOffer(Offer o, Set<ServiceId> subscribed) {
         return o != null && (o.type == OfferType.FREE || (o.type == OfferType.SUB && subscribed.contains(o.service)));
@@ -40,11 +64,15 @@ final class Offers {
         return rent != null ? rent : cheapest(t, OfferType.BUY);
     }
 
-    /** The cheapest offer of that type (the first of equal prices), or null. */
+    /**
+     * The cheapest offer of that type (the first of equal prices), or null. An offer with a price beats one without
+     * (a store no source priced), which is only picked when no offer of the type has a price.
+     */
     static Offer cheapest(Title t, OfferType type) {
         Offer best = null;
         for (Offer o : t.offers) {
-            if (o.type == type && (best == null || o.price < best.price)) best = o;
+            if (o.type != type) continue;
+            if (best == null || (isPriced(o) && (!isPriced(best) || o.price < best.price))) best = o;
         }
         return best;
     }
@@ -68,8 +96,9 @@ final class Offers {
     }
 
     /**
-     * The library card's second provider line: "Included", "Free", "Rent $3.99" or "Buy $9.99"; "" for none and
-     * "Subscription" for SUB on a service the household doesn't have.
+     * The library card's second provider line: "Included", "Free", "Rent $3.99" or "Buy $9.99" ("Rent 39 kr", "Rent
+     * from 49 kr", or "Rent" without a known price, for a real offer); "" for none and "Subscription" for SUB on a
+     * service the household doesn't have.
      */
     static String availability(Offer o, Set<ServiceId> subscribed) {
         if (o == null) return "";
@@ -78,33 +107,34 @@ final class Offers {
                 return "Free";
             case SUB:
                 return subscribed.contains(o.service) ? "Included" : "Subscription";
-            case RENT:
-                return "Rent " + price(o.price);
             default:
-                return "Buy " + price(o.price);
+                return paid(o);
         }
     }
 
     /**
      * One entry per service in the order the offers first name it, with its rent and buy merged (a later offer of the
      * same type replaces an earlier one, as in the prototype); included or free services first, otherwise in order.
-     * The quality is the first offer's, "HD" when it has none.
+     * The quality is the first offer's, "HD" when it has none; for real offers the first one any of the service's
+     * offers has, "" when none has (TMDB gives no quality, only a price source does).
      */
     static List<ServiceOffers> byService(Title t, Set<ServiceId> subscribed) {
         Map<ServiceId, Builder> map = new LinkedHashMap<>();
         for (Offer o : t.offers) {
             Builder e = map.get(o.service);
             if (e == null) {
-                e = new Builder(o.service, o.quality != null ? o.quality : "HD");
+                e = new Builder(o.service, o.quality != null || o.real ? o.quality : "HD");
                 map.put(o.service, e);
             }
+            if (e.quality == null) e.quality = o.quality;
             if (o.type == OfferType.SUB && subscribed.contains(o.service)) e.included = true;
             if (o.type == OfferType.FREE) e.free = true;
             if (o.type == OfferType.RENT) e.rent = o;
             if (o.type == OfferType.BUY) e.buy = o;
         }
         List<ServiceOffers> out = new ArrayList<>(map.size());
-        for (Builder e : map.values()) out.add(new ServiceOffers(e.service, e.included, e.free, e.rent, e.buy, e.quality));
+        for (Builder e : map.values()) out.add(new ServiceOffers(e.service, e.included, e.free, e.rent, e.buy,
+                e.quality != null ? e.quality : ""));
         // List.sort is stable, so services of equal rank keep the offers' order, as Array.prototype.sort does.
         out.sort((a, b) -> Boolean.compare(b.watchable(), a.watchable()));
         return Collections.unmodifiableList(out);
@@ -112,7 +142,7 @@ final class Offers {
 
     private static final class Builder {
         final ServiceId service;
-        final String quality;
+        String quality;
         boolean included, free;
         Offer rent, buy;
 

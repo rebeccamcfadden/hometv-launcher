@@ -94,12 +94,13 @@ public class MockIdsTest {
     }
 
     @Test
-    public void overlayKeepsTheMockOffersListsAndNextEpisode() {
+    public void overlayKeepsTheMockListsAndNextEpisodeButNotItsOffers() {
         MockOverlay overlay = new MockOverlay(mock);
         Title stub = new Title.Draft("tv:95396", Kind.SHOW, "Severance").build();
         Title on = overlay.apply(stub);
         Title m = mock.get("severance");
-        assertEquals(m.offers.size(), on.offers.size());
+        // Offers are real since V2 Phase 2: TMDB's availability, not the mock's.
+        assertTrue(on.offers.isEmpty());
         assertEquals(m.lists, on.lists);
         assertEquals(1, on.nextSeason);
         assertEquals(3, on.nextEpisode);

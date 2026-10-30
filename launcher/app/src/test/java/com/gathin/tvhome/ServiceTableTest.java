@@ -46,7 +46,8 @@ public class ServiceTableTest {
         assertEquals("Disney+", table.name(ServiceId.DISNEY));
         Set<ServiceId> stores = EnumSet.noneOf(ServiceId.class);
         for (ServiceId s : ServiceId.values()) if (table.isStore(s)) stores.add(s);
-        assertEquals(EnumSet.of(ServiceId.YOUTUBE, ServiceId.APPLETV, ServiceId.GOOGLETV), stores);
+        assertEquals(EnumSet.of(ServiceId.YOUTUBE, ServiceId.APPLETV, ServiceId.GOOGLETV, ServiceId.AMAZONVIDEO,
+                ServiceId.SFANYTIME, ServiceId.RAKUTEN), stores);
     }
 
     @Test
@@ -70,10 +71,32 @@ public class ServiceTableTest {
     }
 
     @Test
-    public void everyAppInstalledGivesThePrototypesSet() {
+    public void everyAppInstalledGivesThePrototypesSetAndSwedensServices() {
         Set<String> all = new HashSet<>();
         for (ServiceId s : ServiceId.values()) all.addAll(table.packages(s));
-        assertEquals(OffersTest.PROTOTYPE, table.subscribed(all, AUTO));
+        Set<ServiceId> want = EnumSet.copyOf(OffersTest.PROTOTYPE);
+        // Every subscription or free service, Viaplay and Tele2 Play too though they also sell; no store alone.
+        want.addAll(EnumSet.range(ServiceId.VIAPLAY, ServiceId.CINEASTERNA));
+        want.removeAll(EnumSet.of(ServiceId.SFANYTIME, ServiceId.RAKUTEN));
+        assertEquals(want, table.subscribed(all, AUTO));
+        assertFalse(table.subscribed(all, AUTO).contains(ServiceId.SFANYTIME));
+    }
+
+    @Test
+    public void brandedNamesForTheRealCatalogue() {
+        ServiceTable branded = ServiceTable.branded();
+        assertEquals("HBO Max", branded.name(ServiceId.MAX));
+        assertEquals("Apple TV", branded.name(ServiceId.APPLETVPLUS));
+        assertEquals("Apple TV Store", branded.name(ServiceId.APPLETV));
+        assertEquals("SF Anytime", branded.name(ServiceId.SFANYTIME));
+        assertEquals("Max", table.name(ServiceId.MAX));
+        assertEquals("SVT Play", table.name(ServiceId.SVTPLAY));
+        assertEquals(Arrays.asList("com.viaplay.android"), branded.packages(ServiceId.VIAPLAY));
+        // A store opens in its subscription's app.
+        assertEquals("Apple TV", branded.appName(ServiceId.APPLETV));
+        assertEquals("Prime Video", branded.appName(ServiceId.AMAZONVIDEO));
+        assertEquals("SF Anytime", branded.appName(ServiceId.SFANYTIME));
+        assertEquals("Apple TV", table.appName(ServiceId.APPLETV));
     }
 
     @Test

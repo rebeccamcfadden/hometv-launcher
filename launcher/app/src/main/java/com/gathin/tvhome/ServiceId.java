@@ -7,7 +7,10 @@ import java.util.Locale;
  * prototype's lowercase id, the one config.json's {@code subscribed_services} uses.
  */
 enum ServiceId {
-    NETFLIX, PRIME, DISNEY, MAX, APPLETVPLUS, HULU, YOUTUBE, APPLETV, GOOGLETV;
+    NETFLIX, PRIME, DISNEY, MAX, APPLETVPLUS, HULU, YOUTUBE, APPLETV, GOOGLETV,
+    // V2 Phase 2: Sweden's other services and stores, as WatchProviders maps TMDB's providers onto them.
+    AMAZONVIDEO, VIAPLAY, SKYSHOWTIME, SVTPLAY, TV4PLAY, SFANYTIME, RAKUTEN, TELE2PLAY, TELIAPLAY, HAYU, MUBI,
+    CRUNCHYROLL, BRITBOX, CURIOSITYSTREAM, PLUTOTV, PLEX, CINEASTERNA;
 
     final String id = name().toLowerCase(Locale.ROOT);
 

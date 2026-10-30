@@ -19,8 +19,8 @@ final class PreviewRules {
 
     /**
      * The Watch button: "Watch on Prime Video" for an included movie, "Watch S1 E3 on Apple TV+" for an included
-     * show with a next episode, "Rent on Apple TV · $3.99" or "Buy on … · $9.99" for a paid offer, and "Not on your
-     * services" with none. {@code o} is the title's best offer ({@link Offers#bestOffer}).
+     * show with a next episode, "Rent on Apple TV · $3.99" or "Buy on … · $9.99" for a paid offer ("Rent on SF Anytime"
+     * when its price isn't known), and "Not on your services" with none. {@code o} is the title's best offer ({@link Offers#bestOffer}).
      */
     static String watchLabel(Title t, Offer o, Set<ServiceId> subscribed, ServiceTable table) {
         if (o == null) return "Not on your services";
@@ -30,7 +30,8 @@ final class PreviewRules {
             if (!t.isMovie() && t.hasNext()) return "Watch " + next(t) + " on " + name;
             return "Watch on " + name;
         }
-        return paidVerb(o) + " on " + name + " · " + Offers.price(o.price);
+        String price = Offers.price(o);
+        return paidVerb(o) + " on " + name + (price == null ? "" : " · " + price);
     }
 
     /** "S1 E3", the show's next episode; "" when there is none. */
@@ -75,8 +76,9 @@ final class PreviewRules {
         String name = table.name(o.service);
         if (!Offers.isIncludedOffer(o, subscribed)) return new Availability(null, paidVerb(o) + " on " + name, null);
         Offer rent = Offers.cheapest(t, OfferType.RENT);
+        String from = rent == null ? null : Offers.amount(rent);
         return new Availability(o.type == OfferType.FREE ? "Free" : "Included", "on " + name,
-                rent == null ? null : "· Rent from " + Offers.price(rent.price) + " elsewhere");
+                from == null ? null : "· Rent from " + from + " elsewhere");
     }
 
     /** The first three of the cast, "Amy Adams, Jeremy Renner, Forest Whitaker"; null with no cast. */
@@ -121,8 +123,8 @@ final class PreviewRules {
         if (s.included) return "With your subscription";
         if (s.free) return "Free with ads";
         List<String> parts = new ArrayList<>(2);
-        if (s.rent != null) parts.add("Rent " + Offers.price(s.rent.price));
-        if (s.buy != null) parts.add("Buy " + Offers.price(s.buy.price));
+        if (s.rent != null) parts.add(Offers.paid(s.rent));
+        if (s.buy != null) parts.add(Offers.paid(s.buy));
         return parts.isEmpty() ? "Subscription" : String.join(" · ", parts);
     }
 

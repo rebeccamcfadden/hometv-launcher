@@ -1,0 +1,108 @@
+{
+ "id": 1396,
+ "results": {
+  "SE": {
+   "link": "https://www.themoviedb.org/tv/1396-breaking-bad/watch?locale=SE",
+   "flatrate": [
+    {
+     "provider_id": 8,
+     "provider_name": "Netflix",
+     "display_priority": 0
+    }
+   ],
+   "rent": [
+    {
+     "provider_id": 426,
+     "provider_name": "SF Anytime",
+     "display_priority": 14
+    }
+   ],
+   "buy": [
+    {
+     "provider_id": 423,
+     "provider_name": "Blockbuster",
+     "display_priority": 13
+    },
+    {
+     "provider_id": 426,
+     "provider_name": "SF Anytime",
+     "display_priority": 14
+    },
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 36
+    }
+   ]
+  },
+  "US": {
+   "link": "https://www.themoviedb.org/tv/1396-breaking-bad/watch?locale=US",
+   "flatrate": [
+    {
+     "provider_id": 8,
+     "provider_name": "Netflix",
+     "display_priority": 1
+    },
+    {
+     "provider_id": 1796,
+     "provider_name": "Netflix Standard with Ads",
+     "display_priority": 152
+    }
+   ],
+   "buy": [
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 10
+    },
+    {
+     "provider_id": 2,
+     "provider_name": "Apple TV Store",
+     "display_priority": 11
+    },
+    {
+     "provider_id": 3,
+     "provider_name": "Google Play Movies",
+     "display_priority": 22
+    },
+    {
+     "provider_id": 7,
+     "provider_name": "Fandango At Home",
+     "display_priority": 39
+    }
+   ]
+  },
+  "GB": {
+   "link": "https://www.themoviedb.org/tv/1396-breaking-bad/watch?locale=GB",
+   "flatrate": [
+    {
+     "provider_id": 8,
+     "provider_name": "Netflix",
+     "display_priority": 0
+    },
+    {
+     "provider_id": 1796,
+     "provider_name": "Netflix Standard with Ads",
+     "display_priority": 85
+    }
+   ],
+   "buy": [
+    {
+     "provider_id": 2,
+     "provider_name": "Apple TV Store",
+     "display_priority": 7
+    },
+    {
+     "provider_id": 10,
+     "provider_name": "Amazon Video",
+     "display_priority": 10
+    },
+    {
+     "provider_id": 130,
+     "provider_name": "Sky Store",
+     "display_priority": 19
+    }
+   ]
+  }
+ }
+}

@@ -16,8 +16,8 @@ take on new dependencies. Analytics and telemetry are still out, and Home must k
 | ![Title preview: Watch, My list, Seen, Favorite and Trailer, with tabs below](docs/rework/emulator-preview.jpg) | ![Search on the TV: the 6×6 keyboard, suggestions and results as you type](docs/rework/tv-search.jpg) |
 | *Title preview: Watch, My list, Seen, Favorite, Trailer and tabs* | *Search: fuzzy matching, results as you type* |
 
-V1 on the TCL BeyondTV (Android TV 9), except the title preview, which is from the Android TV 9 emulator. The
-catalogue, availability and prices are still mock data (see [BACKLOG.md](BACKLOG.md)); V2 makes them real.
+V1 on the TCL BeyondTV (Android TV 9), except the title preview, which is from the Android TV 9 emulator. In V1 the
+catalogue, availability and prices were mock data; V2 makes them real (see [BACKLOG.md](BACKLOG.md)).
 
 ## Status
 
@@ -41,7 +41,7 @@ catalogue, availability and prices are still mock data (see [BACKLOG.md](BACKLOG
 |---|---|---|
 | 0 · V1 wrap-up | Real-TV results, docs, V1 follow-ups found in testing | In progress |
 | 1 · Real catalogue | TMDB for titles, artwork, cast, episodes, More like this, trailers and search, cached on the TV | In progress |
-| 2 · Real availability | TMDB watch providers for SE, links that open the title, the household's services, real rent and buy prices | Researching prices |
+| 2 · Real availability | TMDB watch providers for SE, links that open the title, the household's services, real rent and buy prices | In review |
 | 3 · Accounts | TMDB sign-in by QR, My list and Seen synced, Household and Friends from TMDB lists | Planned |
 | 4 · On-TV settings | Weather city and unit, the new Launcher settings page, switching Wi-Fi | In progress |
 
@@ -169,9 +169,9 @@ press away:
 | **Pick for me** | Choose lists, movies or shows and a few filters, and it finds four picks for tonight, with Reroll. |
 | **All Apps** | Every installed app. Hold OK to put one on Home or take it off; on Home, hold OK on a tile to move it, remove it or open App info. |
 
-The clock, the apps, the inputs and the weather (from Open-Meteo, kept for when the TV is offline) are real. The
-catalogue, which service has a title, the prices and the Household and Friends lists are mock data for now; what is
-mocked, and what will replace it, is in [BACKLOG.md](BACKLOG.md). The pictures at the top of this page come from the
+The clock, the apps, the inputs and the weather (from Open-Meteo, kept for when the TV is offline) are real, and with
+a TMDB token so are the catalogue, which service has a title and some prices. The Household and Friends lists are
+mock data for now; what is mocked, and what will replace it, is in [BACKLOG.md](BACKLOG.md). The pictures at the top of this page come from the
 web prototype, until screenshots from a real TV replace them.
 
 And a TV that stops working against you: no sponsored rows, no "Discover" nags, no analytics
@@ -597,8 +597,8 @@ The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor
 |---|---|
 | **Home** | Greeting, date, clock and weather for the city chosen in Launcher settings (default: the location in `launcher/tv.properties`), then the app row. The row starts with the installed apps from `dock_apps`; hold OK on a tile to move it, remove it from Home or open App info, and Home keeps that order. |
 | **Inputs** | The nav's Inputs dropdown and Home's Inputs row: HDMI ports under their names, CEC devices on their port, AV and Live TV (`live_tv_package`). Home's row shows the first four (Live TV first); the dropdown lists them all. Sets that list their inputs another way are handled in [`config.xml`](launcher/app/src/main/res/values/config.xml). |
-| **Movies, TV Shows, Search, Pick for me** | Titles, artwork, cast, episodes, similar titles and search come from [TMDB](https://www.themoviedb.org) when the build has a TMDB token, and are cached on the TV so what was seen once still shows offline; without a token the launcher uses the prototype's mock catalogue. Availability and prices are still illustrative. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. |
-| **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`. Watch opens that service's app. |
+| **Movies, TV Shows, Search, Pick for me** | Titles, artwork, cast, episodes, similar titles and search come from [TMDB](https://www.themoviedb.org) when the build has a TMDB token, and are cached on the TV so what was seen once still shows offline; without a token the launcher uses the prototype's mock catalogue. Where to watch is real for Sweden: which services stream, rent or sell a title, from JustWatch through TMDB, with rent and buy prices in kronor from Watchmode and Movie of the Night (optional keys in `tv.properties`, free plans only, kept a week) and Apple's iTunes; a store with no known price still shows, without one. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. |
+| **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`, Sweden's services included (Viaplay, SkyShowtime, SVT Play, TV4 Play and others). Watch opens the title itself in that service's app where Wikidata has its id (Netflix, Disney+, Apple TV, HBO Max, Prime Video, SVT Play), else the app. |
 | **Settings** | The nav's Settings icon opens the TV's settings; Home's Shortcuts row opens the launcher's own (below). |
 | **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone (below). |
 | **Left for V2** | Themes and wallpapers, the clock screensaver, module cards and add-ons, Watch Next, festivals and the sky: see [BACKLOG.md](BACKLOG.md#left-for-v2). |

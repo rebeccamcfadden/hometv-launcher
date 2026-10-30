@@ -1,0 +1,10 @@
+{
+ "resultCount": 5,
+ "results": [
+  {"wrapperType": "track", "kind": "feature-movie", "trackId": 101, "trackName": "The Arrival", "releaseDate": "1996-05-31T07:00:00Z", "country": "SWE", "currency": "SEK", "trackRentalPrice": 29.0, "trackHdRentalPrice": 29.0, "trackPrice": 49.0, "trackHdPrice": 49.0},
+  {"wrapperType": "track", "kind": "podcast", "trackId": 102, "trackName": "Arrival", "releaseDate": "2016-11-01T07:00:00Z", "country": "SWE", "currency": "SEK", "trackPrice": 0.0},
+  {"wrapperType": "track", "kind": "feature-movie", "trackId": 103, "trackName": "Arrival (2016)", "releaseDate": "2017-01-15T08:00:00Z", "country": "SWE", "currency": "SEK", "trackRentalPrice": 45.0, "trackHdRentalPrice": 45.0, "trackPrice": 99.0, "trackHdPrice": 99.0},
+  {"wrapperType": "track", "kind": "feature-movie", "trackId": 1174618339, "trackName": "Arrival", "releaseDate": "2016-12-02T08:00:00Z", "country": "SWE", "currency": "SEK", "trackRentalPrice": 39.0, "trackHdRentalPrice": 39.0, "trackPrice": 79.0, "trackHdPrice": 79.0},
+  {"wrapperType": "track", "kind": "feature-movie", "trackId": 104, "trackName": "Arrival Day", "releaseDate": "2016-03-01T08:00:00Z", "country": "SWE", "currency": "SEK", "trackRentalPrice": 19.0, "trackPrice": 39.0}
+ ]
+}

@@ -214,8 +214,11 @@
     <bool name="reduced_motion">false</bool>
 
     <!-- The streaming services the household pays for, so their titles read "Included". Lowercase ids: netflix,
-         prime, disney, max, appletvplus, hulu, youtube, appletv, googletv. Empty (the default) works them out
-         from the installed apps: every subscription service whose TV app is installed, and YouTube. An id the
+         prime, disney, max (HBO Max), appletvplus (Apple TV), hulu, youtube, appletv (the Apple TV Store),
+         googletv, amazonvideo, viaplay, skyshowtime, svtplay, tv4play, sfanytime, rakuten, tele2play, teliaplay,
+         hayu, mubi, crunchyroll, britbox, curiositystream, plutotv, plex, cineasterna. Empty (the default) works
+         them out from the installed apps: every subscription or free service whose TV app is installed, and
+         YouTube; a store alone (the Apple TV Store, Amazon Video, SF Anytime, Rakuten TV) never counts. An id the
          launcher doesn't know is ignored, so ["none"] means no services. Can also be set with
          "subscribed_services": ["netflix", "prime"] in a pushed config.json. -->
     <string-array name="subscribed_services" translatable="false">

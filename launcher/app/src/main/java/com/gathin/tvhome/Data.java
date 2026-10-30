@@ -20,7 +20,10 @@ final class Data {
         this.services = services;
         this.household = household;
         this.table = table;
-        wantHousehold = () -> catalog.want(household.titleIds());
+        wantHousehold = () -> {
+            catalog.want(household.titleIds());
+            catalog.keepPriced(household.myListIds());
+        };
         household.addListener(wantHousehold);
         wantHousehold.onHouseholdChanged();
     }
@@ -28,7 +31,8 @@ final class Data {
     static Data create(Context ctx, Config cfg) {
         String token = BuildConfig.TMDB_TOKEN;
         Catalog catalog = token.isEmpty() ? new MockCatalog() : new TmdbCatalog(ctx, token);
-        ServiceTable table = new ServiceTable();
+        // The real catalogue names services as they are branded now; the mock one keeps the prototype's names.
+        ServiceTable table = token.isEmpty() ? new ServiceTable() : ServiceTable.branded();
         return new Data(catalog, Services.from(ctx, cfg, table), new Household(ctx, catalog), table);
     }
 
@@ -37,9 +41,29 @@ final class Data {
         return Offers.bestOffer(t, services.subscribed());
     }
 
-    /** "Prime Video · Included", "Apple TV · Rent $3.99" or "Not available", for this TV's services. */
+    /** "Prime Video · Included", "Apple TV · Rent $3.99" ("Apple TV Store · Rent 39 kr") or "Not available". */
     String offerLabel(Offer o) {
         return Offers.offerLabel(o, services.subscribed(), table);
+    }
+
+    /**
+     * A card's offer line: {@link #offerLabel} of the best offer, or "" for a title whose details (and so its
+     * availability) haven't arrived, rather than "Not available".
+     */
+    String offerLine(Title t) {
+        Offer o = shownOffer(t);
+        return o == null && !t.detailed ? "" : offerLabel(o);
+    }
+
+    /**
+     * The offer a card names: the best one, else a subscription the household doesn't have, so a title on a service
+     * that isn't set up reads "Apple TV · Subscription" rather than "Not available".
+     */
+    Offer shownOffer(Title t) {
+        Offer o = bestOffer(t);
+        if (o != null) return o;
+        for (Offer s : t.offers) if (s.type == OfferType.SUB) return s;
+        return null;
     }
 
     boolean isIncluded(Offer o) {

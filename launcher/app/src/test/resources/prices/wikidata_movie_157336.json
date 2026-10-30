@@ -1,0 +1,67 @@
+{
+ "head": {
+  "vars": [
+   "item",
+   "P1874",
+   "P7595",
+   "P13902",
+   "P9586",
+   "P8298",
+   "P8055",
+   "P14440",
+   "P14462",
+   "P6817",
+   "P6398"
+  ]
+ },
+ "results": {
+  "bindings": [
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q13417189"
+    },
+    "P1874": {
+     "type": "literal",
+     "value": "70305903"
+    },
+    "P7595": {
+     "type": "literal",
+     "value": ""
+    },
+    "P13902": {
+     "type": "literal",
+     "value": ""
+    },
+    "P9586": {
+     "type": "literal",
+     "value": "umc.cmc.1vrwat5k1ucm5k42q97ioqyq3"
+    },
+    "P8298": {
+     "type": "literal",
+     "value": ""
+    },
+    "P8055": {
+     "type": "literal",
+     "value": "B00TU9UFTS"
+    },
+    "P14440": {
+     "type": "literal",
+     "value": ""
+    },
+    "P14462": {
+     "type": "literal",
+     "value": ""
+    },
+    "P6817": {
+     "type": "literal",
+     "value": ""
+    },
+    "P6398": {
+     "type": "literal",
+     "value": "960891136|965491522|968877587"
+    }
+   }
+  ]
+ }
+}

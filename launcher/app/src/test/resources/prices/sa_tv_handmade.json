@@ -1,0 +1,18 @@
+{
+ "itemType": "show", "showType": "series", "id": "1234", "imdbId": "tt7660850", "tmdbId": "tv/76331",
+ "title": "Succession", "firstAirYear": 2018, "lastAirYear": 2023,
+ "streamingOptions": {
+  "se": [
+   {"service": {"id": "apple", "name": "Apple TV", "homePage": "https://tv.apple.com/se", "themeColorCode": "#000000", "imageSet": {}}, "type": "buy", "link": "https://tv.apple.com/se/show/succession/0", "quality": "hd", "audios": [], "subtitles": [], "expiresSoon": false, "availableSince": 1700000000}
+  ]
+ },
+ "seasons": [
+  {"itemType": "season", "title": "Season 1", "firstAirYear": 2018, "lastAirYear": 2018, "streamingOptions": {"se": [
+   {"service": {"id": "apple", "name": "Apple TV", "homePage": "https://tv.apple.com/se", "themeColorCode": "#000000", "imageSet": {}}, "type": "buy", "link": "https://tv.apple.com/se/season/0", "quality": "hd", "audios": [], "subtitles": [], "price": {"amount": "199.00", "currency": "SEK", "formatted": "199.00 SEK"}, "expiresSoon": false, "availableSince": 1700000000},
+   {"service": {"id": "prime", "name": "Prime Video", "homePage": "https://www.primevideo.com", "themeColorCode": "#00A8E1", "imageSet": {}}, "type": "buy", "link": "https://www.primevideo.com/detail/1", "quality": "sd", "audios": [], "subtitles": [], "price": {"amount": "149.00", "currency": "SEK", "formatted": "149.00 SEK"}, "expiresSoon": false, "availableSince": 1700000000}
+  ]}},
+  {"itemType": "season", "title": "Season 2", "firstAirYear": 2019, "lastAirYear": 2019, "streamingOptions": {"se": [
+   {"service": {"id": "apple", "name": "Apple TV", "homePage": "https://tv.apple.com/se", "themeColorCode": "#000000", "imageSet": {}}, "type": "buy", "link": "https://tv.apple.com/se/season/1", "quality": "hd", "audios": [], "subtitles": [], "price": {"amount": "249.00", "currency": "SEK", "formatted": "249.00 SEK"}, "expiresSoon": false, "availableSince": 1700000000}
+  ]}}
+ ]
+}

@@ -1,0 +1,155 @@
+{
+ "itemType": "show",
+ "showType": "movie",
+ "id": "86",
+ "imdbId": "tt0816692",
+ "tmdbId": "movie/157336",
+ "title": "Interstellar",
+ "releaseYear": 2014,
+ "streamingOptions": {
+  "se": [
+   {
+    "service": {
+     "id": "prime",
+     "name": "Prime Video",
+     "homePage": "https://www.primevideo.com/",
+     "themeColorCode": "#00A8E1",
+     "imageSet": {}
+    },
+    "type": "addon",
+    "addon": {
+     "id": "wbdmaxse",
+     "name": "HBO Max",
+     "homePage": "https://www.primevideo.com/storefront/subscription/wbdmaxse",
+     "themeColorCode": "#000000",
+     "imageSet": {}
+    },
+    "link": "https://www.primevideo.com/detail/0SK4MKYI5Q3IBR39MM86QNKVLF?ref_=atv_dp",
+    "quality": "uhd",
+    "audios": [],
+    "subtitles": [],
+    "expiresSoon": false,
+    "availableSince": 1790403339
+   },
+   {
+    "service": {
+     "id": "apple",
+     "name": "Apple TV",
+     "homePage": "https://tv.apple.com/se",
+     "themeColorCode": "#000000",
+     "imageSet": {}
+    },
+    "type": "buy",
+    "link": "https://tv.apple.com/se/movie/interstellar/umc.cmc.1vrwat5k1ucm5k42q97ioqyq3?playableId=tvs.sbd.9001%3A965491522",
+    "quality": "hd",
+    "audios": [],
+    "subtitles": [],
+    "price": {
+     "amount": "99",
+     "currency": "SEK",
+     "formatted": "99 SEK"
+    },
+    "expiresSoon": false,
+    "availableSince": 1699076729
+   },
+   {
+    "service": {
+     "id": "prime",
+     "name": "Prime Video",
+     "homePage": "https://www.primevideo.com/",
+     "themeColorCode": "#00A8E1",
+     "imageSet": {}
+    },
+    "type": "buy",
+    "link": "https://www.primevideo.com/detail/0SK4MKYI5Q3IBR39MM86QNKVLF?ref_=atv_dp",
+    "quality": "uhd",
+    "audios": [],
+    "subtitles": [],
+    "price": {
+     "amount": "99.00",
+     "currency": "SEK",
+     "formatted": "99.00 SEK"
+    },
+    "expiresSoon": false,
+    "availableSince": 1790403339
+   },
+   {
+    "service": {
+     "id": "apple",
+     "name": "Apple TV",
+     "homePage": "https://tv.apple.com/se",
+     "themeColorCode": "#000000",
+     "imageSet": {}
+    },
+    "type": "rent",
+    "link": "https://tv.apple.com/se/movie/interstellar/umc.cmc.1vrwat5k1ucm5k42q97ioqyq3?playableId=tvs.sbd.9001%3A965491522",
+    "quality": "hd",
+    "audios": [],
+    "subtitles": [],
+    "price": {
+     "amount": "39",
+     "currency": "SEK",
+     "formatted": "39 SEK"
+    },
+    "expiresSoon": false,
+    "availableSince": 1699076729
+   },
+   {
+    "service": {
+     "id": "prime",
+     "name": "Prime Video",
+     "homePage": "https://www.primevideo.com/",
+     "themeColorCode": "#00A8E1",
+     "imageSet": {}
+    },
+    "type": "subscription",
+    "link": "https://app.primevideo.com/detail?gti=amzn1.dv.gti.e265dfdf-4ad6-41b9-9123-deb70d7b5bf3",
+    "videoLink": "https://app.primevideo.com/detail?gti=amzn1.dv.gti.e265dfdf-4ad6-41b9-9123-deb70d7b5bf3&action=play",
+    "quality": "uhd",
+    "audios": [],
+    "subtitles": [],
+    "expiresSoon": false,
+    "availableSince": 1790807428
+   },
+   {
+    "service": {
+     "id": "prime",
+     "name": "Prime Video",
+     "homePage": "https://www.primevideo.com/",
+     "themeColorCode": "#00A8E1",
+     "imageSet": {}
+    },
+    "type": "rent",
+    "link": "https://www.primevideo.com/detail/0SK4MKYI5Q3IBR39MM86QNKVLF?ref_=atv_dp",
+    "quality": "uhd",
+    "audios": [],
+    "subtitles": [],
+    "price": {
+     "amount": "39.00",
+     "currency": "SEK",
+     "formatted": "39.00 SEK"
+    },
+    "expiresSoon": false,
+    "availableSince": 1790403339
+   },
+   {
+    "service": {
+     "id": "hbo",
+     "name": "HBO Max",
+     "homePage": "https://play.hbomax.com/",
+     "themeColorCode": "#000000",
+     "imageSet": {}
+    },
+    "type": "subscription",
+    "link": "https://play.hbomax.com/movie/aa5b9295-8f9c-44f5-809b-3f2b84badfbf",
+    "videoLink": "https://play.hbomax.com/video/watch/1a924f82-6366-475d-8fa0-645c502b368b",
+    "quality": "uhd",
+    "audios": [],
+    "subtitles": [],
+    "expiresSoon": false,
+    "expiresOn": 1798757940,
+    "availableSince": 1783999732
+   }
+  ]
+ }
+}

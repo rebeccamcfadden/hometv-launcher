@@ -1,0 +1,133 @@
+{
+ "changes": [
+  {
+   "changeType": "updated",
+   "itemType": "show",
+   "showId": "8854835",
+   "showType": "movie",
+   "service": {
+    "id": "prime",
+    "name": "Prime Video",
+    "homePage": "https://www.primevideo.com/",
+    "themeColorCode": "#00A8E1",
+    "imageSet": {}
+   },
+   "streamingOptionType": "buy",
+   "timestamp": 1793195894,
+   "link": "https://www.primevideo.com/detail/0ODL3A95727PG3A427U2CIDR18?ref_=atv_dp"
+  },
+  {
+   "changeType": "updated",
+   "itemType": "show",
+   "showId": "8854835",
+   "showType": "movie",
+   "service": {
+    "id": "prime",
+    "name": "Prime Video",
+    "homePage": "https://www.primevideo.com/",
+    "themeColorCode": "#00A8E1",
+    "imageSet": {}
+   },
+   "streamingOptionType": "rent",
+   "timestamp": 1793195894,
+   "link": "https://www.primevideo.com/detail/0ODL3A95727PG3A427U2CIDR18?ref_=atv_dp"
+  },
+  {
+   "changeType": "updated",
+   "itemType": "show",
+   "showId": "2828",
+   "showType": "movie",
+   "service": {
+    "id": "prime",
+    "name": "Prime Video",
+    "homePage": "https://www.primevideo.com/",
+    "themeColorCode": "#00A8E1",
+    "imageSet": {}
+   },
+   "streamingOptionType": "rent",
+   "timestamp": 1793298259,
+   "link": "https://www.primevideo.com/detail/0JKT89EOH0H8K3902WJAG566KD?ref_=atv_dp"
+  },
+  {
+   "changeType": "updated",
+   "itemType": "show",
+   "showId": "2828",
+   "showType": "movie",
+   "service": {
+    "id": "prime",
+    "name": "Prime Video",
+    "homePage": "https://www.primevideo.com/",
+    "themeColorCode": "#00A8E1",
+    "imageSet": {}
+   },
+   "streamingOptionType": "buy",
+   "timestamp": 1793298259,
+   "link": "https://www.primevideo.com/detail/0JKT89EOH0H8K3902WJAG566KD?ref_=atv_dp"
+  },
+  {
+   "changeType": "updated",
+   "itemType": "show",
+   "showId": "4588192",
+   "showType": "movie",
+   "service": {
+    "id": "prime",
+    "name": "Prime Video",
+    "homePage": "https://www.primevideo.com/",
+    "themeColorCode": "#00A8E1",
+    "imageSet": {}
+   },
+   "streamingOptionType": "rent",
+   "timestamp": 1793299088,
+   "link": "https://www.primevideo.com/detail/0OL6VDABXCZX9RCYMRD2H36VRF?ref_=atv_dp"
+  },
+  {
+   "changeType": "updated",
+   "itemType": "show",
+   "showId": "4588192",
+   "showType": "movie",
+   "service": {
+    "id": "prime",
+    "name": "Prime Video",
+    "homePage": "https://www.primevideo.com/",
+    "themeColorCode": "#00A8E1",
+    "imageSet": {}
+   },
+   "streamingOptionType": "buy",
+   "timestamp": 1793299088,
+   "link": "https://www.primevideo.com/detail/0OL6VDABXCZX9RCYMRD2H36VRF?ref_=atv_dp"
+  }
+ ],
+ "shows": {
+  "2828": {
+   "itemType": "show",
+   "showType": "movie",
+   "id": "2828",
+   "imdbId": "tt3766354",
+   "tmdbId": "movie/345887",
+   "title": "The Equalizer 2",
+   "releaseYear": 2018,
+   "streamingOptions": {}
+  },
+  "4588192": {
+   "itemType": "show",
+   "showType": "movie",
+   "id": "4588192",
+   "imdbId": "tt17024450",
+   "tmdbId": "movie/926393",
+   "title": "The Equalizer 3",
+   "releaseYear": 2023,
+   "streamingOptions": {}
+  },
+  "8854835": {
+   "itemType": "show",
+   "showType": "movie",
+   "id": "8854835",
+   "imdbId": "tt25147850",
+   "tmdbId": "movie/1155324",
+   "title": "King Ivory",
+   "releaseYear": 2025,
+   "streamingOptions": {}
+  }
+ },
+ "hasMore": false
+}

@@ -244,7 +244,7 @@ final class Kit {
         RingFrame art = art(ctx, t, 417, 172, Ui.RADIUS_L);
         card.addView(art, new LinearLayout.LayoutParams(Ui.px(417), Ui.px(172)));
 
-        Offer o = data.bestOffer(t);
+        Offer o = data.shownOffer(t);
         LinearLayout top = new LinearLayout(ctx);
         top.setOrientation(LinearLayout.HORIZONTAL);
         TextView name = Ui.line(ctx, 25, Ui.TEXT_1, Ui.MEDIUM);
@@ -286,7 +286,7 @@ final class Kit {
         name.setGravity(Gravity.START);
         card.addView(name, below(12));
         card.addView(textLine(ctx, TitleText.kindYear(t), Ui.TEXT_2), below(4));
-        card.addView(textLine(ctx, data.offerLabel(data.bestOffer(t)), Ui.TEXT_3), below(2));
+        card.addView(textLine(ctx, data.offerLine(t), Ui.TEXT_3), below(2));
         return focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name);
     }
 

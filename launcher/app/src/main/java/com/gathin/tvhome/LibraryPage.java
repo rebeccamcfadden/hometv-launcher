@@ -149,7 +149,9 @@ final class LibraryPage extends Screen {
         col.addView(new View(ctx), new LinearLayout.LayoutParams(1, Ui.px(PAGE_END)));
 
         root.addView(Kit.bottomFade(ctx));
-        root.addView(Kit.guide(ctx, ctx.getString(R.string.library_guide_left),
+        // The real catalogue's scores and availability are not illustrative (V2): say where they come from.
+        root.addView(Kit.guide(ctx, ctx.getString(data.catalog.isRemote() ? R.string.prices_library_guide
+                        : R.string.library_guide_left),
                 ctx.getString(R.string.library_guide_right)));
 
         // Titles fill in as their details arrive: what is cached shows first, the rest as it comes.

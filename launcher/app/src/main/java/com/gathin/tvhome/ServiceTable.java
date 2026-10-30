@@ -1,6 +1,5 @@
 package com.gathin.tvhome;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -10,9 +9,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The services the catalogue knows (design_preview/src/data/services.ts): each one's name, whether it is a rent/buy
- * store, and the TV app package(s) that open it, in the order they are tried. Pure Java: {@link Services} adds what
- * the TV has installed. Apple TV+ and the Apple TV store are one app.
+ * The services the catalogue knows (design_preview/src/data/services.ts, and Sweden's in {@link WatchProviders}):
+ * each one's name, whether it is a rent/buy store, and the TV app package(s) that open it, in the order they are
+ * tried. Pure Java: {@link Services} adds what the TV has installed. Apple's subscription and its store are one app,
+ * as are Prime Video and Amazon's store. A service that both streams and sells (Viaplay) counts as a subscription.
+ *
+ * <p>Two sets of names: {@link #branded()}, current branding ("HBO Max", "Apple TV" and the "Apple TV Store"), for
+ * the real catalogue; {@code new ServiceTable()}, the prototype's ("Max", "Apple TV+" and "Apple TV"), for the mock
+ * catalogue, so it still reads as the prototype does and its parity tests hold.
  */
 final class ServiceTable {
 
@@ -21,33 +25,54 @@ final class ServiceTable {
         final boolean store;
         final List<String> packages;
 
-        Entry(String name, boolean store, String... packages) {
+        Entry(String name, boolean store, List<String> packages) {
             this.name = name;
             this.store = store;
-            this.packages = Collections.unmodifiableList(Arrays.asList(packages));
+            this.packages = packages;
         }
     }
 
     private final Map<ServiceId, Entry> entries = new EnumMap<>(ServiceId.class);
+    private final boolean branded;
 
+    /** The prototype's names. */
     ServiceTable() {
-        put(ServiceId.NETFLIX, "Netflix", false, "com.netflix.ninja");
-        put(ServiceId.PRIME, "Prime Video", false, "com.amazon.amazonvideo.livingroom");
-        put(ServiceId.DISNEY, "Disney+", false, "com.disney.disneyplus");
-        put(ServiceId.MAX, "Max", false, "com.wbd.stream", "com.hbo.hbonow");
-        put(ServiceId.APPLETVPLUS, "Apple TV+", false, "com.apple.atve.androidtv.appletv");
-        put(ServiceId.HULU, "Hulu", false, "com.hulu.livingroomplus");
-        put(ServiceId.YOUTUBE, "YouTube", true, "com.google.android.youtube.tv");
-        put(ServiceId.APPLETV, "Apple TV", true, "com.apple.atve.androidtv.appletv");
-        put(ServiceId.GOOGLETV, "Google TV", true, "com.google.android.videos");
+        this(false);
     }
 
-    private void put(ServiceId id, String name, boolean store, String... packages) {
-        entries.put(id, new Entry(name, store, packages));
+    private ServiceTable(boolean branded) {
+        this.branded = branded;
+        for (WatchProviders.Entry e : WatchProviders.SE.all()) {
+            String name = e.name;
+            if (!branded) {
+                if (e.service == ServiceId.MAX) name = "Max";
+                else if (e.service == ServiceId.APPLETVPLUS) name = "Apple TV+";
+                else if (e.service == ServiceId.APPLETV) name = "Apple TV";
+            }
+            entries.put(e.service, new Entry(name, e.store && !e.subscription, e.packages));
+        }
+    }
+
+    /** Current branding, for the real catalogue. */
+    static ServiceTable branded() {
+        return new ServiceTable(true);
     }
 
     String name(ServiceId id) {
         return entries.get(id).name;
+    }
+
+    /**
+     * The name of the app that opens the service: with current branding a store opens in its subscription's app
+     * ("Apple TV Store" in the Apple TV app, "Amazon Video" in Prime Video); otherwise the service's own name.
+     */
+    String appName(ServiceId id) {
+        Entry e = entries.get(id);
+        if (!branded || !e.store) return e.name;
+        for (Entry other : entries.values()) {
+            if (!other.store && other.packages.get(0).equals(e.packages.get(0))) return other.name;
+        }
+        return e.name;
     }
 
     /** A rent/buy store rather than a subscription. */

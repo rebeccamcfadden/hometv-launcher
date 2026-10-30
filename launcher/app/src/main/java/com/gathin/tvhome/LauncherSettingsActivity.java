@@ -84,7 +84,19 @@ public final class LauncherSettingsActivity extends Activity {
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
         // TMDB's notice, wherever its data shows: only in builds with a TMDB token.
-        if (!BuildConfig.TMDB_TOKEN.isEmpty()) findViewById(R.id.tmdbNotice).setVisibility(View.VISIBLE);
+        if (!BuildConfig.TMDB_TOKEN.isEmpty()) {
+            findViewById(R.id.tmdbNotice).setVisibility(View.VISIBLE);
+            // And where its Where to watch comes from: JustWatch through TMDB, Apple's prices, and any keyed source.
+            StringBuilder notice = new StringBuilder(getString(R.string.prices_notice_justwatch))
+                    .append('\n').append(getString(R.string.prices_notice_itunes));
+            if (!PriceKeys.watchmode().isEmpty()) notice.append('\n').append(getString(R.string.prices_notice_watchmode));
+            if (!PriceKeys.movieOfTheNight().isEmpty()) {
+                notice.append('\n').append(getString(R.string.prices_notice_motn));
+            }
+            TextView prices = findViewById(R.id.priceNotice);
+            prices.setText(notice);
+            prices.setVisibility(View.VISIBLE);
+        }
         refresh();
         animationsChoice.requestFocus();
     }

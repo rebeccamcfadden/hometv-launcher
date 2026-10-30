@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * What stays mock on the real catalogue's titles (BACKLOG.md, Streaming availability and prices; Household and
- * Friends lists): the mock catalogue's offers, imported watchlists and next episode, carried over by TMDB id onto the
- * titles {@link MockIds} maps. Any other title has no offers and is on no imported list, so it reads "Not available".
+ * What stays mock on the real catalogue's titles (BACKLOG.md, Household and Friends lists): the mock catalogue's
+ * imported watchlists and next episode, carried over by TMDB id onto the titles {@link MockIds} maps. Any other title
+ * is on no imported list. Offers are real since V2 Phase 2: TMDB's availability, with prices ({@link TmdbParse}).
  * Pure Java, unit-tested (MockOverlayTest).
  */
 final class MockOverlay {
@@ -24,12 +24,11 @@ final class MockOverlay {
         return byTmdbId.get(tmdbId);
     }
 
-    /** t with the mock title's offers, lists and next episode, or t as it is when it has no mock title. */
+    /** t with the mock title's lists and next episode, or t as it is when it has no mock title. */
     Title apply(Title t) {
         Title m = byTmdbId.get(t.id);
         if (m == null) return t;
         Title.Draft d = new Title.Draft(t);
-        d.offers = m.offers;
         d.lists = m.lists;
         d.nextSeason = 0;
         d.nextEpisode = 0;

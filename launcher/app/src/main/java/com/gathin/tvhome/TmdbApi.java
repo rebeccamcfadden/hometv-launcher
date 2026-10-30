@@ -21,9 +21,12 @@ final class TmdbApi {
     /** How long an answer stays fresh, after cleanyourtv-ui's Tmdb.ttl (BACKLOG.md, Findings). */
     static final long TTL_SEARCH = HOUR, TTL_LIST = 3 * HOUR, TTL_TITLE = 12 * HOUR, TTL_WEEK = 7 * DAY;
 
-    /** What a title's details page asks for in one request: the cast, ratings, trailer and similar titles. */
-    private static final String MOVIE_EXTRAS = "credits,release_dates,videos,recommendations,similar";
-    private static final String TV_EXTRAS = "credits,content_ratings,videos,recommendations,similar";
+    /**
+     * What a title's details page asks for in one request: the cast, ratings, trailer, similar titles and where it
+     * can be watched (V2 Phase 2, {@link TmdbParse#availability}), so availability costs no request of its own.
+     */
+    private static final String MOVIE_EXTRAS = "credits,release_dates,videos,recommendations,similar,watch/providers";
+    private static final String TV_EXTRAS = "credits,content_ratings,videos,recommendations,similar,watch/providers";
 
     /** "movie:329865" for a movie, "tv:95396" for a show: the launcher's title ids for TMDB titles. */
     static String id(Kind kind, int tmdbId) {

@@ -55,8 +55,13 @@ final class TitlePreview extends Screen {
     /** The title as shown; replaced when its details or a season's episodes arrive (see apply). */
     private Title t;
     private final Set<ServiceId> subscribed;
-    /** The offer Watch uses: included, else the cheapest rental, else the cheapest purchase (Offers.bestOffer). */
-    private final Offer offer;
+    /**
+     * The offer Watch uses: included, else the cheapest rental, else the cheapest purchase (Offers.bestOffer). Worked
+     * out again when the details (and so the real availability) or the prices arrive.
+     */
+    private Offer offer;
+    /** Whether the real prices and the links into the apps were asked for (once the details are in). */
+    private boolean askedPrices;
     private final View scrim;
     private final FrameLayout popup;
     private final ImageView art;
@@ -171,6 +176,7 @@ final class TitlePreview extends Screen {
         setTab(tabs.get(0));
         // A title from a search or a list is a summary: its details fill the preview in as they arrive.
         if (!t.detailed) data.catalog.details(t, this::apply);
+        else askPrices();
     }
 
     /**
@@ -189,7 +195,10 @@ final class TitlePreview extends Screen {
     private void apply(Title now, int arrived) {
         if (now == null || now == t) return;
         boolean seasonsChanged = now.seasons.size() != t.seasons.size();
+        boolean offersChanged = !now.offers.equals(t.offers);
         t = now;
+        offer = data.bestOffer(t);
+        if (t.detailed) askPrices();
         if (!t.seasons.isEmpty() && t.season(season) == null) {
             int start = PreviewRules.startSeason(t);
             season = t.season(start) != null ? start : t.seasons.get(0).n;
@@ -203,9 +212,16 @@ final class TitlePreview extends Screen {
             if (arrived != 0 && arrived != season) return;
             paintEpisodes(false);
             if (router.shell().top() == this) router.shell().refocus();
-        } else if (active != Tab.WHERE && active != Tab.MORE) {
+        } else if (active != Tab.MORE && (active != Tab.WHERE || offersChanged)) {
             rerender();
         }
+    }
+
+    /** V2 Phase 2: the title's real prices and the links into its services' apps, once its details are in. */
+    private void askPrices() {
+        if (askedPrices) return;
+        askedPrices = true;
+        data.catalog.prices(t, true, this::apply);
     }
 
     /** Draws the tab showing again, from the title as it is now. */
@@ -715,12 +731,31 @@ final class TitlePreview extends Screen {
 
     // ---- Where to watch -------------------------------------------------------------------------------------------
 
-    /** One card per service, included and free ones first (Offers.byService). */
+    /**
+     * One card per service, included and free ones first (Offers.byService); a note when there are none. On the real
+     * catalogue, the sources' credit below the row (V2 Phase 2): "Availability: JustWatch · Prices: Apple".
+     */
     private View whereToWatch() {
-        List<View> cards = new ArrayList<>();
         List<ServiceOffers> services = Offers.byService(t, subscribed);
-        for (int i = 0; i < services.size(); i++) cards.add(serviceCard(services.get(i), i == 0));
-        return row(cards);
+        View body;
+        if (services.isEmpty()) {
+            body = emptyNote(t.detailed ? R.string.prices_where_none : R.string.preview_not_loaded);
+        } else {
+            List<View> cards = new ArrayList<>();
+            for (int i = 0; i < services.size(); i++) cards.add(serviceCard(services.get(i), i == 0));
+            body = row(cards);
+        }
+        String credit = data.catalog.attribution(t);
+        if (credit == null) return body;
+        FrameLayout box = Kit.unclip(new FrameLayout(ctx));
+        box.addView(body);
+        TextView caption = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
+        caption.setText(credit);
+        box.addView(caption, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START));
+        box.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        return box;
     }
 
     /** .service: 376 wide, the name with "Included" or "Free", the offer line and the quality. */

@@ -28,9 +28,9 @@ public class TmdbApiTest {
 
     @Test
     public void paths() {
-        assertEquals("/movie/329865?append_to_response=credits,release_dates,videos,recommendations,similar"
+        assertEquals("/movie/329865?append_to_response=credits,release_dates,videos,recommendations,similar,watch/providers"
                 + "&language=en-US", TmdbApi.details("movie:329865"));
-        assertEquals("/tv/95396?append_to_response=credits,content_ratings,videos,recommendations,similar"
+        assertEquals("/tv/95396?append_to_response=credits,content_ratings,videos,recommendations,similar,watch/providers"
                 + "&language=en-US", TmdbApi.details("tv:95396"));
         assertEquals("/tv/95396/season/2?language=en-US", TmdbApi.season("tv:95396", 2));
         assertEquals("/person/9273?append_to_response=combined_credits&language=en-US", TmdbApi.person(9273));

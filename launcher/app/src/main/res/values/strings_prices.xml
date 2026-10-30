@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- V2 Phase 2, real availability and prices (BACKLOG.md, Streaming availability and prices). English only. -->
+<resources>
+    <!-- The rent dialog's buttons for a store whose price no source knows: the app shows it. -->
+    <string name="prices_rent">Rent</string>
+    <string name="prices_buy">Buy</string>
+    <!-- The rent dialog's body without a quality (real offers have one only when a price source gave it). -->
+    <string name="prices_dialog_body">This opens the %1$s app.</string>
+    <!-- Where to watch, for a title TMDB knows no service or store for in Sweden. -->
+    <string name="prices_where_none">Not on any service or store in Sweden.</string>
+    <!-- The Movies, TV Shows and Pick for me guide lines on the real catalogue, instead of "Illustrative …". -->
+    <string name="prices_library_guide">Scores from TMDB · Where to watch from JustWatch</string>
+    <string name="prices_pick_guide">Picks from your lists · Scores from TMDB · Where to watch from JustWatch</string>
+    <!-- Launcher settings' About notices: where availability and prices come from (their terms ask for it). -->
+    <string name="prices_notice_justwatch">Where to watch: streaming availability from JustWatch, through TMDB.</string>
+    <string name="prices_notice_itunes">Apple TV Store prices: Apple\'s iTunes Search API.</string>
+    <string name="prices_notice_watchmode">Prices: Watchmode (watchmode.com).</string>
+    <string name="prices_notice_motn">Prices: Streaming Availability API by Movie of the Night (movieofthenight.com/about/api).</string>
+</resources>

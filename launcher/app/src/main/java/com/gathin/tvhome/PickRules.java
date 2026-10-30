@@ -284,7 +284,9 @@ final class PickRules {
     static String tileAvailability(Offer o, Set<ServiceId> subscribed) {
         if (o == null) return "";
         if (Offers.isIncludedOffer(o, subscribed)) return "Included";
-        return Offers.price(o.price) + " " + (o.type == OfferType.RENT ? "rent" : "buy");
+        String amount = Offers.amount(o);
+        String verb = o.type == OfferType.RENT ? "rent" : "buy";
+        return amount == null ? (o.type == OfferType.RENT ? "Rent" : "Buy") : amount + " " + verb;
     }
 
     /** The results bar's note: "Max · Included · Open the title in your service", or "Not on your services". */
@@ -298,6 +300,7 @@ final class PickRules {
         if (o == null) return "Unavailable";
         String name = table.name(o.service);
         if (Offers.isIncludedOffer(o, subscribed)) return "Open in " + name;
-        return (o.type == OfferType.RENT ? "Rent" : "Buy") + " on " + name + " · " + Offers.price(o.price);
+        String price = Offers.price(o);
+        return (o.type == OfferType.RENT ? "Rent" : "Buy") + " on " + name + (price == null ? "" : " · " + price);
     }
 }

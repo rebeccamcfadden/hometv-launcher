@@ -120,7 +120,8 @@ final class PickResultsPage extends Screen {
         body.addView(bar, PickSetupPage.below(26));
 
         page.addView(body, PickSetupPage.bodyParams());
-        page.addView(Kit.guide(ctx, ctx.getString(R.string.pick_results_guide_left),
+        page.addView(Kit.guide(ctx, ctx.getString(data.catalog.isRemote() ? R.string.prices_pick_guide
+                        : R.string.pick_results_guide_left),
                 ctx.getString(R.string.pick_results_guide_right)));
         roll();
     }

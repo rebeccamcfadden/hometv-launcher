@@ -14,7 +14,8 @@ import java.util.Map;
  * Turns TMDB's answers into the launcher's titles, seasons and people (BACKLOG.md, Real catalogue): a list item
  * becomes a summary title, a details page a detailed one (runtime or seasons, US rating, cast and crew, trailer), a
  * season its episodes, a person their best-known titles. Missing fields give empty values, never an exception.
- * Offers and watchlists are not TMDB's: {@link MockOverlay} adds them. Pure Java with org.json, unit-tested with
+ * A details page's offers come from its watch providers in Sweden ({@link #availability}), without prices; the
+ * imported watchlists are not TMDB's: {@link MockOverlay} adds them. Pure Java with org.json, unit-tested with
  * hand-written answers (TmdbParseTest).
  */
 final class TmdbParse {
@@ -93,8 +94,16 @@ final class TmdbParse {
         }
         crew.addAll(crew(credits, kind));
         d.crew = dedupe(crew, CREW_MAX);
+        d.offers = OfferMerge.merge(availability(o), Collections.emptyList(), WatchProviders.SE).toOffers();
         d.detailed = true;
         return d.build();
+    }
+
+    /** Where a details page (with watch/providers appended) says the title can be watched in Sweden. */
+    static ProviderAvailability availability(JSONObject details) {
+        JSONObject providers = details.optJSONObject("watch/providers");
+        return providers == null ? ProviderAvailability.empty(WatchProviders.REGION)
+                : ProviderAvailability.parse(providers, WatchProviders.REGION);
     }
 
     /** More like this: the recommendations, or the similar titles when there are none. */

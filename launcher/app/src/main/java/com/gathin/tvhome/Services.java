@@ -3,6 +3,7 @@ package com.gathin.tvhome;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -73,6 +74,22 @@ final class Services {
             Intent i = pm.getLeanbackLaunchIntentForPackage(pkg);
             if (i == null) i = pm.getLaunchIntentForPackage(pkg);
             if (i != null) return i;
+        }
+        return null;
+    }
+
+    /**
+     * The intent that opens {@code url} (a title's page, {@link DeepLinks}) in the service's own app, limited to its
+     * package so no browser picks it up; null when there is no link or no installed app of the service takes it.
+     * Netflix's TV app wants to be told the link is a deep link (cleanyourtv-ui's DeepLinks.java).
+     */
+    Intent linkIntent(ServiceId id, String url) {
+        if (url == null) return null;
+        PackageManager pm = ctx.getPackageManager();
+        for (String pkg : table.packages(id)) {
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage(pkg);
+            if (id == ServiceId.NETFLIX) i.putExtra("source", "30");
+            if (i.resolveActivity(pm) != null) return i;
         }
         return null;
     }

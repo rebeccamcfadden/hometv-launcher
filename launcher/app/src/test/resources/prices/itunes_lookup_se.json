@@ -1,0 +1,37 @@
+{
+ "resultCount": 2,
+ "results": [
+  {
+   "wrapperType": "track",
+   "kind": "feature-movie",
+   "trackId": 1174618339,
+   "trackName": "Arrival",
+   "releaseDate": "2016-12-02T08:00:00Z",
+   "country": "SWE",
+   "currency": "SEK",
+   "trackRentalPrice": 39.0,
+   "trackHdRentalPrice": 39.0,
+   "trackPrice": 79.0,
+   "trackHdPrice": 79.0,
+   "collectionPrice": 79.0,
+   "collectionHdPrice": 79.0
+  },
+  {
+   "wrapperType": "track",
+   "kind": "feature-movie",
+   "trackId": 965491522,
+   "collectionId": 1705961134,
+   "trackName": "Interstellar (2014)",
+   "collectionName": "Christopher Nolan 8 Film Collection",
+   "releaseDate": "2014-11-07T08:00:00Z",
+   "country": "SWE",
+   "currency": "SEK",
+   "trackRentalPrice": 39.0,
+   "trackHdRentalPrice": 39.0,
+   "trackPrice": 99.0,
+   "trackHdPrice": 99.0,
+   "collectionPrice": 99.0,
+   "collectionHdPrice": 99.0
+  }
+ ]
+}

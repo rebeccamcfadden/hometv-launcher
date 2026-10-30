@@ -16,3 +16,12 @@ temperature_unit=C
 # catalogue: titles, artwork, cast, episodes and search. Leave it out and the launcher builds with the mock
 # catalogue instead, which works offline. Never commit a token: keep it in tv.properties only.
 #tmdb_api_key=
+
+# Optional rent and buy prices (BACKLOG.md, Streaming availability and prices). Without a key the launcher shows where
+# a title can be rented or bought, and prices only from Apple's keyless iTunes lookup. Each key is a free plan, for
+# non-commercial use with attribution in the launcher; the launcher stops below each quota (no paid plans).
+# Watchmode, https://api.watchmode.com (free plan: 2,500 credits a month; the launcher stops at 2,300):
+#watchmode_api_key=
+# Movie of the Night's Streaming Availability API, https://developers.movieofthenight.com (free plan: 1,000 requests
+# a month; the launcher stops at 900). streaming_availability_api_key is read too, under the API's other name.
+#movie_of_the_night_api_key=

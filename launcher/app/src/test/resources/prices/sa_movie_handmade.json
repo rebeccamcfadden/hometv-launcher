@@ -1,0 +1,15 @@
+{
+ "itemType": "show", "showType": "movie", "id": "82", "imdbId": "tt2543164", "tmdbId": "movie/329865",
+ "title": "Arrival", "releaseYear": 2016,
+ "streamingOptions": {
+  "se": [
+   {"service": {"id": "apple", "name": "Apple TV", "homePage": "https://tv.apple.com/se", "themeColorCode": "#000000", "imageSet": {}}, "type": "rent", "link": "https://tv.apple.com/se/movie/arrival/umc.cmc.20sgkdxqbvucopzt913joa0gr", "quality": "uhd", "audios": [], "subtitles": [], "price": {"amount": "39.00", "currency": "SEK", "formatted": "39.00 SEK"}, "expiresSoon": false, "availableSince": 1700000000},
+   {"service": {"id": "apple", "name": "Apple TV", "homePage": "https://tv.apple.com/se", "themeColorCode": "#000000", "imageSet": {}}, "type": "buy", "link": "https://tv.apple.com/se/movie/arrival/umc.cmc.20sgkdxqbvucopzt913joa0gr", "quality": "uhd", "audios": [], "subtitles": [], "price": {"amount": "79.00", "currency": "SEK", "formatted": "79.00 SEK"}, "expiresSoon": false, "availableSince": 1700000000},
+   {"service": {"id": "prime", "name": "Prime Video", "homePage": "https://www.primevideo.com", "themeColorCode": "#00A8E1", "imageSet": {}}, "type": "rent", "link": "https://www.primevideo.com/detail/0", "quality": "hd", "audios": [], "subtitles": [], "price": {"amount": "49.00", "currency": "SEK", "formatted": "49.00 SEK"}, "expiresSoon": false, "availableSince": 1700000000},
+   {"service": {"id": "prime", "name": "Prime Video", "homePage": "https://www.primevideo.com", "themeColorCode": "#00A8E1", "imageSet": {}}, "type": "buy", "link": "https://www.primevideo.com/detail/0", "quality": "qhd", "audios": [], "subtitles": [], "price": {"amount": "129.00", "currency": "SEK", "formatted": "129.00 SEK"}, "expiresSoon": false, "availableSince": 1700000000},
+   {"service": {"id": "prime", "name": "Prime Video", "homePage": "https://www.primevideo.com", "themeColorCode": "#00A8E1", "imageSet": {}}, "type": "subscription", "link": "https://www.primevideo.com/detail/0", "quality": "hd", "audios": [], "subtitles": [], "expiresSoon": false, "availableSince": 1700000000},
+   {"service": {"id": "prime", "name": "Prime Video", "homePage": "https://www.primevideo.com", "themeColorCode": "#00A8E1", "imageSet": {}}, "type": "addon", "addon": {"id": "wbdmaxse", "name": "HBO Max", "homePage": "https://www.primevideo.com", "themeColorCode": "#000000", "imageSet": {}}, "link": "https://www.primevideo.com/detail/0", "quality": "hd", "audios": [], "subtitles": [], "price": {"amount": "99.00", "currency": "SEK", "formatted": "99.00 SEK"}, "expiresSoon": false, "availableSince": 1700000000},
+   {"service": {"id": "netflix", "name": "Netflix", "homePage": "https://www.netflix.com", "themeColorCode": "#E50914", "imageSet": {}}, "type": "subscription", "link": "https://www.netflix.com/title/80117799", "quality": "hd", "audios": [], "subtitles": [], "expiresSoon": false, "availableSince": 1700000000}
+  ]
+ }
+}
