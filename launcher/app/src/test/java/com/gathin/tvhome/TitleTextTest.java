@@ -73,4 +73,30 @@ public class TitleTextTest {
         assertEquals("Household", ListNames.of(ListId.HOUSEHOLD));
         assertEquals("Friends", ListNames.of(ListId.FRIENDS));
     }
+
+    @Test
+    public void whatIsNotKnownYetIsLeftOut() {
+        // A TMDB summary: no runtime, seasons or rating yet.
+        Title.Draft d = new Title.Draft("movie:1", Kind.MOVIE, "Summary");
+        d.score = 7.6;
+        d.detailed = false;
+        assertEquals("7.6/10", TitleText.meta(d.build()));
+        d.score = 0;
+        assertEquals("", TitleText.meta(d.build()));
+        assertEquals("Movie", TitleText.kindYear(d.build()));
+        d.year = 2016;
+        d.runtime = 116;
+        d.rating = "PG-13";
+        d.detailed = true;
+        assertEquals("1h 56m · PG-13 · 0.0/10", TitleText.meta(d.build()));
+        // Details without a US rating.
+        d.rating = "";
+        d.score = 7.6;
+        assertEquals("1h 56m · 7.6/10", TitleText.meta(d.build()));
+        Title.Draft show = new Title.Draft("tv:1", Kind.SHOW, "Show");
+        show.seasons = Collections.singletonList(new Season(1, 8, Collections.emptyList()));
+        show.rating = "TV-MA";
+        show.score = 8.4;
+        assertEquals("1 season · TV-MA · 8.4/10", TitleText.meta(show.build()));
+    }
 }

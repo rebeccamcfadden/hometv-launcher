@@ -38,21 +38,37 @@ final class HouseholdState {
 
     /**
      * store.ts's defaults: My list holds the catalogue's titles on the MY list; seen knives-out and budapest;
-     * favourite arrival; four recent searches; six recently viewed.
+     * favourite arrival; four recent searches; six recently viewed. The ids are the catalogue's own
+     * ({@link Catalog#fromMockId}): the real catalogue's TMDB ids, without the mock titles TMDB doesn't have.
      */
     static HouseholdState defaults(Catalog catalog) {
         Set<String> my = new LinkedHashSet<>();
         for (Title t : catalog.all()) if (t.isOn(ListId.MY)) my.add(t.id);
         return new HouseholdState(my,
-                new LinkedHashSet<>(Arrays.asList("knives-out", "budapest")),
-                new LinkedHashSet<>(Collections.singletonList("arrival")),
+                new LinkedHashSet<>(ids(catalog, "knives-out", "budapest")),
+                new LinkedHashSet<>(ids(catalog, "arrival")),
                 new ArrayList<>(Arrays.asList("dune", "amy adams", "sci-fi", "carnival row")),
-                new ArrayList<>(Arrays.asList("arrival", "dune", "past-lives", "coda", "moon", "severance")));
+                new ArrayList<>(ids(catalog, "arrival", "dune", "past-lives", "coda", "moon", "severance")));
+    }
+
+    private static List<String> ids(Catalog catalog, String... mockIds) {
+        return migrate(catalog, Arrays.asList(mockIds));
+    }
+
+    /** Ids in the catalogue's terms, in order, without repeats; an id it has no title for drops out. */
+    private static List<String> migrate(Catalog catalog, List<String> ids) {
+        Set<String> out = new LinkedHashSet<>();
+        for (String id : ids) {
+            String now = catalog.fromMockId(id);
+            if (now != null) out.add(now);
+        }
+        return new ArrayList<>(out);
     }
 
     /**
      * Reads what {@link #toJson()} wrote. A key that is missing or not a list of strings keeps its default, as the
-     * prototype's {@code {...defaults(), ...saved}} does; anything unreadable gives the defaults.
+     * prototype's {@code {...defaults(), ...saved}} does; anything unreadable gives the defaults. Title ids stored
+     * from the mock catalogue move to the catalogue's own (BACKLOG.md, Real catalogue).
      */
     static HouseholdState fromJson(String json, Catalog catalog) {
         HouseholdState s = defaults(catalog);
@@ -66,11 +82,11 @@ final class HouseholdState {
         if (!(root instanceof Map)) return s;
         Map<?, ?> m = (Map<?, ?>) root;
         List<String> v;
-        if ((v = strings(m.get("myList"))) != null) replace(s.myList, v);
-        if ((v = strings(m.get("seen"))) != null) replace(s.seen, v);
-        if ((v = strings(m.get("favorites"))) != null) replace(s.favorites, v);
+        if ((v = strings(m.get("myList"))) != null) replace(s.myList, migrate(catalog, v));
+        if ((v = strings(m.get("seen"))) != null) replace(s.seen, migrate(catalog, v));
+        if ((v = strings(m.get("favorites"))) != null) replace(s.favorites, migrate(catalog, v));
         if ((v = strings(m.get("recent"))) != null) replace(s.recent, cap(v, MAX_RECENT));
-        if ((v = strings(m.get("viewed"))) != null) replace(s.viewed, cap(v, MAX_VIEWED));
+        if ((v = strings(m.get("viewed"))) != null) replace(s.viewed, cap(migrate(catalog, v), MAX_VIEWED));
         return s;
     }
 
@@ -130,6 +146,15 @@ final class HouseholdState {
     /** Recently viewed title ids, newest first. */
     List<String> viewed() {
         return Collections.unmodifiableList(new ArrayList<>(viewed));
+    }
+
+    /** Every title id the household keeps: My list, Seen, Favorites and Recently viewed, without repeats. */
+    List<String> titleIds() {
+        Set<String> all = new LinkedHashSet<>(myList);
+        all.addAll(viewed);
+        all.addAll(seen);
+        all.addAll(favorites);
+        return new ArrayList<>(all);
     }
 
     // ---- Changing ----------------------------------------------------------------------------------------------

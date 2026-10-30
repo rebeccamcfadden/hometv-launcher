@@ -27,6 +27,12 @@ def coordinate = { String key, String value, double limit ->
 weatherLatitude = coordinate('latitude', weatherLatitude, 90)
 weatherLongitude = coordinate('longitude', weatherLongitude, 180)
 if (!(temperatureUnit in ['C', 'F'])) throw new GradleException("${tvPropsFile.name}: temperature_unit must be C or F")
+// Optional: TMDB's v4 read access token. Without one the launcher shows the mock catalogue (docs/rework.md). Only
+// the characters a token has, so it can't break the generated Java; the message never prints the value.
+def tmdbToken = tvProps.getProperty('tmdb_api_key', '').trim()
+if (tmdbToken && !(tmdbToken ==~ /[A-Za-z0-9._\-]+/)) {
+    throw new GradleException("${tvPropsFile.name}: tmdb_api_key has characters a TMDB token never has")
+}
 
 android {
     namespace 'com.gathin.tvhome'
@@ -43,6 +49,7 @@ android {
         buildConfigField 'double', 'WEATHER_LATITUDE', weatherLatitude
         buildConfigField 'double', 'WEATHER_LONGITUDE', weatherLongitude
         buildConfigField 'boolean', 'FAHRENHEIT', String.valueOf(temperatureUnit == 'F')
+        buildConfigField 'String', 'TMDB_TOKEN', "\"${tmdbToken}\""
     }
 
     buildFeatures {

@@ -291,36 +291,46 @@ final class Kit {
     }
 
     /**
-     * A person in Cast &amp; crew or Search ({@code .person}): 176 wide, a 104 px round portrait with initials (32 px),
-     * the name (20 px) or {@code labelOverride}, and the role (18 px). Focused: the ring on the portrait, scale 1.06.
+     * A person in Cast &amp; crew ({@code .person}): 176 wide, a 104 px round portrait with initials (32 px), and
+     * their photo over them once it has loaded, the name (20 px) and the role (18 px). Focused: the ring on the
+     * portrait, scale 1.06.
      */
-    static View personCard(Context ctx, String name, String role, CharSequence labelOverride, String group,
-                           String key, View.OnClickListener onOk) {
-        return personCard(ctx, name, role, labelOverride, group, key, false, onOk);
-    }
-
-    /** {@link #personCard} that a group picks first when entered (isDefault). */
-    static View personCard(Context ctx, String name, String role, CharSequence labelOverride, String group,
-                           String key, boolean isDefault, View.OnClickListener onOk) {
+    static View personCard(Context ctx, Person p, String group, String key, boolean isDefault,
+                           View.OnClickListener onOk) {
         LinearLayout card = card(ctx, 176);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
-        RingFrame portrait = new RingFrame(ctx, 52, true, 0xFF1C2633);
-        TextView initials = Ui.line(ctx, 32, Ui.TEXT_2, Ui.MEDIUM);
-        initials.setText(TitleText.initials(name));
-        initials.setGravity(Gravity.CENTER);
-        portrait.content().addView(initials, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        RingFrame portrait = portrait(ctx, p.name, p.photo, 104, 32);
         card.addView(portrait, new LinearLayout.LayoutParams(Ui.px(104), Ui.px(104)));
         TextView n = Ui.text(ctx, Ui.T_SMALL, Ui.TEXT_1, Ui.MEDIUM);
-        n.setText(labelOverride != null ? labelOverride : name);
+        n.setText(p.name);
         n.setGravity(Gravity.CENTER_HORIZONTAL);
         n.setMaxLines(2);
         n.setEllipsize(TextUtils.TruncateAt.END);
         card.addView(n, below(12));
-        TextView r = textLine(ctx, role, Ui.TEXT_3);
+        TextView r = textLine(ctx, p.role, Ui.TEXT_3);
         r.setGravity(Gravity.CENTER_HORIZONTAL);
         card.addView(r, below(2));
-        return focusCard(card, portrait, 1.06f, group, key, isDefault, onOk, name);
+        return focusCard(card, portrait, 1.06f, group, key, isDefault, onOk, p.name);
+    }
+
+    /**
+     * The round portrait of Cast &amp; crew, Search and the person page: initials on the portrait fill, and the TMDB
+     * photo over them when there is one (Art.photo), loaded for a box {@code size} design px across.
+     */
+    static RingFrame portrait(Context ctx, String name, String photo, float size, float initialsSize) {
+        RingFrame portrait = new RingFrame(ctx, size / 2, true, 0xFF1C2633);
+        TextView initials = Ui.line(ctx, initialsSize, Ui.TEXT_2, Ui.MEDIUM);
+        initials.setText(TitleText.initials(name));
+        initials.setGravity(Gravity.CENTER);
+        portrait.content().addView(initials, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        if (photo != null) {
+            ImageView img = new ImageView(ctx);
+            portrait.content().addView(img, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+            Art.photo(img, photo, Ui.px(size), Ui.px(size));
+        }
+        return portrait;
     }
 
     private static LinearLayout card(Context ctx, float width) {

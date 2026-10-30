@@ -1,5 +1,7 @@
 package com.gathin.tvhome;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -9,10 +11,18 @@ import java.util.Locale;
 final class TitleText {
     private TitleText() {}
 
-    /** "1h 56m · PG-13 · 7.9/10" for a movie, "2 seasons · TV-MA · 8.7/10" for a show. */
+    /**
+     * "1h 56m · PG-13 · 7.9/10" for a movie, "2 seasons · TV-MA · 8.7/10" for a show. What isn't known yet (a
+     * title whose details are still loading) or has no US rating is left out: "7.9/10".
+     */
     static String meta(Title t) {
-        String lead = t.isMovie() ? Offers.runtimeLabel(t.runtime) : seasons(t.seasons.size());
-        return lead + " · " + t.rating + " · " + score(t.score) + "/10";
+        List<String> parts = new ArrayList<>(3);
+        if (t.isMovie() ? t.runtime > 0 : !t.seasons.isEmpty()) {
+            parts.add(t.isMovie() ? Offers.runtimeLabel(t.runtime) : seasons(t.seasons.size()));
+        }
+        if (!t.rating.isEmpty()) parts.add(t.rating);
+        if (t.score > 0 || t.detailed) parts.add(score(t.score) + "/10");
+        return String.join(" · ", parts);
     }
 
     /** "1 season", "3 seasons". */
@@ -31,9 +41,10 @@ final class TitleText {
         return t.genres.isEmpty() ? list : list + " · " + t.genres.get(0);
     }
 
-    /** "Movie · 2016", "TV show · 2022". */
+    /** "Movie · 2016", "TV show · 2022"; just the kind when the year isn't known. */
     static String kindYear(Title t) {
-        return (t.isMovie() ? "Movie" : "TV show") + " · " + t.year;
+        String kind = t.isMovie() ? "Movie" : "TV show";
+        return t.year > 0 ? kind + " · " + t.year : kind;
     }
 
     /** Up to two initials, upper case, for a portrait without a photo: "Amy Adams" gives "AA". */

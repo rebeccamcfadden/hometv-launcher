@@ -11,3 +11,8 @@ longitude=-74.0060
 # C for Celsius or F for Fahrenheit. Android TV has no temperature setting, so the launcher can't ask the TV.
 # Launcher settings on the TV can override it too.
 temperature_unit=C
+
+# Optional: your TMDB "API Read Access Token" (the long v4 token from themoviedb.org, Settings, API), for the real
+# catalogue: titles, artwork, cast, episodes and search. Leave it out and the launcher builds with the mock
+# catalogue instead, which works offline. Never commit a token: keep it in tv.properties only.
+#tmdb_api_key=

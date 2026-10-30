@@ -234,8 +234,10 @@ decided after the first run on a real TV: closing with Back alone felt clunky.)
   from the chips reaches the search bar; OK on it, Back (or Backspace), or ← from the first column bring the
   keyboard back with the query kept. If the focused card goes (a filter chip, typing), focus moves to the first
   result or the bar, never to the hidden keyboard.
-- **No matches:** "No matches for “qzxv”", a tip, and Recently viewed. An exact genre search ("drama", or Browse
-  by genre → Drama) shows No matches too, until real search data lands ([BACKLOG.md](../BACKLOG.md), From M6).
+- **No matches:** "No matches for “qzxv”", a tip, and Recently viewed. In this prototype an exact genre search
+  ("drama", or Browse by genre → Drama) shows No matches too. The launcher, with the real catalogue, lists the
+  genre's titles instead, the ones it knows first and then TMDB's most popular ([BACKLOG.md](../BACKLOG.md), Real
+  catalogue).
 - **Back and Backspace:** on the full results they collapse to the keyboard; with the keyboard showing they go
   Home. Only the on-screen ⌫ key deletes. Leaving Search for another tab clears it (see Focus).
 - **No guide line:** Search has no footer, unlike the other pages; the panel and the results use the height.

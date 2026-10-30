@@ -63,6 +63,10 @@ final class LibraryPage extends Screen {
     /** What the chips and the grid were last built from; they are rebuilt only when it changes. */
     private String chipsBuilt;
     private String gridBuilt;
+    /** The titles the grid shows, compared by identity: a title filled in since is a new object, so its card redraws. */
+    private List<Title> gridTitles;
+    /** Kept in a field: the catalogue holds its listeners weakly. */
+    private final Runnable onCatalog;
 
     static LibraryPage create(Context ctx, NavBar.Host host, Tab tab) {
         return new LibraryPage(ctx, host, tab, Pages.page(ctx, host, tab));
@@ -76,7 +80,7 @@ final class LibraryPage extends Screen {
         this.shell = host.shell();
         this.kind = tab == Tab.TV ? Kind.SHOW : Kind.MOVIE;
         Household household = data.household;
-        filters = new LibraryFilters(kind, data.catalog.genres(), data.services.subscribed(), household::isSeen);
+        filters = new LibraryFilters(kind, data.catalog.genres(kind), data.services.subscribed(), household::isSeen);
 
         box = ScrollBox.vertical(ctx, SCROLL_PAD);
         LinearLayout col = Kit.unclip(new LinearLayout(ctx));
@@ -148,6 +152,11 @@ final class LibraryPage extends Screen {
         root.addView(Kit.guide(ctx, ctx.getString(R.string.library_guide_left),
                 ctx.getString(R.string.library_guide_right)));
 
+        // Titles fill in as their details arrive: what is cached shows first, the rest as it comes.
+        onCatalog = () -> {
+            if (shell.top() == this) render();
+        };
+        data.catalog.addListener(onCatalog);
         render();
     }
 
@@ -261,6 +270,8 @@ final class LibraryPage extends Screen {
     void render() {
         Predicate<String> my = data.household::inMyList;
         List<Title> pool = LibraryLists.pool(data.catalog.all(), kind, my);
+        // The filters judge the titles on their details: load those not in yet (the cache first, then TMDB).
+        data.catalog.want(ids(pool));
 
         LibraryLists.Choice[] choices = LibraryLists.Choice.values();
         int[] counts = new int[choices.length];
@@ -294,9 +305,10 @@ final class LibraryPage extends Screen {
         String gridKey;
         if (chosen.isEmpty()) gridKey = "empty-list:" + list;
         else if (shown.isEmpty()) gridKey = "empty-filters:" + chosen.size() + ":" + summary;
-        else gridKey = "titles:" + ids(shown);
-        if (!gridKey.equals(gridBuilt)) {
+        else gridKey = "titles";
+        if (!gridKey.equals(gridBuilt) || (!shown.isEmpty() && !same(shown, gridTitles))) {
             gridBuilt = gridKey;
+            gridTitles = shown.isEmpty() ? null : shown;
             grid.removeAllViews();
             if (chosen.isEmpty()) emptyList();
             else if (shown.isEmpty()) emptyFilters(chosen.size(), summary);
@@ -405,10 +417,17 @@ final class LibraryPage extends Screen {
         }
     }
 
-    private static String ids(List<Title> titles) {
-        StringBuilder s = new StringBuilder();
-        for (Title t : titles) s.append(t.id).append(',');
-        return s.toString();
+    private static List<String> ids(List<Title> titles) {
+        List<String> out = new ArrayList<>(titles.size());
+        for (Title t : titles) out.add(t.id);
+        return out;
+    }
+
+    /** Whether two lists hold the very same title objects, in the same order. */
+    private static boolean same(List<Title> a, List<Title> b) {
+        if (b == null || a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) if (a.get(i) != b.get(i)) return false;
+        return true;
     }
 
     private static LinearLayout.LayoutParams wrap() {

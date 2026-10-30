@@ -12,8 +12,8 @@ interface Router {
     /** The title preview popup (M5). */
     void openTitle(Title t);
 
-    /** The person page stub (M5). */
-    void openPerson(String name);
+    /** The person page (M5), with what the catalogue knows they are in. */
+    void openPerson(Person p);
 
     /** Pick for me, for movies or shows (M7). */
     void openPick(Kind kind);
@@ -21,7 +21,7 @@ interface Router {
     /** Opens the offer's service app; with no offer, the title's best one. Toasts when it isn't installed. */
     void watch(Title t, Offer o);
 
-    /** The trailer on YouTube's TV app, searched by name and year; a toast without the app. */
+    /** The trailer in YouTube's TV app: TMDB's trailer when the title has one, else a search; a toast without it. */
     void openTrailer(Title t);
 
     void toast(CharSequence text);

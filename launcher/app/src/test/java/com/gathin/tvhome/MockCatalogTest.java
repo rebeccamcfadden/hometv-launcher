@@ -11,13 +11,12 @@ import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-/** The mock catalogue (design_preview/src/data/catalog.ts): ids, artwork, lists, genres, offers and seasons. */
+/** The mock catalogue (design_preview/src/data/catalog.ts): ids, artwork names, lists, genres, offers and seasons. */
 public class MockCatalogTest {
 
     private final MockCatalog catalog = new MockCatalog();
@@ -44,31 +43,14 @@ public class MockCatalogTest {
     }
 
     @Test
-    public void everyArtNameHasItsDrawable() {
+    public void mockArtIsNamesNotImages() {
+        // The bundled art left the APK with the real catalogue: a mock title's art name shows the placeholder.
         for (Title t : catalog.all()) {
-            int id = ArtNames.drawable(t.art);
-            assertNotEquals(t.id + " art " + t.art, 0, id);
-            File jpg = new File(ART_DIR, ArtNames.resourceName(t.art) + ".jpg");
-            assertTrue(jpg + " missing", jpg.isFile());
+            assertFalse(t.id + " art " + t.art, TmdbApi.isImagePath(t.art));
+            assertNull(t.id, TmdbApi.backdrop(t.art, 417));
         }
-        assertEquals(0, ArtNames.drawable("bg-evening"));
-        assertEquals(0, ArtNames.drawable(null));
-    }
-
-    @Test
-    public void everyBundledArtIsMappedAndSmall() {
         File[] files = ART_DIR.listFiles((dir, name) -> name.startsWith("art_"));
-        assertTrue(files != null && files.length > 0);
-        Set<String> mapped = new HashSet<>();
-        for (String name : ArtNames.names()) mapped.add(ArtNames.resourceName(name) + ".jpg");
-        long total = 0;
-        for (File f : files) {
-            assertTrue(f.getName() + " has no ArtNames entry", mapped.contains(f.getName()));
-            total += f.length();
-        }
-        assertEquals(mapped.size(), files.length);
-        // The mock art is re-encoded at most 960 px wide; together it stays well under 2 MB of the APK.
-        assertTrue("art is " + total + " bytes", total < 1_600_000);
+        assertTrue(files == null || files.length == 0);
     }
 
     @Test

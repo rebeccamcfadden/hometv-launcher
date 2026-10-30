@@ -94,7 +94,7 @@ final class LibraryFilters {
             out.add(new Def(RUNTIME, "Length",
                     Arrays.asList("Any length", "Under 90 minutes", "Under 2 hours", "Under 2\u00bd hours"),
                     Arrays.asList("", "Under 90 min", "Under 2h", "Under 2\u00bdh"),
-                    (t, i) -> i == 0 || t.runtime < RUNTIMES[i]));
+                    (t, i) -> i == 0 || (t.runtime > 0 && t.runtime < RUNTIMES[i])));
         }
         out.add(new Def(WATCH, "Watch state",
                 Arrays.asList("Seen or not", "Unwatched only", "Seen only"),

@@ -52,19 +52,28 @@ final class TitlePreview extends Screen {
     private final Context ctx;
     private final Router router;
     private final Data data;
-    private final Title t;
+    /** The title as shown; replaced when its details or a season's episodes arrive (see apply). */
+    private Title t;
     private final Set<ServiceId> subscribed;
     /** The offer Watch uses: included, else the cheapest rental, else the cheapest purchase (Offers.bestOffer). */
     private final Offer offer;
     private final View scrim;
     private final FrameLayout popup;
+    private final ImageView art;
     private final View watch;
+    private TextView titleView;
+    private FrameLayout detailsBox;
     private final List<Toggle> toggles = new ArrayList<>();
     private final List<Tab> tabs = new ArrayList<>();
     private final List<TextView> tabViews = new ArrayList<>();
     private final FrameLayout content;
     private Tab active;
     private boolean shown;
+    /** More like this, once the catalogue has answered; asked for the first time the tab shows. */
+    private List<Title> similar;
+    private boolean askedSimilar;
+    /** The seasons whose episodes were asked for, so each is asked once. */
+    private final Set<Integer> askedSeasons = new java.util.HashSet<>();
 
     /** The Episodes tab: the season shown, its chips, and the row its episodes are painted into. */
     private int season;
@@ -106,7 +115,7 @@ final class TitlePreview extends Screen {
         plp.topMargin = Ui.px(TOP);
         root.addView(popup, plp);
 
-        ImageView art = new ImageView(ctx);
+        art = new ImageView(ctx);
         popup.addView(art, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         Art.into(art, t.art, Ui.px(WIDTH), Ui.px(HEIGHT));
@@ -160,6 +169,51 @@ final class TitlePreview extends Screen {
         popup.addView(back, backLp);
 
         setTab(tabs.get(0));
+        // A title from a search or a list is a summary: its details fill the preview in as they arrive.
+        if (!t.detailed) data.catalog.details(t, this::apply);
+    }
+
+    /**
+     * The title's details or a season's episodes arrived: the header and the tab showing are drawn again with them,
+     * and focus stays where it was (by key, if its view was rebuilt).
+     */
+    private void apply(Title now) {
+        apply(now, 0);
+    }
+
+    /**
+     * As {@link #apply(Title)}, for season {@code arrived}'s episodes (0 for the details): the episode row is
+     * repainted only when that is the season showing, so a late answer for another season leaves the row, its
+     * scroll and the focused episode alone.
+     */
+    private void apply(Title now, int arrived) {
+        if (now == null || now == t) return;
+        boolean seasonsChanged = now.seasons.size() != t.seasons.size();
+        t = now;
+        if (!t.seasons.isEmpty() && t.season(season) == null) {
+            int start = PreviewRules.startSeason(t);
+            season = t.season(start) != null ? start : t.seasons.get(0).n;
+        }
+        titleView.setText(t.name);
+        detailsBox.removeAllViews();
+        detailsBox.addView(details());
+        Art.into(art, t.art, Ui.px(WIDTH), Ui.px(HEIGHT));
+        Kit.setLabel(watch, PreviewRules.watchLabel(t, offer, subscribed, data.table));
+        if (active == Tab.EPISODES && !seasonsChanged) {
+            if (arrived != 0 && arrived != season) return;
+            paintEpisodes(false);
+            if (router.shell().top() == this) router.shell().refocus();
+        } else if (active != Tab.WHERE && active != Tab.MORE) {
+            rerender();
+        }
+    }
+
+    /** Draws the tab showing again, from the title as it is now. */
+    private void rerender() {
+        Tab tab = active;
+        active = null;
+        setTab(tab);
+        if (router.shell().top() == this) router.shell().refocus();
     }
 
     @Override
@@ -298,10 +352,13 @@ final class TitlePreview extends Screen {
         title.setMaxLines(2);
         title.setEllipsize(TextUtils.TruncateAt.END);
         block.addView(title);
+        titleView = title;
         LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         dlp.topMargin = Ui.px(14);
-        block.addView(details(), dlp);
+        detailsBox = new FrameLayout(ctx);
+        detailsBox.addView(details());
+        block.addView(detailsBox, dlp);
         head.addView(block, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         Household h = data.household;
@@ -343,9 +400,12 @@ final class TitlePreview extends Screen {
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         List<String> parts = new ArrayList<>();
-        parts.add(String.valueOf(t.year));
+        if (t.year > 0) parts.add(String.valueOf(t.year));
         if (!t.genres.isEmpty()) parts.add(TextUtils.join(", ", t.genres));
-        parts.add(t.isMovie() ? Offers.runtimeLabel(t.runtime) : TitleText.seasons(t.seasons.size()));
+        // Left out while the details load: a summary has no runtime or seasons yet.
+        if (t.isMovie() ? t.runtime > 0 : !t.seasons.isEmpty()) {
+            parts.add(t.isMovie() ? Offers.runtimeLabel(t.runtime) : TitleText.seasons(t.seasons.size()));
+        }
         for (String part : parts) {
             if (row.getChildCount() > 0) add(row, detail("·", Ui.TEXT_3), 12);
             add(row, detail(part, Ui.TEXT_2), row.getChildCount() == 0 ? 0 : 12);
@@ -355,10 +415,11 @@ final class TitlePreview extends Screen {
             rating.setText(t.rating);
             rating.setPadding(Ui.px(10), Ui.px(1), Ui.px(10), Ui.px(1));
             rating.setBackground(Ui.round(0, 4, RATING_LINE, 1));
-            add(row, rating, 18);
+            add(row, rating, row.getChildCount() == 0 ? 0 : 18);
         }
+        if (t.score <= 0 && !t.detailed) return row;
         ImageView star = Ui.icon(ctx, R.drawable.ic_ui_star, 22, Ui.STAR);
-        add(row, star, 12, 22);
+        add(row, star, row.getChildCount() == 0 ? 0 : 12, 22);
         add(row, detail(TitleText.score(t.score), Ui.TEXT_2), 6);
         return row;
     }
@@ -564,7 +625,7 @@ final class TitlePreview extends Screen {
         LinearLayout.LayoutParams elp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         elp.leftMargin = Ui.px(28) - 2 * room;
         wrap.addView(episodeBox, elp);
-        paintEpisodes();
+        paintEpisodes(true);
 
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -577,14 +638,20 @@ final class TitlePreview extends Screen {
         if (n == season) return;
         season = n;
         for (int i = 0; i < seasonChips.size(); i++) Kit.setSelected(seasonChips.get(i), seasonNumbers.get(i) == n);
-        paintEpisodes();
+        paintEpisodes(true);
     }
 
-    private void paintEpisodes() {
+    /** The showing season's episodes; {@code fromStart} scrolls the row back to its first episode. */
+    private void paintEpisodes(boolean fromStart) {
         if (episodeStrip == null) return;
         episodeStrip.removeAllViews();
         for (Season s : t.seasons) {
             if (s.n != season) continue;
+            if (s.needsEpisodes() && askedSeasons.add(s.n)) {
+                // From TMDB a season's episodes come on their own; apply() paints them when they arrive.
+                int n = s.n;
+                data.catalog.season(t, n, now -> apply(now, n));
+            }
             for (Episode e : s.episodes) {
                 View card = episodeCard(e);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(300), Ui.px(196));
@@ -592,7 +659,7 @@ final class TitlePreview extends Screen {
                 episodeStrip.addView(card, lp);
             }
         }
-        episodeBox.scrollTo(0, 0);
+        if (fromStart) episodeBox.scrollTo(0, 0);
     }
 
     /** .episode: 300×196, "E3" with a tick or the "Up next" badge (and an accent border), the name, the runtime. */
@@ -697,31 +764,44 @@ final class TitlePreview extends Screen {
     private View cast() {
         List<Person> people = new ArrayList<>(t.cast);
         people.addAll(t.crew);
-        if (people.isEmpty()) {
-            TextView empty = Ui.text(ctx, 22, Ui.TEXT_3, Ui.REGULAR);
-            empty.setText(R.string.preview_no_cast);
-            empty.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
-            return empty;
-        }
+        if (people.isEmpty()) return emptyNote(t.detailed ? R.string.preview_no_cast : R.string.preview_not_loaded);
         List<View> cards = new ArrayList<>();
         for (int i = 0; i < people.size(); i++) {
             Person p = people.get(i);
-            cards.add(Kit.personCard(ctx, p.name, p.role, null, G_CAST, "cast-" + i, i == 0,
-                    v -> router.openPerson(p.name)));
+            cards.add(Kit.personCard(ctx, p, G_CAST, "cast-" + i, i == 0, v -> router.openPerson(p)));
         }
         return row(cards);
     }
 
-    /** Similar titles (PreviewRules.similar); OK opens their preview on top of this one. */
+    /**
+     * Similar titles: TMDB's recommendations, asked for when the tab first shows (the mock catalogue's own rule
+     * answers at once); OK opens their preview on top of this one. Until they come, the row is empty.
+     */
     private View moreLikeThis() {
+        if (similar == null && !askedSimilar) {
+            askedSimilar = true;
+            data.catalog.similar(t, list -> {
+                similar = list;
+                if (active == Tab.MORE && content.getChildCount() > 0) rerender();
+            });
+        }
         List<View> cards = new ArrayList<>();
-        List<Title> similar = PreviewRules.similar(t, data.catalog.all());
-        for (int i = 0; i < similar.size(); i++) {
-            Title o = similar.get(i);
+        List<Title> shown = similar == null ? new ArrayList<>() : similar;
+        int n = Math.min(shown.size(), PreviewRules.SIMILAR_MAX);
+        if (similar != null && n == 0) return emptyNote(R.string.preview_no_similar);
+        for (int i = 0; i < n; i++) {
+            Title o = shown.get(i);
             cards.add(Kit.smallCard(ctx, o, null, data, G_SIMILAR, "sim-" + o.id, i == 0, v -> router.openTitle(o)));
         }
         return row(cards);
+    }
+
+    private View emptyNote(int text) {
+        TextView empty = Ui.text(ctx, 22, Ui.TEXT_3, Ui.REGULAR);
+        empty.setText(text);
+        empty.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        return empty;
     }
 
     // ---- Pieces ---------------------------------------------------------------------------------------------------

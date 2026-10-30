@@ -1,0 +1,29 @@
+{
+  "id": 95396,
+  "name": "Severance",
+  "first_air_date": "2022-02-17",
+  "episode_run_time": [],
+  "last_episode_to_air": {"runtime": 51},
+  "vote_average": 8.4,
+  "overview": "Mark leads a team of office workers whose memories have been surgically divided.",
+  "backdrop_path": "/severance.jpg",
+  "genres": [{"id": 18, "name": "Drama"}, {"id": 10765, "name": "Sci-Fi & Fantasy"}, {"id": 9648, "name": "Mystery"}],
+  "seasons": [
+    {"season_number": 0, "episode_count": 3},
+    {"season_number": 1, "episode_count": 9},
+    {"season_number": 2, "episode_count": 10},
+    {"season_number": 3, "episode_count": 0}
+  ],
+  "created_by": [{"id": 1, "name": "Dan Erickson", "profile_path": null}],
+  "credits": {
+    "cast": [{"id": 2, "name": "Adam Scott", "character": "Mark Scout", "profile_path": "/adam-scott.jpg"}],
+    "crew": [{"id": 3, "name": "Ben Stiller", "job": "Director"}]
+  },
+  "content_ratings": {"results": [{"iso_3166_1": "DE", "rating": "16"}, {"iso_3166_1": "US", "rating": "TV-MA"}]},
+  "videos": {"results": []},
+  "recommendations": {"results": []},
+  "similar": {"results": [
+    {"id": 100088, "name": "The Last of Us", "first_air_date": "2023-01-15", "genre_ids": [18],
+     "vote_average": 8.6, "backdrop_path": "/last-of-us.jpg"}
+  ]}
+}

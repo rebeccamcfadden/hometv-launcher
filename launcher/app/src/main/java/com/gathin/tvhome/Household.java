@@ -77,6 +77,11 @@ final class Household {
         return state.viewed();
     }
 
+    /** Every title id the household keeps, for the catalogue to load. */
+    List<String> titleIds() {
+        return state.titleIds();
+    }
+
     void pushViewed(String id) {
         if (state.pushViewed(id)) changed();
     }

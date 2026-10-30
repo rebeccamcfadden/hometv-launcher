@@ -1,7 +1,6 @@
 package com.gathin.tvhome;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -47,7 +46,6 @@ final class PickRules {
     private static final String[][] GENRES = {{}, {"Drama", "Sci-fi"}, {"Comedy", "Animation"}, {"Mystery", "Thriller"},
             {"Documentary"}};
     private static final double[] SCORES = {0, 7, 8};
-    private static final List<String> ABOVE_PG13 = Arrays.asList("R", "TV-MA", "NR");
 
     /** The lists the setup page offers, in its order. */
     static final ListId[] LISTS = {ListId.MY, ListId.HOUSEHOLD, ListId.FRIENDS};
@@ -119,7 +117,9 @@ final class PickRules {
 
     /**
      * Whether t passes option i of a field. A show's length is its episodes' average length (the field reads
-     * "Episode length" for shows); a show with no episodes listed passes, as every show does in the prototype.
+     * "Episode length" for shows); a show with no length known passes, as every show does in the prototype. A
+     * rating passes "Up to PG-13" or "Up to R" by its rank on the US scale ({@link Certifications#rank}); a title
+     * without a US rating counts as not rated, as NR does in the prototype.
      */
     static boolean test(int field, int i, Title t, Household h, Set<ServiceId> subscribed) {
         switch (field) {
@@ -136,7 +136,7 @@ final class PickRules {
                 return t.score >= SCORES[i];
             case RATING:
                 if (i == 0) return true;
-                return i == 1 ? !ABOVE_PG13.contains(t.rating) : !"NR".equals(t.rating);
+                return Certifications.rank(t.rating) <= (i == 1 ? 2 : 3);
             case WATCH:
                 return i == 1 || !h.isSeen(t.id);
             default:
@@ -146,7 +146,10 @@ final class PickRules {
         }
     }
 
-    /** A show's average episode length in minutes, rounded; 0 for a movie or a show without episodes. */
+    /**
+     * A show's average episode length in minutes, rounded: from its episodes when they are loaded, else TMDB's
+     * typical episode length; 0 for a movie or a show without either.
+     */
     static int episodeLength(Title t) {
         int sum = 0, n = 0;
         for (Season s : t.seasons) {
@@ -155,7 +158,7 @@ final class PickRules {
                 n++;
             }
         }
-        return n == 0 ? 0 : Math.round(sum / (float) n);
+        return n == 0 ? t.episodeRuntime : Math.round(sum / (float) n);
     }
 
     /**
@@ -167,6 +170,8 @@ final class PickRules {
         List<Title> out = new ArrayList<>();
         for (Title t : all) {
             if (t.kind != s.kind) continue;
+            // A title whose details haven't loaded yet can't be judged on them.
+            if (!t.detailed) continue;
             if (s.source == Source.LISTS) {
                 if (!onAnyList(t, s.lists, h)) continue;
             } else if (!Offers.isIncluded(t, subscribed)) {

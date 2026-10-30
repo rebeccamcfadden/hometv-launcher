@@ -25,6 +25,7 @@ import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -220,10 +221,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         shell.push(TitlePreview.create(this, this, t));
     }
 
-    /** M5: the person page stub, pushed over the preview it was opened from. */
+    /** M5: the person page, pushed over the preview or the search it was opened from. */
     @Override
-    public void openPerson(String name) {
-        shell.push(PersonPage.create(this, this, name));
+    public void openPerson(Person p) {
+        shell.push(PersonPage.create(this, this, p));
     }
 
     /** M7: Pick for me's setup page, pushed over whichever page is showing, so Back returns to it. */
@@ -248,15 +249,23 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         start(i);
     }
 
-    /** YouTube's TV app, searching "name year trailer": its search intent, else its results page. */
+    /**
+     * YouTube's TV app on the title's trailer from TMDB; without one (the mock catalogue, details not loaded yet, no
+     * trailer on TMDB), searching "name year trailer": its search intent, else its results page.
+     */
     @Override
     public void openTrailer(Title t) {
-        String query = t.name + " " + t.year + " trailer";
         String youtube = data.table.packages(ServiceId.YOUTUBE).get(0);
-        Intent search = new Intent(Intent.ACTION_SEARCH).setPackage(youtube).putExtra(SearchManager.QUERY, query);
-        Intent results = new Intent(Intent.ACTION_VIEW,
-                Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(query))).setPackage(youtube);
-        for (Intent i : new Intent[]{search, results}) {
+        List<Intent> tries = new ArrayList<>();
+        if (t.trailer != null) {
+            tries.add(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + t.trailer))
+                    .setPackage(youtube));
+        }
+        String query = t.name + " " + t.year + " trailer";
+        tries.add(new Intent(Intent.ACTION_SEARCH).setPackage(youtube).putExtra(SearchManager.QUERY, query));
+        tries.add(new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(query))).setPackage(youtube));
+        for (Intent i : tries) {
             if (i.resolveActivity(getPackageManager()) != null) {
                 start(i);
                 return;
@@ -351,7 +360,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private void readNetwork() {
         NetworkState s = NetworkState.read(this);
         networkIcon = s.icon();
+        boolean was = internet;
         internet = s.validated;
+        // Titles whose details failed while offline (a cold start before Wi-Fi is up) load once the internet is back.
+        if (internet && !was && data != null) data.catalog.retryFailed();
     }
 
     private void refreshInputs() {

@@ -217,6 +217,34 @@ public class PickRulesTest {
         assertTrue(test(PickRules.RATING, 2, rated("R")));
         assertTrue(test(PickRules.RATING, 2, rated("TV-MA")));
         assertFalse(test(PickRules.RATING, 2, rated("NR")));
+        // From TMDB: NC-17 is above R, and a title without a US rating counts as not rated.
+        assertFalse(test(PickRules.RATING, 2, rated("NC-17")));
+        assertFalse(test(PickRules.RATING, 1, rated("")));
+        assertFalse(test(PickRules.RATING, 2, rated("")));
+        assertTrue(test(PickRules.RATING, 0, rated("")));
+    }
+
+    @Test
+    public void aShowsLengthFallsBackToTmdbsEpisodeLength() {
+        Title.Draft d = new Title.Draft(show("tmdb"));
+        d.episodeRuntime = 95;
+        d.seasons = Collections.singletonList(new Season(1, 8, Collections.emptyList()));
+        Title t = d.build();
+        assertEquals(95, PickRules.episodeLength(t));
+        assertFalse(test(PickRules.LENGTH, 2, t));
+        assertTrue(test(PickRules.LENGTH, 1, t));
+    }
+
+    @Test
+    public void titlesStillLoadingAreNotPicked() {
+        Title arrival = catalog.get("arrival");
+        Title.Draft d = new Title.Draft(arrival);
+        d.id = "loading";
+        d.detailed = false;
+        PickRules.Household both = household(new java.util.HashSet<>(Arrays.asList("arrival", "loading")),
+                Collections.emptySet());
+        List<Title> m = PickRules.matches(open(Kind.MOVIE), Arrays.asList(arrival, d.build()), both, SUBS);
+        assertEquals(Collections.singletonList("arrival"), ids(m));
     }
 
     @Test

@@ -42,6 +42,7 @@ final class PickSetupPage extends Screen {
     private final View[] fieldViews = new View[PickRules.IDS.length];
     private final TextView count, countText, summaryLead, summaryFilters, note;
     private final View find;
+    private final Runnable onCatalog;
 
     static PickSetupPage create(MainActivity activity, Kind kind) {
         return new PickSetupPage(activity, activity, activity, kind, new Random());
@@ -167,6 +168,11 @@ final class PickSetupPage extends Screen {
 
         page.addView(body, bodyParams());
         page.addView(Kit.guide(ctx, ctx.getString(R.string.pick_guide_left), ctx.getString(R.string.pick_guide_right)));
+        // The count follows the titles' details as they arrive (the catalogue holds this listener weakly).
+        onCatalog = () -> {
+            if (router.shell().top() == this) refresh();
+        };
+        data.catalog.addListener(onCatalog);
         refresh();
     }
 

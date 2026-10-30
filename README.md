@@ -597,7 +597,7 @@ The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor
 |---|---|
 | **Home** | Greeting, date, clock and weather for the city chosen in Launcher settings (default: the location in `launcher/tv.properties`), then the app row. The row starts with the installed apps from `dock_apps`; hold OK on a tile to move it, remove it from Home or open App info, and Home keeps that order. |
 | **Inputs** | The nav's Inputs dropdown and Home's Inputs row: HDMI ports under their names, CEC devices on their port, AV and Live TV (`live_tv_package`). Home's row shows the first four (Live TV first); the dropdown lists them all. Sets that list their inputs another way are handled in [`config.xml`](launcher/app/src/main/res/values/config.xml). |
-| **Movies, TV Shows, Search, Pick for me** | Built on a catalogue interface; V1 plugs in the prototype's mock catalogue, so titles, artwork, availability and prices are illustrative. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. |
+| **Movies, TV Shows, Search, Pick for me** | Titles, artwork, cast, episodes, similar titles and search come from [TMDB](https://www.themoviedb.org) when the build has a TMDB token, and are cached on the TV so what was seen once still shows offline; without a token the launcher uses the prototype's mock catalogue. Availability and prices are still illustrative. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. |
 | **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`. Watch opens that service's app. |
 | **Settings** | The nav's Settings icon opens the TV's settings; Home's Shortcuts row opens the launcher's own (below). |
 | **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone (below). |
@@ -612,7 +612,12 @@ and `sdkmanager "platforms;android-34" "build-tools;34.0.0"`. On Linux the insta
 
 The weather's default location and temperature unit come from `launcher/tv.properties`, which is gitignored: copy
 [`launcher/tv.properties.example`](launcher/tv.properties.example) (New York, °C) and edit the copy. Both can be
-changed on the TV too, in Launcher settings.
+changed on the TV too, in Launcher settings. For the real catalogue, add your TMDB "API Read Access Token" there as
+`tmdb_api_key` (free for non-commercial use, from your account's API settings at themoviedb.org). Without it the
+launcher builds with the mock catalogue, which needs no network. The token ends up inside the APK you build, so
+keep that APK to yourself.
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 </details>
 

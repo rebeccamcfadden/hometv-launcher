@@ -216,4 +216,17 @@ public class LibraryFiltersTest {
             assertTrue(t.id, freeOrRent);
         }
     }
+
+    @Test
+    public void aMovieWhoseLengthIsNotKnownYetFailsALengthFilter() {
+        LibraryFilters f = filters(Kind.MOVIE);
+        f.clear();
+        Title.Draft d = new Title.Draft(catalog.get("arrival"));
+        d.runtime = 0;
+        d.detailed = false;
+        f.set(LibraryFilters.RUNTIME, 1);
+        assertFalse(f.passes(d.build()));
+        f.set(LibraryFilters.RUNTIME, 0);
+        assertTrue(f.passes(d.build()));
+    }
 }

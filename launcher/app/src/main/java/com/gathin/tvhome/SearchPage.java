@@ -27,7 +27,7 @@ import java.util.Locale;
  * the first column bring the keyboard back with the query kept. With the keyboard showing, Back and Backspace go
  * Home; only the on-screen delete key deletes. Leaving for another tab forgets the search. Typing on a hardware
  * keyboard or a remote with keys types into the bar (Shell routes the characters to {@link #onText}). Matching is
- * {@link SearchIndex} over the catalogue.
+ * {@link SearchIndex} over the catalogue, with TMDB's answer for the query merged in once typing pauses.
  */
 final class SearchPage extends Screen {
 
@@ -59,6 +59,10 @@ final class SearchPage extends Screen {
     private static final int PREVIEW_ROWS = 3;
     /** A row that runs off the screen's edge stops scrolling this far short of it (search.ts titleRow). */
     private static final int ROW_REVEAL = 96;
+    /** How long typing must pause before TMDB is asked, and how many letters it takes. */
+    private static final int DEBOUNCE_MS = 300;
+    private static final int REMOTE_MIN = 2;
+    private static final int GENRE_MIN = 3;
 
     private static final String[] KEY_ROWS = {"abcdef", "ghijkl", "mnopqr", "stuvwx", "yz1234", "567890"};
     private static final String[] BROWSE_GENRES = {"Sci-fi", "Drama", "Comedy", "Documentary", "Animation", "Thriller"};
@@ -98,6 +102,17 @@ final class SearchPage extends Screen {
     private SearchIndex.Results results;
     private boolean hasMatches;
     private int viewLeft = VIEW_LEFT;
+
+    /** What TMDB found for {@link #foundFor}, merged into the results while the query is still that. */
+    private Catalog.Found found;
+    private String foundFor;
+    /** The popular titles of a genre typed in full, and the genre asked for last. */
+    private List<Title> genreFound;
+    private String genreFoundName, genreAsked;
+    /** Asks TMDB once typing pauses (DEBOUNCE_MS), from two letters on. */
+    private final Runnable askRemote = this::askRemote;
+    /** Kept in a field: the catalogue holds its listeners weakly. */
+    private final Runnable onCatalog;
 
     static SearchPage create(MainActivity activity, NavBar.Host host) {
         return new SearchPage(activity, activity, Pages.page(activity, host, Tab.SEARCH));
@@ -210,6 +225,11 @@ final class SearchPage extends Screen {
         plp.leftMargin = Ui.px(Ui.SAFE_X);
         content.addView(panel, plp);
 
+        // Recently viewed and From My list fill in as their titles' details arrive.
+        onCatalog = () -> {
+            if (shell.top() == this) render();
+        };
+        data.catalog.addListener(onCatalog);
         render();
     }
 
@@ -238,6 +258,10 @@ final class SearchPage extends Screen {
         filter = SearchIndex.Filter.ALL;
         expanded = false;
         snap = true;
+        view.removeCallbacks(askRemote);
+        found = null;
+        foundFor = null;
+        genreAsked = null;
         memory.clear();
         lastFocus = null;
         lastFocusKey = null;
@@ -281,7 +305,39 @@ final class SearchPage extends Screen {
     private void setQuery(String q) {
         query = SearchQuery.clean(q);
         if (query.isEmpty()) expanded = false;
+        view.removeCallbacks(askRemote);
+        if (data.catalog.isRemote() && query.trim().length() >= REMOTE_MIN) view.postDelayed(askRemote, DEBOUNCE_MS);
         render();
+    }
+
+    /**
+     * Typing paused: asks TMDB for the query (cached for an hour), and for a genre typed well enough the genre's
+     * popular titles. The answers redraw the page only while the query is still the one asked.
+     */
+    private void askRemote() {
+        String q = query;
+        if (q.trim().length() < REMOTE_MIN) return;
+        data.catalog.search(q, f -> {
+            if (!q.equals(query)) return;
+            found = f;
+            foundFor = q;
+            if (shell.top() == this) render();
+        });
+        String genre = results == null ? null : SearchIndex.strongGenre(results);
+        if (genre == null || q.trim().length() < GENRE_MIN || genre.equals(genreAsked)) return;
+        genreAsked = genre;
+        data.catalog.genre(genre, list -> {
+            genreFound = list;
+            genreFoundName = genre;
+            if (shell.top() == this && query.equals(q)) render();
+        });
+    }
+
+    /** What the network found that still belongs to the query; null when nothing does. */
+    private SearchIndex.Remote remote() {
+        Catalog.Found f = query.equals(foundFor) ? found : null;
+        if (f == null && genreFound == null) return null;
+        return new SearchIndex.Remote(f, genreFoundName, genreFound);
     }
 
     private void expand() {
@@ -319,9 +375,9 @@ final class SearchPage extends Screen {
         router.openTitle(t);
     }
 
-    private void openPerson(String name) {
+    private void openPerson(Person p) {
         if (!query.isEmpty()) data.household.pushRecent(query);
-        router.openPerson(name);
+        router.openPerson(p);
     }
 
     // ---- Rendering ------------------------------------------------------------------------------------------------
@@ -335,7 +391,7 @@ final class SearchPage extends Screen {
      * inert; expand and collapse pass false and place focus themselves, so the keyboard's memory survives.
      */
     private void render(boolean refocus) {
-        results = query.isEmpty() ? null : index.search(query);
+        results = query.isEmpty() ? null : index.search(query, remote());
         hasMatches = results != null && results.hasMatches();
 
         // The bar.
@@ -707,7 +763,9 @@ final class SearchPage extends Screen {
     }
 
     private View resultCard(SearchIndex.Hit hit, boolean isDefault) {
-        String key = "r-" + hit.kind.name().toLowerCase(Locale.ROOT) + "-" + hit.label;
+        // Titles by id: two titles may share a name (Dune, 1984 and 2021).
+        String key = hit.kind == SearchIndex.HitKind.TITLE ? "r-title-" + hit.title.id
+                : "r-" + hit.kind.name().toLowerCase(Locale.ROOT) + "-" + hit.label;
         CharSequence name = Kit.highlight(hit.label, hit.match.indices);
         if (hit.kind == SearchIndex.HitKind.PERSON) return personCard(hit, name, key, isDefault);
         return Kit.smallCard(ctx, hit.title, name, data, GROUP_GRID, key, isDefault, v -> openTitle(hit.title));
@@ -715,18 +773,14 @@ final class SearchPage extends Screen {
 
     /**
      * A person among the results ({@code .card--small.card--person}): the small card's 271 × 152 art box with the
-     * round initials portrait in its middle, the highlighted name, "Person" and how many titles they are in.
+     * round portrait in its middle (initials, and their photo over them when TMDB has one), the highlighted name,
+     * "Person" and how many titles they are in.
      */
     private View personCard(SearchIndex.Hit hit, CharSequence name, String key, boolean isDefault) {
         LinearLayout card = Kit.unclip(new LinearLayout(ctx));
         card.setOrientation(LinearLayout.VERTICAL);
         RingFrame art = new RingFrame(ctx, 14, false, Ui.BG_RAISED);
-        RingFrame portrait = new RingFrame(ctx, 52, true, 0xFF1C2633);
-        TextView initials = Ui.line(ctx, 32, Ui.TEXT_2, Ui.MEDIUM);
-        initials.setText(TitleText.initials(hit.label));
-        initials.setGravity(Gravity.CENTER);
-        portrait.content().addView(initials, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        RingFrame portrait = Kit.portrait(ctx, hit.label, hit.person.photo, 104, 32);
         art.content().addView(portrait, new FrameLayout.LayoutParams(Ui.px(104), Ui.px(104), Gravity.CENTER));
         card.addView(art, new LinearLayout.LayoutParams(Ui.px(CARD_W), Ui.px(152)));
         TextView n = Ui.line(ctx, 22, Ui.TEXT_1, Ui.MEDIUM);
@@ -748,7 +802,7 @@ final class SearchPage extends Screen {
             float s = focused ? 1.03f : 1f;
             art.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
-        return Focus.make(card, GROUP_GRID, key, isDefault, v -> openPerson(hit.label));
+        return Focus.make(card, GROUP_GRID, key, isDefault, v -> openPerson(hit.person));
     }
 
     // ---- Layout helpers -------------------------------------------------------------------------------------------

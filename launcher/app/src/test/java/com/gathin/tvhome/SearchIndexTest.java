@@ -208,9 +208,116 @@ public class SearchIndexTest {
         assertFalse(r.hasMatches());
         assertTrue(r.suggestions.isEmpty());
         assertEquals(null, SearchQuery.ghost("qzxv", r, false));
-        // A genre alone is not a match.
+        // A genre alone is not a match, unless it is typed well enough to list its titles (below).
         assertFalse(INDEX.search("dcoumentary").hasMatches());
         assertFalse(INDEX.search("dcoumentary").genres.isEmpty());
+    }
+
+    @Test
+    public void anExactGenreListsItsTitles() {
+        // BACKLOG.md, Exact genre search: "drama" used to show No matches.
+        SearchIndex.Results r = INDEX.search("drama");
+        assertTrue(r.hasMatches());
+        assertEquals("Drama", SearchIndex.strongGenre(r));
+        assertFalse(r.genreTitles.isEmpty());
+        for (Title t : r.genreTitles) assertTrue(t.id, t.genres.contains("Drama"));
+        // Its titles lead the grid, before titles merely named like it.
+        assertTrue(r.genreFirst);
+        assertEquals(r.genreTitles.get(0), INDEX.items(r, SearchIndex.Filter.ALL, OffersTest.PROTOTYPE).get(0).title);
+        assertFalse(INDEX.search("dram").genreFirst);
+        assertEquals(null, SearchIndex.strongGenre(INDEX.search("dcoumentary")));
+    }
+
+    // ---- With what TMDB found (SearchIndex.Remote) -----------------------------------------------------------------
+
+    private static Title remote(String id, Kind kind, String name, int year, String... genres) {
+        Title.Draft d = new Title.Draft(id, kind, name);
+        d.year = year;
+        d.genres = java.util.Arrays.asList(genres);
+        d.score = 7;
+        return d.build();
+    }
+
+    private static SearchIndex.Remote found(List<Title> titles, List<Person> people,
+                                            java.util.Map<Integer, List<Title>> knownFor) {
+        return new SearchIndex.Remote(new Catalog.Found(titles, people, knownFor), null, null);
+    }
+
+    @Test
+    public void remoteTitlesComeFirstAmongEqualScoresInTmdbsOrder() {
+        Title dune2021 = remote("movie:438631", Kind.MOVIE, "Dune", 2021, "Sci-fi");
+        Title dune1984 = remote("movie:841", Kind.MOVIE, "Dune", 1984, "Sci-fi");
+        Title partTwo = remote("movie:693134", Kind.MOVIE, "Dune: Part Two", 2024, "Sci-fi");
+        SearchIndex.Results r = INDEX.search("dune", found(java.util.Arrays.asList(dune2021, dune1984, partTwo),
+                Collections.emptyList(), Collections.emptyMap()));
+        assertEquals("movie:438631", r.titles.get(0).title.id);
+        assertEquals("movie:841", r.titles.get(1).title.id);
+        // The mock's own Dune: Part Two (id "dune") is a different title here, so both are listed.
+        List<String> ids = new ArrayList<>();
+        for (SearchIndex.Hit h : r.titles) ids.add(h.title.id);
+        assertTrue(ids.contains("movie:693134"));
+        assertTrue(ids.contains("dune"));
+        assertEquals(new java.util.HashSet<>(ids).size(), ids.size());
+    }
+
+    @Test
+    public void aTypoStillFindsWhatTheTvKnows() {
+        // TMDB finds nothing for "arival"; the catalogue's Arrival still matches with one typo.
+        Title other = remote("movie:1", Kind.MOVIE, "Zzz Top", 2001);
+        SearchIndex.Results r = INDEX.search("arival", found(Collections.singletonList(other),
+                Collections.emptyList(), Collections.emptyMap()));
+        assertEquals("Arrival", r.titles.get(0).label);
+        assertTrue(r.hasMatches());
+    }
+
+    @Test
+    public void aRemoteTitleWhoseNameDoesntMatchRanksJustBelowATypo() {
+        Title alt = remote("movie:2", Kind.MOVIE, "Zzz", 2001);
+        SearchIndex.Results r = INDEX.search("arrivsl", found(Collections.singletonList(alt),
+                Collections.emptyList(), Collections.emptyMap()));
+        assertEquals("Arrival", r.titles.get(0).label);
+        SearchIndex.Hit alt2 = null;
+        for (SearchIndex.Hit h : r.titles) if (h.title.id.equals("movie:2")) alt2 = h;
+        assertNotNull(alt2);
+        assertEquals(SearchIndex.REMOTE_SCORE, alt2.match.score, 1e-9);
+        assertEquals(0, alt2.match.indices.length);
+        assertTrue(r.titles.get(0).match.score > alt2.match.score);
+    }
+
+    @Test
+    public void aRemotePersonMergesWithTheOneTheTvKnows() {
+        Person amy = new Person("Amy Adams", "Acting", 9273, "/amy.jpg");
+        Title enchanted = remote("movie:4523", Kind.MOVIE, "Enchanted", 2007);
+        java.util.Map<Integer, List<Title>> knownFor = new java.util.HashMap<>();
+        knownFor.put(9273, Collections.singletonList(enchanted));
+        SearchIndex.Results r = INDEX.search("amy adams", found(Collections.emptyList(),
+                Collections.singletonList(amy), knownFor));
+        assertEquals(1, r.people.size());
+        SearchIndex.Hit p = r.people.get(0);
+        assertEquals("Amy Adams", p.label);
+        assertEquals(9273, p.person.id);
+        assertEquals("/amy.jpg", p.person.photo);
+        // TMDB's best known first, then what the catalogue has her in.
+        assertEquals("movie:4523", p.titles.get(0).id);
+        assertEquals(1 + INDEX.titlesForPerson("Amy Adams").size(), p.titles.size());
+    }
+
+    @Test
+    public void aGenresPopularTitlesJoinItsTitles() {
+        Title popular = remote("movie:3", Kind.MOVIE, "Popular Drama", 2020, "Drama");
+        SearchIndex.Results r = INDEX.search("drama", new SearchIndex.Remote(null, "Drama",
+                Collections.singletonList(popular)));
+        assertEquals("movie:3", r.genreTitles.get(r.genreTitles.size() - 1).id);
+        // Another genre's titles don't.
+        SearchIndex.Results c = INDEX.search("comedy", new SearchIndex.Remote(null, "Drama",
+                Collections.singletonList(popular)));
+        for (Title t : c.genreTitles) assertFalse(t.id.equals("movie:3"));
+    }
+
+    @Test
+    public void localPeopleKeepTheirPerson() {
+        SearchIndex.Results r = INDEX.search("amy adams");
+        assertEquals("Amy Adams", r.people.get(0).person.name);
     }
 
     @Test

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- V2 Phase 1, the real catalogue from TMDB (BACKLOG.md, Real catalogue). English only (docs/rework.md, Languages). -->
+<resources>
+    <!-- Cast & crew while a title's details haven't arrived (offline with nothing cached, or still loading). -->
+    <string name="preview_not_loaded">Not loaded yet.</string>
+    <string name="preview_no_similar">Nothing similar found for this title.</string>
+    <!-- TMDB's required notice (developer.themoviedb.org/docs/faq), shown in Launcher settings. Do not reword. -->
+    <string name="tmdb_notice">This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
+</resources>

@@ -83,6 +83,8 @@ public final class LauncherSettingsActivity extends Activity {
         });
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
+        // TMDB's notice, wherever its data shows: only in builds with a TMDB token.
+        if (!BuildConfig.TMDB_TOKEN.isEmpty()) findViewById(R.id.tmdbNotice).setVisibility(View.VISIBLE);
         refresh();
         animationsChoice.requestFocus();
     }
