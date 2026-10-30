@@ -11,13 +11,13 @@ take on new dependencies. Analytics and telemetry are still out, and Home must k
 
 | | |
 |---|---|
-| ![Home: greeting, clock, weather and the app row](docs/rework/prototype-home.jpg) | ![Movies: the household's watchlists as a grid, with filters and Pick for me](docs/rework/prototype-movies.jpg) |
+| ![Home on the TV: greeting, clock, weather and the app row](docs/rework/tv-home.jpg) | ![Movies on the TV: the household's watchlists as a grid, with filters and Pick for me](docs/rework/tv-movies.jpg) |
 | *Home: greeting, clock, weather and the app row* | *Movies: the household's watchlists, filters and Pick for me* |
-| ![Title preview: Watch, My list, Seen, Favorite and Trailer, with tabs below](docs/rework/prototype-preview.jpg) | ![Search: the 6×6 keyboard, suggestions and results as you type](docs/rework/prototype-search.jpg) |
+| ![Title preview: Watch, My list, Seen, Favorite and Trailer, with tabs below](docs/rework/emulator-preview.jpg) | ![Search on the TV: the 6×6 keyboard, suggestions and results as you type](docs/rework/tv-search.jpg) |
 | *Title preview: Watch, My list, Seen, Favorite, Trailer and tabs* | *Search: fuzzy matching, results as you type* |
 
-These come from the web prototype in [`design_preview/`](design_preview/), with mock data. Screenshots from the TV
-replace them as each screen lands.
+V1 on the TCL BeyondTV (Android TV 9), except the title preview, which is from the Android TV 9 emulator. The
+catalogue, availability and prices are still mock data (see [BACKLOG.md](BACKLOG.md)); V2 makes them real.
 
 ## Status
 
@@ -25,15 +25,25 @@ replace them as each screen lands.
 |---|---|---|
 | Design | The web prototype and its spec, [`design_preview/README.md`](design_preview/README.md) | Done (#1) |
 | M0 · Tooling | JDK 17, Android SDK, an Android TV 9 emulator; the current launcher built and run as a baseline | Done (#4) |
-| M1 · Foundation | New Home activity replacing the old UI; design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | In review (#5) |
-| M1b · V1 cleanup | `Config` and `config.xml` cut to what the new launcher reads; old-UI docs, tools and tests; the README's old launcher sections | In review |
-| M2 · Home | Clock, greeting, weather, the app row with its hold-OK menu, Inputs, Shortcuts | In review (#6) |
-| M3 · Data layer | Household store, mock catalogue behind an interface, image cache, offline behaviour | In review (#7) |
-| M4 · Movies and TV Shows | List chips, grid, Filters drawer, empty states | In review (#8) |
-| M5 · Title preview | Popup, actions, five tabs, rent/buy dialog, person page | In review (#9) |
-| M6 · Search | Keyboard, fuzzy matching, suggestions, results, no matches | In review (#10) |
-| M7 · Pick for me | Setup and results | In review (#11) |
-| M8 · Finish | Stubs, docs, then the real TV | In review; the real-TV run is next ([checklist](docs/rework.md#real-tv-run)) |
+| M1 · Foundation | New Home activity replacing the old UI; design tokens, nav, screen stack, Back, focus memory, top-bar dropdowns | Done (#5) |
+| M1b · V1 cleanup | `Config` and `config.xml` cut to what the new launcher reads; old-UI docs, tools and tests; the README's old launcher sections | Done (#13) |
+| M2 · Home | Clock, greeting, weather, the app row with its hold-OK menu, Inputs, Shortcuts | Done (#6) |
+| M3 · Data layer | Household store, mock catalogue behind an interface, image cache, offline behaviour | Done (#7) |
+| M4 · Movies and TV Shows | List chips, grid, Filters drawer, empty states | Done (#8) |
+| M5 · Title preview | Popup, actions, five tabs, rent/buy dialog, person page | Done (#9) |
+| M6 · Search | Keyboard, fuzzy matching, suggestions, results, no matches | Done (#10) |
+| M7 · Pick for me | Setup and results | Done (#11) |
+| M8 · Finish | Stubs, docs, then the real TV | Done (#12); real-TV run 2026-10-30 ([results](docs/rework.md#real-tv-run)) |
+
+**V2** (planned with the project lead, 2026-10-30; [docs/rework.md](docs/rework.md#v2)):
+
+| Phase | What | Status |
+|---|---|---|
+| 0 · V1 wrap-up | Real-TV results, docs, V1 follow-ups found in testing | In progress |
+| 1 · Real catalogue | TMDB for titles, artwork, cast, episodes, More like this, trailers and search, cached on the TV | In progress |
+| 2 · Real availability | TMDB watch providers for SE, links that open the title, the household's services, real rent and buy prices | Researching prices |
+| 3 · Accounts | TMDB sign-in by QR, My list and Seen synced, Household and Friends from TMDB lists | Planned |
+| 4 · On-TV settings | Weather city and unit, the new Launcher settings page, switching Wi-Fi | In progress |
 
 What is mocked or deferred, and why: [BACKLOG.md](BACKLOG.md).
 

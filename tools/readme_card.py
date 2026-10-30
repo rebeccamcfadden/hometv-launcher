@@ -8,7 +8,7 @@ import sys
 
 # See readme_stats.py: Pillow lives in the optional requirements file, so name it rather than crash.
 try:
-    from PIL import Image, ImageDraw, ImageFilter, ImageFont
+    from PIL import Image, ImageDraw, ImageFont
 except ImportError:
     sys.exit("readme_card.py needs Pillow: tools/venv/bin/pip install -r tools/requirements-perf.txt")
 
@@ -21,11 +21,10 @@ def spaced(d, cx, y, t, font, sp, fill):
     w = sum(d.textlength(c, font=font) for c in t) + sp * (len(t) - 1); x = cx - w / 2
     for c in t: d.text((x, y), c, font=font, fill=fill); x += d.textlength(c, font=font) + sp
 
-# the TV screens, cropped to the bezel; the Wi-Fi name on the after shot is blurred
+# the TV screens: the stock "before" photo cropped to its bezel; the "after" is a 1920×1080 screenshot of the new
+# Home (tools/tv.py --screenshot), which needs no crop, and no blur since its nav shows Wi-Fi as an icon only
 before = Image.open("docs/stock-home.jpg").convert("RGB").crop((130, 216, 1317, 864))
 after = Image.open("docs/new-home.jpg").convert("RGB")
-box = (1150, 236, 1240, 280); after.paste(after.crop(box).filter(ImageFilter.GaussianBlur(9)), box)
-after = after.crop((203, 138, 1467, 792))
 PAD, ARROW = 70, 90
 tw = (W - 2 * PAD - ARROW) // 2
 shots = [im.resize((tw, round(im.height * tw / im.width)), Image.LANCZOS) for im in (before, after)]

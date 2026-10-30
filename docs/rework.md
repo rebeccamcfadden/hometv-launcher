@@ -66,13 +66,16 @@ Settled with the project lead on 2026-10-28.
 | Search, after review (2026-10-29) | Backspace is Back on every screen, Search included: on the full results it brings the keyboard back with the query kept, with the keyboard showing it goes Home, and only the on-screen ⌫ key deletes. Leaving Search for another tab (nav, Back, the remote's Home) clears the query, filter and full results; a title or person opened from it keeps them. Recent searches keep four, not five. Search has no guide line. The full results' six columns stay title-safe (96 px left, 98 px right); the start page's rows may still run off the right edge. The prototype and its README changed with it. |
 | M1b scope | Decided 2026-10-29. **Theme docs frozen:** `themes/README.md`, `docs/switches.md` and `docs/sky.md` stay as a V2 reference, marked as not read by the current launcher; only the tests that compare them with `config.xml` go. **Workflows retired:** `docs/workflows/translation.md`, `theme.md`, `launcher-switch.md`, `addon.md` and `docs/modules.md` are deleted and dropped from AGENTS.md, with a note that V2 may take them from upstream ([Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv)). **README:** the sections that describe the old launcher are rewritten for the new one. **`docs/card.jpg` and `docs/stats.png`:** redrawn with the tools, after fixing the language count. M1b runs now, before the real-TV run. |
 | Open questions, settled (2026-10-29) | `subscribed_services` stays on `tests/test_switches.py`'s "screenshots wanted" list until a TV screenshot exists. `.github/maintainer/MAINTAINER.md` allows the INTERNET permission for the fork's network features and pauses the 512 KB APK gate; `CONTRIBUTING.md` allows limited network access; `PROMPT.md` describes the new UI. The APK stays at about 1.6 MB for now, to be measured again once the mock artwork goes (BACKLOG.md, From M1). `LastOpened` stays, unread, with a BACKLOG entry for a future use. |
+| V2 plan | Decided 2026-10-30. Phases in order: 0 V1 wrap-up (finished first), 1 real catalogue (TMDB), 2 real availability, 3 accounts, 4 on-TV settings; work in a phase may start early where it doesn't wait on another. **Prices:** real rent and buy prices are a priority, from a second source alongside TMDB's providers (researched, see [V2](#v2)). **TMDB:** each builder uses their own TMDB API read access token (v4, sent as a `Bearer` header, not a v3 `api_key` query parameter), put in `launcher/tv.properties` as `tmdb_api_key`. That file is gitignored: never paste a token into a commit, issue or PR. Without it the launcher keeps the mock catalogue. **Designs:** screens without a design are drafted in Figma as a few options, the project lead picks, then they go into `design_preview/` and the launcher. |
 
 ## Open questions
 
 Raise these when they become relevant; don't settle them alone.
 
-- **The remote's Settings key** on the TCL still goes to TCL's own handler, not the launcher's Settings dropdown.
-  Check it in the real-TV run, then decide whether a key helper is worth it.
+- **The remote's Settings key** on the TCL opens TCL's own settings panel, not the launcher's quick-settings dropdown
+  (checked on the TV, 2026-10-30). The launcher can take it over with the Home key helper (`HOME_KEY_SERVICE=1` and
+  `settings_key_scancodes`, read from `getevent -lt` on the TV), at the cost the PROMPT.md notes describe for key
+  helpers. Keep TCL's panel, or map the key?
 
 ## Real-TV run
 
@@ -117,6 +120,42 @@ before any scripted check.
 
 **After:** close ADB as AGENTS.md requires: USB and network debugging off, authorisations revoked, a reboot, then `tools/adb-closed.py <tv ip>` must report the port closed. Record the results and any new decisions here.
 
+### Results (2026-10-30, `main` at 0212b6a4)
+
+The project lead tried every screen by hand on the evening of 2026-10-29 ("it looks good") and merged V1. The
+scripted part ran the next night on the same build:
+
+| Measure | V1 | Before |
+|---|---|---|
+| Cold start, `am start -W` TotalTime after a force stop (3 runs) | 1.9–2.1 s | 2.8 s (M1), 2.7 s (old launcher) |
+| Cold start, `tools/bench.py` WaitTime p50 / p95 | 609 / 626 ms | |
+| Key response p50 / p95 | 21 / 31 ms | |
+| Movement p50 (key to the end of the focus animation) | 197 ms | |
+| Janky frames while pressing keys on Home | 47 % (337 of 712) | a V2 follow-up |
+| Return to Home p50 / p95 | 71 / 235 ms | |
+| Idle CPU, whole TV / launcher | 2.9 % / 0.1 % | |
+| PSS after a cold start / after visiting every page | 22 MB / 41 MB | 11 MB (M1, no artwork) |
+
+- **Screenshots:** `shots/v1/` (gitignored); Home, Movies and Search are now in README.md and Home is the README
+  card's "after".
+- **Settings key:** TCL's own settings panel (Open questions).
+- **Not checked on the TV:** Wi-Fi off (it takes ADB with it; checked on the emulator in the integration pass).
+- **ADB:** the project lead chose to close it. The TV was off before the port could be checked, so
+  `tools/adb-closed.py <tv ip>` still needs a run with the TV on and debugging off.
+
+## V2
+
+The plan from the V2 plan decision above. Each phase follows the same workflow as V1: one PR per topic, stacked,
+emulator first, the real TV in a batch with the project lead.
+
+| Phase | Scope | Waits on |
+|---|---|---|
+| 0 · V1 wrap-up | Real-TV results and docs; follow-ups from the integration pass and the TV (nav focus on the page's own tab, the tile menu over the greeting, screen-reader state, jank on Home) | Nothing |
+| 1 · Real catalogue | TMDB titles, artwork, cast, episodes, More like this, trailers and search, cached on disk; the mock art leaves the APK, then the size gate is reconsidered | The TMDB token (there) |
+| 2 · Real availability | TMDB watch providers for SE, deep links through Wikidata, the household's services, real rent and buy prices | The price source (researched), the services picker design |
+| 3 · Accounts | TMDB sign-in by QR, My list, Seen and Favorites synced, Household and Friends from TMDB lists, start empty instead of the mock seed | The first-run and sign-in designs |
+| 4 · On-TV settings | Weather city and unit, the new Launcher settings page, switching between saved Wi-Fi networks | The Launcher settings and picker designs |
+| Later | Two regions (SE and US), Music, Explore pages, voice search, the screensaver, themes, add-ons, Watch Next, more languages | A design or a decision |
 ## Milestones
 
 | | Scope | Done when |
