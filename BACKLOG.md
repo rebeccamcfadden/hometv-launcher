@@ -173,9 +173,6 @@ From the old launcher; not in V1 by decision.
   `docs/stats.png` show TV models, brands and the launcher's size. Its "after", `docs/new-home.jpg`, is a screenshot
   of the new Home from the TV (2026-10-30). The stat strip still says 1.6 MB: redraw it once the APK size settles
   (V2 Phase 1 brought it to about 0.27 MB).
-- **APK size:** about 1.6 MB in V1, almost all of it the bundled mock artwork (1.35 MB); the 512 KB gate is paused in
-  this fork. With the real catalogue the artwork left the APK: 275,607 B with a TMDB token, about 260 KB without
-  (V2 Phase 1). Decide whether the gate comes back, and at what size (project lead).
 - **Last opened:** `LastOpened` notes when Home or All Apps last opened each app (on the TV only, no permission).
   Nothing reads it since the old Home's "Last opened" line went in M1. Wanted: a use for it, for example ordering
   All Apps or the Home row by recent use, once that is designed.

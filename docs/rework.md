@@ -35,7 +35,7 @@ Settled with the project lead on 2026-10-28.
 | Left for V2 | Themes and wallpapers, the clock screensaver, module cards and add-ons, Watch Next, festivals, sky and lunar calendars. Listed in [BACKLOG.md](../BACKLOG.md). |
 | Toolkit | Plain Java and Android Views, with the existing Gradle build. No Kotlin, no Compose. |
 | Typeface | Roboto, the system font; nothing bundled. Sizes and weights follow Figma, which uses Inter. |
-| APK size | The 512 KB gate is not enforced in this fork. Each PR reports the size; M0 changes `ci.yml` to report it instead of failing. |
+| APK size | V1 (M0, 2026-10-29) dropped upstream's 512 KB gate: `ci.yml` only reported the size. Since V2 Phase 1 (2026-10-30) CI fails a release APK over 1,048,576 bytes (1 MB), at the project lead's decision; each PR still reports its size. |
 | Languages | English only. Launcher translations, RTL and the translated READMEs are dropped. |
 | Catalogue | Mock in V1, ported from `design_preview/src/data`, behind an interface a TMDB source can replace. Real in V2 Phase 1 (`TmdbCatalog`) when the build has a TMDB token; without one, the mock catalogue still builds and works offline. |
 | Availability and prices | Mock in V1. |

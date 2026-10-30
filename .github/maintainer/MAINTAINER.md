@@ -6,7 +6,7 @@ tested TV lists under `examples/<tv>/`, translations, docs, small launcher optio
 
 ## The policy: a small core plus a well-indexed hub
 The main repo stays small and simple: the prompt, tested TV lists, the safety rules and a small, stable
-launcher. The APK size gate (`.github/workflows/ci.yml`, 524,288 B) is paused in this fork while the launcher bundles mock artwork: CI reports the size but does not fail on it, and the PR states it. Bigger ideas live next to
+launcher. The APK size gate (`.github/workflows/ci.yml`) is 1 MB (1,048,576 bytes; CI is the source of truth) in this fork: the mock artwork left with the real catalogue (V2 Phase 1), and the launcher may use the network. Bigger ideas live next to
 it, and every one of them gets a home. Pick the smallest home that fits (CONTRIBUTING, "Where does my idea go?"):
 
 | The idea | Where it goes | Verdict |
@@ -22,7 +22,7 @@ it, and every one of them gets a home. Pick the smallest home that fits (CONTRIB
   say where it fits and why the core stays small. They are not a judgement of the work. Never rework a big
   feature into a small one; offer the showcase row instead.
 - The core takes a switch only if it changes nothing until a theme or config.xml turns it on, has its strings in
-  every locale (or no settings row), and keeps the APK size in the PR (the gate is paused, see above).
+  every locale (or no settings row), and keeps the APK at or under the 1,048,576-byte gate (see above).
   A changed default for every TV is a rework (put the new value in a theme or that TV's example config).
 - Launcher bug fixes that correct wrong behaviour need no flag; tested on a device, they can merge.
 - Changes to the Home/launch path (Home key, boot, return to Home, the install scripts) usually need a run on a

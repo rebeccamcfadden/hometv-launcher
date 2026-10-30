@@ -135,7 +135,7 @@ take them back from [upstream](https://github.com/Gathin23/cleanyourtv/tree/main
 |---|---|
 | Tests, as CI runs them | `python3 -m unittest discover -s tests -v` after `python3 -m venv tools/venv` and `tools/venv/bin/pip install -r tools/requirements.txt`. On `main`, CI sets `CLEANYOURTV_STRICT=1`, and its "README tables" job checks that the TV tables and counts are what `tools/gen_tables.py` writes. |
 | Launcher, if you touched `launcher/` | JDK 17, Android SDK platform 34, build-tools 34.0.0. In `launcher/`: `./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease`. Lint must stay at zero errors. |
-| APK size | Report the size of `launcher/app/build/outputs/apk/release/app-release.apk` in the PR; this fork has no size gate. |
+| APK size | Report the size of `launcher/app/build/outputs/apk/release/app-release.apk` in the PR, for context; CI fails it above 1,048,576 bytes (1 MB). |
 | Design preview, if you touched `design_preview/` | Node 20+. In `design_preview/`: `npm install`, then `npm run build` (type-checks; no errors). |
 | README rows | A new list adds only its folder, with a `tv.json`: the TV tables, the brand line and the counts are generated after merging, so leave them alone. A theme has its row in `themes/README.md`; an add-on in `addons/README.md`. |
 | One topic per PR | A TV list never rides inside a launcher feature PR. A device's list plus small fixes for that same device can be one PR. |

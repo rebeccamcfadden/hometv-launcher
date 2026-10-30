@@ -63,7 +63,12 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease
-      - name: APK size (reported; not a gate in this fork, see docs/rework.md)
+      - name: APK size (gate at 1 MB in this fork, see docs/rework.md)
         run: |
           size=$(stat -c %s launcher/app/build/outputs/apk/release/app-release.apk)
-          echo "release APK: $size B ($((size / 1024)) KB)" | tee -a "$GITHUB_STEP_SUMMARY"
+          limit=1048576
+          echo "release APK: $size B ($((size / 1024)) KB), limit $limit B" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$size" -gt "$limit" ]; then
+            echo "::error::release APK is $size B, over the $limit B gate"
+            exit 1
+          fi
