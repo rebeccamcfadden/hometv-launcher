@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- First run (design_preview/README.md, First run; V2 designs 01-setup B and r2-setup-checklist). -->
+<resources>
+    <!-- The checklist. -->
+    <string name="first_run_eyebrow">First run</string>
+    <string name="first_run_title">Set up your Home screen</string>
+    <string name="first_run_title_done">You’re all set</string>
+    <string name="first_run_lead">Everything has a sensible default. Open a row to change it, or start right away.</string>
+    <string name="first_run_lead_done">Every row is done. Change any of them now, or start.</string>
+    <string name="first_run_start">Start using Home</string>
+    <string name="first_run_start_note">The same pages are in Launcher settings.</string>
+    <string name="first_run_optional">Optional</string>
+    <string name="first_run_suggested">Suggested</string>
+    <string name="first_run_default">Default</string>
+
+    <!-- The rows: title and the line under it. -->
+    <string name="first_run_account">Sign in to TMDB</string>
+    <string name="first_run_account_line">Brings My list, Seen and Favorites from your account</string>
+    <string name="first_run_account_line_in">Signed in · your lists stay in step with TMDB</string>
+    <string name="first_run_services">Streaming services</string>
+    <string name="first_run_stores">Stores for rent and buy</string>
+    <string name="first_run_stores_line">Where prices come from</string>
+    <string name="first_run_weather">Weather city</string>
+    <string name="first_run_weather_line">For the forecast on Home</string>
+
+    <!-- The help pane for the focused row. -->
+    <string name="first_run_account_help_title">Your watchlists, on the TV.</string>
+    <string name="first_run_account_help_body">TMDB is a free film and TV database. Sign in once with your phone and My list, Seen and Favorites stay in step with your account.</string>
+    <string name="first_run_account_help_note">Skip it and your lists are kept on this TV only. You can sign in later from Launcher settings.</string>
+    <string name="first_run_services_help_title">What does the household pay for?</string>
+    <string name="first_run_services_help_body">Titles on these services show as Included in Movies and TV Shows. The ones with an app on this TV were ticked to start with.</string>
+    <string name="first_run_services_help_note">OK opens the same page as Launcher settings › Streaming services.</string>
+    <string name="first_run_stores_help_title">Where may we show prices from?</string>
+    <string name="first_run_stores_help_body">Rent and buy prices in kronor come from these stores, the cheapest first.</string>
+    <string name="first_run_stores_help_note">OK opens the same page as Launcher settings › Stores for rent and buy.</string>
+    <string name="first_run_weather_help_title">The forecast on Home.</string>
+    <string name="first_run_weather_help_body">Home shows today’s and tomorrow’s weather, and an hourly strip below the apps. The city starts as the build’s default.</string>
+    <string name="first_run_weather_help_note">Weather data by Open-Meteo.com.</string>
+    <plurals name="first_run_done_note">
+        <item quantity="one">%1$d done. Start using Home at any time; the rest keep their defaults.</item>
+        <item quantity="other">%1$d done. Start using Home at any time; the rest keep their defaults.</item>
+    </plurals>
+
+    <!-- The help pane for Start. -->
+    <string name="first_run_start_eyebrow">Start</string>
+    <string name="first_run_start_help_title">Happy with the defaults?</string>
+    <plurals name="first_run_start_help_body">
+        <item quantity="one">%1$d row still on its default. Start now and change any of it later.</item>
+        <item quantity="other">%1$d rows still on their default. Start now and change any of it later.</item>
+    </plurals>
+    <string name="first_run_ready_eyebrow">Ready</string>
+    <string name="first_run_ready_help_title">Your Home screen is set up.</string>
+    <string name="first_run_ready_help_body">Movies and TV Shows show your lists, and titles on your services are marked Included.</string>
+    <string name="first_run_settings_note">The Settings icon → Launcher settings changes any of it.</string>
+
+    <!-- The cut-down split (r2-setup-checklist). -->
+    <string name="first_run_split_hint">First run · Back returns to the checklist</string>
+    <string name="first_run_step">Step %1$d of %2$d · changes save at once</string>
+    <string name="first_run_back_to_checklist">Back to checklist</string>
+    <string name="first_run_next">Next: %1$s</string>
+    <string name="first_run_next_stores">Stores</string>
+    <string name="first_run_finish">Done</string>
+</resources>

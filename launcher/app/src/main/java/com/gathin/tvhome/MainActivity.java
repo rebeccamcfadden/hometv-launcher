@@ -27,6 +27,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -47,7 +48,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private static final String KEY_SETTINGS_SECTION = "settings_section";
     private static final String KEY_SETTINGS_IN_PANE = "settings_in_pane";
     private LauncherSettingsPage settingsPage;
-
+    /** Opens First run's checklist over Home (FirstRunPage) at any time, for adb; by itself it shows once. */
+    static final String ACTION_FIRST_RUN = "com.gathin.tvhome.action.FIRST_RUN";
+    /** Survive a rebuild with First run open: the checklist reopens with the same steps done. */
+    private static final String KEY_FIRST_RUN = "first_run_opened";
+    private FirstRunPage firstRun;
     private static final String MENU_INPUTS = "Inputs";
     private static final String MENU_NETWORK = "Wi-Fi";
     private static final String MENU_QUICK = "Quick settings";
@@ -211,9 +216,15 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (tim != null) tim.registerCallback(inputCallback, handler);
 
         // Not after recreate(): the launch intent survives it and would open them again.
-        if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())) {
-            openInputsIfAsked(getIntent());
+        if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())
+                && !openFirstRunIfAsked(getIntent()) && !openInputsIfAsked(getIntent())
+                && FirstRunPage.dueOnStart(this)) {
+            openFirstRun(null);
         }
+        // Rebuilt with First run open: it reopens with the same steps done (under Launcher settings, if that was).
+        ArrayList<String> firstRunDone = savedInstanceState == null ? null
+                : savedInstanceState.getStringArrayList(KEY_FIRST_RUN);
+        if (firstRunDone != null) openFirstRun(firstRunDone);
         // Rebuilt with Launcher settings open (a theme change, or a choice made before a trip to another app).
         String section = savedInstanceState == null ? null : savedInstanceState.getString(KEY_SETTINGS_SECTION);
         if (section != null) openLauncherSettings(section, savedInstanceState.getBoolean(KEY_SETTINGS_IN_PANE));
@@ -410,6 +421,36 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         settingsPage = null;
     }
 
+    /**
+     * First run's checklist, a page over whatever is showing (FirstRunPage), with done's steps already done (after a
+     * rebuild); null for none. Already open, it stays as it is.
+     */
+    void openFirstRun(Collection<String> done) {
+        shell.closeDialogs();
+        if (firstRun != null && shell.has(firstRun)) return;
+        // Never over Launcher settings: the two would restore in the wrong order after a rebuild.
+        if (settingsPage != null && shell.has(settingsPage)) {
+            shell.goTab(Screen.Tab.HOME, false);
+            settingsClosed();
+        }
+        firstRun = FirstRunPage.create(this, done);
+        FirstRunPage.markShown(this);
+        shell.push(firstRun);
+    }
+
+    /** Start using Home, or Back: Home, rebuilt if a step changed a choice, as Launcher settings does on close. */
+    void closeFirstRun() {
+        shell.goTab(Screen.Tab.HOME, false);
+        firstRunClosed();
+        if (settingsPage != null && !shell.has(settingsPage)) settingsClosed();
+        if (Config.settingsChanged(settingsRevision, settingsRevision())) recreate();
+    }
+
+    private void firstRunClosed() {
+        if (firstRun != null) firstRun.closed();
+        firstRun = null;
+    }
+
     /** Whether there are inputs to list and which network icon to show, on every page's nav. */
     private void refreshNav() {
         if (isDestroyed()) return;
@@ -498,9 +539,17 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         return true;
     }
 
+    private boolean openFirstRunIfAsked(Intent intent) {
+        if (intent == null || !ACTION_FIRST_RUN.equals(intent.getAction())) return false;
+        setIntent(new Intent(Intent.ACTION_MAIN));
+        openFirstRun(null);
+        return true;
+    }
+
     @Override
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
+        if (firstRun != null && shell.has(firstRun)) out.putStringArrayList(KEY_FIRST_RUN, firstRun.opened());
         if (settingsPage != null && shell.has(settingsPage)) {
             out.putString(KEY_SETTINGS_SECTION, settingsPage.section());
             out.putBoolean(KEY_SETTINGS_IN_PANE, settingsPage.inPane());
@@ -531,10 +580,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (openLauncherSettingsIfAsked(intent)) return;
+        if (openFirstRunIfAsked(intent)) return;
         if (openInputsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         shell.home();
         if (settingsPage != null && !shell.has(settingsPage)) settingsClosed();
+        if (firstRun != null && !shell.has(firstRun)) firstRunClosed();
         // Home closed Launcher settings: rebuild with what changed there, as Back would have.
         if (Config.settingsChanged(settingsRevision, settingsRevision())) recreate();
     }
@@ -645,6 +696,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onDestroy() {
         super.onDestroy();
         settingsClosed();
+        firstRunClosed();
         handler.removeCallbacksAndMessages(null);
         ThemeFonts.forget(fontsArrived);
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);

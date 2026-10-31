@@ -39,6 +39,9 @@ SCREENSHOT_WANTED = {
     # The reworked launcher's data layer (M3, docs/rework.md): docs/switches.md is frozen as a V2 reference
     # since M1b, and this key's screenshot comes from the real-TV run (docs/rework.md, Open questions).
     "subscribed_services",
+    # First run's checklist (V2): on by default as an opt-out, as the project lead decided on 2026-10-31 (BACKLOG.md,
+    # First run); its screenshot comes with the real-TV run, like subscribed_services.
+    "first_run_checklist",
 }
 
 

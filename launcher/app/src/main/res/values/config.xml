@@ -51,6 +51,13 @@
          Off by default; a pushed config.json can set "open_on_start_choice": true. -->
     <bool name="open_on_start_choice">false</bool>
 
+    <!-- First run's checklist (Set up your Home screen: TMDB, streaming services, stores, weather city) by itself,
+         once, on the first start after a fresh install; never after an update, so a TV that had the launcher
+         before doesn't see it. false never shows it by itself; a pushed config.json can set
+         "first_run_checklist": false. The intent action com.gathin.tvhome.action.FIRST_RUN on MainActivity opens
+         it at any time. -->
+    <bool name="first_run_checklist">true</bool>
+
     <!-- Some TVs give their Live TV app no leanback entry point at all, so `live_tv_package` above
          resolves to nothing (TCL Android TV 9 on China-market sets is one). This action is then sent
          to that package instead, and the app starts normally. Leave empty to omit. -->

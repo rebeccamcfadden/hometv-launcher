@@ -508,8 +508,8 @@ width with 243 px art.
   prices and states here are shaped like the launcher's V2 data (TMDB availability for Sweden, prices per quality);
   the values are made up.
 - **Deep links:** "Watch on …" and Episodes assume each service can open a title or episode directly.
-- **Setup:** the checklist and its panes are built. When First run shows (first start only, or until signed in) is
-  open; a row counts as done once its pane has been opened.
+- **Setup:** the checklist and its panes are built. In the launcher First run shows by itself once, after a fresh
+  install (never after an update), and keeps its done rows; a row counts as done once its pane has been opened.
 - **Sign-in:** TMDB's approval link is too long to type, so the QR is the only way in; whether to host a short
   redirect is open. The code is polled only while Launcher settings is open.
 - **Wi-Fi switching:** joining a saved network from the dropdown may need system permissions a launcher lacks;

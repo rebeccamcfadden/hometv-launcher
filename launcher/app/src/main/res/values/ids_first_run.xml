@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- View tags of First run's checklist rows (FirstRunPage); the title, line, value and step id use ids_settings.xml. -->
+<resources>
+    <item name="first_run_disc" type="id" />
+    <item name="first_run_digit" type="id" />
+    <item name="first_run_check" type="id" />
+    <item name="first_run_pill" type="id" />
+</resources>

@@ -60,8 +60,7 @@ final class StoresSection implements SettingsSection {
         LinearLayout rows = PaneParts.column(ctx);
         first = null;
         for (ServiceId s : ServicePicks.STORES) {
-            // Viaplay streams and sells under one name; its rent and buy is the Viaplay Store.
-            String name = table.isStore(s) ? table.name(s) : ctx.getString(R.string.stores_store_name, table.name(s));
+            String name = storeName(ctx, table, s);
             TextView opens = PaneParts.hint(ctx, ctx.getString(R.string.stores_opens, table.appName(s)), false);
             boolean installed = services.isInstalled(s);
             TextView app = PaneParts.hint(ctx, ctx.getString(installed ? R.string.settings_hint_installed
@@ -87,6 +86,12 @@ final class StoresSection implements SettingsSection {
     @Override
     public View firstFocus() {
         return first;
+    }
+
+    /** A store's name on its row, and in First run's Stores value. */
+    static String storeName(Context ctx, ServiceTable table, ServiceId s) {
+        // Viaplay streams and sells under one name; its rent and buy is the Viaplay Store.
+        return table.isStore(s) ? table.name(s) : ctx.getString(R.string.stores_store_name, table.name(s));
     }
 
     private void updateCount(Context ctx) {
