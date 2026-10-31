@@ -8,7 +8,7 @@ body {
   height: 100%;
   background: #000;
   color: var(--text-1);
-  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -145,8 +145,10 @@ body {
 }
 .screen--base {
   background:
-    linear-gradient(rgba(9, 14, 21, 0.86), rgba(9, 14, 21, 0.9)),
+    linear-gradient(rgba(var(--shade-rgb), 0.86), rgba(var(--shade-rgb), 0.9)),
+    var(--vignette),
     var(--bg-image) center / cover no-repeat,
+    var(--sky),
     var(--bg);
 }
 .scrim {
@@ -221,7 +223,7 @@ body {
   padding: 0 30px 0 24px;
   border-radius: var(--radius-pill);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: var(--line-w) solid var(--line);
   font-size: var(--t-body);
   white-space: nowrap;
 }
@@ -285,7 +287,7 @@ body {
   padding: 0 22px;
   border-radius: var(--radius-pill);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: var(--line-w) solid var(--line);
   font-size: var(--t-small);
   color: var(--text-2);
   white-space: nowrap;
@@ -312,7 +314,7 @@ body {
   overflow: hidden;
   border-radius: var(--radius-l);
   background: var(--bg-raised);
-  box-shadow: inset 0 0 0 1px var(--line);
+  box-shadow: inset 0 0 0 var(--line-w) var(--line);
 }
 .card-art img {
   display: block;
@@ -379,7 +381,7 @@ body {
 }
 .card--small .card-art {
   height: 152px;
-  border-radius: 14px;
+  border-radius: calc(var(--radius-l) * 0.875);
 }
 .card--small .card-name {
   margin-top: 12px;
@@ -409,8 +411,8 @@ body {
   width: 104px;
   height: 104px;
   border-radius: 50%;
-  background: #1c2633;
-  box-shadow: inset 0 0 0 1px var(--line);
+  background: var(--person-bg);
+  box-shadow: inset 0 0 0 var(--line-w) var(--line);
   font-size: 32px;
   font-weight: 500;
   color: var(--text-2);
@@ -473,7 +475,7 @@ body {
   padding: 6px;
   border-radius: var(--radius-pill);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: var(--line-w) solid var(--line);
 }
 .nav-tab {
   height: 60px;
@@ -487,7 +489,7 @@ body {
 .nav-tab.is-active,
 .nav-search.is-active {
   background: var(--active);
-  color: var(--on-accent);
+  color: var(--on-active);
   font-weight: 600;
 }
 .nav-search {
@@ -503,7 +505,7 @@ body {
   padding: 6px;
   border-radius: var(--radius-pill);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: var(--line-w) solid var(--line);
 }
 .nav-icon {
   display: grid;
@@ -524,6 +526,7 @@ body {
 /* ---- Common page furniture ---- */
 .page-title {
   margin: 0;
+  font-family: var(--font-display);
   font-size: var(--t-h1);
   font-weight: 400;
 }
@@ -550,7 +553,7 @@ body {
   right: 0;
   bottom: 0;
   height: 200px;
-  background: linear-gradient(rgba(9, 14, 21, 0), rgba(9, 14, 21, 0.97) 70%);
+  background: linear-gradient(rgba(var(--shade-rgb), 0), rgba(var(--shade-rgb), 0.97) 70%);
   z-index: 3;
   pointer-events: none;
 }
@@ -578,8 +581,8 @@ body {
   z-index: 100;
   padding: 18px 32px;
   border-radius: var(--radius-pill);
-  background: rgba(22, 30, 41, 0.97);
-  border: 1px solid var(--line-strong);
+  background: var(--toast-bg);
+  border: var(--line-w) solid var(--line-strong);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   font-size: 22px;
   opacity: 0;

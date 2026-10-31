@@ -3,6 +3,7 @@ import { app, type Screen } from '../core/app';
 import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { net } from '../core/net';
+import { theme } from '../core/theme';
 import { MOTION_LABELS, settings, START_LABELS } from '../core/settings';
 import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
@@ -12,9 +13,10 @@ import { appsPane } from './panes/apps';
 import { aboutPane, homePane, motionPane, tvPane } from './panes/misc';
 import type { Pane, PaneHost } from './panes/pane';
 import { servicesPane, storesPane } from './panes/services';
+import { themePane } from './panes/theme';
 import { weatherPane } from './panes/weather';
 
-export type SectionId = 'account' | 'services' | 'stores' | 'weather' | 'apps' | 'motion' | 'start' | 'home' | 'tv' | 'about';
+export type SectionId = 'account' | 'services' | 'stores' | 'weather' | 'apps' | 'theme' | 'motion' | 'start' | 'home' | 'tv' | 'about';
 
 interface Section {
   id: SectionId;
@@ -32,6 +34,7 @@ const SECTIONS: Section[] = [
   { id: 'stores', label: 'Stores for rent and buy', icon: 'cart', value: () => ({ text: `${settings.get().stores.length} ticked` }) },
   { id: 'weather', label: 'Weather', setupLabel: 'Weather city', icon: 'cloud', value: () => ({ text: placeById(settings.get().place).name }) },
   { id: 'apps', label: 'Home row apps', icon: 'apps', value: () => ({ text: String(settings.get().homeApps.length) }) },
+  { id: 'theme', label: 'Theme', icon: 'palette', value: () => ({ text: theme.label() }) },
   { id: 'motion', label: 'Motion', icon: 'motion', value: () => ({ text: MOTION_LABELS[settings.get().motion] }) },
   { id: 'start', label: 'Open on start', icon: 'power', value: () => ({ text: START_LABELS[settings.get().openOnStart] }) },
   { id: 'home', label: 'Default Home', icon: 'home', value: () => ({ text: 'On' }) },
@@ -83,6 +86,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     stores: storesPane(),
     weather: weatherPane(host),
     apps: appsPane(host),
+    theme: themePane(),
     motion: motionPane('motion'),
     start: motionPane('start'),
     home: homePane(),
@@ -220,6 +224,8 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     settings.on(() => rerender()),
     account.on(() => rerender()),
     net.on(() => rerender()),
+    // A new period (the dev bar's date, or midnight) changes Seasonal's label and swatches.
+    theme.on(() => rerender()),
     account.onTick(() => {
       const c = scroll.querySelector('[data-countdown]');
       if (c) c.textContent = account.countdown();

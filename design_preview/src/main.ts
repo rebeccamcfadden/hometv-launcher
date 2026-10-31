@@ -1,13 +1,14 @@
 import './styles/tokens.css';
+import './styles/themes.css';
 import './styles/base.css';
 import './styles/screens.css';
 import { ACCOUNT_STATES, account, type AccountState } from './core/account';
 import { app } from './core/app';
-import { imgUrl } from './core/dom';
 import { DATA_STATES, net, type DataState } from './core/net';
 import { settings } from './core/settings';
 import { settingsMenu } from './screens/quickSettings';
 import { store } from './core/store';
+import { isThemeId, parseDate, PERIOD_DATES, PERIOD_LABELS, periodAt, theme, THEMES } from './core/theme';
 import { getTitle } from './data/catalog';
 import { homeScreen } from './screens/home';
 import { quickSettings, topBarButton } from './screens/dropdown';
@@ -19,8 +20,6 @@ import { searchScreen } from './screens/search';
 import { launcherSettings } from './screens/settings';
 import { setupScreen } from './screens/setup';
 
-document.documentElement.style.setProperty('--bg-image', `url("${imgUrl('bg-evening.jpg')}")`);
-
 // Launcher settings' Motion: the stage drops slides and scale-ups (Reduced) or every animation (Off).
 const stage = document.getElementById('stage')!;
 const applyMotion = () => (stage.dataset.motion = settings.get().motion);
@@ -31,6 +30,14 @@ settings.on(applyMotion);
 const params = new URLSearchParams(location.search);
 const startState = params.get('state') as DataState | null;
 if (startState && DATA_STATES.some(([id]) => id === startState)) net.set(startState);
+
+// The theme on <html>: ?theme=<id> picks one as Launcher settings › Theme does, ?date=2026-10-31 sets the date Seasonal
+// themes follow (see the Theme and Date menus in the dev bar).
+const startTheme = params.get('theme');
+if (isThemeId(startTheme)) settings.set({ theme: startTheme });
+const startDate = parseDate(params.get('date'));
+if (startDate) theme.setDate(startDate);
+theme.init();
 
 app.init(stage, {
   home: homeScreen,
@@ -66,6 +73,31 @@ accountSelect.addEventListener('change', () => {
 const startAccount = params.get('account') as AccountState | null;
 if (startAccount && ACCOUNT_STATES.some(([id]) => id === startAccount)) account.devSet(startAccount);
 
+// Themes, beside them: switch the theme, and put the preview on a date in each Seasonal period.
+const themeSelect = document.getElementById('theme') as HTMLSelectElement;
+for (const t of THEMES) themeSelect.append(new Option(`Theme: ${t.group === 'seasonal' ? `Seasonal · ${t.name}` : t.name}`, t.id));
+const dateSelect = document.getElementById('date') as HTMLSelectElement;
+const year = new Date().getFullYear();
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+dateSelect.append(new Option(`Date: today (${PERIOD_LABELS[periodAt(new Date())]})`, ''));
+for (const [p, md] of PERIOD_DATES) dateSelect.append(new Option(`Date: ${PERIOD_LABELS[p]} (${year}-${md})`, `${year}-${md}`));
+if (startDate && ![...dateSelect.options].some((o) => o.value === iso(startDate)))
+  dateSelect.append(new Option(`Date: ${iso(startDate)} (${PERIOD_LABELS[periodAt(startDate)]})`, iso(startDate)));
+const showTheme = () => {
+  themeSelect.value = theme.current().id;
+  dateSelect.value = theme.isDateOverridden() ? iso(theme.date()) : '';
+};
+showTheme();
+theme.on(showTheme);
+themeSelect.addEventListener('change', () => {
+  if (isThemeId(themeSelect.value)) settings.set({ theme: themeSelect.value });
+  themeSelect.blur();
+});
+dateSelect.addEventListener('change', () => {
+  theme.setDate(parseDate(dateSelect.value));
+  dateSelect.blur();
+});
+
 const preview = (tab: 'movies' | 'tv', id: string) => () => {
   app.goTab(tab);
   app.push(titlePreview(getTitle(id)));
@@ -98,10 +130,10 @@ const jumps: [string, string, () => void][] = [
       app.push(launcherSettings());
     },
   ],
-  ...(['account', 'services', 'stores', 'weather', 'apps'] as const).map(
+  ...(['account', 'services', 'stores', 'weather', 'apps', 'theme'] as const).map(
     (id): [string, string, () => void] => [
       `settings-${id}`,
-      `Launcher settings · ${{ account: 'Account', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps' }[id]}`,
+      `Launcher settings · ${{ account: 'Account', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps', theme: 'Theme' }[id]}`,
       () => {
         app.goTab('home');
         app.push(launcherSettings(id, { enter: true }));

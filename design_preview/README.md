@@ -35,8 +35,8 @@ The 1920×1080 TV screen is scaled to fit the window. The keyboard stands in for
 | Letters, digits, space | Type on Search, and in Launcher settings › Weather › Change city |
 
 The mouse works too: a click is focus + OK. The bar under
-the stage shows the screen stack (what Back returns through), a **State** menu, an **Account** menu, a **Jump to**
-menu, and **Reset state**, which clears My list, Seen, Favorites, recent searches and Launcher settings (kept in
+the stage shows the screen stack (what Back returns through), a **State** menu, an **Account** menu, **Theme** and
+**Date** menus, a **Jump to** menu, and **Reset state**, which clears My list, Seen, Favorites, recent searches and Launcher settings (kept in
 `localStorage`).
 
 The **State** menu simulates the network and the catalogue, so each loading, offline and error state can be
@@ -45,12 +45,16 @@ Loading (title preview); Offline, lists saved; Offline, nothing saved; Error in 
 Cast & crew tab. Open screens change in place, with focus kept where it can be. Two URL parameters do the same from a
 link: `?state=offline` (any id from `src/core/net.ts`) and `?jump=moon` (any Jump to entry's id from `src/main.ts`,
 for example `quick`, `settings`, `settings-account`, `settings-services`, `settings-stores`, `settings-weather`,
-`settings-apps`, `setup`, `arrival`, `interstellar`, `daredevil`).
+`settings-apps`, `settings-theme`, `setup`, `arrival`, `interstellar`, `daredevil`).
 
 The **Account** menu (or `?account=in`) steps the mocked TMDB sign-in, so each state of the Account pane can be
 reviewed (see [Account](#account)): Signed out, Getting a code, Waiting (QR), Approved on the phone, Signed in, Code
 expired, Couldn’t reach TMDB. Without it the pane runs by itself: Sign in fetches a code in about a second, and the
 code waits for 15 minutes until the menu approves it; approval imports for a few seconds and signs in.
+
+The **Theme** menu (or `?theme=cinema`, any id from [Theme](#theme)) picks a theme as Launcher settings › Theme does,
+and keeps it. The **Date** menu (or `?date=2026-10-31`) puts the preview on a day in each Seasonal period, or back on
+today, so every period can be reviewed without waiting for it.
 
 ## Figma
 
@@ -380,7 +384,7 @@ on the right.
 
 - **Sections and values:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing in…", "Code
   expired", or the username), Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"), Weather (the
-  city), Home row apps (7), Motion (Full), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values
+  city), Home row apps (7), Theme (Midnight, or "Nature · Halloween"), Motion (Full), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values
   update live.
 - **Moving:** landing on a section shows its pane at once, as a preview. → or OK enters the pane, on its first control
   (the selected option in a segmented control), and the pane's border brightens. ← from the pane's left edge
@@ -436,6 +440,43 @@ r2-weather A, with r2-weather B's "now showing / quick picks".
   English and Swedish. OK on a match sets the place and returns to the summary on Change city; Back returns
   without changing it. Offline, the list keeps the quick picks and says searching needs the internet.
 
+#### Theme
+
+The look of the whole launcher, from the Figma file "CleanTV · Theme explorations" (`lwShqRaciMpDUDW5dYljNw`, page
+Settings · Theme picker, frame `18:10`). The default stays Midnight, today's look, so nothing changes until someone
+picks another theme.
+
+- **Pane:** "Theme", "Colours, type and the picture behind Home. Rows, apps and data stay as they are.", then two
+  groups of 156 × 100 swatches: **Classic** and **Seasonal · follows the date · today: Halloween** (today's period).
+  Each swatch is drawn from that theme's own tokens: its sky, the horizon and a shelf of three mini tiles, the first
+  focused with the accent ring, and "Aa" in its display face. Under them, two half-width rows: **Typeface** (Theme
+  font / System font; "System font uses Roboto") and **Moving details** (On / Off; "Snow, rain, leaves and bats drift
+  slowly"). Moving highlights a swatch with the accent fill; OK selects it, it gets the accent ring, and the whole
+  preview wears it at once. OK on a row switches its value. The pane enters on the selected theme.
+- **Themes** (ids for `?theme=`): Classic, which keep their look all year: Midnight `midnight`, Daylight `daylight`,
+  OLED Black `oled`, High Contrast `high-contrast`, Cinema `cinema`, Landscapes `landscapes`. Seasonal, which follow the
+  date: Nature `seasonal-nature`, Vector art `seasonal-vector`, 8-bit `seasonal-8bit`. Retro comes in a later PR.
+  A Seasonal theme's colours are its period's; its corners, line widths and type are its style's. Its section value
+  is the style and the period: "Nature · Halloween".
+- **Periods:** Snow 1 Jan – 28/29 Feb, Thaw March, Spring rain April, Bloom May, Pride June, Midsummer July, Late
+  summer August, Autumn 1 Sep – 14 Oct and 3 – 30 Nov, Halloween 15 Oct – 2 Nov, Christmas December. The period is
+  looked at again on the hour, so it turns over at midnight.
+- **Fonts:** each theme has a display face (the greeting, the clock and page titles) and a UI face, from Google
+  Fonts: Midnight Inter, Daylight Figtree, OLED Black Manrope, High Contrast Atkinson Hyperlegible Next, Cinema DM
+  Serif Display and DM Sans, Landscapes and Nature Outfit, Vector art Baloo 2 and Nunito, 8-bit Press Start 2P and
+  Pixelify Sans. Only the active theme's are fetched (and the swatches' display faces while the picker shows); the
+  system font stands in until they arrive. **System font** puts every theme in Roboto, the TV's own.
+- **Backdrops:** Midnight keeps the bundled evening landscape; OLED Black and High Contrast have none, only their
+  background. The others are downloaded once from `launcher/backdrops/` in the repo (through jsDelivr; one constant,
+  `BACKDROP_BASE` in `src/core/theme.ts`) and kept: `classic/daylight.webp`, `classic/cinema.webp`,
+  `classic/landscapes-1.webp` … `-4.webp` (a new one every hour), `seasonal/nature/<period>.webp`,
+  `seasonal/vector/<period>.webp` and 8-bit's `seasonal/8bit/<period>.png`, 160 × 90 pixels scaled up without
+  smoothing. While a picture loads, when it can't be fetched, and offline when it never arrived, the theme's sky shows
+  instead: a gradient from its sky to its horizon colour. Cinema adds a soft vignette.
+- **Moving details** is saved only: nothing moves yet, on the TV either.
+- **Not taken from Figma:** shadows under tiles and the focus glow (Midnight has none today), and the photo or
+  drawing inside the Seasonal swatches (the swatches show the sky instead).
+
 #### The other panes
 
 - **Home row apps:** not drawn in the design. Home's row as small tiles in order ("On Home · 7 of 7"), then the other
@@ -481,7 +522,9 @@ the titles the person appears in.
 
 ## Visual system
 
-From `src/styles/tokens.css`, taken from the Figma frames.
+From `src/styles/tokens.css`, taken from the Figma frames. This is Midnight, the default theme; `src/styles/themes.css`
+overrides the same tokens for the others ([Theme](#theme)), so styles use tokens rather than literal colours, radii
+and line widths.
 
 | Token | Value |
 |---|---|
@@ -494,7 +537,7 @@ From `src/styles/tokens.css`, taken from the Figma frames.
 | Score star | `#F2C46D` |
 | Offline and errors | the star's amber: pill background at 12%, error box at 8% with a 30% border |
 | Skeletons | white at 6–7%, radius 8 (art keeps its card's radius), static |
-| Type (Inter) | 84 title, 44 page heading, 30, 26, 24 body, 20 small, 18 minimum |
+| Type (Inter) | 84 title, 44 page heading, 30, 26, 24 body, 20 small, 18 minimum; other themes have their own faces ([Theme](#theme)) |
 | Radii | 8, 12, 16, 24, pills 100 |
 | Focus | accent fill, or a 4 px accent ring on cards and art, with a 3–8% scale-up |
 | Motion | 140 ms for focus changes; 320–360 ms for page and popup transitions |
@@ -527,14 +570,14 @@ width with 243 px art.
 | `src/core/focus.ts` | Spatial D-pad navigation; `data-group` remembers focus per row or grid |
 | `src/core/fuzzy.ts` | Search matching: subsequences with word-start and run bonuses; 1–2 typo tolerance for words of 4+ letters |
 | `src/core/store.ts` | Household state: My list, Seen, Favorites, recent searches, recently viewed |
-| `src/core/settings.ts` | Launcher settings the prototype acts on (Motion, Open on start, Home row apps, ticked services and stores, weather place and unit) |
+| `src/core/theme.ts` | The themes, the Seasonal periods by date, and what applies one to the page: `data-theme` and `data-period` on `<html>`, its fonts and its backdrop |
 | `src/core/account.ts` | The mocked TMDB sign-in and lists, behind the Account pane and the dev bar's Account menu |
 | `src/core/net.ts` | The simulated network and data state behind the dev bar's State menu |
 | `src/data/` | Mock catalogue, services (and the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |
 | `src/screens/` | One module per screen; `dropdown.ts` holds the top-bar menus, `quickSettings.ts` the Settings icon's, `rent.ts` the rent/buy dialog, `settings.ts` Launcher settings, `setup.ts` First run |
-| `src/screens/panes/` | Launcher settings' panes, shared with First run: account, services and stores, weather, Home row apps, and the rest |
+| `src/screens/panes/` | Launcher settings' panes, shared with First run: account, services and stores, weather, Home row apps, theme, and the rest |
 | `src/ui/` | Nav, buttons, chips, segmented controls, cards (and their skeletons), icons, and the look-alike QR |
-| `src/styles/` | `tokens.css` (the visual system), `base.css`, `screens.css` |
+| `src/styles/` | `tokens.css` (the visual system, Midnight), `themes.css` (the other themes, from the Figma variables), `base.css`, `screens.css` |
 | `public/img/` | Artwork exported from the Figma file |
 
 In development builds, `window.app` exposes the screen stack and `window.net` the data state in the browser console

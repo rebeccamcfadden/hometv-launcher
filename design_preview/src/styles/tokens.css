@@ -1,5 +1,10 @@
-/* Design tokens, taken from the Figma frames (V1 Movies, Title preview C, Search). */
-:root {
+/*
+ * Design tokens, taken from the Figma frames (V1 Movies, Title preview C, Search). These are Midnight, the default
+ * theme; themes.css overrides them per theme. They are declared on every [data-theme] element too (the page's <html>
+ * and the theme picker's swatches), so tokens built from other tokens resolve against that element's own theme.
+ */
+:root,
+[data-theme] {
   --bg: #090e15;
   --bg-raised: #0d141d;
   --surface: rgba(255, 255, 255, 0.05);
@@ -7,19 +12,53 @@
   --surface-3: rgba(255, 255, 255, 0.14);
   --line: rgba(255, 255, 255, 0.09);
   --line-strong: rgba(255, 255, 255, 0.18);
+  /* Tiles, the search and keyboard wells, and the settings pane (and with focus in it). */
+  --tile: rgba(255, 255, 255, 0.045);
+  --well: rgba(255, 255, 255, 0.03);
+  --pane: rgba(255, 255, 255, 0.04);
+  --pane-live: rgba(255, 255, 255, 0.055);
 
   --text-1: #f4f5f7;
   --text-2: #adb5c0;
+  --text-2-rgb: 173, 181, 192;
   --text-3: #7d8999;
   --ghost: #5e6878;
 
   --accent: #c4ddf7;
+  --accent-rgb: 196, 221, 247;
   --accent-soft: rgba(196, 221, 247, 0.14);
   --on-accent: #101820;
+  --on-accent-rgb: 16, 24, 32;
   --active: rgba(255, 255, 255, 0.91);
+  --on-active: #101820;
   --good: #8fd9a8;
   --good-soft: rgba(143, 217, 168, 0.16);
   --star: #f2c46d;
+  --star-rgb: 242, 196, 109;
+
+  /* r, g, b of the look's layers, for alpha: the shade over the backdrop, raised panels, and the ink of tints. */
+  --shade-rgb: 9, 14, 21;
+  --deep-rgb: 13, 20, 29;
+  --tint-rgb: 255, 255, 255;
+  /* Home's shade over the backdrop: top, middle and the shelf at the bottom; and the scrolled-down shade. */
+  --shade-top: 0.25;
+  --shade-mid: 0.55;
+  --shade-shelf: 0.92;
+  --shade-scroll: 0.6;
+  /* The sky behind a downloaded backdrop while it loads or when it can't be fetched (Figma bg/sky-*). */
+  --sky-top: #0d1622;
+  --sky-mid: #1a2433;
+  --horizon: #3a3f52;
+  --sky: none;
+  --vignette: none;
+  --popup-bg: #121a24;
+  --menu-bg: rgba(22, 28, 37, 0.96);
+  --menu-solid: #161c25;
+  --toast-bg: rgba(22, 30, 41, 0.97);
+  --person-bg: #1c2633;
+  --avatar-bg: #1f3346;
+  --art-loading: linear-gradient(160deg, #16202c, #0f161f 60%);
+  --knob: #c8d0da;
 
   /* TV title-safe area: 5% of 1920 × 1080. */
   --safe-x: 96px;
@@ -30,6 +69,8 @@
   --radius-l: 16px;
   --radius-xl: 24px;
   --radius-pill: 100px;
+  --line-w: 1px;
+  --focus-w: 4px;
 
   /* Type scale. Nothing below 18px: it is read from the couch. */
   --t-display: 84px;
@@ -39,8 +80,13 @@
   --t-body: 24px;
   --t-small: 20px;
   --t-min: 18px;
+  /* The display face is the greeting, the clock and page titles; the UI face is everything else. */
+  --font-display: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display-weight: 300;
+  --text-shadow: none;
 
-  --focus-ring: 0 0 0 4px var(--accent);
+  --focus-ring: 0 0 0 var(--focus-w) var(--accent);
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --fast: 140ms;
   --slow: 320ms;
