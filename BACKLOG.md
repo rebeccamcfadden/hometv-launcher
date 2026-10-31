@@ -284,10 +284,14 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   | Theme | Response p50 | Movement p50 | Jank | Cold start p50 | PSS |
   |---|---|---|---|---|---|
   | Midnight | 19 ms | 195 ms | 46.9 % | 681 ms | 27 MB |
+  | Daylight | 24 ms | 212 ms | 71.2 % | 701 ms | 51 MB |
   | Cinema | 23 ms | 236 ms | 84.8 % | 726 ms | 31 MB |
 
-  Cinema nearly doubles the jank. It also has a photo backdrop and a vignette, so the run doesn't separate the
-  shadows' cost from the backdrop's. What to do is open with the project lead; the default stays as it is until then.
+  All three have a photo backdrop. Daylight adds the resting shadows, and Cinema the shadows plus a vignette and a
+  glow, so the shadows look like most of the extra jank (about 24 points) and Cinema's extras the rest. Each row is one
+  run, in which one of the three series was lost the same way (72 of 108 keys measured); Daylight's PSS is from that
+  single run too. Every theme, Classic and Seasonal, renders on the TCL. What to do is open with the project lead; the
+  default stays as it is until then.
 - **Focus glow:** checked on the TCL: a theme's glow shows in full on Home's Inputs and Shortcuts tiles, edges
   included.
 
