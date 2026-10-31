@@ -66,7 +66,6 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
     private int[] settingsKeycodes;
     private boolean settingsKeyPanel;
-    private boolean launcherSettingsButton;
     private boolean showInputs;
     private boolean showNetwork;
     private String vpnApp;
@@ -154,7 +153,6 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         applyViewInputsHandler(cfg.handleViewInputs);
         settingsKeycodes = cfg.settingsKeycodes;
         settingsKeyPanel = cfg.settingsKeyPanel;
-        launcherSettingsButton = cfg.launcherSettingsButton;
         showInputs = cfg.showInputsPill;
         showNetwork = cfg.showNetworkPill;
         vpnApp = cfg.vpnApp;
@@ -334,11 +332,15 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         shell.push(Dropdown.create(shell, MENU_INPUTS, anchor, null, rows));
     }
 
-    /** As in the base launcher: the TV's own settings, or Launcher settings with launcher_settings_button. */
+    /**
+     * V2 quick settings (design final-quick-settings): the Settings icon opens its dropdown, whose first two rows are
+     * the TV's settings and Launcher settings, so launcher_settings_button no longer changes it. The remote's
+     * Settings key is unchanged (handleSettingsKey).
+     */
     @Override
     public void openSettings(View anchor) {
-        if (launcherSettingsButton) openLauncherSettings();
-        else start(SystemSettings.intent(this, Settings.ACTION_SETTINGS));
+        if (shell.isOpen(QuickSettings.LABEL)) return;
+        shell.push(QuickSettings.create(this, anchor));
     }
 
     /** The remote's Settings key on Home: the quick-settings dropdown under the Settings icon, or closing it. */

@@ -211,7 +211,7 @@ clunky.) Rows are 72 px; the panel is opaque (no blur).
 |---|---|
 | Inputs icon | HDMI 1–3 and named HDMI-CEC devices with a green "Connected" mark, then AV, then Live TV, divided |
 | Wi-Fi icon | Header with the network, "Connected · Internet OK · Strong signal" (offline: an amber "Connected · No internet"); saved networks; Other networks; Wi-Fi settings |
-| Settings icon | Quick settings (design final-quick-settings), 600 px wide, four groups divided: **TV settings** (the TV's settings) and **Launcher settings** › (the split page); **Picture, Sound, Network & Wi-Fi, Inputs** (the TV's own pages; a toast here); **TMDB account** (status), **Streaming services** ("8 ticked"), **Weather** ("New York · °C"), each with a chevron, opening that section's pane; **Motion** (Full / Reduced / Off) and **Sleep timer** (Off, 30, 60, 90, 120 min), where OK steps the value in place, the menu stays open, and small dots show the position |
+| Settings icon | Quick settings (design final-quick-settings), 600 px wide, ten rows in four groups divided: **TV settings** (the TV's settings) and **Launcher settings** › (the split page); **Picture** (the TV's display settings), **Sound, Network & Wi-Fi, Inputs** (the TV's own pages; a toast here); **TMDB account** (status), **Streaming services** ("8 ticked"), **Weather** ("New York · °C"; before a place is chosen, the build's city), each with a chevron, opening that section's pane; **Motion** (Full / Reduced / Off; never Full on a TV whose config sets reduced motion), where OK steps the value in place, the menu stays open, and small dots show the position. No Sleep timer row (the project lead's decision, 2026-10-31) |
 | Remote's Settings key | The TV maker's own panel, untouched by the launcher. The preview's S key shows the base launcher's stand-in: TV system settings, Picture, Network, Apps ("Re-enable"), Launcher settings |
 
 ## Screens
@@ -451,7 +451,7 @@ r2-weather A, with r2-weather B's "now showing / quick picks".
 - **About:** "Clean your TV launcher", version and catalogue cache lines, the TMDB notice ("This product uses the
   TMDB API but is not endorsed or certified by TMDB.") beside a placeholder for TMDB's logo, the Open-Meteo,
   JustWatch and Apple credits, and **Open-source licences** (a stub page) and **Clear cache** (asks first).
-- Choices are kept in `localStorage`; Reset state clears them. The sleep timer is not kept.
+- Choices are kept in `localStorage`; Reset state clears them.
 
 ### First run
 
@@ -517,7 +517,7 @@ width with 243 px art.
 - **Not designed yet:** hold-OK menus (the base uses them for tile Move / Remove / App info and a Settings
   menu), the screensaver, removing recent searches, voice search, progress on started titles, sorting lists, a
   person page design, Search and Home's weather while loading, the Home row apps pane (built here without a design),
-  the sleep timer's warning before it turns the TV off, and right-to-left layouts (the base supports Hebrew).
+  and right-to-left layouts (the base supports Hebrew).
 
 ## Prototype code
 
@@ -527,7 +527,7 @@ width with 243 px art.
 | `src/core/focus.ts` | Spatial D-pad navigation; `data-group` remembers focus per row or grid |
 | `src/core/fuzzy.ts` | Search matching: subsequences with word-start and run bonuses; 1–2 typo tolerance for words of 4+ letters |
 | `src/core/store.ts` | Household state: My list, Seen, Favorites, recent searches, recently viewed |
-| `src/core/settings.ts` | Launcher settings the prototype acts on (Motion, Open on start, Home row apps, ticked services and stores, weather place and unit, sleep timer) |
+| `src/core/settings.ts` | Launcher settings the prototype acts on (Motion, Open on start, Home row apps, ticked services and stores, weather place and unit) |
 | `src/core/account.ts` | The mocked TMDB sign-in and lists, behind the Account pane and the dev bar's Account menu |
 | `src/core/net.ts` | The simulated network and data state behind the dev bar's State menu |
 | `src/data/` | Mock catalogue, services (and the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |

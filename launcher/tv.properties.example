@@ -7,6 +7,9 @@
 # The default is New York. Launcher settings on the TV can choose another place, which then wins over these.
 latitude=40.7128
 longitude=-74.0060
+# Optional: the city's name, for the quick-settings Weather row ("New York · °C") while no place is chosen on the TV.
+# Leave it out and the row says Default. Written as it is spelled (the file is read as UTF-8), at most 60 characters.
+weather_city=New York
 
 # C for Celsius or F for Fahrenheit. Android TV has no temperature setting, so the launcher can't ask the TV.
 # Launcher settings on the TV can override it too.

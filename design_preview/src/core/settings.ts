@@ -6,7 +6,6 @@ import type { ServiceId } from '../types';
 export type Motion = 'full' | 'reduced' | 'off';
 export type OpenOnStart = 'home' | 'last' | 'live';
 export type Unit = 'c' | 'f' | 'tv';
-export type Sleep = 0 | 30 | 60 | 90 | 120;
 
 interface Saved {
   motion: Motion;
@@ -21,8 +20,6 @@ interface Saved {
   place: string;
   recentPlaces: string[];
   unit: Unit;
-  /** Sleep timer, in minutes; 0 is off. Not kept between visits on the TV either. */
-  sleep: Sleep;
 }
 
 const KEY = 'cleanyourtv-preview-settings-v2';
@@ -40,13 +37,12 @@ const defaults = (): Saved => ({
   place: DEFAULT_PLACE,
   recentPlaces: ['malmo'],
   unit: 'tv',
-  sleep: 0,
 });
 
 function load(): Saved {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...defaults(), ...(JSON.parse(raw) as Partial<Saved>), sleep: 0 };
+    if (raw) return { ...defaults(), ...(JSON.parse(raw) as Partial<Saved>) };
   } catch {
     // Corrupt or blocked storage: start fresh.
   }
@@ -95,8 +91,6 @@ export const START_LABELS: Record<OpenOnStart, string> = { home: 'Home', last: '
 /** The TV's region is Sweden in the mock, so TV default resolves to °C. */
 export const TV_UNIT: 'c' | 'f' = 'c';
 export const UNIT_LABELS: Record<Unit, string> = { c: '°C', f: '°F', tv: `TV default (°${TV_UNIT.toUpperCase()})` };
-export const SLEEP_STEPS: Sleep[] = [0, 30, 60, 90, 120];
-export const sleepLabel = (m: Sleep) => (m ? `${m} min` : 'Off');
 
 /** A temperature kept in °C, shown in the chosen unit: "14°". */
 export function deg(c: number): string {

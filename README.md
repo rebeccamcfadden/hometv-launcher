@@ -615,7 +615,8 @@ and `sdkmanager "platforms;android-34" "build-tools;34.0.0"`. On Linux the insta
 
 The weather's default location and temperature unit come from `launcher/tv.properties`, which is gitignored: copy
 [`launcher/tv.properties.example`](launcher/tv.properties.example) (New York, °C) and edit the copy. Both can be
-changed on the TV too, in Launcher settings. For the real catalogue, add your TMDB "API Read Access Token" there as
+changed on the TV too, in Launcher settings. The optional `weather_city` names the default location on the quick
+settings' Weather row ("New York · °C"); without it the row says Default. For the real catalogue, add your TMDB "API Read Access Token" there as
 `tmdb_api_key` (free for non-commercial use, from your account's API settings at themoviedb.org). Without it the
 launcher builds with the mock catalogue, which needs no network. The token ends up inside the APK you build, so
 keep that APK to yourself.

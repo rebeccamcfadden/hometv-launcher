@@ -45,7 +45,8 @@ public final class LauncherSettingsActivity extends Activity {
         animationsChoice = findViewById(R.id.animationsChoice);
         animationsChoice.setOnClickListener(v -> {
             animations = !animations;
-            choices.edit().putBoolean("animations", animations).apply();
+            // The switch speaks for Motion again: Off, or what config.xml makes it (MotionChoice.resolve).
+            choices.edit().putBoolean("animations", animations).remove(MotionChoice.KEY).apply();
             changed();
             refresh();
         });
@@ -70,7 +71,8 @@ public final class LauncherSettingsActivity extends Activity {
         followThemeChoice = findViewById(R.id.followThemeChoice);
         followThemeChoice.setOnClickListener(v -> {
             if (!hasOnTvChoices()) return;
-            SharedPreferences.Editor edit = choices.edit().remove("animations").remove(OpenOnStart.KEY);
+            SharedPreferences.Editor edit = choices.edit().remove("animations").remove(MotionChoice.KEY)
+                    .remove(OpenOnStart.KEY);
             for (String key : OLD_CHOICES) edit.remove(key);
             edit.commit();
             animations = Config.load(this).animations;
@@ -204,7 +206,9 @@ public final class LauncherSettingsActivity extends Activity {
     }
 
     private boolean hasOnTvChoices() {
-        if (choices.contains("animations") || choices.contains(OpenOnStart.KEY)) return true;
+        if (choices.contains("animations") || choices.contains(MotionChoice.KEY) || choices.contains(OpenOnStart.KEY)) {
+            return true;
+        }
         for (String key : OLD_CHOICES) if (choices.contains(key)) return true;
         return false;
     }

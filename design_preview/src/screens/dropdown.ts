@@ -13,7 +13,7 @@ export interface MenuRow {
   chevron?: boolean;
   /** Small position dots after the status, for a value that OK steps through: [how many, which is on]. */
   dots?: () => [number, number];
-  /** OK steps the value in place and the menu stays open (Motion, Sleep timer). */
+  /** OK steps the value in place and the menu stays open (Motion). */
   cycle?: () => void;
   /** Draws the status with the green dot, as the base launcher does for connected inputs. */
   good?: boolean;

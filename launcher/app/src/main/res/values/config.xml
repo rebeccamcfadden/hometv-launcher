@@ -193,8 +193,9 @@
     <!-- Optional VPN app, offered at the top of the Wi-Fi dropdown with a "VPN on" or "VPN off" status, e.g. the
          package of the VPN you use. Empty: no VPN row. -->
     <string name="vpn_app" translatable="false"></string>
-    <!-- The nav bar's Settings icon opens Launcher settings instead of the TV's Settings.
-         Off by default; a pushed config.json can set "launcher_settings_button": true. -->
+    <!-- The old Home's switch for the Settings icon to open Launcher settings instead of the TV's Settings. The new
+         nav's Settings icon opens the quick-settings dropdown, which has both, so nothing reads it now; kept so a
+         pushed config.json that sets "launcher_settings_button" stays valid. -->
     <bool name="launcher_settings_button">false</bool>
 
     <!-- The Wi-Fi/Ethernet icon in the nav bar. false hides it (on Android 14 with Location off it can

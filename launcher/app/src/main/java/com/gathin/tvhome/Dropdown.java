@@ -16,15 +16,23 @@ final class Dropdown {
     private Dropdown() {}
 
     static Screen create(Shell shell, String label, View anchor, View header, List<MenuPanel.Row> rows) {
+        LinearLayout panel = MenuPanel.build(shell.stage.getContext(), header, rows, row -> {
+            shell.pop();
+            if (row.action != null) row.action.run();
+        });
+        return create(shell, label, anchor, panel, MenuPanel.hang(0, 0));
+    }
+
+    /**
+     * The same dropdown around a panel built elsewhere (QuickSettings, whose rows step a value in place); lp is
+     * MenuPanel.hang's, with the panel's width. Its rows close it themselves.
+     */
+    static Screen create(Shell shell, String label, View anchor, View panel, FrameLayout.LayoutParams lp) {
         FrameLayout root = new FrameLayout(shell.stage.getContext());
         View catcher = new View(root.getContext());
         catcher.setOnClickListener(v -> shell.pop());
         root.addView(catcher, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
-        LinearLayout panel = MenuPanel.build(root.getContext(), header, rows, row -> {
-            shell.pop();
-            if (row.action != null) row.action.run();
-        });
         int top = Ui.px(130);
         int right = Ui.px(Ui.SAFE_X);
         if (anchor != null && anchor.isAttachedToWindow()) {
@@ -32,7 +40,9 @@ final class Dropdown {
             top = Math.round(r[3]) + Ui.px(14);
             right = Math.max(0, Math.round(shell.stage.getWidth() - r[2]));
         }
-        root.addView(panel, MenuPanel.hang(top, right));
+        lp.topMargin = top;
+        lp.rightMargin = right;
+        root.addView(panel, lp);
         return new Screen(label, root, Screen.Layer.DIALOG) {
             private boolean shown;
 

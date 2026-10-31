@@ -7,7 +7,8 @@ plugins {
 def tvPropsFile = rootProject.file('tv.properties')
 if (!tvPropsFile.exists()) tvPropsFile = rootProject.file('tv.properties.example')
 def tvProps = new Properties()
-tvPropsFile.withInputStream { tvProps.load(it) }
+// UTF-8, so a weather_city such as Malmö can be written as it is spelled.
+tvPropsFile.withReader('UTF-8') { tvProps.load(it) }
 def tvSetting = { String key ->
     def value = tvProps.getProperty(key)?.trim()
     if (!value) throw new GradleException("${tvPropsFile.name}: ${key} is missing")
@@ -27,6 +28,18 @@ def coordinate = { String key, String value, double limit ->
 weatherLatitude = coordinate('latitude', weatherLatitude, 90)
 weatherLongitude = coordinate('longitude', weatherLongitude, 180)
 if (!(temperatureUnit in ['C', 'F'])) throw new GradleException("${tvPropsFile.name}: temperature_unit must be C or F")
+// Optional: the city at latitude and longitude, named on the quick-settings Weather row ("New York · °C") until a
+// place is chosen on the TV; without it the row says Default. No quote, backslash or control character, so it can't
+// break the generated Java; letters beyond ASCII go in as Java's unicode escapes. The message never prints the value.
+def weatherCity = tvProps.getProperty('weather_city', '').trim()
+if (weatherCity.length() > 60 || weatherCity.any { Character.isISOControl(it as char) || it == '"' || it == '\\' }) {
+    throw new GradleException("${tvPropsFile.name}: weather_city must be at most 60 characters, " +
+            "without a quote, a backslash or a control character")
+}
+weatherCity = weatherCity.collect { String ch ->
+    int c = (ch as char) as int
+    c < 0x80 ? ch : String.format('\\u%04X', c)
+}.join('')
 // Optional: TMDB's v4 read access token. Without one the launcher shows the mock catalogue (docs/rework.md). Only
 // the characters a token has, so it can't break the generated Java; the message never prints the value.
 def tmdbToken = tvProps.getProperty('tmdb_api_key', '').trim()
@@ -61,6 +74,7 @@ android {
         buildConfigField 'double', 'WEATHER_LATITUDE', weatherLatitude
         buildConfigField 'double', 'WEATHER_LONGITUDE', weatherLongitude
         buildConfigField 'boolean', 'FAHRENHEIT', String.valueOf(temperatureUnit == 'F')
+        buildConfigField 'String', 'WEATHER_CITY', "\"${weatherCity}\""
         buildConfigField 'String', 'TMDB_TOKEN', "\"${tmdbToken}\""
         buildConfigField 'String', 'WATCHMODE_KEY', "\"${watchmodeKey}\""
         buildConfigField 'String', 'MOVIE_OF_THE_NIGHT_KEY', "\"${movieOfTheNightKey}\""

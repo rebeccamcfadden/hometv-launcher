@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The nav Settings icon's quick-settings dropdown (design final-quick-settings; QuickSettings). -->
+<resources>
+    <string name="qs_tv_settings">TV settings</string>
+    <string name="qs_launcher_settings">Launcher settings</string>
+    <string name="qs_picture">Picture</string>
+    <string name="qs_sound">Sound</string>
+    <string name="qs_network">Network &amp; Wi-Fi</string>
+    <string name="qs_inputs">Inputs</string>
+    <string name="qs_account">TMDB account</string>
+    <string name="qs_services">Streaming services</string>
+    <string name="qs_weather">Weather</string>
+    <string name="qs_motion">Motion</string>
+
+    <string name="qs_account_not_signed_in">Not signed in</string>
+    <string name="qs_account_signed_in">Signed in</string>
+    <string name="qs_account_getting_code">Getting a code…</string>
+    <string name="qs_account_waiting">Waiting…</string>
+    <string name="qs_account_signing_in">Signing in…</string>
+    <string name="qs_account_expired">Code expired</string>
+    <plurals name="qs_services_ticked">
+        <item quantity="one">%1$d ticked</item>
+        <item quantity="other">%1$d ticked</item>
+    </plurals>
+    <!-- The weather row while tv.properties' position is used and it names no weather_city. -->
+    <string name="qs_weather_default">Default</string>
+    <string name="qs_motion_full">Full</string>
+    <string name="qs_motion_reduced">Reduced</string>
+    <string name="qs_motion_off">Off</string>
+</resources>

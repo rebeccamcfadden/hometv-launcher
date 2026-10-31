@@ -206,8 +206,10 @@ milestones: [docs/rework.md](docs/rework.md).
   settings has two rows over them: **Weather location** searches Open-Meteo's geocoding as the typing pauses (no
   key; only the typed name is sent, in the TV's language) and keeps the chosen place's name, region, country and
   position on the TV; "Use default" goes back to `tv.properties`. **Temperature unit** is Default, °C or °F. Home
-  fetches the weather for the new place or unit as soon as it is back in front; the cached answer is kept per
-  request, so the old place's weather never shows for the new one. The logic is in `WeatherPlace`,
+  fetches the weather for the new place or unit as soon as it is back in front (a place or unit change moves the
+  settings change count, Home rebuilds on resume, and the new request has no cached answer, so it is fetched at
+  once); the cached answer is kept per request, so the old place's weather never shows for the new one. The
+  optional `weather_city` in `tv.properties` names the default place on the quick settings' Weather row. The logic is in `WeatherPlace`,
   `WeatherSettings` and `WeatherPrefs`, unit-tested.
 - **Waits for design:** the picker is a plain Android dialog (a text field with the TV's keyboard and a list of
   matches) in the old-style settings screen, until the new Launcher settings page and its pickers are designed
@@ -363,6 +365,35 @@ From the old launcher; not in V1 by decision.
 - **Accessibility in the prototype:** the launcher now reports the current preview tab and nav section as selected
   and reads Pick for me's fields with their value; the prototype has no ARIA roles or states to match.
 
+## Quick settings
+
+The nav Settings icon's dropdown (design final-quick-settings; `QuickSettings`, `QuickPanel`). The remote's Settings
+key still opens the TV maker's panel, or `settings_key_panel`'s old quick-settings panel; nothing about it changed.
+
+- **Sleep timer:** the row was dropped by the project lead's decision, 2026-10-31.
+- **Picture and Inputs:** Picture opens `ACTION_DISPLAY_SETTINGS`, as the TCL's own panel and the remote's old
+  panel (`Menus.quickSettings`) do (the project lead's decision, 2026-10-31). Inputs has no public settings action and
+  opens the TV's settings. Sound and Network & Wi-Fi use `ACTION_SOUND_SETTINGS` and `ACTION_WIFI_SETTINGS`. Each
+  falls back to the TV's settings when its page doesn't resolve (through `SystemSettings`, the vendor's settings app
+  where it has one). Every row starts the settings app afresh, so it opens on the page asked for and not on the page
+  it was left on. Wanted: a check on the project lead's TCL of which activity is its own Inputs page, to add as a
+  vendor target.
+- **Launcher settings rows:** Launcher settings, TMDB account, Streaming services and Weather open the old
+  `LauncherSettingsActivity`, the last three with a `section` extra (`account`, `services`, `weather`) that it
+  ignores. `QuickSettings.openLauncherSettings` is the one place to point at the new split page and its panes once
+  they land, and the rows' values go through `QuickSettings.Value`, the shape of `SettingsSection.value`, so the
+  panes can supply them. The TMDB account row is left out of builds without a TMDB token, as in Launcher settings.
+- **Motion:** Full, Reduced and Off, saved as `motion` (`full`, `reduced`, `off`; `MotionChoice`), with the old
+  Animations switch kept in step: Off is Animations off, and turning the switch on or off in Launcher settings drops
+  the saved Motion. A TV whose config.xml or config.json sets `reduced_motion` is never Full (the project lead's
+  decision, 2026-10-31): a saved Full is Reduced there, a saved Off stays Off, the row shows the Motion in effect and
+  OK steps Reduced and Off only. With nothing saved, the switch and `reduced_motion` decide as before. A step applies at once and moves the settings change count, so Home
+  rebuilds with it the next time it resumes. The launcher has one reduced-motion mode (no animations), so Reduced
+  and Off look the same for now. Wanted: Reduced as the spec has it, keeping the fades and dropping slides, rises
+  and focus scale-ups.
+- **The open menu's button:** as with the Wi-Fi and Inputs dropdowns, the Settings icon is not kept highlighted while
+  its menu is open (the prototype's `is-open`).
+
 ## Not designed yet
 
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before
@@ -371,11 +402,10 @@ it is built.
 - Search and Home's weather while loading (06-states A designs offline and errors, not these).
 - First run and setup: the checklist (01-setup B) and its panes (r2-setup-checklist) are built in the prototype; not
   in the launcher. When it shows is open.
-- Launcher settings in the new UI: the split (05-settings A), the round-2 Account, Streaming services, Stores and
-  Weather panes, and the Settings icon's quick-settings dropdown (final-quick-settings) are built in the prototype;
-  the launcher still has the old Launcher settings activity, and its nav Settings icon opens the TV's settings.
+- Launcher settings in the new UI: the split (05-settings A) and the round-2 Account, Streaming services, Stores and
+  Weather panes are built in the prototype; the launcher still has the old Launcher settings activity, which the
+  nav Settings icon's quick-settings dropdown opens (see [Quick settings](#quick-settings)).
   Home row apps (with reordering) has no design; the prototype's is a stand-in.
-- The sleep timer (quick settings): its warning before the TV turns off, and how the launcher turns the TV off.
 - Removing a recent search.
 - Voice search.
 - Progress on started titles.

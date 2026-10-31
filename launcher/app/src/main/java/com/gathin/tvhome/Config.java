@@ -58,9 +58,9 @@ final class Config {
         return seen != current;
     }
 
-    /** The new UI's reduced motion: reduced_motion, or Animations turned off in Launcher settings. */
+    /** The new UI's reduced motion: Motion (MotionChoice) not Full. */
     boolean reducedMotion() {
-        return reducedMotion || !animations;
+        return motion.reduced();
     }
     private static final String THEME_REVISION_NAME = "theme_revision";
     private static final String THEME_SIGNATURE_KEY = "theme_signature";
@@ -84,13 +84,16 @@ final class Config {
     final String inputUriScheme;
     /** Animations on (config.xml, animations), unless turned off in Launcher settings. */
     final boolean animations;
-    /** Calmer motion for weak GPUs (config.xml, reduced_motion); see {@link #reducedMotion()}. */
+    /** Calmer motion for weak GPUs (config.xml or config.json, reduced_motion): this TV's own setting, before the
+     *  household's Motion. With it, Motion is never Full (MotionChoice.resolve); see {@link #reducedMotion()}. */
     final boolean reducedMotion;
+    /** The Motion in effect: the household's, over the Animations switch and reduced_motion (MotionChoice). */
+    final MotionChoice motion;
     /** Open the Live TV app on the first Home after the TV starts (config.xml, boot_to_live_tv). */
     final boolean bootToLiveTv;
     /** Show the Open on start row in Launcher settings (config.xml, open_on_start_choice). */
     final boolean openOnStartChoice;
-    /** The Settings button opens Launcher settings instead of the TV's Settings (launcher_settings_button). */
+    /** launcher_settings_button: read but unused since the nav's Settings icon opens quick settings (QuickSettings). */
     final boolean launcherSettingsButton;
     /** Show the Wi-Fi/Ethernet button in the nav bar (config.xml, show_network_pill). */
     final boolean showNetworkPill;
@@ -152,7 +155,7 @@ final class Config {
                    String liveTvAction, String liveTvInputId, Map<String, String> appLabels,
                    String sourcePanelService, String sourcePanelAction, String sourcePanelExtra,
                    boolean coocaaSources, String inputAction, String inputUriScheme, boolean animations,
-                   boolean reducedMotion, boolean bootToLiveTv, boolean openOnStartChoice,
+                   boolean reducedMotion, MotionChoice motion, boolean bootToLiveTv, boolean openOnStartChoice,
                    boolean launcherSettingsButton, boolean showNetworkPill, boolean showInputsPill, String vpnApp,
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean restoreKeyServices,
                    int[] inputKeycodes, List<String> appKeys, String stockHomeRedirect, boolean keyFilter,
@@ -181,6 +184,7 @@ final class Config {
         this.inputUriScheme = inputUriScheme;
         this.animations = animations;
         this.reducedMotion = reducedMotion;
+        this.motion = motion;
         this.bootToLiveTv = bootToLiveTv;
         this.openOnStartChoice = openOnStartChoice;
         this.launcherSettingsButton = launcherSettingsButton;
@@ -313,10 +317,15 @@ final class Config {
         // Unmounted storage looks like a theme reset; compare only once the file is readable.
         if (mounted) syncThemeChoices(choices, dir, file);
         animations = choices.getBoolean("animations", animations);
+        // Motion from the quick-settings dropdown (MotionChoice): a saved choice wins over the switch; without one
+        // they mean what they did before. reduced_motion stays this TV's own, and keeps Motion from being Full.
+        MotionChoice motion = MotionChoice.resolve(choices.getString(MotionChoice.KEY, null), animations,
+                reducedMotion);
+        animations = motion.animations();
 
         return new Config(dock, hidden, liveTv, liveTvAction, liveTvInputId, packageMap(appLabels),
                 panelService, panelAction, panelExtra, coocaaSources, inputAction, inputUriScheme, animations,
-                reducedMotion, bootToLiveTv, openOnStartChoice, launcherSettingsButton, showNetworkPill,
+                reducedMotion, motion, bootToLiveTv, openOnStartChoice, launcherSettingsButton, showNetworkPill,
                 showInputsPill, vpn, settingsKeycodes, settingsKeyPanel, restoreKeyServices, inputKeycodes,
                 appKeys, stockHomeRedirect, keyFilter, handleViewInputs, gamepadPassthrough, consumeVolumeKeys,
                 subscribedServices,
@@ -343,7 +352,7 @@ final class Config {
     }
 
     private static void clearChoices(SharedPreferences.Editor editor) {
-        editor.remove("animations");
+        editor.remove("animations").remove(MotionChoice.KEY);
         for (String key : OLD_CHOICES) editor.remove(key);
     }
 
