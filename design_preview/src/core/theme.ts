@@ -120,7 +120,7 @@ export const THEMES: ThemeDef[] = [
     group: 'seasonal',
     display: { family: 'Baloo 2', weights: '500' },
     ui: { family: 'Nunito', weights: UI },
-    backdrop: (p) => url(`seasonal/vector/${p}.webp`),
+    backdrop: (p) => url(`seasonal/vector-2/${p}.webp`),
   },
   {
     id: 'seasonal-8bit',

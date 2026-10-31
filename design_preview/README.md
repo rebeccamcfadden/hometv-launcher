@@ -470,7 +470,7 @@ picks another theme.
   background. The others are downloaded once from `launcher/backdrops/` in the repo (through jsDelivr; one constant,
   `BACKDROP_BASE` in `src/core/theme.ts`) and kept: `classic/daylight.webp`, `classic/cinema.webp`,
   `classic/landscapes-1.webp` … `-4.webp` (a new one every hour), `seasonal/nature/<period>.webp`,
-  `seasonal/vector/<period>.webp` and 8-bit's `seasonal/8bit/<period>.png`, 160 × 90 pixels scaled up without
+  `seasonal/vector-2/<period>.webp` and 8-bit's `seasonal/8bit/<period>.png`, 160 × 90 pixels scaled up without
   smoothing. While a picture loads, when it can't be fetched, and offline when it never arrived, the theme's sky shows
   instead: a gradient from its sky to its horizon colour. Cinema adds a soft vignette.
 - **Moving details** is saved only: nothing moves yet, on the TV either.

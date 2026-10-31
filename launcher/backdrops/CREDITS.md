@@ -33,7 +33,7 @@ else is changed. The page links use Pixabay's short form, which leads to the pho
 
 ## Seasonal · Vector art
 
-`seasonal/vector/*.webp` (all ten periods): drawn for CleanYourTV, in the project's Figma file "CleanTV · Theme
+`seasonal/vector-2/*.webp` (all ten periods): drawn for CleanYourTV, in the project's Figma file "CleanTV · Theme
 explorations" (component set "Calendar · Vector art"), released with the repo under its MIT licence.
 
 ## 8-bit

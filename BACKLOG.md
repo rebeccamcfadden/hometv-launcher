@@ -276,7 +276,8 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   Cinema's DM Serif Display and Daylight's Figtree.
 - **Backdrops:** the photos and Vector art live in `launcher/backdrops/` and are downloaded once from
   `theme_assets_url` (jsDelivr on this repository's `main`). The 8-bit scenes are in the APK. On the TCL, Cinema's,
-  Landscapes' and Vector art's downloaded from `main`. Vector art's sky shows faint gradient banding at full size.
+  Landscapes' and Vector art's downloaded from `main`. Vector art's sky showed gradient banding there (the launcher
+  decodes backdrops as RGB_565); since 2026-11-01 the pictures in `seasonal/vector-2/` are dithered to that grid.
 - **Not shipped:** the Vector scenes alternative to Vector art, and the old Seasonal & festive themes (Figma pages kept).
 - **Card shadows:** every theme but Midnight draws a resting shadow under each artwork card. Measured on the TCL with
   `tools/bench.py` (main 24e8f119, 36 keys × 3, 2026-10-31):

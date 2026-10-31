@@ -105,7 +105,7 @@ public class ThemesTest {
         t = Themes.resolve("seasonal-vector", LocalDate.of(2026, 4, 10));
         assertEquals("seasonal-vector:spring-rain", t.id);
         assertEquals("Spring rain", t.name);
-        assertEquals("url:seasonal/vector/spring-rain.webp", t.backdrop);
+        assertEquals("url:seasonal/vector-2/spring-rain.webp", t.backdrop);
 
         t = Themes.resolve("seasonal-8bit", LocalDate.of(2026, 8, 1));
         assertEquals("seasonal-8bit:late-summer", t.id);

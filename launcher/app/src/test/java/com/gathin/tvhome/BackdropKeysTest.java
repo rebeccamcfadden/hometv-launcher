@@ -91,7 +91,7 @@ public class BackdropKeysTest {
         assertEquals(base + "classic/cinema.webp",
                 BackdropKeys.join(base.substring(0, base.length() - 1), "classic/cinema.webp"));
         assertEquals(base + "classic/cinema.webp", BackdropKeys.join(base, "/classic/cinema.webp"));
-        assertEquals("backdrops/seasonal/vector/snow.webp", BackdropKeys.cachePath("seasonal/vector/snow.webp"));
+        assertEquals("backdrops/seasonal/vector-2/snow.webp", BackdropKeys.cachePath("seasonal/vector-2/snow.webp"));
     }
 
     @Test
@@ -118,7 +118,7 @@ public class BackdropKeysTest {
     public void swapsThePeriodInAPath() {
         assertEquals("seasonal/nature/halloween.webp", BackdropKeys.forPeriod("seasonal/nature/autumn.webp",
                 SeasonCalendar.Period.AUTUMN, SeasonCalendar.Period.HALLOWEEN));
-        assertEquals("seasonal/vector/thaw.webp", BackdropKeys.forPeriod("seasonal/vector/snow.webp",
+        assertEquals("seasonal/vector-2/thaw.webp", BackdropKeys.forPeriod("seasonal/vector-2/snow.webp",
                 SeasonCalendar.Period.SNOW, SeasonCalendar.Period.THAW));
         assertNull(BackdropKeys.forPeriod("classic/cinema.webp",
                 SeasonCalendar.Period.SNOW, SeasonCalendar.Period.THAW));

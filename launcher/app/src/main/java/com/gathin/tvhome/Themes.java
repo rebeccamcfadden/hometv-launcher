@@ -91,7 +91,7 @@ final class Themes {
                 break;
             case "seasonal-vector":
                 style = VECTOR;
-                backdrop = "url:seasonal/vector/" + slug + ".webp";
+                backdrop = "url:seasonal/vector-2/" + slug + ".webp";
                 break;
             case "seasonal-8bit":
                 style = PIXEL;
