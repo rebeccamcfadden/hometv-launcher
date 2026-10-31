@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M9, Launcher settings' Theme pane (Figma lwShqRaciMpDUDW5dYljNw, frame 18:10). -->
+<resources>
+    <string name="theme_section">Theme</string>
+    <string name="theme_pane_title">Theme</string>
+    <string name="theme_pane_sub">Colours, type and the picture behind Home. Rows, apps and data stay as they are.</string>
+    <string name="theme_group_classic">Classic</string>
+    <!-- Shown in capitals: SEASONAL · FOLLOWS THE DATE · TODAY: HALLOWEEN. -->
+    <string name="theme_group_seasonal">Seasonal · follows the date · today: %1$s</string>
+    <!-- The section's value for a Seasonal theme: "Nature · Halloween". -->
+    <string name="theme_value_seasonal">%1$s · %2$s</string>
+
+    <string name="theme_typeface">Typeface</string>
+    <string name="theme_typeface_sub">System font uses Roboto</string>
+    <string name="theme_font_theme">Theme font</string>
+    <string name="theme_font_system">System font</string>
+    <string name="theme_moving">Moving details</string>
+    <string name="theme_moving_sub">Snow, rain, leaves and bats drift slowly</string>
+    <string name="theme_moving_on">On</string>
+    <string name="theme_moving_off">Off</string>
+
+    <string name="theme_name_midnight">Midnight</string>
+    <string name="theme_name_daylight">Daylight</string>
+    <string name="theme_name_oled">OLED Black</string>
+    <string name="theme_name_high_contrast">High Contrast</string>
+    <string name="theme_name_cinema">Cinema</string>
+    <string name="theme_name_landscapes">Landscapes</string>
+    <string name="theme_name_nature">Nature</string>
+    <string name="theme_name_vector">Vector art</string>
+    <string name="theme_name_8bit">8-bit</string>
+
+    <string name="theme_period_snow">Snow</string>
+    <string name="theme_period_thaw">Thaw</string>
+    <string name="theme_period_spring_rain">Spring rain</string>
+    <string name="theme_period_bloom">Bloom</string>
+    <string name="theme_period_pride">Pride</string>
+    <string name="theme_period_midsummer">Midsummer</string>
+    <string name="theme_period_late_summer">Late summer</string>
+    <string name="theme_period_autumn">Autumn</string>
+    <string name="theme_period_halloween">Halloween</string>
+    <string name="theme_period_christmas">Christmas</string>
+</resources>

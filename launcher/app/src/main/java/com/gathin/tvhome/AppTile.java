@@ -14,14 +14,15 @@ import android.widget.TextView;
 /**
  * An app on Home's row or in All Apps (design_preview/src/styles/screens.css, .app): the app's banner in a rounded
  * tile, or its icon and name where it has no banner, with the name under the tile. Focused, the tile scales up 5%
- * inside a 4 px accent ring and the name brightens. While being moved it is lifted, with arrows on its sides.
+ * inside the accent focus ring and the name brightens. While being moved it is lifted, with arrows on its sides.
  */
 @SuppressLint("ViewConstructor") // built in code only, never inflated
 final class AppTile extends LinearLayout {
-    /** The ring sits outside the tile, as the prototype's box-shadow does; the column is that much wider. */
+    /**
+     * The room the ring has outside the tile, as the prototype's box-shadow does; the column is that much wider. The
+     * ring itself is the theme's focus width (Ui.FOCUS_W, 4 in Midnight).
+     */
     static final int RING = 4;
-    private static final int FILL = 0x0BFFFFFF;
-    private static final int FILL_FOCUSED = 0x17FFFFFF;
 
     final String pkg;
     private final FrameLayout frame;
@@ -43,14 +44,14 @@ final class AppTile extends LinearLayout {
 
         frame = new FrameLayout(ctx);
         frame.setPadding(Ui.px(RING), Ui.px(RING), Ui.px(RING), Ui.px(RING));
-        frame.setBackground(Ui.states(Ui.round(0, Ui.RADIUS_L + RING), null,
-                Ui.round(0, Ui.RADIUS_L + RING, Ui.ACCENT, RING)));
+        frame.setBackground(Ui.states(TileFrame.resting(RING, Ui.RADIUS_L), null,
+                TileFrame.focused(RING, Ui.RADIUS_L)));
         frame.setDuplicateParentStateEnabled(true);
         frame.setClipChildren(false);
 
         FrameLayout tile = new FrameLayout(ctx);
-        tile.setBackground(Ui.states(Ui.round(FILL, Ui.RADIUS_L, Ui.LINE, 1), null,
-                Ui.round(FILL_FOCUSED, Ui.RADIUS_L, Ui.LINE, 1)));
+        tile.setBackground(Ui.states(Ui.round(Ui.TILE, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W), null,
+                Ui.round(Ui.SURFACE_2, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W)));
         tile.setDuplicateParentStateEnabled(true);
         tile.setClipToOutline(true);
         int w = Ui.px(width), h = Ui.px(height);
@@ -123,7 +124,7 @@ final class AppTile extends LinearLayout {
 
     private static View arrows(Context ctx) {
         FrameLayout box = new FrameLayout(ctx);
-        box.setBackground(Ui.round(0x66090E15, Ui.RADIUS_L));
+        box.setBackground(Ui.round(Ui.alpha(Ui.BG, 0x66), Ui.RADIUS_L));
         int[] icons = {R.drawable.ic_ui_chev_left, R.drawable.ic_ui_chev_right};
         int[] gravity = {Gravity.START | Gravity.CENTER_VERTICAL, Gravity.END | Gravity.CENTER_VERTICAL};
         for (int i = 0; i < 2; i++) {

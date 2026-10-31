@@ -105,7 +105,7 @@ final class Accounts implements Household.Recorder {
         return flow;
     }
 
-    /** Hears sign-in steps and sign-outs, on the main thread; for the sign-in page. */
+    /** Hears sign-in steps, sign-outs and full syncs, on the main thread; for the sign-in page and Account pane. */
     void addListener(Runnable l) {
         if (!listeners.contains(l)) listeners.add(l);
     }
@@ -232,7 +232,11 @@ final class Accounts implements Household.Recorder {
             dropSession();
             return;
         }
-        if (!r.lists.isEmpty()) lastFull = at;
+        if (!r.lists.isEmpty()) {
+            lastFull = at;
+            // Launcher settings' Account pane shows when the lists were last read.
+            changed();
+        }
         Map<SyncList, List<String>> mine = new EnumMap<>(SyncList.class);
         for (Map.Entry<SyncList, List<String>> e : r.lists.entrySet()) {
             if (e.getKey().writable) mine.put(e.getKey(), e.getValue());
@@ -260,6 +264,16 @@ final class Accounts implements Household.Recorder {
         SyncPlan.Run run = again;
         again = SyncPlan.Run.NONE;
         request(run);
+    }
+
+    /** Sync now (Launcher settings, Account): a full sync while signed in; one already running runs again after. */
+    void syncNow() {
+        request(SyncPlan.Run.FULL);
+    }
+
+    /** When the account's lists were last read in full since Home started (ms), or 0 for not yet. */
+    long lastSynced() {
+        return lastFull;
     }
 
     /** Worker: Household and Friends set by number, read with the app's token. A list that fails keeps its copy. */

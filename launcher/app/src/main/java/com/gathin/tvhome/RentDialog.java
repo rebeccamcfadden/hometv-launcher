@@ -27,8 +27,6 @@ final class RentDialog {
     private RentDialog() {}
 
     private static final String G_QUALITY = "qual", G_PRICES = "prices", G_ACTIONS = "dialog";
-    /** screens.css .dialog background. */
-    private static final int FILL = 0xFF121A24;
 
     static Screen create(Context ctx, Router router, Title t, ServiceOffers s) {
         Data data = router.data();
@@ -48,7 +46,7 @@ final class RentDialog {
         LinearLayout box = Kit.unclip(new LinearLayout(ctx));
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(Ui.px(56), Ui.px(52), Ui.px(56), Ui.px(52));
-        box.setBackground(Ui.round(FILL, Ui.RADIUS_XL, Ui.LINE_STRONG, 1));
+        box.setBackground(Ui.round(Ui.DIALOG_BG, Ui.RADIUS_XL, Ui.LINE_STRONG, Ui.LINE_W));
         box.setElevation(Ui.px(40));
 
         TextView title = Ui.text(ctx, 38, Ui.TEXT_1, Ui.REGULAR);
@@ -158,8 +156,8 @@ final class RentDialog {
         LinearLayout v = new LinearLayout(ctx);
         v.setOrientation(LinearLayout.VERTICAL);
         v.setPadding(Ui.px(24), Ui.px(20), Ui.px(24), Ui.px(20));
-        v.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.LINE, 1), null,
-                Ui.round(Ui.ACCENT, Ui.RADIUS_L, Ui.ACCENT, 1)));
+        v.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W), null,
+                Ui.round(Ui.ACCENT, Ui.RADIUS_L, Ui.ACCENT, Ui.LINE_W)));
         v.addView(part(ctx, b.label, Ui.T_SMALL, Ui.TEXT_3));
         v.addView(part(ctx, b.amount, 32, Ui.TEXT_1), below(4));
         v.addView(part(ctx, b.detail, Ui.T_MIN, Ui.TEXT_3), below(4));

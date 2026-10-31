@@ -64,7 +64,7 @@ final class PickSetupPage extends Screen {
 
         // ---- Left: where from, which lists, the six fields ----
         LinearLayout left = column(ctx);
-        TextView title = Ui.line(ctx, 54, Ui.TEXT_1, Ui.REGULAR);
+        TextView title = Ui.line(ctx, 54, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         title.setText(R.string.pick_title);
         left.addView(title);
         left.addView(context(ctx, ctx.getString(R.string.pick_context)), below(8));
@@ -131,11 +131,11 @@ final class PickSetupPage extends Screen {
 
         LinearLayout card = column(ctx);
         card.setPadding(Ui.px(36), Ui.px(40), Ui.px(36), Ui.px(40));
-        card.setBackground(Ui.round(0x0FFFFFFF, Ui.RADIUS_XL, Ui.LINE_STRONG, 1));
+        card.setBackground(Ui.round(Ui.CARD, Ui.RADIUS_XL, Ui.LINE_STRONG, Ui.LINE_W));
         LinearLayout head = new LinearLayout(ctx);
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setBaselineAligned(true);
-        count = Ui.line(ctx, 120, Ui.TEXT_1, LIGHT);
+        count = Ui.line(ctx, 120, Ui.TEXT_1, Ui.display(LIGHT));
         count.setGravity(Gravity.START);
         head.addView(count, wrap());
         countText = Ui.line(ctx, 34, Ui.TEXT_1, Ui.REGULAR);
@@ -152,7 +152,7 @@ final class PickSetupPage extends Screen {
         card.addView(summaryFilters, below(16));
         View divider = new View(ctx);
         divider.setBackgroundColor(Ui.LINE);
-        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, Ui.px(1)));
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.linePx());
         dlp.topMargin = Ui.px(28);
         dlp.bottomMargin = Ui.px(28);
         card.addView(divider, dlp);
@@ -233,7 +233,7 @@ final class PickSetupPage extends Screen {
         LinearLayout v = new LinearLayout(ctx);
         v.setOrientation(LinearLayout.VERTICAL);
         v.setPadding(Ui.px(22), Ui.px(18), Ui.px(22), Ui.px(18));
-        v.setBackground(Ui.states(Ui.round(Ui.SURFACE, 14, Ui.LINE, 1), null, Ui.round(Ui.ACCENT, 14, Ui.ACCENT, 1)));
+        v.setBackground(Ui.states(Ui.round(Ui.SURFACE, 14, Ui.LINE, Ui.LINE_W), null, Ui.round(Ui.ACCENT, 14, Ui.ACCENT, Ui.LINE_W)));
         TextView l = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
         l.setGravity(Gravity.START);
         l.setTextColor(Ui.colors(Ui.TEXT_3, Ui.TEXT_3, Ui.ON_ACCENT));

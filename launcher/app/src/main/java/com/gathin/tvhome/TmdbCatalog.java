@@ -13,6 +13,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -80,6 +81,8 @@ final class TmdbCatalog implements Catalog {
     private boolean visible = true;
     /** Off until a TMDB account is signed in: see {@link Catalog#setListPricing}. */
     private boolean listPricing;
+    /** The stores whose rent and buy offers show (Launcher settings, Stores for rent and buy). */
+    private Set<ServiceId> priceStores = EnumSet.copyOf(ServicePicks.STORES);
     /** While Home shows, the household's titles are checked for prices due every few hours (memory only). */
     private final Runnable keepFresh = new Runnable() {
         @Override
@@ -372,7 +375,7 @@ final class TmdbCatalog implements Catalog {
         if (visible) keepFresh.run();
     }
 
-    /** t's offers: its availability with what the price book found merged in. */
+    /** t's offers: its availability with what the price book found merged in, without the stores left unticked. */
     private Title priced(Title t) {
         ProviderAvailability a = availability.get(t.id);
         if (a == null) return t;
@@ -380,8 +383,19 @@ final class TmdbCatalog implements Catalog {
         OfferMerge.Result r = OfferMerge.merge(a, e == null ? Collections.emptyList() : e.prices, WatchProviders.SE);
         priceSources.put(t.id, r.priceSources);
         Title.Draft d = new Title.Draft(t);
-        d.offers = r.toOffers();
+        d.offers = ServicePicks.keep(r.toOffers(), priceStores);
         return d.build();
+    }
+
+    @Override
+    public void setPriceStores(Set<ServiceId> stores) {
+        Set<ServiceId> next = stores.isEmpty() ? EnumSet.noneOf(ServiceId.class) : EnumSet.copyOf(stores);
+        if (next.equals(priceStores)) return;
+        priceStores = next;
+        for (Map.Entry<String, Title> k : known.entrySet()) {
+            if (k.getValue().detailed && availability.containsKey(k.getKey())) k.setValue(priced(k.getValue()));
+        }
+        changed();
     }
 
     /** The price book found something for a title: its offers again, and the screens hear. */

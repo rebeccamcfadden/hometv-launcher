@@ -22,9 +22,6 @@ final class QuickPanel {
     private static final float STATUS_TEXT = 19;
     private static final int DOT = 7;
     private static final int DOT_GAP = 5;
-    /** .dots i: white at 22%, and the focused row's dark at 25%. */
-    private static final int DOT_OFF = 0x38FFFFFF;
-    private static final int DOT_OFF_FOCUSED = 0x40101820;
 
     interface OnOpen {
         void open(QuickSettings.Row row);
@@ -36,7 +33,7 @@ final class QuickPanel {
         int pad = Ui.px(10);
         panel.setPadding(pad, pad, pad, pad);
         // .menu--settings is opaque, the other dropdowns' colour at full strength.
-        panel.setBackground(Ui.round(Ui.MENU_BG | 0xFF000000, 28, Ui.LINE_STRONG, 1));
+        panel.setBackground(Ui.round(Ui.MENU_BG | 0xFF000000, 28, Ui.LINE_STRONG, Ui.LINE_W));
         panel.setElevation(Ui.px(30));
         for (int i = 0; i < rows.size(); i++) {
             QuickSettings.Row r = rows.get(i);
@@ -154,11 +151,12 @@ final class QuickPanel {
             if (text != null) text.setText(r.value.value(ctx));
             if (dots == null) return;
             int on = r.stepper.index();
+            // .dots i: the text at 22%, and the focused row's dark at 25%.
             for (int i = 0; i < dots.getChildCount(); i++) {
                 boolean lit = i == on;
                 View dot = dots.getChildAt(i);
-                dot.setBackground(Ui.states(Ui.oval(lit ? Ui.ACCENT : DOT_OFF), null,
-                        Ui.oval(lit ? Ui.ON_ACCENT : DOT_OFF_FOCUSED)));
+                dot.setBackground(Ui.states(Ui.oval(lit ? Ui.ACCENT : Ui.alpha(Ui.TEXT_1, 0x38)), null,
+                        Ui.oval(lit ? Ui.ON_ACCENT : Ui.alpha(Ui.ON_ACCENT, 0x40))));
                 // A new background would otherwise fade in from its resting look and, set on a focused row, stop there.
                 dot.jumpDrawablesToCurrentState();
             }

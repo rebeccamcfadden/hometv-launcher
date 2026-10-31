@@ -60,7 +60,7 @@ final class AllAppsPage {
         LinearLayout head = new LinearLayout(activity);
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setBaselineAligned(true);
-        TextView title = Ui.line(activity, Ui.T_H1, Ui.TEXT_1, Ui.REGULAR);
+        TextView title = Ui.line(activity, Ui.T_H1, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         title.setText(R.string.all_apps);
         head.addView(title);
         count = Ui.line(activity, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
@@ -217,6 +217,10 @@ final class AllAppsPage {
             }));
         } else {
             rows.add(new MenuPanel.Row(activity.getString(R.string.tile_add_to_home), 0, () -> {
+                if (!AppRow.hasRoom(apps.full(), apps::shown)) {
+                    shell.toast(activity.getString(R.string.home_apps_full, AppRow.MAX));
+                    return;
+                }
                 apps.save(AppRow.add(apps.full(), pkg));
                 shell.toast(activity.getString(R.string.home_added));
             }));

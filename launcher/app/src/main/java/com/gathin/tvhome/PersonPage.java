@@ -66,7 +66,7 @@ final class PersonPage extends Screen {
         eyebrow.setText(ctx.getString(R.string.preview_person_eyebrow).toUpperCase(Locale.ROOT));
         eyebrow.setLetterSpacing(0.08f);
         words.addView(eyebrow);
-        TextView title = Ui.line(ctx, Ui.T_H1, Ui.TEXT_1, Ui.REGULAR);
+        TextView title = Ui.line(ctx, Ui.T_H1, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         title.setText(p.name);
         LinearLayout.LayoutParams tlp = wrap();
         tlp.topMargin = Ui.px(6);

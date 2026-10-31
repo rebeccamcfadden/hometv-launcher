@@ -59,8 +59,8 @@ milestones: [docs/rework.md](docs/rework.md).
 - **TMDB attribution:** TMDB's terms (developer.themoviedb.org/docs/faq, checked 2026-10-30) ask for the notice "This
   product uses the TMDB API but is not endorsed or certified by TMDB" in the app's About or Credits section, and for
   one of their approved logos (themoviedb.org/about/logos-attribution), less prominent than the app's own mark. For
-  now the notice is a line in the old Launcher settings activity (only in builds with a token) and in the README;
-  the logo is not in the launcher yet. Wanted: both on the new Launcher settings page once it is designed.
+  now the notice is in Launcher settings' About pane (only in builds with a token) and in the README; the logo is not
+  in the launcher yet (the design has a placeholder for it). Wanted: TMDB's logo in About.
 - **The token is in the APK:** `BuildConfig.TMDB_TOKEN` can be read out of the APK by anyone who has it. A read
   access token can only read TMDB's public data, but it is the account's: keep a token build to yourself, and
   revoke the token on themoviedb.org if an APK leaks.
@@ -128,7 +128,7 @@ milestones: [docs/rework.md](docs/rework.md).
 
 ### TMDB sign-in and watchlist sync
 - **V1:** My list, Seen, Favorites, recent searches and recently viewed are stored on the TV only.
-- **V2 Phase 3:** signing in is optional, from a "TMDB account" row in Launcher settings, on a temporary page over
+- **V2 Phase 3:** signing in is optional, from Launcher settings' Account section, on a temporary page over
   Home (`AccountPage`, "Temporary design") until the Figma design is chosen. TMDB's v4 flow: a request token shown as a
   QR code for `themoviedb.org/auth/access` (version 14, about 460 px), polled every 5 s while the page is on screen
   and for at most 15 minutes, then the access token turned into a v3 session (`/3/authentication/session/convert/4`),
@@ -199,22 +199,29 @@ milestones: [docs/rework.md](docs/rework.md).
   when installed, even on its free tier. With the real catalogue the names follow current branding: "HBO Max", and
   "Apple TV" for the subscription with the "Apple TV Store" beside it.
 - **Wanted:** a screen in Launcher settings to tick the services the household pays for.
+- **M9 (track D2):** the Streaming services pane of the new Launcher settings page (`ServicesSection`) ticks them, free
+  services included; the ticks are saved on the TV (`ServiceChoices`, `ticked_services` in `launcher_settings`), win
+  over `subscribed_services` and the installed apps, and change Included at once for screens built after. The Stores
+  pane (`StoresSection`, `ticked_stores`) leaves the unticked stores' rent and buy offers out of the real catalogue
+  (`TmdbCatalog.setPriceStores`); the mock catalogue keeps all of them. Neither is cleared by Follow theme or a theme
+  push.
 
 ### Weather location on the TV
-- **V2 (Phase 4):** `latitude`, `longitude` and `temperature_unit` still come from the gitignored build properties
-  file, `launcher/tv.properties` (template: `launcher/tv.properties.example`, New York), as the default. Launcher
-  settings has two rows over them: **Weather location** searches Open-Meteo's geocoding as the typing pauses (no
-  key; only the typed name is sent, in the TV's language) and keeps the chosen place's name, region, country and
-  position on the TV; "Use default" goes back to `tv.properties`. **Temperature unit** is Default, °C or °F. Home
-  fetches the weather for the new place or unit as soon as it is back in front (a place or unit change moves the
-  settings change count, Home rebuilds on resume, and the new request has no cached answer, so it is fetched at
-  once); the cached answer is kept per request, so the old place's weather never shows for the new one. The
-  optional `weather_city` in `tv.properties` names the default place on the quick settings' Weather row. The logic is in `WeatherPlace`,
-  `WeatherSettings` and `WeatherPrefs`, unit-tested.
-- **Waits for design:** the picker is a plain Android dialog (a text field with the TV's keyboard and a list of
-  matches) in the old-style settings screen, until the new Launcher settings page and its pickers are designed
-  (see [Launcher settings page](#from-m1)).
-- **Findings:** Open-Meteo matches names in the language it is asked in. On an English TV "Göteborg" finds only
+- **V2 (Phase 4):** `latitude` and `longitude` still come from the gitignored build properties file,
+  `launcher/tv.properties` (template: `launcher/tv.properties.example`, New York), as the default place. Launcher
+  settings' Weather pane (M9) shows the place with the weather there now, or the last answer and when it came while
+  offline. **Change city** searches Open-Meteo's geocoding as the typing pauses (no key; only the typed name is
+  sent), in the TV's language and in English and Swedish, so "Göteborg" finds the city on an English TV too; the
+  answers are merged (one row per place, names typed exactly first, accents ignored) and countries are named in the
+  TV's language. It works on the pane's own 6 × 6 keyboard or a real one, and keeps the chosen place's name,
+  region, country and position on the TV; with nothing typed it lists the place now showing, the default and up to
+  three places picked before, which work offline. "Use default" goes back to `tv.properties`, whose optional
+  `weather_city` names that place on the pane and its row ("Default" without it). **Temperature** is °C, °F or the
+  TV default: `temperature_unit` in `tv.properties` when it is set, else the TV's region (Android 14's regional
+  preference first, then the locale's country). Home fetches the weather for the new place or
+  unit when it is rebuilt; the cached answer is kept per request, so the old place's weather never shows for the
+  new one. The logic is in `WeatherPlace`, `WeatherSettings` and `WeatherPrefs`, unit-tested.
+- **Findings:** Open-Meteo matches names in the language it is asked in. In English "Göteborg" finds only
   Göteborgnuten (Svalbard) and a park; the city is "Gothenburg". In Swedish both names find it.
 
 ### Wi-Fi networks
@@ -238,7 +245,8 @@ milestones: [docs/rework.md](docs/rework.md).
 
 From the old launcher; not in V1 by decision.
 
-- Themes and wallpapers pushed as `config.json`.
+- Themes and wallpapers pushed as `config.json`. (M9 brought themes back as an on-TV choice in Launcher settings › Theme;
+  see [Themes](#themes).)
 - The clock screensaver. Until it returns, a remote key mapped to `screensaver` (`app_keys`) starts the TV's own
   screensaver only where the firmware has the system's "start now" shortcut; the launcher's clock fallback went
   with the old Home in M1.
@@ -250,11 +258,38 @@ From the old launcher; not in V1 by decision.
   library dialog, reorder mode and dock editing. Their `config.xml` keys went in M1b; the theme keys are described,
   frozen, in `themes/README.md`.
 
+## Themes
+
+M9 (2026-10-30): Launcher settings › Theme, from the Figma file "CleanTV · Theme explorations"
+(`lwShqRaciMpDUDW5dYljNw`). Classic: Midnight (the default, today's look), Daylight, OLED Black, High Contrast, Cinema
+and Landscapes. Seasonal, following the date: Nature, Vector art and 8-bit, each in ten periods (`SeasonCalendar`).
+A theme changes colours, type, corners, shading, overlays and the backdrop; layout and data stay the same.
+
+- **Retro themes** (Retro CRT, Synthwave '84, Groovy '70s, 8-bit Arcade): designed in Figma, with their tokens and the
+  scanline overlay ready; not in the picker yet.
+- **Moving details:** the switch is saved, but nothing moves yet (petals, snow, leaves, bats).
+- **Southern hemisphere:** the Seasonal periods follow the northern calendar everywhere.
+- **Fonts:** downloaded through Google Play services' font provider and kept on the TV; a family the provider can't
+  serve comes straight from Google Fonts' CSS API over HTTPS (the TrueType file, at most 2 MB; still none in the APK).
+  Roboto until they arrive. On the API 28 emulator's Play services, Outfit, Figtree, Manrope, Atkinson Hyperlegible
+  Next, Baloo 2 and Pixelify Sans come that second way.
+- **Backdrops:** the photos and Vector art live in `launcher/backdrops/` and are downloaded once from
+  `theme_assets_url` (jsDelivr on this repository's `main`), so they work only once that folder is on `main`. The 8-bit
+  scenes are in the APK.
+- **Not shipped:** the Vector scenes alternative to Vector art, and the old Seasonal & festive themes (Figma pages kept).
+- **Card shadows:** every theme but Midnight draws a resting shadow under each artwork card; their cost on the TV is
+  to be measured with `tools/bench.py` (Midnight against a shadow theme).
+
 ## From M1
 
-- **Launcher settings page:** V1 opens the old `LauncherSettingsActivity`, cut to Animations, Open on start,
-  Follow theme, Default Home and TV settings; V2 Phase 4 added Weather location and Temperature unit as plain rows.
-  Wanted: the new page in the new UI, with designed pickers; the lead is drafting it in Figma.
+- **Launcher settings page:** M9 replaced the old `LauncherSettingsActivity` with the split page of V2 design
+  05-settings A (`LauncherSettingsPage`, its sections in `SettingsSections`, shared controls in `SettingsKit`).
+  Every section has its pane: Account, Streaming services, Stores for rent and buy, Weather, Home row apps, Theme,
+  Motion (Full, Reduced or Off, on `MotionChoice`), Open on start, Default Home, TV settings and About. Not built:
+  About's Open-source licences and Clear cache. Follow theme is a button in About: it drops Motion, Open on start
+  and the old layout choices so `config.xml` or a pushed `config.json` decides again; the Theme, weather, account and
+  the service and store ticks stay (the project lead, 2026-10-31). A `config.json` push still clears the same.
+  Home's row holds seven apps, as the spec: Home row apps and All Apps' Add to Home say so when it is full.
 - **Network icon state:** the nav shows the prototype's Wi-Fi arcs, on Ethernet too (the project lead, 2026-10-31), or the arcs crossed out when offline, which since 06-states A
   includes a network with no internet behind it. The old pill could also
   tint by state (`wifi_status_color`, `wifi_status_warnings`); not designed for the new nav.
@@ -402,10 +437,8 @@ it is built.
 - Search and Home's weather while loading (06-states A designs offline and errors, not these).
 - First run and setup: the checklist (01-setup B) and its panes (r2-setup-checklist) are built in the prototype; not
   in the launcher. When it shows is open.
-- Launcher settings in the new UI: the split (05-settings A) and the round-2 Account, Streaming services, Stores and
-  Weather panes are built in the prototype; the launcher still has the old Launcher settings activity, which the
-  nav Settings icon's quick-settings dropdown opens (see [Quick settings](#quick-settings)).
-  Home row apps (with reordering) has no design; the prototype's is a stand-in.
+- Launcher settings in the new UI: the split (05-settings A) and every pane are built in the launcher (M9, see
+  [From M1](#from-m1)). Home row apps (with reordering) has no design; the prototype's is a stand-in.
 - Removing a recent search.
 - Voice search.
 - Progress on started titles.

@@ -1,25 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- V2 Phase 4, on-TV settings: the weather place and unit in Launcher settings, and the Wi-Fi dropdown's saved
-     networks. -->
+<!-- Launcher settings (LauncherSettingsPage, design_preview/README.md § Launcher settings): the page, its sections and
+     their panes; and V2 Phase 4's Wi-Fi dropdown's saved networks. -->
 <resources>
-    <string name="weather_place_state">Weather location: %1$s</string>
-    <string name="weather_place_default_state">Default (from tv.properties)</string>
-    <string name="weather_place_title">Weather location</string>
-    <string name="weather_place_hint">City or town</string>
-    <string name="weather_place_type">Type a city or town; the matches show here.</string>
+    <string name="settings_hint">Back closes · changes save at once</string>
+
+    <!-- The sections, in the list's order. -->
+    <string name="settings_account">Account</string>
+    <string name="settings_services">Streaming services</string>
+    <string name="settings_stores">Stores for rent and buy</string>
+    <string name="settings_weather">Weather</string>
+    <string name="settings_motion">Motion</string>
+    <string name="settings_start">Open on start</string>
+    <string name="settings_home">Default Home</string>
+    <string name="settings_tv">TV settings</string>
+    <string name="settings_about">About</string>
+
+    <!-- Panes still to be built (the *SectionStub classes). -->
+
+    <!-- Weather. -->
+    <string name="weather_default_value">Default</string>
+    <string name="weather_title">Weather on Home</string>
+    <string name="weather_default_name">Default place</string>
+    <string name="weather_default_detail">From tv.properties</string>
+    <string name="weather_now_loading">Getting the weather…</string>
+    <string name="weather_now_offline">Offline · updated %1$s</string>
+    <string name="weather_now_unavailable">Unavailable offline</string>
+    <string name="weather_place_label">Place</string>
+    <string name="weather_place_sub">For today, tomorrow and the hourly strip</string>
+    <string name="weather_change_city">Change city</string>
+    <string name="weather_use_default">Use default</string>
+    <string name="weather_already_default">Already showing the default place</string>
+    <string name="weather_unit_label">Temperature</string>
+    <string name="weather_unit_sub">TV default: tv.properties, else the TV\'s region</string>
+    <string name="weather_unit_tv">TV default (%1$s)</string>
+    <string name="weather_pane_note">Forecasts from Open-Meteo. Only the place name you type is sent.</string>
+    <string name="weather_crumb">Weather · Change city</string>
+    <string name="weather_type_city">Type a city</string>
+    <string name="weather_now_showing">Now showing</string>
+    <string name="weather_quick_picks">Quick picks</string>
+    <string name="weather_pick_default">Default · from tv.properties</string>
+    <string name="weather_pick_recent">Recent · %1$s</string>
+    <string name="weather_more_letters">Type at least two letters to search.</string>
     <string name="weather_place_searching">Searching…</string>
-    <string name="weather_place_pick">Choose a place</string>
-    <string name="weather_place_none">No places match “%1$s”</string>
-    <string name="weather_place_offline">Can\'t search: no internet</string>
+    <plurals name="weather_places">
+        <item quantity="one">%d place</item>
+        <item quantity="other">%d places</item>
+    </plurals>
+    <string name="weather_no_places">No places</string>
+    <string name="weather_place_none">Nothing called “%1$s”. Try fewer letters, or the English name.</string>
+    <string name="weather_place_offline">Finding a city needs the internet. The quick picks work offline.</string>
     <string name="weather_place_failed">Search failed; try again later</string>
-    <string name="weather_place_default">Use default</string>
     <string name="weather_place_saved">Weather for %1$s</string>
-    <string name="weather_place_hint_row">Home\'s weather. The search sends only what you type to Open-Meteo.</string>
-    <string name="temperature_unit_state">Temperature unit: %1$s</string>
-    <string name="temperature_unit_title">Temperature unit</string>
-    <string name="temperature_unit_default">Default (%1$s, from tv.properties)</string>
+
+    <!-- Motion. -->
+    <string name="motion_sub">Full: pages slide and focused items grow. Reduced and Off: pages, menus and Home\'s scroll switch at once, without moving.</string>
+    <string name="motion_full">Full</string>
+    <string name="motion_reduced">Reduced</string>
+    <string name="motion_off">Off</string>
+    <string name="motion_forced_system">Android\'s animations are off on this TV, so motion stays reduced.</string>
+    <string name="motion_forced_config">This TV\'s config keeps motion reduced (reduced_motion), so Full isn\'t offered.</string>
+
+    <!-- Open on start. -->
+    <string name="start_home">Home</string>
+    <string name="start_title">What the TV shows when it starts</string>
+    <string name="start_sub">Home, or an app that opens instead the first time Home comes up after the TV starts. Once per start, so Home and Back still reach the launcher. A new choice counts from the next start.</string>
+
+    <!-- Default Home. -->
+    <string name="home_is">This launcher is Home</string>
+    <string name="home_is_not">Another app is Home</string>
+    <string name="home_good">The remote\'s Home button opens it</string>
+    <string name="home_choose">Choose Home app</string>
+
+    <!-- TV settings. -->
+    <string name="tv_eyebrow">TV</string>
+    <string name="tv_sub">Picture, sound, network, apps and accounts are in the TV\'s own settings.</string>
+    <string name="tv_open">Open TV settings</string>
+
+    <!-- About. -->
+    <string name="about_title">Clean your TV launcher</string>
+    <string name="about_version">Version</string>
+    <string name="about_version_value">%1$s (build %2$d)</string>
+    <string name="about_open_meteo">Weather data by Open-Meteo.com (CC BY 4.0).</string>
 
     <string name="wifi_saved">Saved</string>
     <string name="wifi_switching">Switching to %1$s…</string>
     <string name="wifi_switch_refused">This TV did not let the launcher switch networks</string>
+    <!-- About: Follow theme. -->
+    <string name="follow_theme">Follow theme (reset on-TV choices)</string>
+    <string name="follow_theme_hint">Motion and Open on start go back to what config.xml or a pushed config.json says. The Theme, weather, account, services and stores stay as they are.</string>
+    <string name="follow_theme_done">Motion and Open on start follow the config again</string>
+    <string name="follow_theme_nothing">Nothing to reset: the config already decides</string>
 </resources>

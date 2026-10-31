@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M9 track D2: four panes of the new Launcher settings page (design_preview/README.md, Launcher settings): Account,
+     Streaming services, Stores for rent and buy and Home row apps. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Sections and their values -->
+    <string name="settings_home_apps">Home row apps</string>
+    <string name="settings_ticked" tools:ignore="PluralsCandidate">%1$d ticked</string>
+    <string name="settings_ticked_of" tools:ignore="PluralsCandidate">%1$d of %2$d ticked</string>
+    <string name="settings_hint_free">Free</string>
+    <string name="settings_hint_free_tier">Free tier</string>
+    <string name="settings_hint_installed">Installed</string>
+    <string name="settings_hint_no_app">No app</string>
+
+    <!-- Account -->
+    <string name="account_row_getting">Getting a code…</string>
+    <string name="account_row_waiting">Waiting…</string>
+    <string name="account_row_signing_in">Signing in…</string>
+    <string name="account_row_expired">Code expired</string>
+    <string name="account_pane_title">Sign in to TMDB</string>
+    <string name="account_pane_sub">TMDB is a free film and TV database. Signing in brings the household’s lists to this TV.</string>
+    <string name="account_ben_sync">My list, Seen and Favorites, in step</string>
+    <string name="account_ben_sync_sub">Add a title on your phone and it shows here too</string>
+    <string name="account_ben_lists">Household and Friends lists</string>
+    <string name="account_ben_lists_sub">Pick which of your TMDB lists they come from</string>
+    <string name="account_ben_password">Your password stays with TMDB</string>
+    <string name="account_ben_password_sub">This TV only gets a sign-in key; sign out any time</string>
+    <string name="account_sign_in_phone">Sign in with your phone</string>
+    <string name="account_signed_out_pane_note">Not signed in, My list and Seen are kept on this TV only.</string>
+    <string name="account_unavailable">This build has no TMDB key, so it can’t sign in. My list and Seen are kept on this TV only.</string>
+    <string name="account_getting_hold">Getting a code from TMDB…</string>
+    <string name="account_step_scan">Scan the code with your phone’s camera</string>
+    <string name="account_step_approve">Sign in to TMDB and press Approve</string>
+    <string name="account_step_carry_on">This TV carries on by itself</string>
+    <string name="account_cancel">Cancel</string>
+    <string name="account_left">left on this code</string>
+    <string name="account_waiting_note">The link is too long to type; use the camera. ← goes to the sections and keeps this code waiting.</string>
+    <string name="account_approved">Approved on your phone</string>
+    <string name="account_signing_in_title">Signing in…</string>
+    <string name="account_importing">Then your lists come in: My list, Seen and Favorites first, Household and Friends next.</string>
+    <string name="account_expired_over">Code expired</string>
+    <string name="account_expired_title">That code has expired</string>
+    <string name="account_expired_sub">Codes last 15 minutes. Nothing changed on this TV; get a new code and scan again.</string>
+    <string name="account_no_code">No code</string>
+    <string name="account_unreachable_title">Couldn’t reach TMDB</string>
+    <string name="account_unreachable_sub">This TV is offline, or TMDB said no (for example after Deny on the phone).</string>
+    <string name="account_wifi_settings">Wi-Fi settings</string>
+    <string name="account_signed_in_good">Signed in to TMDB</string>
+    <string name="account_kv_lists">My list · Seen · Favorites</string>
+    <string name="account_kv_lists_value">%1$d · %2$d · %3$d</string>
+    <string name="account_kv_list_value">%1$s · %2$s</string>
+    <string name="account_kv_list_number">List %1$d</string>
+    <string name="account_kv_last_synced">Last synced</string>
+    <string name="account_synced_not_yet">Not yet</string>
+    <string name="account_synced_now">Just now</string>
+    <plurals name="account_synced_minutes">
+        <item quantity="one">%d minute ago</item>
+        <item quantity="other">%d minutes ago</item>
+    </plurals>
+    <plurals name="account_synced_hours">
+        <item quantity="one">%d hour ago</item>
+        <item quantity="other">%d hours ago</item>
+    </plurals>
+    <string name="account_sync_now">Sync now</string>
+    <string name="account_syncing">Syncing with TMDB…</string>
+    <string name="account_sync_offline">Offline: syncs when the TV is back online</string>
+    <string name="account_sign_out_title">Sign out of TMDB?</string>
+    <string name="account_sign_out_body">My list, Favorites and Seen stay on this TV, and stop following the account until you sign in again.</string>
+    <string name="account_lists_sub">All your TMDB lists. Mark one as Household and one as Friends; ←/→ moves along a row, OK picks.</string>
+    <string name="account_lists_pane_note">My list, Seen and Favorites always come from the account itself. Back returns.</string>
+
+    <!-- Streaming services -->
+    <string name="services_title">What does the household pay for?</string>
+    <string name="services_sub">Titles on ticked services show as Included. Installed apps were ticked to start with.</string>
+    <string name="services_more_count">+%1$d</string>
+    <string name="services_fewer_mark">−</string>
+    <string name="services_more">More services</string>
+    <string name="services_fewer">Fewer services</string>
+    <string name="services_more_cap">Hayu, MUBI, Plex…</string>
+    <string name="services_fewer_cap_ticked">Open while one is ticked</string>
+    <string name="services_fewer_cap" tools:ignore="PluralsCandidate">Hide the %1$d below</string>
+    <string name="services_untick_first">Untick the services below to hide them</string>
+
+    <!-- Stores for rent and buy -->
+    <string name="stores_title">Where may we show prices from?</string>
+    <string name="stores_sub">Prices in Where to watch and on cards come from ticked stores. Renting or buying opens the store’s app.</string>
+    <string name="stores_store_name">%1$s Store</string>
+    <string name="stores_opens">Opens in the %1$s app</string>
+    <string name="stores_note">Prices are in kronor and may differ in the store. Google Play isn’t sold in Sweden.</string>
+
+    <!-- Home row apps -->
+    <string name="home_apps_eyebrow">Home</string>
+    <string name="home_apps_sub">The apps on Home’s row. OK on one picks it up to move it.</string>
+    <string name="home_apps_on_home">On Home · %1$d of %2$d</string>
+    <string name="home_apps_full">Home\'s row is full (%1$d): take an app off to add another</string>
+    <string name="home_apps_hint">OK picks an app up, as Hold OK → Move does on Home.</string>
+    <string name="home_apps_hint_moving">← → moves it · OK puts it down · ↓ takes it off Home · Back cancels</string>
+    <string name="home_apps_others">Other apps</string>
+    <string name="home_apps_all_on_home">Every app is on Home.</string>
+    <string name="home_apps_note">OK on another app adds it at the end of the row, ready to place.</string>
+    <string name="home_apps_keep_one">Keep at least one app on Home</string>
+</resources>

@@ -116,7 +116,7 @@ final class LibraryPage extends Screen {
         intro.setGravity(Gravity.TOP);
         LinearLayout heading = new LinearLayout(ctx);
         heading.setOrientation(LinearLayout.VERTICAL);
-        TextView title = Ui.line(ctx, Ui.T_H1, Ui.TEXT_1, Ui.REGULAR);
+        TextView title = Ui.line(ctx, Ui.T_H1, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         title.setText(label);
         heading.addView(title);
         TextView context = Ui.line(ctx, 22, Ui.TEXT_2, Ui.REGULAR);

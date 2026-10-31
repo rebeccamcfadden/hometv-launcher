@@ -1,40 +1,32 @@
-"""README: the Launcher settings section names every row the settings screen has.
+"""README: the Launcher settings section names every section the settings page has.
 
-The rows are read from the screen, not from a list kept here. `activity_launcher_settings.xml` carries
-each row, and the rows whose label the code writes (`animationsChoice`, `openOnStartChoice`) take the
-string `LauncherSettingsActivity.refresh()` sets on them. So a row added to the screen without a README
-line fails in CI, while rewording a README line stays free as long as the row's own label - the text the
-TV shows - is still there.
+The sections are read from the page, not from a list kept here. `SettingsSections.all` adds each section's class in
+order, and each class names its label: `label()` returns `R.string.<name>`, or a stub passes it to `SectionStub`'s
+constructor. So a section added to the page without a README line fails in CI, while rewording a README line stays
+free as long as the section's own label - the text the TV shows - is still there.
 
-The launcher rework (docs/rework.md, M1) trimmed the screen to five rows: Animations, Open on start,
-Follow theme, Default Home and TV settings. The rows it removed (reorder, columns, rows below the dock,
-dock opacity, wallpaper, advanced effects) and the check on their numbers went with them, and the README
-section was rewritten for the five rows in M1b.
+The old `LauncherSettingsActivity` and its rows were replaced in M9 by the split Launcher settings page
+(`LauncherSettingsPage`, design_preview/README.md § Launcher settings), and this test with them.
 """
 import re
 import unittest
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LAYOUT = ROOT / "launcher/app/src/main/res/layout/activity_launcher_settings.xml"
-ACTIVITY = ROOT / "launcher/app/src/main/java/com/gathin/tvhome/LauncherSettingsActivity.java"
-STRINGS = ROOT / "launcher/app/src/main/res/values/strings.xml"
+SOURCES = ROOT / "launcher/app/src/main/java/com/gathin/tvhome"
+REGISTRY = SOURCES / "SettingsSections.java"
+VALUES = ROOT / "launcher/app/src/main/res/values"
 README = ROOT / "README.md"
 
-ANDROID = "{http://schemas.android.com/apk/res/android}"
 SUMMARY = "Launcher settings and the default home"
 
 
-def attr(view, name):
-    return view.get(ANDROID + name) or ""
-
-
-def english_strings(text):
-    """name -> value for every <string> in res/values/strings.xml (the English text Android shows)."""
+def english_strings(texts):
+    """name -> value for every <string> in the given res/values files (the English text Android shows)."""
     out = {}
-    for match in re.finditer(r"<string name=\"([a-z_0-9]+)\"[^>]*>(.*?)</string>", text, re.S):
-        out[match.group(1)] = match.group(2).strip()
+    for text in texts:
+        for match in re.finditer(r"<string name=\"([a-z_0-9]+)\"[^>]*>(.*?)</string>", text, re.S):
+            out[match.group(1)] = match.group(2).strip()
     return out
 
 
@@ -44,7 +36,7 @@ def normalise(text):
 
 
 def row_label(name, strings):
-    """A resource name as the row's label: 'animations_state' ("Animations: %1$s") is 'Animations'."""
+    """A resource name as the row's label, without any placeholder: 'x_state' ("Animations: %1$s") is 'Animations'."""
     value = strings.get(name)
     if value is None:
         return None
@@ -52,36 +44,26 @@ def row_label(name, strings):
     return value.strip().rstrip(":").strip() or None
 
 
-def row_labels(layout_text, activity_text, strings):
-    """Every label the settings screen shows, in screen order, as [(id, label)].
+def section_classes(registry_text):
+    """The section classes `SettingsSections.all` adds, in the order it adds them."""
+    return re.findall(r"\bout\.add\(new (\w+)\(", registry_text)
 
-    A row is a view with the settings-row style, or a group label (a 20sp caption naming the
-    numbered choices under it). A settings row with no android:text takes the string its own
-    `<id>.setText(getString(R.string.<name>` uses in the activity.
-    """
+
+def label_name(class_text):
+    """The string resource a section class shows as its label, or None."""
+    found = re.search(r"\bint label\(\)\s*\{\s*return R\.string\.([a-z_0-9]+);", class_text)
+    if not found:
+        found = re.search(r"\bsuper\(\s*\"[a-z]+\",\s*R\.string\.([a-z_0-9]+)", class_text)
+    return found.group(1) if found else None
+
+
+def section_labels(registry_text, read_class, strings):
+    """Every section the settings page lists, in order, as [(class, label)]."""
     rows = []
-    for view in ET.fromstring(layout_text).iter():
-        text = attr(view, "text")
-        style = view.get("style") or ""
-        if text.startswith("@string/"):
-            # A row that carries its own label (a settings row), or the 20sp caption of a group of
-            # numbered choices. The hints under a row are 14sp and the title is 34sp, so neither is a row.
-            if not (style.endswith("SettingsRow") or attr(view, "textSize") == "20sp"):
-                continue
-            name = text[len("@string/"):]
-        elif style.endswith("SettingsRow"):
-            # A row whose label the code writes: `<id>.setText(getString(R.string.<name>` in the activity.
-            view_id = attr(view, "id").split("/")[-1]
-            found = re.search(r"\b%s\.setText\(\s*getString\(R\.string\.([a-z_0-9]+)"
-                              % re.escape(view_id), activity_text) if view_id else None
-            if not found:
-                continue
-            name = found.group(1)
-        else:
-            continue
-        label = row_label(name, strings)
+    for name in section_classes(registry_text):
+        label = row_label(label_name(read_class(name)) or "", strings)
         if label:
-            rows.append((attr(view, "id").split("/")[-1] or name, label))
+            rows.append((name, label))
     return rows
 
 
@@ -101,59 +83,71 @@ def detail_section(readme_text, summary):
     return readme_text[start:end if end > 0 else len(readme_text)]
 
 
-class ScreenRows(unittest.TestCase):
-    """The README against the settings screen it describes."""
+def read_class(name):
+    return (SOURCES / ("%s.java" % name)).read_text(encoding="utf-8")
+
+
+class PageSections(unittest.TestCase):
+    """The README against the settings page it describes."""
 
     def setUp(self):
-        self.layout_text = LAYOUT.read_text(encoding="utf-8")
-        self.activity_text = ACTIVITY.read_text(encoding="utf-8")
-        self.strings = english_strings(STRINGS.read_text(encoding="utf-8"))
-        self.rows = row_labels(self.layout_text, self.activity_text, self.strings)
+        strings = english_strings(p.read_text(encoding="utf-8") for p in sorted(VALUES.glob("strings*.xml")))
+        self.registry = REGISTRY.read_text(encoding="utf-8")
+        self.rows = section_labels(self.registry, read_class, strings)
         self.section = detail_section(README.read_text(encoding="utf-8"), SUMMARY)
 
-    def test_screen_rows_are_read(self):
-        """The screen has its rows, and each one resolved to the label the TV shows."""
-        self.assertGreaterEqual(len(self.rows), 5, self.rows)
+    def test_page_sections_are_read(self):
+        """The page has its sections, and each one resolved to the label the TV shows."""
+        classes = section_classes(self.registry)
+        self.assertGreaterEqual(len(classes), 10, classes)
+        self.assertEqual(len(self.rows), len(classes), (self.rows, classes))
         labels = [label for _, label in self.rows]
         self.assertEqual(len(labels), len(set(labels)), labels)
-        for row_id, label in self.rows:
-            self.assertTrue(label.strip(), row_id)
 
-    def test_readme_names_every_row(self):
+    def test_readme_names_every_section(self):
         self.assertTrue(self.section, "README has no '%s' section" % SUMMARY)
         self.assertEqual(missing_rows(self.section, self.rows), [])
 
-    def test_a_row_the_readme_leaves_out_is_reported(self):
-        rows = [("reorderChoice", "Reorder apps"), ("walls", "Wallpaper")]
-        self.assertEqual(missing_rows("- **Reorder apps** only with the button.", rows),
-                         [("walls", "Wallpaper")])
+    def test_a_label_is_found_in_a_section_or_a_stub(self):
+        section = "final class X implements SettingsSection {\n    public int label() {\n" \
+                  "        return R.string.settings_motion;\n    }\n}"
+        stub = "    XStub() {\n        super(\"apps\", R.string.settings_apps, R.drawable.ic_ui_apps,\n"
+        self.assertEqual(label_name(section), "settings_motion")
+        self.assertEqual(label_name(stub), "settings_apps")
+        self.assertIsNone(label_name("class Y {}"))
 
-    def test_a_row_named_in_another_section_does_not_count(self):
+    def test_the_registry_is_read_in_order(self):
+        registry = ("if (a) out.add(new AccountSectionStub());\nout.add(new WeatherSection());\n"
+                    "out.add(new MotionSection(config));\n")
+        self.assertEqual(section_classes(registry), ["AccountSectionStub", "WeatherSection", "MotionSection"])
+        strings = {"settings_weather": "Weather", "settings_motion": "Motion"}
+        classes = {"AccountSectionStub": "class A {}",
+                   "WeatherSection": "int label() { return R.string.settings_weather; }",
+                   "MotionSection": "int label() { return R.string.settings_motion; }"}
+        self.assertEqual(section_labels(registry, classes.get, strings),
+                         [("WeatherSection", "Weather"), ("MotionSection", "Motion")])
+
+    def test_a_section_the_readme_leaves_out_is_reported(self):
+        rows = [("WeatherSection", "Weather"), ("AboutSection", "About")]
+        self.assertEqual(missing_rows("- **Weather**: the city.", rows), [("AboutSection", "About")])
+
+    def test_a_section_named_in_another_block_does_not_count(self):
         readme = ("<details>\n<summary><b>%s</b></summary>\n\nNothing here.\n\n</details>\n\n"
                   "<details>\n<summary><b>Elsewhere</b></summary>\n\n- **Wallpaper** this is not the "
                   "settings page.\n\n</details>\n" % SUMMARY)
         section = detail_section(readme, SUMMARY)
         self.assertIn("Nothing here", section)
         self.assertNotIn("Elsewhere", section)
-        self.assertEqual(missing_rows(section, [("wallpaperChoice", "Wallpaper")]),
-                         [("wallpaperChoice", "Wallpaper")])
+        self.assertEqual(missing_rows(section, [("w", "Wallpaper")]), [("w", "Wallpaper")])
 
     def test_a_placeholder_is_not_part_of_the_label(self):
         strings = {"animations_state": "Animations: %1$s", "wallpaper_label": "Wallpaper"}
         self.assertEqual(row_label("animations_state", strings), "Animations")
         self.assertEqual(missing_rows("**Animations** on or off", [("a", "Animations")]), [])
-        self.assertEqual(missing_rows("**Animations: %s** on or off", [("a", "Animations")]), [])
 
     def test_a_label_wrapped_across_lines_still_matches(self):
-        section = "**Follow theme (reset on-TV\n  choices)** clears the choices."
-        self.assertEqual(missing_rows(section, [("f", "Follow theme (reset on-TV choices)")]), [])
-        self.assertEqual(missing_rows(normalise(section),
-                                       [("f", "Follow theme (reset on-TV choices)")]), [])
-
-    def test_a_screen_with_no_rows_reads_as_no_rows(self):
-        layout = ('<ScrollView xmlns:android="http://schemas.android.com/apk/res/android">'
-                  '<TextView android:text="Hi" android:textSize="34sp" /></ScrollView>')
-        self.assertEqual(row_labels(layout, "", {}), [])
+        section = "**Stores for rent\n  and buy** where prices come from."
+        self.assertEqual(missing_rows(section, [("s", "Stores for rent and buy")]), [])
 
 
 if __name__ == "__main__":

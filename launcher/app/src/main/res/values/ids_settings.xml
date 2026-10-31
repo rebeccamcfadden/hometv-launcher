@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- View tags of Launcher settings' controls (SettingsKit) and its page (LauncherSettingsPage). -->
+<resources>
+    <!-- A segmented control's option: the value it stands for. -->
+    <item name="settings_seg_value" type="id" />
+    <!-- A list row's parts and state, for setValue, setSub and setOn. -->
+    <item name="settings_row_title" type="id" />
+    <item name="settings_row_sub" type="id" />
+    <item name="settings_row_value" type="id" />
+    <item name="settings_row_mark" type="id" />
+    <item name="settings_row_on" type="id" />
+    <!-- The section id a row of the page's list stands for. -->
+    <item name="settings_section" type="id" />
+</resources>

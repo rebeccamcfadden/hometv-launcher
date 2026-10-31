@@ -3,8 +3,12 @@ package com.gathin.tvhome;
 import org.json.JSONException;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -68,6 +72,47 @@ public class WeatherPlaceTest {
     @Test(expected = JSONException.class)
     public void notJsonIsRejected() throws JSONException {
         WeatherPlace.parseSearch("<html>Bad gateway</html>");
+    }
+
+    @Test
+    public void searchAsksInTheTvsLanguageThenEnglishAndSwedish() {
+        assertEquals(Arrays.asList("en", "sv"), WeatherPlace.searchLanguages("en"));
+        assertEquals(Arrays.asList("en", "sv"), WeatherPlace.searchLanguages(""));
+        assertEquals(Arrays.asList("en", "sv"), WeatherPlace.searchLanguages(null));
+        assertEquals(Arrays.asList("sv", "en"), WeatherPlace.searchLanguages("SV"));
+        assertEquals(Arrays.asList("de", "en", "sv"), WeatherPlace.searchLanguages("de"));
+    }
+
+    @Test
+    public void countriesAreNamedInTheTvsLanguage() throws JSONException {
+        String swedish = "{\"results\":[{\"name\":\"Göteborg\",\"latitude\":57.70716,\"longitude\":11.96679,"
+                + "\"country_code\":\"SE\",\"country\":\"Sverige\",\"admin1\":\"Västra Götaland\"},"
+                + "{\"name\":\"Odd code\",\"latitude\":1,\"longitude\":2,\"country_code\":\"QQ\",\"country\":\"Q\"}]}";
+        List<WeatherPlace> en = WeatherPlace.parseSearch(swedish, Locale.ENGLISH);
+        assertEquals("Sweden", en.get(0).country);
+        assertEquals("Q", en.get(1).country);
+        assertEquals("Sverige", WeatherPlace.parseSearch(swedish).get(0).country);
+    }
+
+    @Test
+    public void mergedAnswersListEachPlaceOnceWithExactNamesFirst() {
+        WeatherPlace nuten = new WeatherPlace("Göteborgnuten", "Svalbard", "", 79.63333, 11.33333);
+        WeatherPlace garden = new WeatherPlace("Göteborgs Botaniska Trädgård", "", "Sweden", 57.68, 11.95);
+        WeatherPlace city = new WeatherPlace("Göteborg", "Västra Götaland", "Sweden", 57.70716, 11.96679);
+        WeatherPlace nutenSv = new WeatherPlace("Göteborgnuten", "Svalbard", "", 79.633331, 11.333331);
+        // An English TV typing "Göteborg": English finds only the mountain and the garden, Swedish the city too.
+        List<WeatherPlace> merged = WeatherPlace.merge(" göteborg ",
+                Arrays.asList(Arrays.asList(nuten, garden), null, Arrays.asList(city, nutenSv, garden)));
+        assertEquals(3, merged.size());
+        assertSame(city, merged.get(0));
+        assertSame(nuten, merged.get(1));
+        assertSame(garden, merged.get(2));
+        assertSame(city, WeatherPlace.merge("Goteborg", Arrays.asList(Arrays.asList(nuten), Arrays.asList(city))).get(0));
+
+        List<WeatherPlace> many = new ArrayList<>();
+        for (int i = 0; i < 25; i++) many.add(new WeatherPlace("P" + i, "", "", i, i));
+        assertEquals(WeatherPlace.RESULTS, WeatherPlace.merge("p", Collections.singletonList(many)).size());
+        assertTrue(WeatherPlace.merge("x", Collections.singletonList(null)).isEmpty());
     }
 
     @Test

@@ -28,11 +28,6 @@ import java.time.ZoneId;
 final class PriceViews {
     private PriceViews() {}
 
-    /** tokens.css --good: the Cheapest tag and the deciding price. */
-    static final int CHEAPEST = 0xFF8FD9A8;
-    /** tokens.css --good-soft: the Cheapest tag's fill. */
-    static final int CHEAPEST_SOFT = 0x298FD9A8;
-
     /**
      * A Where to watch card (.service): 376 wide, the name with "Included", "Free" or the green "Cheapest" tag, then
      * the offer or the price lines and the detail. Its height follows the row's tallest card. Focused: the 4 px
@@ -122,15 +117,15 @@ final class PriceViews {
         int start = b.length();
         b.append(m.format());
         b.setSpan(new FaceSpan(Ui.MEDIUM), start, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (green) b.setSpan(new ForegroundColorSpan(CHEAPEST), start, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (green) b.setSpan(new ForegroundColorSpan(Ui.GOOD), start, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     /** .tag-best: the green "Cheapest" pill, 18 px. */
     static TextView cheapestTag(Context ctx) {
-        TextView t = Ui.line(ctx, Ui.T_MIN, CHEAPEST, Ui.MEDIUM);
+        TextView t = Ui.line(ctx, Ui.T_MIN, Ui.GOOD, Ui.MEDIUM);
         t.setText(R.string.prices_cheapest);
         t.setPadding(Ui.px(10), Ui.px(2), Ui.px(10), Ui.px(2));
-        t.setBackground(Ui.round(CHEAPEST_SOFT, Ui.RADIUS_PILL));
+        t.setBackground(Ui.round(Ui.GOOD_SOFT, Ui.RADIUS_PILL));
         return t;
     }
 

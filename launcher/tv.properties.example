@@ -7,12 +7,13 @@
 # The default is New York. Launcher settings on the TV can choose another place, which then wins over these.
 latitude=40.7128
 longitude=-74.0060
-# Optional: the city's name, for the quick-settings Weather row ("New York · °C") while no place is chosen on the TV.
-# Leave it out and the row says Default. Written as it is spelled (the file is read as UTF-8), at most 60 characters.
+# Optional: the city's name, shown on the quick-settings Weather row ("New York · °C") and in Launcher settings
+# while no place is chosen on the TV. Leave it out and they say Default. Written as it is spelled (the file is read as
+# UTF-8), at most 60 characters.
 weather_city=New York
 
-# C for Celsius or F for Fahrenheit. Android TV has no temperature setting, so the launcher can't ask the TV.
-# Launcher settings on the TV can override it too.
+# Optional: C for Celsius or F for Fahrenheit, the TV default unit. Left out, the TV default follows the TV's region
+# (°F in the US, °C in most places). Launcher settings › Weather on the TV can choose °C or °F too.
 temperature_unit=C
 
 # Optional: your TMDB "API Read Access Token" (the long v4 token from themoviedb.org, Settings, API), for the real
@@ -28,3 +29,7 @@ temperature_unit=C
 # Movie of the Night's Streaming Availability API, https://developers.movieofthenight.com (free plan: 1,000 requests
 # a month; the launcher stops at 900). streaming_availability_api_key is read too, under the API's other name.
 #movie_of_the_night_api_key=
+
+# Optional: where the themes' photos and drawings (launcher/backdrops/) are downloaded from, once, the first time a
+# theme needs one. https only. The default is that folder on the fork's main branch, through jsDelivr.
+#theme_assets_url=https://cdn.jsdelivr.net/gh/rebeccamcfadden/cleanyourtv@main/launcher/backdrops/

@@ -46,7 +46,7 @@ final class NavBar {
         sections.setPadding(pad, pad, pad, pad);
         // The focused section scales up 5%; clipped to the padding, its outer side was cut flat.
         sections.setClipToPadding(false);
-        sections.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, 1));
+        sections.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, Ui.LINE_W));
         int[] labels = {R.string.nav_home, R.string.nav_movies, R.string.nav_tv, R.string.nav_music};
         Screen.Tab[] ids = {Screen.Tab.HOME, Screen.Tab.MOVIES, Screen.Tab.TV, Screen.Tab.MUSIC};
         for (int i = 0; i < ids.length; i++) {
@@ -75,7 +75,7 @@ final class NavBar {
         device.setOrientation(LinearLayout.HORIZONTAL);
         device.setPadding(pad, pad, pad, pad);
         device.setClipToPadding(false);
-        device.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, 1));
+        device.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, Ui.LINE_W));
         ImageView wifi = deviceIcon(ctx, R.drawable.ic_ui_wifi, R.string.wifi, KEY_WIFI, host::openNetwork);
         ImageView inputs = deviceIcon(ctx, R.drawable.ic_ui_input, R.string.inputs, KEY_INPUTS, host::openInputs);
         ImageView settings = deviceIcon(ctx, R.drawable.ic_ui_settings, R.string.settings, KEY_SETTINGS,
@@ -135,7 +135,7 @@ final class NavBar {
         t.setText(label);
         t.setGravity(Gravity.CENTER);
         t.setPadding(Ui.px(30), 0, Ui.px(30), 0);
-        t.setTextColor(Ui.colors(Ui.TEXT_2, Ui.ON_ACCENT, Ui.ON_ACCENT));
+        t.setTextColor(Ui.colors(Ui.TEXT_2, Ui.ON_ACTIVE, Ui.ON_ACCENT));
         t.setBackground(Ui.states(Ui.round(0, Ui.RADIUS_PILL), Ui.round(Ui.ACTIVE, Ui.RADIUS_PILL),
                 Ui.round(Ui.ACCENT, Ui.RADIUS_PILL)));
         t.setActivated(isActive);
@@ -170,7 +170,7 @@ final class NavBar {
         v.setScaleType(ImageView.ScaleType.FIT_CENTER);
         int pad = Ui.px((size - iconSize) / 2);
         v.setPadding(pad, pad, pad, pad);
-        v.setImageTintList(Ui.colors(color, Ui.ON_ACCENT, Ui.ON_ACCENT));
+        v.setImageTintList(Ui.colors(color, Ui.ON_ACTIVE, Ui.ON_ACCENT));
         v.setBackground(Ui.states(Ui.oval(0), activeFill != 0 ? Ui.oval(activeFill) : null, Ui.oval(Ui.ACCENT)));
         return v;
     }

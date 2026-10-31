@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 
 /**
  * Motion as saved in Launcher settings' preferences (MotionChoice decides what it means). Saving writes the old
- * Animations switch too, so LauncherSettingsActivity shows the same, and moves the settings change count, so Home
+ * Animations choice too, for anything that still reads it, and moves the settings change count, so Home
  * rebuilds with it when it next resumes (MainActivity#onResume).
  */
 final class MotionPrefs {

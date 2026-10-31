@@ -26,12 +26,15 @@ public final class QuickSettingsActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         Ui.init(this, Config.load(this).reducedMotion());
+        Theme theme = ThemeStore.current(this);
+        Ui.apply(theme);
+        ThemeFonts.apply(this, theme);
         FrameLayout root = new FrameLayout(this);
         View catcher = new View(this);
         catcher.setOnClickListener(v -> finish());
         root.addView(catcher, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        // Through Home, so it rebuilds with the new choices when Launcher settings close.
+        // Through Home, where Launcher settings is a page.
         List<MenuPanel.Row> rows = Menus.quickSettings(this, this::open, () -> open(
                 new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_LAUNCHER_SETTINGS)));
         LinearLayout panel = MenuPanel.build(this, null, rows, row -> {

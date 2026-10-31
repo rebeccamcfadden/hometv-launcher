@@ -63,7 +63,7 @@ final class PickResultsPage extends Screen {
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setBaselineAligned(false);
         LinearLayout titles = PickSetupPage.column(ctx);
-        TextView title = Ui.line(ctx, 54, Ui.TEXT_1, Ui.REGULAR);
+        TextView title = Ui.line(ctx, 54, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         title.setGravity(Gravity.START);
         title.setText(R.string.pick_results_title);
         titles.addView(title);
@@ -97,7 +97,7 @@ final class PickResultsPage extends Screen {
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setPadding(Ui.px(30), Ui.px(20), Ui.px(20), Ui.px(20));
-        bar.setBackground(Ui.round(Ui.SURFACE, 20, Ui.LINE, 1));
+        bar.setBackground(Ui.round(Ui.SURFACE, 20, Ui.LINE, Ui.LINE_W));
         LinearLayout barText = PickSetupPage.column(ctx);
         barTitle = Ui.line(ctx, 28, Ui.TEXT_1, Ui.REGULAR);
         barTitle.setGravity(Gravity.START);
@@ -238,7 +238,7 @@ final class PickResultsPage extends Screen {
         View rule = new View(ctx);
         rule.setBackgroundColor(Ui.LINE);
         LinearLayout.LayoutParams rulelp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                Math.max(1, Ui.px(1)));
+                Ui.linePx());
         rulelp.topMargin = Ui.px(14);
         tile.addView(rule, rulelp);
         TextView blurb = Ui.text(ctx, 21, Ui.TEXT_2, Ui.REGULAR);

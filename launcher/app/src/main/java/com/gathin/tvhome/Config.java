@@ -351,6 +351,24 @@ final class Config {
         }
     }
 
+    /**
+     * Launcher settings › About › Follow theme: drops the on-TV choices a pushed config.json would set (Motion, the old
+     * Animations switch, Open on start, the old layout keys), so config.xml or the pushed file decides again. The Theme
+     * picker, weather, account and the service and store ticks stay (the project lead, 2026-10-31). False when there
+     * was nothing to drop.
+     */
+    static boolean followTheme(Context ctx) {
+        SharedPreferences choices = ctx.getSharedPreferences(SETTINGS_NAME, Context.MODE_PRIVATE);
+        boolean any = choices.contains("animations") || choices.contains(MotionChoice.KEY)
+                || choices.contains(OpenOnStart.KEY);
+        for (String key : OLD_CHOICES) any |= choices.contains(key);
+        if (!any) return false;
+        SharedPreferences.Editor editor = choices.edit().remove(OpenOnStart.KEY);
+        clearChoices(editor);
+        editor.apply();
+        return true;
+    }
+
     private static void clearChoices(SharedPreferences.Editor editor) {
         editor.remove("animations").remove(MotionChoice.KEY);
         for (String key : OLD_CHOICES) editor.remove(key);

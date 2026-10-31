@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 /** Home's app row: the seed, what shows, and Move, Remove and Add (docs/rework.md, Home app row). */
@@ -98,5 +100,17 @@ public class AppRowTest {
     @Test
     public void decodeDropsLinesThatAreNotPackages() {
         assertEquals(list("a.b", "c.d"), AppRow.decode("a.b\n\nnot a package\n../x\nc.d\na.b\n"));
+    }
+
+    @Test
+    public void theRowShowsAtMostSeven() {
+        List<String> nine = list("a", "b", "c", "d", "e", "f", "g", "h", "i");
+        Predicate<String> all = installed("a", "b", "c", "d", "e", "f", "g", "h", "i");
+        assertEquals(list("a", "b", "c", "d", "e", "f", "g"), AppRow.visible(nine, all));
+        assertFalse(AppRow.hasRoom(nine, all));
+        // An app that can't show makes room for the eighth, which was kept in the saved list.
+        assertEquals(list("a", "c", "d", "e", "f", "g", "h"),
+                AppRow.visible(nine, installed("a", "c", "d", "e", "f", "g", "h", "i")));
+        assertTrue(AppRow.hasRoom(list("a", "b"), all));
     }
 }

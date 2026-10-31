@@ -43,12 +43,19 @@ final class Data {
     static Data create(Context ctx, Config cfg) {
         String token = BuildConfig.TMDB_TOKEN;
         Catalog catalog = token.isEmpty() ? new MockCatalog() : new TmdbCatalog(ctx, token);
+        catalog.setPriceStores(ServiceChoices.stores(ctx));
         // The real catalogue names services as they are branded now; the mock one keeps the prototype's names.
         ServiceTable table = token.isEmpty() ? new ServiceTable() : ServiceTable.branded();
         Household household = new Household(ctx, catalog);
-        return new Data(catalog, Services.from(ctx, cfg, table), household, table,
+        Data data = new Data(catalog, Services.from(ctx, cfg, table), household, table,
                 new Accounts(ctx, household, token));
+        Context app = ctx.getApplicationContext();
+        data.tickedStores = () -> ServicePicks.counted(ServiceChoices.stores(app));
+        return data;
     }
+
+    /** Launcher settings' Stores ticks (ServiceChoices), read each time so a change shows at once. */
+    private java.util.function.Supplier<Set<ServiceId>> tickedStores;
 
     /** The offer a title's Watch button uses on this TV (Offers.bestOffer with the subscribed services). */
     Offer bestOffer(Title t) {
@@ -56,12 +63,11 @@ final class Data {
     }
 
     /**
-     * The stores the household ticked, whose rent and buy offers count (design 07-prices A, Ticks); null means every
-     * store. Launcher settings can't tick stores yet (BACKLOG.md, Streaming availability and prices), so every store
-     * counts.
+     * The stores the household ticked in Launcher settings, whose rent and buy offers count (design 07-prices A,
+     * Ticks); null means every store.
      */
     Set<ServiceId> stores() {
-        return null;
+        return tickedStores == null ? null : tickedStores.get();
     }
 
     /** "Prime Video · Included", "Apple TV · Rent $3.99" ("Apple TV Store · Rent 39 kr") or "Not available". */

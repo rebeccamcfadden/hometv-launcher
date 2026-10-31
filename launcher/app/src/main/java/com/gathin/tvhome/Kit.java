@@ -64,9 +64,9 @@ final class Kit {
         b.setContentDescription(label);
         int fill = primary ? Ui.ACCENT_SOFT : Ui.SURFACE;
         int border = primary ? Ui.ACCENT : Ui.LINE;
-        b.setBackground(Ui.states(Ui.round(fill, Ui.RADIUS_PILL, border, 1),
-                Ui.round(Ui.ACCENT_SOFT, Ui.RADIUS_PILL, border, 1),
-                Ui.round(Ui.ACCENT, Ui.RADIUS_PILL, Ui.ACCENT, 1)));
+        b.setBackground(Ui.states(Ui.round(fill, Ui.RADIUS_PILL, border, Ui.LINE_W),
+                Ui.round(Ui.ACCENT_SOFT, Ui.RADIUS_PILL, border, Ui.LINE_W),
+                Ui.round(Ui.ACCENT, Ui.RADIUS_PILL, Ui.ACCENT, Ui.LINE_W)));
         ColorStateList color = Ui.colors(primary ? Ui.ACCENT : Ui.TEXT_1, Ui.ACCENT, Ui.ON_ACCENT);
 
         ImageView icon = new ImageView(ctx);
@@ -191,9 +191,9 @@ final class Kit {
         c.setMinimumHeight(Ui.px(54));
         c.setPadding(Ui.px(22), 0, Ui.px(22), 0);
         c.setContentDescription(label);
-        c.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, 1),
-                Ui.round(Ui.ACCENT_SOFT, Ui.RADIUS_PILL, Ui.ACCENT, 1),
-                Ui.round(Ui.ACCENT, Ui.RADIUS_PILL, Ui.ACCENT, 1)));
+        c.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, Ui.LINE_W),
+                Ui.round(Ui.ACCENT_SOFT, Ui.RADIUS_PILL, Ui.ACCENT, Ui.LINE_W),
+                Ui.round(Ui.ACCENT, Ui.RADIUS_PILL, Ui.ACCENT, Ui.LINE_W)));
         ColorStateList color = Ui.colors(Ui.TEXT_2, Ui.ACCENT, Ui.ON_ACCENT);
         ImageView tick = null;
         if (check) {
@@ -319,7 +319,7 @@ final class Kit {
      * photo over them when there is one (Art.photo), loaded for a box {@code size} design px across.
      */
     static RingFrame portrait(Context ctx, String name, String photo, float size, float initialsSize) {
-        RingFrame portrait = new RingFrame(ctx, size / 2, true, 0xFF1C2633);
+        RingFrame portrait = new RingFrame(ctx, size / 2, true, Ui.PORTRAIT);
         TextView initials = Ui.line(ctx, initialsSize, Ui.TEXT_2, Ui.MEDIUM);
         initials.setText(TitleText.initials(name));
         initials.setGravity(Gravity.CENTER);
@@ -497,10 +497,11 @@ final class Kit {
         View v = new View(ctx);
         PaintDrawable d = new PaintDrawable();
         d.setShape(new RectShape());
+        int[] colors = {Ui.alpha(Ui.BG, 0), Ui.alpha(Ui.BG, 0xF7), Ui.alpha(Ui.BG, 0xF7)};
         d.setShaderFactory(new ShapeDrawable.ShaderFactory() {
             @Override
             public Shader resize(int width, int height) {
-                return new LinearGradient(0, 0, 0, height, new int[]{0x00090E15, 0xF7090E15, 0xF7090E15},
+                return new LinearGradient(0, 0, 0, height, colors,
                         new float[]{0f, 0.7f, 1f}, Shader.TileMode.CLAMP);
             }
         });

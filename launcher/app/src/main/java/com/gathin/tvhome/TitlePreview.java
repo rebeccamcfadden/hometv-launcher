@@ -40,12 +40,6 @@ final class TitlePreview extends Screen {
     private static final float ROOM = Kit.RING_ROOM;
     /** How far a row may run below the content area, into the popup's 44 px bottom padding. */
     private static final float OVERHANG = 40;
-    /** .pv-back .btn:not(.is-focused): the art's own dark at 60%, so Back reads on a bright sky. */
-    private static final int BACK_FILL = 0x990D141D;
-    /** .tab.is-active: white at 12%. */
-    private static final int TAB_ACTIVE = 0x1FFFFFFF;
-    /** .pv-details .rating: the secondary text at 50%. */
-    private static final int RATING_LINE = 0x80ADB5C0;
 
     private enum Tab { OVERVIEW, EPISODES, WHERE, CAST, MORE }
 
@@ -124,7 +118,7 @@ final class TitlePreview extends Screen {
 
         popup = new FrameLayout(ctx);
         popup.setBackground(Ui.round(Ui.BG_RAISED, Ui.RADIUS_XL));
-        popup.setForeground(Ui.round(0, Ui.RADIUS_XL, Ui.LINE, 1));
+        popup.setForeground(Ui.round(0, Ui.RADIUS_XL, Ui.LINE, Ui.LINE_W));
         // The rounded outline clips the art and everything on it; the rows inside may still draw past the body.
         popup.setClipToOutline(true);
         popup.setClipChildren(false);
@@ -168,7 +162,7 @@ final class TitlePreview extends Screen {
         View divider = new View(ctx);
         divider.setBackgroundColor(Ui.LINE);
         LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                Math.max(1, Ui.px(1)));
+                Ui.linePx());
         dlp.topMargin = Ui.px(18);
         dlp.bottomMargin = Ui.px(22);
         body.addView(divider, dlp);
@@ -186,8 +180,9 @@ final class TitlePreview extends Screen {
 
         View back = Kit.button(ctx, ctx.getString(R.string.back), R.drawable.ic_ui_back, Kit.SMALL, false, null,
                 "back", false, v -> router.shell().back());
-        back.setBackground(Ui.states(Ui.round(BACK_FILL, Ui.RADIUS_PILL, Ui.LINE, 1), null,
-                Ui.round(Ui.ACCENT, Ui.RADIUS_PILL, Ui.ACCENT, 1)));
+        // .pv-back .btn:not(.is-focused): the art's own dark at 60%, so Back reads on a bright sky.
+        back.setBackground(Ui.states(Ui.round(Ui.alpha(Ui.BG_RAISED, 0x99), Ui.RADIUS_PILL, Ui.LINE, Ui.LINE_W), null,
+                Ui.round(Ui.ACCENT, Ui.RADIUS_PILL, Ui.ACCENT, Ui.LINE_W)));
         FrameLayout.LayoutParams backLp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
         backLp.leftMargin = Ui.px(48);
@@ -546,7 +541,7 @@ final class TitlePreview extends Screen {
 
         LinearLayout block = new LinearLayout(ctx);
         block.setOrientation(LinearLayout.VERTICAL);
-        TextView title = Ui.text(ctx, Ui.T_DISPLAY, Ui.TEXT_1, Ui.REGULAR);
+        TextView title = Ui.text(ctx, Ui.T_DISPLAY, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         title.setText(t.name);
         title.setMaxLines(2);
         title.setEllipsize(TextUtils.TruncateAt.END);
@@ -635,7 +630,8 @@ final class TitlePreview extends Screen {
             TextView rating = Ui.line(ctx, 19, Ui.TEXT_2, Ui.REGULAR);
             rating.setText(t.rating);
             rating.setPadding(Ui.px(10), Ui.px(1), Ui.px(10), Ui.px(1));
-            rating.setBackground(Ui.round(0, 4, RATING_LINE, 1));
+            // .pv-details .rating: the secondary text at 50%.
+            rating.setBackground(Ui.round(0, 4, Ui.alpha(Ui.TEXT_2, 0x80), Ui.LINE_W));
             add(row, rating, row.getChildCount() == 0 ? 0 : 18);
         }
         if (t.score <= 0 && !t.detailed) return row;
@@ -676,7 +672,7 @@ final class TitlePreview extends Screen {
             v.setText(tabLabel(tab));
             v.setGravity(Gravity.CENTER);
             v.setPadding(Ui.px(22), 0, Ui.px(22), 0);
-            v.setBackground(Ui.states(Ui.round(0, Ui.RADIUS_PILL), Ui.round(TAB_ACTIVE, Ui.RADIUS_PILL),
+            v.setBackground(Ui.states(Ui.round(0, Ui.RADIUS_PILL), Ui.round(Ui.SELECTED, Ui.RADIUS_PILL),
                     Ui.round(Ui.ACCENT, Ui.RADIUS_PILL)));
             v.setTextColor(Ui.colors(Ui.TEXT_3, Ui.TEXT_1, Ui.ON_ACCENT));
             v.setContentDescription(v.getText());
@@ -892,7 +888,7 @@ final class TitlePreview extends Screen {
         boolean watched = PreviewRules.watched(t, season, e.n);
         boolean next = PreviewRules.upNext(t, season, e.n);
         RingFrame card = new RingFrame(ctx, Ui.RADIUS_L, false, Ui.SURFACE);
-        if (next) card.content().setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.ACCENT, 1));
+        if (next) card.content().setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.ACCENT, Ui.LINE_W));
         LinearLayout col = new LinearLayout(ctx);
         col.setOrientation(LinearLayout.VERTICAL);
         col.setPadding(Ui.px(20), Ui.px(20), Ui.px(20), Ui.px(20));
@@ -1085,11 +1081,13 @@ final class TitlePreview extends Screen {
         View v = new View(ctx);
         PaintDrawable d = new PaintDrawable();
         d.setShape(new RectShape());
+        int dark = Ui.BG_RAISED;
+        int[] colors = {Ui.alpha(dark, 0x73), Ui.alpha(dark, 0), Ui.alpha(dark, 0), Ui.alpha(dark, 0xE6),
+                Ui.alpha(dark, 0xFF), Ui.alpha(dark, 0xFF)};
         d.setShaderFactory(new ShapeDrawable.ShaderFactory() {
             @Override
             public Shader resize(int width, int height) {
-                return new LinearGradient(0, 0, 0, height,
-                        new int[]{0x730D141D, 0x000D141D, 0x000D141D, 0xE60D141D, 0xFF0D141D, 0xFF0D141D},
+                return new LinearGradient(0, 0, 0, height, colors,
                         new float[]{0f, 0.14f, 0.28f, 0.5f, 0.6f, 1f}, Shader.TileMode.CLAMP);
             }
         });

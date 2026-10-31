@@ -56,7 +56,7 @@ final class Shell {
         this.pages = pages;
         toast = Ui.text(ctx, 22, Ui.TEXT_1, Ui.REGULAR);
         toast.setPadding(Ui.px(32), Ui.px(18), Ui.px(32), Ui.px(18));
-        toast.setBackground(Ui.round(Ui.TOAST_BG, Ui.RADIUS_PILL, Ui.LINE_STRONG, 1));
+        toast.setBackground(Ui.round(Ui.TOAST_BG, Ui.RADIUS_PILL, Ui.LINE_STRONG, Ui.LINE_W));
         toast.setElevation(Ui.px(20));
         toast.setAlpha(0f);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -68,6 +68,11 @@ final class Shell {
 
     Screen top() {
         return stack.isEmpty() ? null : stack.get(stack.size() - 1);
+    }
+
+    /** Whether s is on the stack, showing or under another screen. */
+    boolean has(Screen s) {
+        return stack.contains(s);
     }
 
     View focused() {

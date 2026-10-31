@@ -56,7 +56,7 @@ final class Pages {
         e.setAllCaps(true);
         e.setLetterSpacing(0.08f);
         body.addView(e);
-        TextView t = Ui.line(ctx, 64, Ui.TEXT_1, Ui.REGULAR);
+        TextView t = Ui.line(ctx, 64, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         t.setText(title);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);

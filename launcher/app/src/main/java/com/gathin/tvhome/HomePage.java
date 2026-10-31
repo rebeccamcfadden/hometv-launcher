@@ -55,7 +55,6 @@ final class HomePage extends Screen {
     private static final int TILE_H = 141;
     private static final int TILE_GAP = 22;
     private static final int TILE_ROOM = 8;
-    private static final int TILE_FILL = 0x0BFFFFFF;
     private static final int HOURS = 6;
 
     static final String GROUP_APPS = "apps";
@@ -122,13 +121,12 @@ final class HomePage extends Screen {
 
         // The landscape shows through more than on other pages, darkening towards the apps (.home background).
         View shade = new View(ctx);
-        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0x40090E15, 0x8C090E15, 0xEB090E15}));
+        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, Ui.theme().homeShade));
         shade.setTag(R.id.ui_still, Boolean.TRUE);
         root.addView(shade, match());
         // .home::before: the scrolled state dims the landscape further.
         dim = new View(ctx);
-        dim.setBackgroundColor(0x99090E15);
+        dim.setBackgroundColor(Ui.theme().homeDim);
         dim.setAlpha(0f);
         dim.setTag(R.id.ui_still, Boolean.TRUE);
         root.addView(dim, match());
@@ -144,9 +142,11 @@ final class HomePage extends Screen {
         hero = heroBox;
         LinearLayout hello = new LinearLayout(ctx);
         hello.setOrientation(LinearLayout.VERTICAL);
-        greeting = Ui.line(ctx, 50, Ui.TEXT_1, LIGHT);
+        greeting = Ui.line(ctx, 50, Ui.TEXT_1, Ui.display(LIGHT));
+        Ui.textShadow(greeting);
         hello.addView(greeting, wrap());
         date = Ui.line(ctx, 25, Ui.TEXT_2, Ui.REGULAR);
+        Ui.textShadow(date);
         LinearLayout.LayoutParams dlp = wrap();
         dlp.topMargin = Ui.px(10);
         hello.addView(date, dlp);
@@ -159,11 +159,13 @@ final class HomePage extends Screen {
         LinearLayout timeRow = new LinearLayout(ctx);
         timeRow.setOrientation(LinearLayout.HORIZONTAL);
         timeRow.setBaselineAligned(true);
-        time = Ui.text(ctx, 92, Ui.TEXT_1, LIGHT);
+        time = Ui.text(ctx, 92, Ui.TEXT_1, Ui.display(LIGHT));
         time.setSingleLine(true);
+        Ui.textShadow(time);
         timeRow.addView(time);
         ampm = Ui.text(ctx, 32, Ui.TEXT_2, Ui.REGULAR);
         ampm.setSingleLine(true);
+        Ui.textShadow(ampm);
         LinearLayout.LayoutParams alp = wrap();
         alp.leftMargin = Ui.px(18);
         timeRow.addView(ampm, alp);
@@ -224,7 +226,7 @@ final class HomePage extends Screen {
         addTile(shortcutRow, tile(ctx, R.string.all_apps, R.drawable.ic_ui_grid, SHORTCUT_W, GROUP_SHORTCUTS,
                 "sc-apps", false, v -> openAllApps()));
         addTile(shortcutRow, tile(ctx, R.string.launcher_settings, R.drawable.ic_ui_home, SHORTCUT_W, GROUP_SHORTCUTS,
-                "sc-launcher", false, v -> activity.start(new Intent(activity, LauncherSettingsActivity.class))));
+                "sc-launcher", false, v -> activity.openLauncherSettings()));
         addTile(shortcutRow, tile(ctx, R.string.tv_settings_short, R.drawable.ic_ui_settings, SHORTCUT_W,
                 GROUP_SHORTCUTS, "sc-settings", false,
                 v -> activity.start(SystemSettings.intent(activity, Settings.ACTION_SETTINGS))));
@@ -238,13 +240,13 @@ final class HomePage extends Screen {
         weatherFrame = new FrameLayout(ctx);
         int ring = Ui.px(AppTile.RING);
         weatherFrame.setPadding(ring, ring, ring, ring);
-        weatherFrame.setBackground(Ui.states(Ui.round(0, 20 + AppTile.RING), null,
-                Ui.round(0, 20 + AppTile.RING, Ui.ACCENT, AppTile.RING)));
+        weatherFrame.setBackground(Ui.states(TileFrame.resting(AppTile.RING, 20), null,
+                TileFrame.focused(AppTile.RING, 20)));
         LinearLayout strip = new LinearLayout(ctx);
         strip.setOrientation(LinearLayout.HORIZONTAL);
         strip.setGravity(Gravity.CENTER_VERTICAL);
         strip.setPadding(Ui.px(36), 0, Ui.px(36), 0);
-        strip.setBackground(Ui.round(TILE_FILL, 20, Ui.LINE, 1));
+        strip.setBackground(Ui.round(Ui.TILE, 20, Ui.LINE, Ui.LINE_W));
         weatherFrame.addView(strip, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(WEATHER_H)));
         // .weather-now: 330 px wide with a line on its right, as tall as its text.
         LinearLayout now = new LinearLayout(ctx);
@@ -255,7 +257,7 @@ final class HomePage extends Screen {
         TextView label = Ui.line(ctx, 22, Ui.TEXT_2, Ui.REGULAR);
         label.setText(R.string.weather);
         nowText.addView(label);
-        weatherTemp = Ui.line(ctx, 64, Ui.TEXT_1, LIGHT);
+        weatherTemp = Ui.line(ctx, 64, Ui.TEXT_1, Ui.display(LIGHT));
         LinearLayout.LayoutParams tlp = wrap();
         tlp.topMargin = Ui.px(4);
         nowText.addView(weatherTemp, tlp);
@@ -266,7 +268,7 @@ final class HomePage extends Screen {
         now.addView(nowText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         View divider = new View(ctx);
         divider.setBackgroundColor(Ui.LINE_STRONG);
-        now.addView(divider, new LinearLayout.LayoutParams(Math.max(1, Ui.px(1)), ViewGroup.LayoutParams.MATCH_PARENT));
+        now.addView(divider, new LinearLayout.LayoutParams(Ui.linePx(), ViewGroup.LayoutParams.MATCH_PARENT));
         strip.addView(now, new LinearLayout.LayoutParams(Ui.px(330), ViewGroup.LayoutParams.WRAP_CONTENT));
         weatherHours = new LinearLayout(ctx);
         weatherHours.setOrientation(LinearLayout.HORIZONTAL);
@@ -587,7 +589,9 @@ final class HomePage extends Screen {
     private static LinearLayout group(Context ctx, int heading) {
         LinearLayout box = new LinearLayout(ctx);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setClipChildren(true);
+        // Inputs shows at most four tiles (TvInputs.HOME_TILES), which fit the box: nothing needs cutting, and a
+        // theme's focus glow (up to ~32 px) reaches past the 8 px room the tiles have.
+        Kit.unclip(box);
         TextView h = Ui.line(ctx, Ui.T_H3, Ui.TEXT_1, Ui.REGULAR);
         h.setText(heading);
         LinearLayout.LayoutParams lp = wrap();
@@ -610,8 +614,9 @@ final class HomePage extends Screen {
         t.setOrientation(LinearLayout.VERTICAL);
         t.setGravity(Gravity.CENTER);
         t.setPadding(Ui.px(14), 0, Ui.px(14), 0);
-        t.setBackground(Ui.states(Ui.round(TILE_FILL, Ui.RADIUS_L, Ui.LINE, 1), null,
-                Ui.round(Ui.ACCENT, Ui.RADIUS_L)));
+        t.setBackground(Ui.states(
+                TileFrame.shadowUnder(Ui.round(Ui.TILE, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W), Ui.RADIUS_L), null,
+                TileFrame.glowBehind(Ui.round(Ui.ACCENT, Ui.RADIUS_L), Ui.RADIUS_L)));
         ImageView i = new ImageView(ctx);
         i.setImageResource(icon);
         i.setImageTintList(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACCENT));
@@ -758,7 +763,7 @@ final class HomePage extends Screen {
         if (forecast.getChildCount() > 0) {
             View sep = new View(activity);
             sep.setBackgroundColor(Ui.LINE_STRONG);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Math.max(1, Ui.px(1)), Ui.px(26));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.linePx(), Ui.px(26));
             lp.leftMargin = Ui.px(12 + 14);
             lp.rightMargin = Ui.px(14);
             forecast.addView(sep, lp);
@@ -768,6 +773,7 @@ final class HomePage extends Screen {
         ilp.rightMargin = Ui.px(12);
         forecast.addView(i, ilp);
         TextView t = Ui.line(activity, 22, Ui.TEXT_2, Ui.REGULAR);
+        Ui.textShadow(t);
         t.setText(activity.getString(label, Weather.degrees(day.max, weatherStore.fahrenheit())));
         forecast.addView(t);
     }
@@ -787,7 +793,8 @@ final class HomePage extends Screen {
         }
     }
 
-    private static int conditionText(Weather.Condition c) {
+    /** The words for a weather condition, on Home and in Launcher settings' Weather pane. */
+    static int conditionText(Weather.Condition c) {
         switch (c) {
             case CLEAR:
                 return R.string.wmo_clear;

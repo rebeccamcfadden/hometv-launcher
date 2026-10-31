@@ -40,11 +40,25 @@ final class AppRow {
         return saved != null ? dedupe(saved) : seed(dockApps, shown);
     }
 
-    /** What the row shows: the full list without the apps that can't show (not installed, hidden_apps). */
+    /** The most apps Home's row holds (design 02-home: seven tiles across the stage). */
+    static final int MAX = 7;
+
+    /**
+     * What the row shows: the full list without the apps that can't show (not installed, hidden_apps), at most
+     * {@link #MAX}. Apps past the seventh stay in the saved list and show again when one before them goes.
+     */
     static List<String> visible(List<String> full, Predicate<String> shown) {
         List<String> out = new ArrayList<>();
-        for (String pkg : dedupe(full)) if (shown.test(pkg)) out.add(pkg);
+        for (String pkg : dedupe(full)) {
+            if (out.size() == MAX) break;
+            if (shown.test(pkg)) out.add(pkg);
+        }
         return out;
+    }
+
+    /** Whether another app can join the row: fewer than {@link #MAX} show. */
+    static boolean hasRoom(List<String> full, Predicate<String> shown) {
+        return visible(full, shown).size() < MAX;
     }
 
     /**

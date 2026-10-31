@@ -143,7 +143,7 @@ final class SearchPage extends Screen {
         // ---- The search bar: focusable only on the full results, where OK on it brings the keyboard back.
         bar = new RingFrame(ctx, BAR_H / 2f, false, Ui.SURFACE);
         bar.content().setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL),
-                null, Ui.round(Ui.SURFACE_2, Ui.RADIUS_PILL, Ui.ACCENT, 1)));
+                null, Ui.round(Ui.SURFACE_2, Ui.RADIUS_PILL, Ui.ACCENT, Ui.LINE_W)));
         bar.content().setDuplicateParentStateEnabled(true);
         LinearLayout barRow = new LinearLayout(ctx);
         barRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -184,7 +184,7 @@ final class SearchPage extends Screen {
                 ViewGroup.LayoutParams.MATCH_PARENT));
         View fade = new View(ctx);
         fade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0x00090E15, 0xF7090E15}));
+                new int[]{Ui.alpha(Ui.BG, 0), Ui.alpha(Ui.BG, 0xF7)}));
         viewport.addView(fade, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(110),
                 Gravity.BOTTOM));
         FrameLayout.LayoutParams vlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -197,7 +197,7 @@ final class SearchPage extends Screen {
         panel = Kit.unclip(new LinearLayout(ctx));
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(Ui.px(32), Ui.px(24), Ui.px(32), Ui.px(30));
-        panel.setBackground(Ui.round(0x08FFFFFF, Ui.RADIUS_XL, Ui.LINE, 1));
+        panel.setBackground(Ui.round(Ui.PANEL, Ui.RADIUS_XL, Ui.LINE, Ui.LINE_W));
         listHead = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.MEDIUM);
         listHead.setPadding(Ui.px(16), 0, 0, 0);
         panel.addView(listHead, below(0));
@@ -716,8 +716,8 @@ final class SearchPage extends Screen {
     }
 
     private static void keyLook(View k) {
-        k.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_M, Ui.LINE, 1), null,
-                Ui.round(Ui.ACCENT, Ui.RADIUS_M, Ui.ACCENT, 1)));
+        k.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_M, Ui.LINE, Ui.LINE_W), null,
+                Ui.round(Ui.ACCENT, Ui.RADIUS_M, Ui.ACCENT, Ui.LINE_W)));
         Ui.scaleOnFocus(k, 1.08f);
     }
 

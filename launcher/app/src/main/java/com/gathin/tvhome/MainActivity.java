@@ -3,12 +3,13 @@ package com.gathin.tvhome;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.ComponentCallbacks2;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.tv.TvInputManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -36,15 +37,16 @@ import java.util.List;
  */
 public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, Router {
 
-    /** Sent by QuickSettingsActivity: open Launcher settings from here, so Home rebuilds when they close. */
+    /** Sent by QuickSettingsActivity: open Launcher settings here, over Home, optionally on one section. */
     static final String ACTION_LAUNCHER_SETTINGS = "com.gathin.tvhome.action.LAUNCHER_SETTINGS";
+    /** With ACTION_LAUNCHER_SETTINGS: the section to open straight into (SettingsSection.id). */
+    static final String EXTRA_SETTINGS_SECTION = "com.gathin.tvhome.extra.SETTINGS_SECTION";
     /** The system input switcher, forwarded here by InputsRequestActivity while handle_view_inputs is on. */
     static final String ACTION_VIEW_INPUTS = "com.android.tv.action.VIEW_INPUTS";
-    /** V2 Phase 3: Launcher settings' TMDB account row opens the sign-in page here, over Home (AccountPage). */
-    static final String ACTION_TMDB_ACCOUNT = "com.gathin.tvhome.action.TMDB_ACCOUNT";
-    /** Survives the rebuild after a settings change, to open the sign-in page asked for in the same visit. */
-    private static final String KEY_OPEN_ACCOUNT = "open_account";
-    private boolean openAccountAfterRebuild;
+    /** Survive a rebuild with Launcher settings open (a theme change): the page reopens on the same section. */
+    private static final String KEY_SETTINGS_SECTION = "settings_section";
+    private static final String KEY_SETTINGS_IN_PANE = "settings_in_pane";
+    private LauncherSettingsPage settingsPage;
 
     private static final String MENU_INPUTS = "Inputs";
     private static final String MENU_NETWORK = "Wi-Fi";
@@ -59,10 +61,30 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private TvInputs inputs;
     private FrameLayout stage;
     private ImageView backdrop;
+    private Backdrops backdrops;
     private boolean backdropLoaded;
     private boolean started;
     /** Launcher settings' change count this Home was built with (see onResume). */
     private long settingsRevision;
+    /** The theme this Home was built with; a different one today (a new choice, or a new season) rebuilds it. */
+    private Theme theme;
+    /** And whether the System font option was on then: switching it rebuilds Home too. */
+    private boolean systemFont;
+    private final Runnable recreateForFonts = () -> {
+        if (!isDestroyed() && ThemeStore.current(this).id.equals(theme.id)) recreate();
+    };
+    /** The theme's fonts arrived after Home was built with Roboto: rebuild with them, once a burst has settled. */
+    private final Runnable fontsArrived = () -> {
+        handler.removeCallbacks(recreateForFonts);
+        handler.postDelayed(recreateForFonts, 500);
+    };
+    /** Midnight passed or the clock was set: the Seasonal theme may have moved to its next period. */
+    private final BroadcastReceiver dateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            recreateIfThemeChanged();
+        }
+    };
 
     private int[] settingsKeycodes;
     private boolean settingsKeyPanel;
@@ -146,6 +168,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         Config cfg = Config.load(this);
         config = cfg;
         Ui.init(this, cfg.reducedMotion());
+        theme = ThemeStore.current(this);
+        systemFont = ThemeStore.systemFont(this);
+        Ui.apply(theme);
+        if (!ThemeFonts.apply(this, theme)) ThemeFonts.fetch(this, theme, fontsArrived);
         // restore_key_services: after a force stop, put back the remote's accessibility helpers that Android took
         // off the list (needs WRITE_SECURE_SETTINGS, granted by build-and-install with RESTORE_KEY_SERVICES=1).
         if (cfg.restoreKeyServices) ServiceRepair.restore(this);
@@ -165,6 +191,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         backdrop.setScaleType(ImageView.ScaleType.CENTER_CROP);
         root.addView(backdrop, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+        backdrops = new Backdrops(this, backdrop);
+        Overlays.add(root, this, theme);
         stage = new FrameLayout(this);
         root.addView(stage, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
@@ -183,14 +211,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (tim != null) tim.registerCallback(inputCallback, handler);
 
         // Not after recreate(): the launch intent survives it and would open them again.
-        if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent()) && !openAccountIfAsked(getIntent())) {
+        if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())) {
             openInputsIfAsked(getIntent());
         }
-        // The TMDB account row was chosen in the same Launcher settings visit as a change that rebuilt Home.
-        if (savedInstanceState != null && savedInstanceState.getBoolean(KEY_OPEN_ACCOUNT)
-                && data.accounts.available()) {
-            openAccount();
-        }
+        // Rebuilt with Launcher settings open (a theme change, or a choice made before a trip to another app).
+        String section = savedInstanceState == null ? null : savedInstanceState.getString(KEY_SETTINGS_SECTION);
+        if (section != null) openLauncherSettings(section, savedInstanceState.getBoolean(KEY_SETTINGS_IN_PANE));
     }
 
     @Override
@@ -356,8 +382,32 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
                 Menus.quickSettings(this, this::start, this::openLauncherSettings)));
     }
 
-    private void openLauncherSettings() {
-        start(new Intent(this, LauncherSettingsActivity.class));
+    /**
+     * Launcher settings, a page over whatever is showing (LauncherSettingsPage): on its first section, or straight
+     * into section's pane when enter. Already open, it stays as it is.
+     */
+    void openLauncherSettings(String section, boolean enter) {
+        shell.closeDialogs();
+        if (settingsPage != null && shell.has(settingsPage)) return;
+        settingsPage = LauncherSettingsPage.create(this, section, enter);
+        shell.push(settingsPage);
+    }
+
+    void openLauncherSettings() {
+        openLauncherSettings(null, false);
+    }
+
+    /** Back on Launcher settings' list: the page closes, and Home is rebuilt if a choice changed while it was open. */
+    void closeLauncherSettings() {
+        if (settingsPage != null && shell.top() == settingsPage) shell.pop();
+        settingsClosed();
+        if (Config.settingsChanged(settingsRevision, settingsRevision())) recreate();
+    }
+
+    /** Launcher settings has left the stack, or is about to with the activity: its sections stop what they run. */
+    private void settingsClosed() {
+        if (settingsPage != null) settingsPage.closed();
+        settingsPage = null;
     }
 
     /** Whether there are inputs to list and which network icon to show, on every page's nav. */
@@ -442,40 +492,19 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
     private boolean openLauncherSettingsIfAsked(Intent intent) {
         if (intent == null || !ACTION_LAUNCHER_SETTINGS.equals(intent.getAction())) return false;
+        String section = intent.getStringExtra(EXTRA_SETTINGS_SECTION);
         setIntent(new Intent(Intent.ACTION_MAIN));
-        openLauncherSettings();
+        openLauncherSettings(section, section != null);
         return true;
-    }
-
-    /**
-     * The TMDB account row in Launcher settings: the sign-in page over Home, once it is on screen. When a setting was
-     * also changed in that visit, onResume is about to rebuild Home, which would drop the page: it opens after the
-     * rebuild instead ({@link #KEY_OPEN_ACCOUNT}), so the code isn't asked for twice either.
-     */
-    private boolean openAccountIfAsked(Intent intent) {
-        if (intent == null || !ACTION_TMDB_ACCOUNT.equals(intent.getAction())) return false;
-        setIntent(new Intent(Intent.ACTION_MAIN));
-        if (!data.accounts.available()) return true;
-        if (Config.settingsChanged(settingsRevision, settingsRevision())) {
-            openAccountAfterRebuild = true;
-            return true;
-        }
-        openAccount();
-        return true;
-    }
-
-    private void openAccount() {
-        afterLayout(() -> {
-            if (isFinishing()) return;
-            shell.closeDialogs();
-            shell.push(AccountPage.create(this, this));
-        });
     }
 
     @Override
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
-        out.putBoolean(KEY_OPEN_ACCOUNT, openAccountAfterRebuild);
+        if (settingsPage != null && shell.has(settingsPage)) {
+            out.putString(KEY_SETTINGS_SECTION, settingsPage.section());
+            out.putBoolean(KEY_SETTINGS_IN_PANE, settingsPage.inPane());
+        }
     }
 
     /** Runs r once the stage has been laid out, so dropdowns can hang from their buttons on a cold start. */
@@ -502,10 +531,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (openLauncherSettingsIfAsked(intent)) return;
-        if (openAccountIfAsked(intent)) return;
         if (openInputsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         shell.home();
+        if (settingsPage != null && !shell.has(settingsPage)) settingsClosed();
+        // Home closed Launcher settings: rebuild with what changed there, as Back would have.
+        if (Config.settingsChanged(settingsRevision, settingsRevision())) recreate();
     }
 
     // ---- Keys ---------------------------------------------------------------------------------------------------
@@ -546,6 +577,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             data.accounts.setVisible(true);
         }
         if (!backdropLoaded) loadBackdrop();
+        backdrops.setVisible(true);
+        IntentFilter dates = new IntentFilter(Intent.ACTION_DATE_CHANGED);
+        dates.addAction(Intent.ACTION_TIME_CHANGED);
+        dates.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+        registerReceiver(dateReceiver, dates);
     }
 
     @Override
@@ -555,6 +591,13 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (Config.settingsChanged(settingsRevision, settingsRevision())) {
             recreate();
             return;
+        }
+        if (recreateIfThemeChanged()) return;
+        // Another activity (quick settings, Launcher settings) may have set Ui's tokens to another theme meanwhile:
+        // pages Home builds from now on use the ones it was built with.
+        if (Ui.theme() != theme) {
+            Ui.apply(theme);
+            ThemeFonts.apply(this, theme);
         }
         if (inputs.openOnStartIfDue()) return;
         // Callbacks keep the nav current while Home is in the background; this catches anything missed, after the
@@ -573,6 +616,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStop() {
         super.onStop();
         started = false;
+        backdrops.setVisible(false);
+        unregisterReceiver(dateReceiver);
         if (data != null) {
             data.catalog.setVisible(false);
             data.accounts.setVisible(false);
@@ -592,14 +637,16 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             Art.trim();
         }
         if (!MemoryTrimPolicy.shouldRelease(level, started)) return;
-        backdrop.setImageDrawable(null);
+        backdrops.release();
         backdropLoaded = false;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        settingsClosed();
         handler.removeCallbacksAndMessages(null);
+        ThemeFonts.forget(fontsArrived);
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         if (cm != null) cm.unregisterNetworkCallback(networkCallback);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
@@ -612,21 +659,21 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     }
 
     /**
-     * The evening landscape every page sits on, decoded off the main thread at 16 bits per pixel (about 2 MB) so
-     * the first frame never waits for it.
+     * Rebuilds Home when today's theme isn't the one it was built with: another choice saved, a Seasonal theme whose
+     * period changed with the date (its id names the period), or the System font option switched. True when it does.
+     */
+    private boolean recreateIfThemeChanged() {
+        if (ThemeStore.current(this).id.equals(theme.id) && ThemeStore.systemFont(this) == systemFont) return false;
+        recreate();
+        return true;
+    }
+
+    /**
+     * The theme's backdrop behind every page (Backdrops): decoded off the main thread at 16 bits per pixel, or
+     * downloaded first for a theme whose picture is not in the APK, so the first frame never waits for it.
      */
     private void loadBackdrop() {
         backdropLoaded = true;
-        new Thread(() -> {
-            BitmapFactory.Options o = new BitmapFactory.Options();
-            o.inPreferredConfig = Bitmap.Config.RGB_565;
-            Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.bg_evening, o);
-            runOnUiThread(() -> {
-                if (isDestroyed() || !backdropLoaded || b == null) return;
-                backdrop.setImageBitmap(b);
-                backdrop.setAlpha(0f);
-                backdrop.animate().alpha(1f).setDuration(Ui.ms(Ui.SLOW_MS)).start();
-            });
-        }, "backdrop").start();
+        backdrops.show(Ui.theme());
     }
 }

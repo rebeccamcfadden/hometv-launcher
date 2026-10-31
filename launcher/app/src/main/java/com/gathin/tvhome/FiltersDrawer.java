@@ -26,7 +26,6 @@ final class FiltersDrawer extends Screen {
     private static final int WIDTH = 660;
     /** The drawer's shadow to its left (box-shadow -30px 0 80px), drawn as a gradient: no blur on a 1 GB TV. */
     private static final int SHADOW = 110;
-    private static final int SCRIM_LIGHT = 0x5905080C;
 
     private final LibraryFilters filters;
     private final Runnable onChange;
@@ -42,7 +41,8 @@ final class FiltersDrawer extends Screen {
         FrameLayout root = (FrameLayout) view;
 
         scrim = new View(ctx);
-        scrim.setBackgroundColor(SCRIM_LIGHT);
+        // A lighter scrim than a popup's: the filtered page stays readable behind.
+        scrim.setBackgroundColor(Ui.alpha(Ui.SCRIM, 0x59));
         root.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -62,7 +62,7 @@ final class FiltersDrawer extends Screen {
                 Gravity.END));
         View border = new View(ctx);
         border.setBackgroundColor(Ui.LINE);
-        FrameLayout.LayoutParams edge = new FrameLayout.LayoutParams(Math.max(1, Ui.px(1)),
+        FrameLayout.LayoutParams edge = new FrameLayout.LayoutParams(Ui.linePx(),
                 ViewGroup.LayoutParams.MATCH_PARENT, Gravity.START | Gravity.TOP);
         edge.leftMargin = Ui.px(SHADOW);
         slide.addView(border, edge);
@@ -112,8 +112,8 @@ final class FiltersDrawer extends Screen {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setMinimumHeight(Ui.px(84));
         row.setPadding(Ui.px(26), 0, Ui.px(18), 0);
-        row.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.LINE, 1), null,
-                Ui.round(Ui.ACCENT, Ui.RADIUS_L, Ui.ACCENT, 1)));
+        row.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W), null,
+                Ui.round(Ui.ACCENT, Ui.RADIUS_L, Ui.ACCENT, Ui.LINE_W)));
 
         TextView label = Ui.line(ctx, 22, Ui.TEXT_2, Ui.REGULAR);
         label.setText(d.label);

@@ -22,8 +22,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 /**
- * Home's weather from Open-Meteo (no key), for the place and unit chosen in Launcher settings or else those in
- * launcher/tv.properties (BuildConfig; see WeatherSettings). The
+ * Home's weather from Open-Meteo (no key), for the place and unit chosen in Launcher settings or else the defaults
+ * (see WeatherSettings). The
  * last good answer is kept in the app's files and shown at once; Home asks for a fresh one when it comes into view
  * and the answer is over 30 minutes old. Nothing polls in the background, and nothing waits on the network: offline
  * Home shows the cached answer, or no weather at all when there has never been one.
@@ -84,7 +84,7 @@ final class WeatherStore {
 
     /** When {@link #current} was fetched, in epoch milliseconds (06-states A: "Offline · updated 19:52"). */
     long fetchedAt() {
-        return fetchedAt;
+        return weather == null ? 0 : fetchedAt;
     }
 
     /**

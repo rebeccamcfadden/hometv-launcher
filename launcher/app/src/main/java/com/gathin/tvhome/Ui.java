@@ -29,43 +29,56 @@ final class Ui {
     static final int STAGE_H = 1080;
 
     // Colours (tokens.css).
-    static final int BG = 0xFF090E15;
-    static final int BG_RAISED = 0xFF0D141D;
-    static final int SURFACE = 0x0DFFFFFF;
-    static final int SURFACE_2 = 0x17FFFFFF;
-    static final int SURFACE_3 = 0x24FFFFFF;
-    static final int LINE = 0x17FFFFFF;
-    static final int LINE_STRONG = 0x2EFFFFFF;
-    static final int TEXT_1 = 0xFFF4F5F7;
-    static final int TEXT_2 = 0xFFADB5C0;
-    static final int TEXT_3 = 0xFF7D8999;
-    static final int GHOST = 0xFF5E6878;
-    static final int ACCENT = 0xFFC4DDF7;
-    static final int ACCENT_SOFT = 0x24C4DDF7;
-    static final int ON_ACCENT = 0xFF101820;
-    static final int ACTIVE = 0xE8FFFFFF;
-    static final int GOOD = 0xFF8FD9A8;
-    static final int GOOD_SOFT = 0x298FD9A8;
-    static final int STAR = 0xFFF2C46D;
+    static int BG = 0xFF090E15;
+    static int BG_RAISED = 0xFF0D141D;
+    static int SURFACE = 0x0DFFFFFF;
+    static int SURFACE_2 = 0x17FFFFFF;
+    static int SURFACE_3 = 0x24FFFFFF;
+    static int LINE = 0x17FFFFFF;
+    static int LINE_STRONG = 0x2EFFFFFF;
+    static int TEXT_1 = 0xFFF4F5F7;
+    static int TEXT_2 = 0xFFADB5C0;
+    static int TEXT_3 = 0xFF7D8999;
+    static int GHOST = 0xFF5E6878;
+    static int ACCENT = 0xFFC4DDF7;
+    static int ACCENT_SOFT = 0x24C4DDF7;
+    static int ON_ACCENT = 0xFF101820;
+    static int ACTIVE = 0xE8FFFFFF;
+    /** Text and icons on the ACTIVE fill (the current page's nav item, a focused menu row). */
+    static int ON_ACTIVE = 0xFF101820;
+    static int GOOD = 0xFF8FD9A8;
+    static int GOOD_SOFT = 0x298FD9A8;
+    static int STAR = 0xFFF2C46D;
     /** Dropdown menus: no backdrop blur, the launcher targets TVs with 1 GB of RAM. */
-    static final int MENU_BG = 0xF5161C25;
-    static final int TOAST_BG = 0xF7161E29;
+    static int MENU_BG = 0xF5161C25;
+    static int TOAST_BG = 0xF7161E29;
     /** The 58% scrim a popup draws over the whole page behind it. */
-    static final int SCRIM = 0x9405080C;
+    static int SCRIM = 0x9405080C;
     /** Pages sit on the evening landscape under an 86–90% shade. */
-    static final int SHADE_TOP = 0xDB090E15;
-    static final int SHADE_BOTTOM = 0xE6090E15;
+    static int SHADE_TOP = 0xDB090E15;
+    static int SHADE_BOTTOM = 0xE6090E15;
+    /** Tile, panel and card fills, the active tab, a dialog's fill and a portrait's (Theme has each one's use). */
+    static int TILE = 0x0BFFFFFF;
+    static int PANEL = 0x08FFFFFF;
+    static int CARD = 0x0FFFFFFF;
+    static int SELECTED = 0x1FFFFFFF;
+    static int DIALOG_BG = 0xFF121A24;
+    static int PORTRAIT = 0xFF1C2633;
 
     // TV title-safe area: 5% of 1920 × 1080.
     static final int SAFE_X = 96;
     static final int SAFE_Y = 54;
 
     // Radii.
-    static final int RADIUS_S = 8;
-    static final int RADIUS_M = 12;
-    static final int RADIUS_L = 16;
-    static final int RADIUS_XL = 24;
-    static final int RADIUS_PILL = 100;
+    static int RADIUS_S = 8;
+    static int RADIUS_M = 12;
+    static int RADIUS_L = 16;
+    static int RADIUS_XL = 24;
+    static int RADIUS_PILL = 100;
+
+    /** Hairlines (the 1 px edge of tiles, panels and pills) and the focus ring, in design px. */
+    static float LINE_W = 1;
+    static float FOCUS_W = 4;
 
     // Type scale. Nothing below 18 px: it is read from the couch.
     static final int T_DISPLAY = 84;
@@ -82,12 +95,110 @@ final class Ui {
     static final TimeInterpolator EASE = new PathInterpolator(0.2f, 0.8f, 0.2f, 1f);
 
     /** Roboto, the system font (docs/rework.md); Figma's Inter weights map to the nearest installed one. */
-    static final Typeface REGULAR = Typeface.create("sans-serif", Typeface.NORMAL);
-    static final Typeface MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL);
-    static final Typeface BOLD = Typeface.create("sans-serif", Typeface.BOLD);
+    private static final Typeface ROBOTO_REGULAR = Typeface.create("sans-serif", Typeface.NORMAL);
+    private static final Typeface ROBOTO_MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+    private static final Typeface ROBOTO_BOLD = Typeface.create("sans-serif", Typeface.BOLD);
+
+    /** The UI faces: Roboto, or the theme's UI font once ThemeFonts has it on the TV. */
+    static Typeface REGULAR = ROBOTO_REGULAR;
+    static Typeface MEDIUM = ROBOTO_MEDIUM;
+    static Typeface BOLD = ROBOTO_BOLD;
+
+    /** The display face: greeting, clock and page titles. Roboto unless the theme brings its own. */
+    static Typeface DISPLAY = REGULAR;
+    /** Whether DISPLAY is the theme's own face rather than Roboto (see {@link #display}). */
+    private static boolean themedDisplay;
+
+    /** The theme the tokens above were last set from (Midnight until {@link #apply(Theme)} runs). */
+    private static Theme theme = Theme.midnight();
 
     private static float scale = 1f;
     private static boolean reducedMotion;
+
+    static Theme theme() {
+        return theme;
+    }
+
+    /**
+     * Sets every token from a theme. Call before building views: screens read the tokens when they are built, so a
+     * theme change rebuilds them (MainActivity recreates). Fonts are not set here: ThemeFonts sets
+     * REGULAR, MEDIUM, BOLD and DISPLAY once the theme's faces are on the TV (Roboto until then).
+     */
+    static void apply(Theme t) {
+        theme = t;
+        BG = t.bg;
+        BG_RAISED = t.bgRaised;
+        SURFACE = t.surface;
+        SURFACE_2 = t.surface2;
+        SURFACE_3 = t.surface3;
+        LINE = t.line;
+        LINE_STRONG = t.lineStrong;
+        TEXT_1 = t.text1;
+        TEXT_2 = t.text2;
+        TEXT_3 = t.text3;
+        GHOST = t.ghost;
+        ACCENT = t.accent;
+        ACCENT_SOFT = t.accentSoft;
+        ON_ACCENT = t.onAccent;
+        ACTIVE = t.active;
+        ON_ACTIVE = t.onActive;
+        GOOD = t.good;
+        GOOD_SOFT = t.goodSoft;
+        STAR = t.star;
+        MENU_BG = t.menuBg;
+        TOAST_BG = t.toastBg;
+        SCRIM = t.scrim;
+        SHADE_TOP = t.shadeTop;
+        SHADE_BOTTOM = t.shadeBottom;
+        TILE = t.tile;
+        PANEL = t.panel;
+        CARD = t.card;
+        SELECTED = t.selected;
+        DIALOG_BG = t.dialogBg;
+        PORTRAIT = t.portrait;
+        RADIUS_S = Math.round(t.radiusS);
+        RADIUS_M = Math.round(t.radiusM);
+        RADIUS_L = Math.round(t.radiusL);
+        RADIUS_XL = Math.round(t.radiusXl);
+        RADIUS_PILL = Math.round(t.radiusPill);
+        LINE_W = t.lineWidth;
+        FOCUS_W = t.focusWidth;
+        Glow.clear();
+    }
+
+    /**
+     * Sets the faces (ThemeFonts): the UI font's three weights and the display face; a null one is Roboto's. A null
+     * display face leaves each big text on its own Roboto weight ({@link #display}).
+     */
+    static void fonts(Typeface regular, Typeface medium, Typeface bold, Typeface display) {
+        REGULAR = regular != null ? regular : ROBOTO_REGULAR;
+        MEDIUM = medium != null ? medium : ROBOTO_MEDIUM;
+        BOLD = bold != null ? bold : ROBOTO_BOLD;
+        themedDisplay = display != null;
+        DISPLAY = themedDisplay ? display : REGULAR;
+    }
+
+    /**
+     * The face for a display text (greeting, clock, page titles): the theme's display font, or, while that is Roboto,
+     * the Roboto weight the text had before themes, so Midnight looks as it always did.
+     */
+    static Typeface display(Typeface roboto) {
+        return themedDisplay ? DISPLAY : roboto;
+    }
+
+    /** A colour with its alpha replaced: a token's colour at another strength (fades, scrims, outlines). */
+    static int alpha(int color, int alpha) {
+        return (color & 0x00FFFFFF) | (alpha << 24);
+    }
+
+    /** The theme's shadow behind big text on the backdrop (Home's greeting, date, clock); none when transparent. */
+    static void textShadow(TextView t) {
+        Theme th = theme;
+        if ((th.textShadowColor >>> 24) == 0) return;
+        // A radius of 0 removes the layer: a hard shadow (blur 0) takes the smallest blur instead.
+        t.setShadowLayer(Math.max(0.01f, th.textShadowBlur * scale), 0, th.textShadowOffset * scale,
+                th.textShadowColor);
+    }
 
     /** Reads the screen once per activity: the stage is as wide as the screen's long side. */
     static void init(Context ctx, boolean reduced) {
@@ -152,8 +263,14 @@ final class Ui {
 
     static GradientDrawable round(int color, float radius, int stroke, float strokeWidth) {
         GradientDrawable d = round(color, radius);
-        d.setStroke(Math.max(1, px(strokeWidth)), stroke);
+        // A theme without hairlines (lineWidth 0) draws none.
+        if (strokeWidth > 0) d.setStroke(Math.max(1, px(strokeWidth)), stroke);
         return d;
+    }
+
+    /** A hairline's width in screen px: at least 1 while the theme has hairlines, 0 without. */
+    static int linePx() {
+        return LINE_W > 0 ? Math.max(1, px(LINE_W)) : 0;
     }
 
     static GradientDrawable oval(int color) {

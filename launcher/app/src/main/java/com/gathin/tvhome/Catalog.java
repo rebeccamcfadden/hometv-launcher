@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -114,6 +115,13 @@ interface Catalog {
      * a preview still prices the title it shows.
      */
     default void setListPricing(boolean on) {}
+
+    /**
+     * The stores ticked in Launcher settings (Stores for rent and buy): rent and buy offers of the other stores the
+     * pane lists are left out, the titles known now included ({@link ServicePicks#keep}). The mock catalogue keeps
+     * the prototype's offers, so it does nothing.
+     */
+    default void setPriceStores(Set<ServiceId> stores) {}
 
     /** The link that opens t itself in a service's app, or null (the app then opens on its home screen). */
     default String link(Title t, ServiceId service) {

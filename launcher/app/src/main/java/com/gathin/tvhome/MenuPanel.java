@@ -62,7 +62,7 @@ final class MenuPanel {
             @Override
             protected void onMeasure(int widthSpec, int heightSpec) {
                 int w = MeasureSpec.getMode(widthSpec) == MeasureSpec.EXACTLY ? MeasureSpec.getSize(widthSpec) : 0;
-                setMeasuredDimension(w, Math.max(1, Ui.px(1)));
+                setMeasuredDimension(w, Ui.linePx());
             }
         };
         line.setBackgroundColor(Ui.LINE_STRONG);
@@ -75,14 +75,14 @@ final class MenuPanel {
         int pad = Ui.px(10);
         panel.setPadding(pad, pad, pad, pad);
         panel.setMinimumWidth(Ui.px(420));
-        panel.setBackground(Ui.round(Ui.MENU_BG, 28, Ui.LINE_STRONG, 1));
+        panel.setBackground(Ui.round(Ui.MENU_BG, 28, Ui.LINE_STRONG, Ui.LINE_W));
         panel.setElevation(Ui.px(30));
         if (header != null) panel.addView(header);
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
             if (r.divider && panel.getChildCount() > 0) {
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                        Math.max(1, Ui.px(1)));
+                        Ui.linePx());
                 lp.setMargins(Ui.px(22), Ui.px(8), Ui.px(22), Ui.px(8));
                 panel.addView(hairline(ctx), lp);
             }
@@ -101,7 +101,7 @@ final class MenuPanel {
         if (r.icon != 0) {
             ImageView icon = new ImageView(ctx);
             icon.setImageResource(r.icon);
-            icon.setImageTintList(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACCENT));
+            icon.setImageTintList(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACTIVE));
             icon.setDuplicateParentStateEnabled(true);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(28), Ui.px(28));
             lp.rightMargin = Ui.px(18);
@@ -109,14 +109,14 @@ final class MenuPanel {
         }
         TextView label = Ui.line(ctx, 25, Ui.TEXT_1, Ui.REGULAR);
         label.setText(r.label);
-        label.setTextColor(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACCENT));
+        label.setTextColor(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACTIVE));
         label.setDuplicateParentStateEnabled(true);
         row.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         if (r.status != null) {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.leftMargin = Ui.px(24);
-            row.addView(status(ctx, r.status, r.good ? Ui.GOOD : 0, Ui.TEXT_3, Ui.ON_ACCENT), lp);
+            row.addView(status(ctx, r.status, r.good ? Ui.GOOD : 0, Ui.TEXT_3, Ui.ON_ACTIVE), lp);
         }
         Focus.make(row, GROUP, "m-" + index, index == 0, v -> onRow.picked(r));
         row.setContentDescription(r.status == null ? r.label : r.label + ", " + r.status);
@@ -171,7 +171,7 @@ final class MenuPanel {
         top.addView(lines);
         box.addView(top);
         LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                Math.max(1, Ui.px(1)));
+                Ui.linePx());
         llp.bottomMargin = Ui.px(8);
         box.addView(hairline(ctx), llp);
         return box;

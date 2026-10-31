@@ -45,7 +45,7 @@ final class StubPage {
         e.setAllCaps(true);
         e.setLetterSpacing(0.08f);
         body.addView(e);
-        TextView t = Ui.line(ctx, 64, Ui.TEXT_1, Ui.REGULAR);
+        TextView t = Ui.line(ctx, 64, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         t.setText(title);
         LinearLayout.LayoutParams tlp = wrap();
         tlp.topMargin = Ui.px(14);
@@ -91,8 +91,8 @@ final class StubPage {
         b.setOrientation(LinearLayout.HORIZONTAL);
         b.setGravity(Gravity.CENTER_VERTICAL);
         b.setPadding(Ui.px(24), 0, Ui.px(30), 0);
-        b.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, 1), null,
-                Ui.round(Ui.ACCENT, Ui.RADIUS_PILL, Ui.ACCENT, 1)));
+        b.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, Ui.LINE_W), null,
+                Ui.round(Ui.ACCENT, Ui.RADIUS_PILL, Ui.ACCENT, Ui.LINE_W)));
         ImageView icon = new ImageView(ctx);
         icon.setImageResource(R.drawable.ic_ui_back);
         icon.setImageTintList(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACCENT));

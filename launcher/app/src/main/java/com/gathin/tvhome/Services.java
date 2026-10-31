@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,19 +14,22 @@ import java.util.Set;
  * The household's services on this TV (docs/rework.md, Services): which ones are subscribed, so their offers read
  * "Included", and the intent that opens each one's app. Subscribed comes from the installed apps
  * ({@link ServiceTable#subscribed}), unless config.xml or a pushed config.json lists them in
- * {@code subscribed_services}. Read once when {@link Data} is made; a settings screen is in BACKLOG.md.
+ * {@code subscribed_services}; the ticks in Launcher settings' Streaming services ({@link ServiceChoices}) win over
+ * both, and change it at once ({@link #choose}). Otherwise read once when {@link Data} is made.
  */
 final class Services {
     private final Context ctx;
     private final ServiceTable table;
-    private final Set<ServiceId> subscribed;
-    private final Set<ServiceId> installed;
+    private final Set<String> installed;
+    private final Set<ServiceId> installedServices;
+    private volatile Set<ServiceId> subscribed;
 
-    private Services(Context ctx, ServiceTable table, Set<ServiceId> subscribed, Set<ServiceId> installed) {
+    private Services(Context ctx, ServiceTable table, Set<String> installed, Set<ServiceId> subscribed) {
         this.ctx = ctx;
         this.table = table;
-        this.subscribed = subscribed;
         this.installed = installed;
+        this.installedServices = table.installed(installed);
+        this.subscribed = subscribed;
     }
 
     static Services from(Context ctx, Config cfg) {
@@ -38,8 +43,9 @@ final class Services {
         for (ServiceId s : ServiceId.values()) {
             for (String pkg : table.packages(s)) if (isInstalled(pm, pkg)) installed.add(pkg);
         }
-        return new Services(app, table, table.subscribed(installed, cfg.subscribedServices),
-                table.installed(installed));
+        Set<ServiceId> ticked = ServiceChoices.services(app);
+        return new Services(app, table, installed,
+                ticked != null ? ticked : table.subscribed(installed, cfg.subscribedServices));
     }
 
     private static boolean isInstalled(PackageManager pm, String pkg) {
@@ -56,11 +62,26 @@ final class Services {
 
     /** The services, subscriptions and stores, whose app is installed and enabled, as read when Data was made. */
     Set<ServiceId> installed() {
-        return installed;
+        return installedServices;
     }
 
     boolean isSubscribed(ServiceId id) {
         return subscribed.contains(id);
+    }
+
+    /**
+     * The household ticked or unticked a service in Launcher settings: saved on the TV, and the subscribed set from
+     * now on. Screens built before keep what they read until they are built again.
+     */
+    void choose(Set<ServiceId> ticked) {
+        subscribed = Collections.unmodifiableSet(ticked.isEmpty() ? EnumSet.noneOf(ServiceId.class)
+                : EnumSet.copyOf(ticked));
+        ServiceChoices.setServices(ctx, subscribed);
+    }
+
+    /** Whether one of the service's apps was installed (and enabled) when Home started. */
+    boolean isInstalled(ServiceId id) {
+        return table.isInstalled(id, installed);
     }
 
     String name(ServiceId id) {

@@ -1,35 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- V2 Phase 3, the TMDB account: the temporary sign-in page and its row in Launcher settings. -->
+<!-- V2 Phase 3, the TMDB account: the temporary sign-in page and its section in Launcher settings. -->
 <resources>
-    <string name="account_row_state">TMDB account: %1$s</string>
     <string name="account_not_signed_in">Not signed in</string>
 
-    <string name="account_temporary">Temporary design</string>
-    <string name="account_title">TMDB account</string>
-    <string name="account_intro">Signing in is optional. Signed in, My list, Favorites and Seen follow your TMDB watchlist, favorites and private Seen list, here and on your phone.</string>
-    <string name="account_getting_code">Getting a code…</string>
-    <string name="account_scan">On your phone, scan the code, sign in to TMDB and tap Approve.</string>
-    <string name="account_valid_for">The code works for %1$s more</string>
-    <string name="account_finishing">Approved. Signing in…</string>
-    <string name="account_signed_in">Signed in as %1$s</string>
-    <string name="account_signed_in_note">My list, Favorites and Seen follow this TMDB account. Signing out keeps them on the TV.</string>
-    <string name="account_expired">The code ran out before it was approved.</string>
     <string name="account_offline">Can\'t reach TMDB. Check the internet connection and try again.</string>
-    <string name="account_refused">TMDB refused the sign-in. Try again with a new code.</string>
-    <string name="account_signed_out">Not signed in. My list, Favorites and Seen stay on this TV.</string>
     <string name="account_new_code">New code</string>
     <string name="account_try_again">Try again</string>
-    <string name="account_sign_in">Sign in</string>
     <string name="account_sign_out">Sign out</string>
     <string name="account_signed_out_toast">Signed out of TMDB</string>
     <string name="account_qr_description">QR code to approve this TV on TMDB</string>
     <string name="account_choose_lists">Choose lists</string>
     <string name="account_lists_loading">Getting your lists…</string>
     <string name="account_lists_none">This account has no lists yet. Make them on themoviedb.org, then come back here.</string>
-    <string name="account_lists_note">Which of your TMDB lists are Household and Friends. OK changes a list\'s choice.</string>
     <string name="account_lists_override">%1$s is set in config.xml, so a choice here doesn\'t change it.</string>
     <string name="account_lists_override_both">Household and Friends are set in config.xml, so a choice here doesn\'t change them.</string>
-    <string name="account_list_row">%1$s · %2$s · %3$s</string>
     <plurals name="account_list_items">
         <item quantity="one">%d title</item>
         <item quantity="other">%d titles</item>

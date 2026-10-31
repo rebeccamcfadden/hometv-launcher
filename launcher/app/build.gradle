@@ -16,7 +16,8 @@ def tvSetting = { String key ->
 }
 def weatherLatitude = tvSetting('latitude')
 def weatherLongitude = tvSetting('longitude')
-def temperatureUnit = tvSetting('temperature_unit').toUpperCase(Locale.ROOT)
+// Optional: set, it is the TV default unit; left out, the TV's region decides (WeatherPrefs.defaultFahrenheit).
+def temperatureUnit = tvProps.getProperty('temperature_unit', '').trim().toUpperCase(Locale.ROOT)
 // Parsed to doubles and written back with Double.toString, never copied verbatim: Java would read "010" as octal.
 def coordinate = { String key, String value, double limit ->
     def number = value.isDouble() ? value.toDouble() : Double.NaN
@@ -27,10 +28,11 @@ def coordinate = { String key, String value, double limit ->
 }
 weatherLatitude = coordinate('latitude', weatherLatitude, 90)
 weatherLongitude = coordinate('longitude', weatherLongitude, 180)
-if (!(temperatureUnit in ['C', 'F'])) throw new GradleException("${tvPropsFile.name}: temperature_unit must be C or F")
-// Optional: the city at latitude and longitude, named on the quick-settings Weather row ("New York · °C") until a
-// place is chosen on the TV; without it the row says Default. No quote, backslash or control character, so it can't
-// break the generated Java; letters beyond ASCII go in as Java's unicode escapes. The message never prints the value.
+if (!(temperatureUnit in ['', 'C', 'F'])) throw new GradleException("${tvPropsFile.name}: temperature_unit must be C or F")
+// Optional: the city at latitude and longitude, named on the quick-settings Weather row ("New York · °C") and in
+// Launcher settings until a place is chosen on the TV; without it they say Default. No quote, backslash or control
+// character, so it can't break the generated Java; letters beyond ASCII go in as Java's unicode escapes. The message
+// never prints the value.
 def weatherCity = tvProps.getProperty('weather_city', '').trim()
 if (weatherCity.length() > 60 || weatherCity.any { Character.isISOControl(it as char) || it == '"' || it == '\\' }) {
     throw new GradleException("${tvPropsFile.name}: weather_city must be at most 60 characters, " +
@@ -58,6 +60,14 @@ def watchmodeKey = priceKey('watchmode_api_key')
 // Movie of the Night's key under the project lead's name, or under its API's other name; Java picks (PriceKeys).
 def movieOfTheNightKey = priceKey('movie_of_the_night_api_key')
 def streamingAvailabilityKey = priceKey('streaming_availability_api_key')
+// Where the themes' photos and drawings are downloaded from (launcher/backdrops/README.md): https only, and only the
+// characters a URL needs, so it can't break the generated Java.
+def themeAssetsUrl = tvProps.getProperty('theme_assets_url', '').trim()
+if (!themeAssetsUrl) themeAssetsUrl = 'https://cdn.jsdelivr.net/gh/rebeccamcfadden/cleanyourtv@main/launcher/backdrops/'
+if (!(themeAssetsUrl ==~ /https:\/\/[A-Za-z0-9._~:\/@%+\-]+/)) {
+    throw new GradleException("${tvPropsFile.name}: theme_assets_url must be an https:// address")
+}
+if (!themeAssetsUrl.endsWith('/')) themeAssetsUrl += '/'
 
 android {
     namespace 'com.gathin.tvhome'
@@ -73,12 +83,13 @@ android {
 
         buildConfigField 'double', 'WEATHER_LATITUDE', weatherLatitude
         buildConfigField 'double', 'WEATHER_LONGITUDE', weatherLongitude
-        buildConfigField 'boolean', 'FAHRENHEIT', String.valueOf(temperatureUnit == 'F')
+        buildConfigField 'String', 'TEMPERATURE_UNIT', "\"${temperatureUnit}\""
         buildConfigField 'String', 'WEATHER_CITY', "\"${weatherCity}\""
         buildConfigField 'String', 'TMDB_TOKEN', "\"${tmdbToken}\""
         buildConfigField 'String', 'WATCHMODE_KEY', "\"${watchmodeKey}\""
         buildConfigField 'String', 'MOVIE_OF_THE_NIGHT_KEY', "\"${movieOfTheNightKey}\""
         buildConfigField 'String', 'STREAMING_AVAILABILITY_KEY', "\"${streamingAvailabilityKey}\""
+        buildConfigField 'String', 'THEME_ASSETS_URL', "\"${themeAssetsUrl}\""
     }
 
     buildFeatures {

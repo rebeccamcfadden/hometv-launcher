@@ -600,11 +600,12 @@ The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor
 | **Home** | Greeting, date, clock and weather for the city chosen in Launcher settings (default: the location in `launcher/tv.properties`), then the app row. The row starts with the installed apps from `dock_apps`; hold OK on a tile to move it, remove it from Home or open App info, and Home keeps that order. |
 | **Inputs** | The nav's Inputs dropdown and Home's Inputs row: HDMI ports under their names, CEC devices on their port, AV and Live TV (`live_tv_package`). Home's row shows the first four (Live TV first); the dropdown lists them all. Sets that list their inputs another way are handled in [`config.xml`](launcher/app/src/main/res/values/config.xml). |
 | **Movies, TV Shows, Search, Pick for me** | Titles, artwork, cast, episodes, similar titles and search come from [TMDB](https://www.themoviedb.org) when the build has a TMDB token, and are cached on the TV so what was seen once still shows offline; without a token the launcher uses the prototype's mock catalogue. Where to watch is real for Sweden: which services stream, rent or sell a title, from JustWatch through TMDB, with rent and buy prices in kronor from Watchmode and Movie of the Night (optional keys in `tv.properties`, free plans only, kept a week) and Apple's iTunes; a store with no known price still shows, without one. My list, Seen, Favorites, recent searches and recently viewed are stored on the TV; a fresh install starts with all of them empty. |
-| **TMDB account** | Optional. Launcher settings' "TMDB account" row shows a QR code; approve it on your phone and My list, Favorites and Seen follow the account's watchlist, favorites and a private list named "Seen" (made when missing), both ways, with changes made offline sent later. The first sign-in takes the account's lists and adds nothing from the TV. Household and Friends are chosen on the TV with the account page's Choose lists, from your TMDB lists; `tmdb_household_list` and `tmdb_friends_list` in `config.xml` override that (a list number or link, or a list name). Syncs only while Home is on screen; signing out keeps the lists on the TV. |
+| **TMDB account** | Optional. Launcher settings' Account pane shows a QR code; approve it on your phone and My list, Favorites and Seen follow the account's watchlist, favorites and a private list named "Seen" (made when missing), both ways, with changes made offline sent later. The first sign-in takes the account's lists and adds nothing from the TV. Household and Friends are chosen on the TV with the Account pane's Choose lists, from your TMDB lists; `tmdb_household_list` and `tmdb_friends_list` in `config.xml` override that (a list number or link, or a list name). Syncs only while Home is on screen; signing out keeps the lists on the TV. |
 | **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`, Sweden's services included (Viaplay, SkyShowtime, SVT Play, TV4 Play and others). Watch opens the title itself in that service's app where Wikidata has its id (Netflix, Disney+, Apple TV, HBO Max, Prime Video, SVT Play), else the app. |
 | **Settings** | The nav's Settings icon opens the TV's settings; Home's Shortcuts row opens the launcher's own (below). |
 | **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone (below). |
-| **Left for V2** | Themes and wallpapers, the clock screensaver, module cards and add-ons, Watch Next, festivals and the sky: see [BACKLOG.md](BACKLOG.md#left-for-v2). |
+| **Themes** | Launcher settings › Theme: six Classic themes and three Seasonal ones that follow the date. Layout and data stay the same in every theme. |
+| **Left for V2** | Wallpapers pushed as `config.json`, the clock screensaver, module cards and add-ons, Watch Next, festivals and the sky: see [BACKLOG.md](BACKLOG.md#left-for-v2). |
 
 <details>
 <summary><b>Build it yourself</b></summary>
@@ -642,19 +643,31 @@ launcher's look and layout keys are not read any more; [themes/README.md](themes
 
 - Open **Launcher settings** from Home: press Down to the Shortcuts row and choose it. It is also the last row of
   the remote Settings key's dropdown (`settings_key_panel`), and `launcher_settings_button` makes the nav's
-  Settings icon open it. Until a new page is designed it is the old launcher's, with these rows, top to bottom:
-  - **Animations** on or off. Off, pages and dropdowns switch without moving, as with `reduced_motion`.
-  - **Open on start**, only with `open_on_start_choice`: Off, or an app that opens instead of Home the first
+  Settings icon open it. It is one page: the sections on the left with their current values, and the focused
+  section's pane on the right. Right or OK enters the pane, Left returns to the list, Back closes. Choices save at
+  once; Home is rebuilt with them when the page closes. The sections, top to bottom:
+  - **Account**, only in builds with a TMDB token: sign in to TMDB with a QR code on your phone, then see the lists,
+    sync now, choose the Household and Friends lists, or sign out.
+  - **Streaming services**: tick the services the household pays for; titles on them show as Included.
+  - **Stores for rent and buy**: tick the stores whose rent and buy prices show.
+  - **Home row apps**: pick an app up with OK to move it, take it off Home, or add another app.
+  - **Theme**: the look of every page. Classic: Midnight (the default), Daylight, OLED Black, High Contrast, Cinema
+    and Landscapes. Seasonal, which follows the date through ten periods from Snow to Christmas: Nature (photos),
+    Vector art and 8-bit. Typeface switches between the theme's own fonts (downloaded from Google Fonts and kept
+    on the TV) and Roboto. The theme's pictures, except 8-bit's, are downloaded once from `theme_assets_url`.
+  - **Weather**: the place Home's weather is for, with the weather there now. Change city searches Open-Meteo's
+    places as you type, on the on-screen keyboard or a real one; Use default goes back to the place in
+    `tv.properties`. The temperature in °C, °F or the TV default, which follows the TV's region.
+  - **Motion**: Full, or Reduced, where pages, menus and Home's scroll switch without moving, as with
+    `reduced_motion`. Pushing or resetting a `config.json` clears the choice.
+  - **Open on start**, only with `open_on_start_choice`: Home, or an app that opens instead of Home the first
     time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
-  - **Follow theme (reset on-TV choices)**, which clears the choices above. Pushing or resetting a
-    `config.json` clears them too.
-  - **Weather location**: search for a city (Open-Meteo's place search) or go back to the default from
-    `tv.properties`. **Temperature unit**: the default, °C or °F. Neither is cleared by Follow theme.
-  - **Choose default home** opens Android's home picker, and **TV system settings** the TV's own settings
-    page.
-- **Change the default home:** Launcher settings opens Android's home picker. Choose the original launcher to
-  stop using CleanYourTV as Home, or CleanYourTV to return. The original launcher must be enabled; if the install
-  script disabled it, run the restore script below first. Some TVs provide no home picker.
+  - **Default Home** says whether this launcher is Home and opens Android's home picker; **TV settings** opens the
+    TV's own settings, Picture, Network and Apps.
+  - **About**: the version, and the TMDB, availability, price and weather notices.
+- **Change the default home:** Launcher settings' Default Home opens Android's home picker. Choose the original
+  launcher to stop using CleanYourTV as Home, or CleanYourTV to return. The original launcher must be enabled; if
+  the install script disabled it, run the restore script below first. Some TVs provide no home picker.
 
 </details>
 

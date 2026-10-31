@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M9, themes: the picker's theme names (Themes.nameRes) and the Seasonal periods (Themes.periodRes), as the Figma
+     file names them. -->
+<resources>
+    <string name="theme_midnight">Midnight</string>
+    <string name="theme_daylight">Daylight</string>
+    <string name="theme_oled">OLED Black</string>
+    <string name="theme_high_contrast">High Contrast</string>
+    <string name="theme_cinema">Cinema</string>
+    <string name="theme_landscapes">Landscapes</string>
+    <string name="theme_seasonal_nature">Nature</string>
+    <string name="theme_seasonal_vector">Vector art</string>
+    <string name="theme_seasonal_8bit">8-bit</string>
+
+    <string name="season_snow">Snow</string>
+    <string name="season_thaw">Thaw</string>
+    <string name="season_spring_rain">Spring rain</string>
+    <string name="season_bloom">Bloom</string>
+    <string name="season_pride">Pride</string>
+    <string name="season_midsummer">Midsummer</string>
+    <string name="season_late_summer">Late summer</string>
+    <string name="season_autumn">Autumn</string>
+    <string name="season_halloween">Halloween</string>
+    <string name="season_christmas">Christmas</string>
+</resources>

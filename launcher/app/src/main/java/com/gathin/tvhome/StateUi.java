@@ -26,18 +26,34 @@ import java.util.function.Consumer;
 final class StateUi {
     private StateUi() {}
 
-    /** Offline and errors use the score star's amber (tokens.css --star), read from Ui when a view is built. */
+    // Read when a view is built, so they follow the theme (Ui.apply). In Midnight they are the old literals.
+    /** Offline and errors use the score star's amber (tokens.css --star). */
     static int amber() {
         return Ui.STAR;
     }
+
     /** .offline-pill: the amber at 12%. */
-    static final int AMBER_PILL = 0x1FF2C46D;
+    static int amberPill() {
+        return Ui.alpha(Ui.STAR, 0x1F);
+    }
+
     /** .inline-err: the amber at 8%, with a 30% border. */
-    static final int AMBER_BOX = 0x14F2C46D;
-    static final int AMBER_LINE = 0x4DF2C46D;
-    /** .sk: white at 7%; .sk-art (a card's art) at 6% with the 9% line inside. */
-    static final int SKELETON = 0x12FFFFFF;
-    static final int SKELETON_ART = 0x0FFFFFFF;
+    static int amberBox() {
+        return Ui.alpha(Ui.STAR, 0x14);
+    }
+
+    static int amberLine() {
+        return Ui.alpha(Ui.STAR, 0x4D);
+    }
+
+    /** .sk: the text colour at 7% (white in the dark themes); .sk-art (a card's art) at 6% with the line inside. */
+    static int skeleton() {
+        return Ui.alpha(Ui.TEXT_1, 0x12);
+    }
+
+    static int skeletonArt() {
+        return Ui.alpha(Ui.TEXT_1, 0x0F);
+    }
 
     // ---- The network -----------------------------------------------------------------------------------------------
 
@@ -126,7 +142,7 @@ final class StateUi {
         pill.setOrientation(LinearLayout.HORIZONTAL);
         pill.setGravity(Gravity.CENTER_VERTICAL);
         pill.setPadding(Ui.px(18), Ui.px(8), Ui.px(18), Ui.px(8));
-        pill.setBackground(Ui.round(AMBER_PILL, Ui.RADIUS_PILL));
+        pill.setBackground(Ui.round(amberPill(), Ui.RADIUS_PILL));
         pill.addView(Ui.icon(ctx, R.drawable.ic_ui_wifi_off, 24, amber()), new LinearLayout.LayoutParams(Ui.px(24),
                 Ui.px(24)));
         TextView t = Ui.line(ctx, Ui.T_SMALL, amber(), Ui.REGULAR);
@@ -178,7 +194,7 @@ final class StateUi {
 
     static View sk(Context ctx, float w, float h, float radius) {
         View v = new View(ctx);
-        v.setBackground(Ui.round(SKELETON, radius));
+        v.setBackground(Ui.round(skeleton(), radius));
         v.setLayoutParams(new LinearLayout.LayoutParams(Ui.px(w), Ui.px(h)));
         return v;
     }
@@ -193,7 +209,7 @@ final class StateUi {
     /** .card-art.sk-art: the card's art box at 6% with the line inside, keeping the card's radius. */
     private static View artSkeleton(Context ctx, float w, float h, float radius) {
         View v = new View(ctx);
-        v.setBackground(Ui.round(SKELETON_ART, radius, Ui.LINE, 1));
+        v.setBackground(Ui.round(skeletonArt(), radius, Ui.LINE, Ui.LINE_W));
         v.setLayoutParams(new LinearLayout.LayoutParams(Ui.px(w), Ui.px(h)));
         return v;
     }
@@ -246,7 +262,7 @@ final class StateUi {
         LinearLayout card = column(ctx);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
         View portrait = new View(ctx);
-        portrait.setBackground(Ui.oval(SKELETON));
+        portrait.setBackground(Ui.oval(skeleton()));
         card.addView(portrait, new LinearLayout.LayoutParams(Ui.px(104), Ui.px(104)));
         card.addView(sk(ctx, 120, 20, Ui.RADIUS_S, 14));
         card.addView(sk(ctx, 90, 18, Ui.RADIUS_S, 8));
@@ -290,7 +306,7 @@ final class StateUi {
     static GradientDrawable artGradient() {
         // 160deg in CSS runs from the top left towards the bottom right, a little steeper than the diagonal.
         GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[]{0xFF16202C, 0xFF0F161F, 0xFF0F161F});
+                new int[]{Ui.DIALOG_BG, Ui.BG_RAISED, Ui.BG_RAISED});
         return g;
     }
 
@@ -356,7 +372,7 @@ final class StateUi {
         box.setOrientation(LinearLayout.HORIZONTAL);
         box.setGravity(Gravity.CENTER_VERTICAL);
         box.setPadding(Ui.px(28), Ui.px(24), Ui.px(28), Ui.px(24));
-        box.setBackground(Ui.round(AMBER_BOX, Ui.RADIUS_L, AMBER_LINE, 1));
+        box.setBackground(Ui.round(amberBox(), Ui.RADIUS_L, amberLine(), Ui.LINE_W));
         ImageView icon = Ui.icon(ctx, R.drawable.ic_state_alert, 40, amber());
         box.addView(icon, new LinearLayout.LayoutParams(Ui.px(40), Ui.px(40)));
         LinearLayout text = new LinearLayout(ctx);

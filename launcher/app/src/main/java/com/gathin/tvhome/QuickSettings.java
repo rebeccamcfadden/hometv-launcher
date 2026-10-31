@@ -24,8 +24,6 @@ final class QuickSettings {
 
     /** The dropdown's label on the Shell's stack (the prototype's). */
     static final String LABEL = "Settings";
-    /** Which Launcher settings section to open (SettingsSection ids); LauncherSettingsActivity ignores it for now. */
-    static final String EXTRA_SECTION = "section";
 
     /**
      * A row's value, read when the menu opens and after each step. The shape of SettingsSection.value, so the new
@@ -153,13 +151,11 @@ final class QuickSettings {
     }
 
     /**
-     * Launcher settings, asked for one section ("account", "services", "weather") or none. The one place the
-     * dropdown opens it from, to point at the new split page and its panes once they land.
+     * Launcher settings, asked for one section ("account", "services", "weather") or none: the split page
+     * (LauncherSettingsPage), straight into that section's pane when one is asked for.
      */
     static void openLauncherSettings(MainActivity act, String section) {
-        Intent i = new Intent(act, LauncherSettingsActivity.class);
-        if (section != null) i.putExtra(EXTRA_SECTION, section);
-        act.start(i);
+        act.openLauncherSettings(section, section != null);
     }
 
     private static Row section(MainActivity act, int label, int icon, String section, Value value) {
