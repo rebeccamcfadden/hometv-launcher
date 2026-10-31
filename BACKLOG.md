@@ -272,13 +272,24 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 - **Fonts:** downloaded through Google Play services' font provider and kept on the TV; a family the provider can't
   serve comes straight from Google Fonts' CSS API over HTTPS (the TrueType file, at most 2 MB; still none in the APK).
   Roboto until they arrive. On the API 28 emulator's Play services, Outfit, Figtree, Manrope, Atkinson Hyperlegible
-  Next, Baloo 2 and Pixelify Sans come that second way.
+  Next, Baloo 2 and Pixelify Sans come that second way. On the TCL (main 24e8f119, 2026-10-31) the provider served
+  Cinema's DM Serif Display and Daylight's Figtree.
 - **Backdrops:** the photos and Vector art live in `launcher/backdrops/` and are downloaded once from
-  `theme_assets_url` (jsDelivr on this repository's `main`), so they work only once that folder is on `main`. The 8-bit
-  scenes are in the APK.
+  `theme_assets_url` (jsDelivr on this repository's `main`). The 8-bit scenes are in the APK. On the TCL, Cinema's,
+  Landscapes' and Vector art's downloaded from `main`. Vector art's sky shows faint gradient banding at full size.
 - **Not shipped:** the Vector scenes alternative to Vector art, and the old Seasonal & festive themes (Figma pages kept).
-- **Card shadows:** every theme but Midnight draws a resting shadow under each artwork card; their cost on the TV is
-  to be measured with `tools/bench.py` (Midnight against a shadow theme).
+- **Card shadows:** every theme but Midnight draws a resting shadow under each artwork card. Measured on the TCL with
+  `tools/bench.py` (main 24e8f119, 36 keys × 3, 2026-10-31):
+
+  | Theme | Response p50 | Movement p50 | Jank | Cold start p50 | PSS |
+  |---|---|---|---|---|---|
+  | Midnight | 19 ms | 195 ms | 46.9 % | 681 ms | 27 MB |
+  | Cinema | 23 ms | 236 ms | 84.8 % | 726 ms | 31 MB |
+
+  Cinema nearly doubles the jank. It also has a photo backdrop and a vignette, so the run doesn't separate the
+  shadows' cost from the backdrop's. What to do is open with the project lead; the default stays as it is until then.
+- **Focus glow:** checked on the TCL: a theme's glow shows in full on Home's Inputs and Shortcuts tiles, edges
+  included.
 
 ## From M1
 
