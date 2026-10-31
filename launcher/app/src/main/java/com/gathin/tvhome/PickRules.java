@@ -299,6 +299,7 @@ final class PickRules {
         String name = table.name(o.service);
         if (Offers.isIncludedOffer(o, subscribed)) return "Open in " + name;
         String price = Offers.price(o);
-        return (o.type == OfferType.RENT ? "Rent" : "Buy") + " on " + name + (price == null ? "" : " · " + price);
+        return (o.type == OfferType.RENT ? "Rent" : "Buy") + " on " + table.storeName(o.service)
+                + (price == null ? "" : " · " + price);
     }
 }

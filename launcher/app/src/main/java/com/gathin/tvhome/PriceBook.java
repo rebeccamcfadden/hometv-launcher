@@ -52,6 +52,8 @@ final class PriceBook {
     private final Map<String, String> motnHeaders;
     private final boolean feedOn;
     private final Map<String, PriceLookup.Entry> entries = new HashMap<>();
+    /** When each title's prices were fetched, as opposed to looked up again from the disk (main thread). */
+    private final Map<String, Long> savedAt = new HashMap<>();
     private final ChangeFeed.Marks marks;
     /** Titles queued or being looked up (main thread). */
     private final Set<String> inFlight = new HashSet<>();
@@ -103,6 +105,12 @@ final class PriceBook {
     /** What is known for a title, or null. */
     PriceLookup.Entry get(String id) {
         return entries.get(id);
+    }
+
+    /** When the title's prices were fetched from their sources, 0 when it has none yet. */
+    long savedAt(String id) {
+        Long at = savedAt.get(id);
+        return at == null ? 0 : at;
     }
 
     /**
@@ -184,14 +192,22 @@ final class PriceBook {
             h.trigger = job.trigger;
             // A title the feed marked stale skips its kept prices (not its Wikidata ids).
             h.refresh = stale && h != https[0];
+            h.oldestServed = Long.MAX_VALUE;
         }
         PriceLookup.Result r = lookup.run(job.kind, TmdbApi.number(id), job.name, job.year, job.needPrices);
-        for (CachedHttp h : https) h.refresh = false;
+        long oldest = Long.MAX_VALUE;
+        for (CachedHttp h : https) {
+            h.refresh = false;
+            if (h != https[0]) oldest = Math.min(oldest, h.oldestServed);
+        }
         long now = System.currentTimeMillis();
+        long fetched = Math.min(oldest, now);
         main.post(() -> {
             inFlight.remove(id);
             PriceLookup.Entry e = PriceLookup.Entry.after(entries.get(id), r, job.needPrices, job.trigger, now);
             entries.put(id, e);
+            // The prices' own age: a kept copy (offline, or still fresh from an earlier run) keeps its fetch time.
+            if (job.needPrices && e.pricedAt == now) savedAt.put(id, fetched);
             if (e.pricedAt == now && marks.staleAt(id) > 0) {
                 marks.clear(id);
                 prefs.edit().putString(PREF_MARKS, marks.encode()).apply();

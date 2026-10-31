@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- V2 Phase 2, real availability and prices (BACKLOG.md, Streaming availability and prices). English only. -->
 <resources>
-    <!-- The rent dialog's buttons for a store whose price no source knows: the app shows it. -->
-    <string name="prices_rent">Rent</string>
-    <string name="prices_buy">Buy</string>
-    <!-- The rent dialog's body without a quality (real offers have one only when a price source gave it). -->
-    <string name="prices_dialog_body">This opens the %1$s app.</string>
+    <!-- Design 07-prices A: the green tag on the Where to watch card of the cheapest store. The cards' lines, the
+         credit and the rent/buy dialog's words are worked out in PriceCards, where they are unit-tested. -->
+    <string name="prices_cheapest">Cheapest</string>
     <!-- Where to watch, for a title TMDB knows no service or store for in Sweden. -->
     <string name="prices_where_none">Not on any service or store in Sweden.</string>
     <!-- The Movies, TV Shows and Pick for me guide lines on the real catalogue, instead of "Illustrative …". -->

@@ -325,6 +325,11 @@ final class TmdbCatalog implements Catalog {
     }
 
     @Override
+    public long pricesSavedAt(Title t) {
+        return book.savedAt(t.id);
+    }
+
+    @Override
     public void setVisible(boolean visible) {
         this.visible = visible;
         book.setActive(visible);

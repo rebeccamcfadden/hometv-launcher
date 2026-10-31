@@ -93,7 +93,7 @@ final class PricedOffer {
         Money min = cheapest();
         Quality q = cheapestQuality();
         return new Offer(provider.service, type, min == null ? 0 : min.major(), q == null ? null : q.label, min,
-                isFrom(), true);
+                isFrom(), true, prices, seasonal);
     }
 
     @Override

@@ -116,7 +116,7 @@ one option for each (2026-10-30). The prototype builds these:
 - **Segmented controls select on OK.** Moving along two or three options (Motion, the unit, a list's role) only
   highlights; OK selects. The same holds for every row of choices in the prototype.
 - **Cheapest rule** (confirmed 2026-10-30): rentals with a price first, cheapest first; then purchases with a price;
-  stores with no price last.
+  stores with no price last. A tie on the cheapest price goes to a store whose app is installed (2026-10-31).
 - **Paid titles ask before leaving the launcher.** Renting or buying opens the store's app, after a dialog.
 - **Network features are allowed** in this fork (see [AGENTS.md](../AGENTS.md#this-fork)), for catalogue
   search, availability, prices, artwork and cast. Analytics and telemetry are not.
@@ -326,7 +326,10 @@ and buy offers carry a price per picture quality (SD, HD, 4K), or none at all wh
 - **Where to watch:** one card per service, one D-pad stop each. Included and free services first ("With your
   subscription", "Free with ads", the quality), then the stores, cheapest first: rentals with a price, cheapest
   first, then purchases with a price, then the stores with no price (confirmed 2026-10-30). When two or more stores
-  have a price, the first gets a green **Cheapest** tag and its deciding price is green.
+  have a price, the first gets a green **Cheapest** tag and its deciding price is green. When stores tie on that
+  deciding price (the cheapest rental, else the cheapest purchase), the first place and the tag go to one whose app
+  is installed on the TV (decided 2026-10-31, in the launcher); otherwise equal stores keep
+  TMDB's order.
 - **A line per quality:** "Rent **49 kr** · Buy **149 kr**   HD", and a second line for 4K only when it costs
   something different (a quality that costs the same joins the line: "HD · 4K"). A store that only sells 4K shows
   "Buy 169 kr   4K". A show's season prices add "Per season".

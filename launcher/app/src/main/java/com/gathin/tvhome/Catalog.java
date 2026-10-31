@@ -107,6 +107,11 @@ interface Catalog {
         return null;
     }
 
+    /** When t's prices were fetched, for Where to watch's offline caption ("Saved today 19:52"); 0 when not known. */
+    default long pricesSavedAt(Title t) {
+        return 0;
+    }
+
     /** Home is showing (true) or hidden: no price lookups start while it is hidden. */
     default void setVisible(boolean visible) {}
 

@@ -255,7 +255,8 @@ final class Kit {
         provider.setOrientation(LinearLayout.VERTICAL);
         provider.setGravity(Gravity.END);
         TextView service = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_2, Ui.REGULAR);
-        service.setText(o == null ? "" : data.table.name(o.service));
+        service.setText(o == null ? "" : PriceCards.isPaid(o) ? data.table.storeName(o.service)
+                : data.table.name(o.service));
         provider.addView(service);
         TextView avail = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
         avail.setText(Offers.availability(o, data.services.subscribed()));

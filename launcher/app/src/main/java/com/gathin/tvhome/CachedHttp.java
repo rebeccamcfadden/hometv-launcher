@@ -85,6 +85,11 @@ final class CachedHttp implements HttpGet {
     volatile PriceCachePolicy.Trigger trigger = PriceCachePolicy.Trigger.PREVIEW;
     /** Ask again even when the kept answer is fresh (the change feed marked the title stale); set like trigger. */
     volatile boolean refresh;
+    /**
+     * When the oldest answer handed out since the price thread last reset it was fetched: a kept copy's time, or now
+     * for one from the network (a 404 included); {@link Long#MAX_VALUE} for none. Where to watch says it offline ("Saved today 19:52").
+     */
+    volatile long oldestServed = Long.MAX_VALUE;
 
     CachedHttp(String sourceId, DiskCache cache, long ttl, long minInterval, Fetcher fetcher, LedgerStore ledgers,
                LongSupplier clock, ZoneId zone) {
@@ -106,7 +111,7 @@ final class CachedHttp implements HttpGet {
     @Override
     public synchronized String get(String url, Map<String, String> headers) throws IOException {
         DiskCache.Entry kept = cache.read(url, ttl);
-        if (kept != null && kept.fresh && !refresh) return text(kept.bytes);
+        if (kept != null && kept.fresh && !refresh) return served(kept);
         PriceCachePolicy.Quota quota = quota();
         if (WatchmodePrices.ID.equals(sourceId)
                 && !PriceCachePolicy.fresh(quota.syncedAt, clock.getAsLong(), PriceCachePolicy.DAY)) {
@@ -125,7 +130,7 @@ final class CachedHttp implements HttpGet {
             lastRequest = clock.getAsLong();
             // Offline, DNS and timeouts before a reply cost nothing; a reply whose body was lost still counts.
             if (e instanceof Unread) charge(quota, cost);
-            if (kept != null) return text(kept.bytes);
+            if (kept != null) return served(kept);
             throw e;
         }
         lastRequest = clock.getAsLong();
@@ -136,14 +141,22 @@ final class CachedHttp implements HttpGet {
         ledgers.save(sourceId, quota.encode());
         if (r.code == 200 && r.body != null && r.body.length > 0) {
             cache.write(url, r.body);
+            oldestServed = Math.min(oldestServed, clock.getAsLong());
             return new String(r.body, StandardCharsets.UTF_8);
         }
         if (r.code == 404) {
             cache.write(url, new byte[0]);
+            oldestServed = Math.min(oldestServed, clock.getAsLong());
             return null;
         }
-        if (kept != null) return text(kept.bytes);
+        if (kept != null) return served(kept);
         throw new IOException(sourceId + " answered " + r.code);
+    }
+
+    /** A kept copy handed out, noting when it was fetched. */
+    private String served(DiskCache.Entry kept) {
+        oldestServed = Math.min(oldestServed, kept.savedAt);
+        return text(kept.bytes);
     }
 
     private void charge(PriceCachePolicy.Quota quota, int cost) {

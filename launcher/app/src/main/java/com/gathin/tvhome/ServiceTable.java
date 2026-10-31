@@ -63,6 +63,15 @@ final class ServiceTable {
     }
 
     /**
+     * The name of the service as a store, where its rentals and purchases show (design 07-prices A): "Viaplay Store"
+     * for Viaplay, which also streams, with current branding (design_preview/README.md, Product decisions); otherwise
+     * {@link #name}.
+     */
+    String storeName(ServiceId id) {
+        return branded && id == ServiceId.VIAPLAY ? "Viaplay Store" : name(id);
+    }
+
+    /**
      * The name of the app that opens the service: with current branding a store opens in its subscription's app
      * ("Apple TV Store" in the Apple TV app, "Amazon Video" in Prime Video); otherwise the service's own name.
      */
@@ -89,6 +98,16 @@ final class ServiceTable {
     boolean isInstalled(ServiceId id, Collection<String> installed) {
         for (String pkg : packages(id)) if (installed.contains(pkg)) return true;
         return false;
+    }
+
+    /**
+     * Every service, subscription or store, with an app in {@code installed} (package names): a store whose app is on
+     * the TV wins a tie for Cheapest ({@link PriceCards#order}).
+     */
+    Set<ServiceId> installed(Collection<String> installed) {
+        Set<ServiceId> out = EnumSet.noneOf(ServiceId.class);
+        for (ServiceId s : ServiceId.values()) if (isInstalled(s, installed)) out.add(s);
+        return Collections.unmodifiableSet(out);
     }
 
     /**

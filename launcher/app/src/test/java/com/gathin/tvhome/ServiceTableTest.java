@@ -71,6 +71,15 @@ public class ServiceTableTest {
     }
 
     @Test
+    public void installedCountsStoresToo() {
+        // The Apple TV app is both Apple TV+ and the Apple TV store; a store's own app counts as installed.
+        assertEquals(EnumSet.of(ServiceId.APPLETVPLUS, ServiceId.APPLETV),
+                table.installed(installed("com.apple.atve.androidtv.appletv")));
+        assertTrue(table.installed(installed("com.google.android.videos")).contains(ServiceId.GOOGLETV));
+        assertTrue(table.installed(installed()).isEmpty());
+    }
+
+    @Test
     public void everyAppInstalledGivesThePrototypesSetAndSwedensServices() {
         Set<String> all = new HashSet<>();
         for (ServiceId s : ServiceId.values()) all.addAll(table.packages(s));
@@ -97,6 +106,12 @@ public class ServiceTableTest {
         assertEquals("Prime Video", branded.appName(ServiceId.AMAZONVIDEO));
         assertEquals("SF Anytime", branded.appName(ServiceId.SFANYTIME));
         assertEquals("Apple TV", table.appName(ServiceId.APPLETV));
+        // Viaplay's rentals and purchases are the Viaplay Store's (07-prices A); it opens in Viaplay.
+        assertEquals("Viaplay Store", branded.storeName(ServiceId.VIAPLAY));
+        assertEquals("Viaplay", branded.name(ServiceId.VIAPLAY));
+        assertEquals("Viaplay", branded.appName(ServiceId.VIAPLAY));
+        assertEquals("Apple TV Store", branded.storeName(ServiceId.APPLETV));
+        assertEquals("Viaplay", table.storeName(ServiceId.VIAPLAY));
     }
 
     @Test

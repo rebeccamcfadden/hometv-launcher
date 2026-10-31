@@ -78,6 +78,25 @@ milestones: [docs/rework.md](docs/rework.md).
     store with no known price still shows, without an amount, and its dialog only opens the app. Where to watch
     credits its sources ("Availability: JustWatch · Prices: Watchmode"); Launcher settings has the full notices.
     Answers are kept on disk and used stale offline. Seen on the emulator with real keys (2026-10-30).
+  - **Design 07-prices A (cards):** Where to watch shows one card per service: included and free first, then the
+    stores, rentals with a price cheapest first, purchases with a price, stores with no price last; with two or more
+    priced stores the first is tagged a green Cheapest with its deciding price green; a tie on that price goes to a
+    store whose app is installed, else to TMDB's order (2026-10-31). A line per quality ("Rent 49 kr
+    · Buy 149 kr   HD", a second for 4K when it costs more, "HD · 4K" when it doesn't, "Per season" for a show); an
+    unpriced store reads "Rent · Buy", "Price shown in the app". Offline the credit adds "Saved today 19:52, prices
+    may be out of date", from when the prices were fetched (the disk copy's time). The rent/buy dialog has the HD /
+    4K switch (OK selects), the 4K note, two price buttons ("Price in the app" without a price), Cancel and the
+    cheaper store. Small cards (Search, More like this, the person page) say "Rent from 39 kr · 4 stores" and the
+    like from the prices already known; a card never asks for one. Logic in `PriceCards` (PriceCardsTest).
+  - **Store ticks (mock):** the spec leaves an unticked store's offers out everywhere, but Launcher settings can't
+    tick stores yet (the stores pane is being built), so `Data.stores()` returns null and every store counts.
+    `PriceCards.ticked` already does the leaving out for Where to watch, the dialog, the card lines, the Watch button
+    and library cards; once the pane stores the ticks, `Data.stores()` returns them, and the Overview's "Rent from …
+    elsewhere" and Pick for me should go through `PriceCards.ticked` too.
+  - **SD left unsaid:** a store whose SD costs the same as its HD (Watchmode lists both for most titles) shows no SD
+    line or SD choice in the dialog, so a card fits "HD · 4K" beside two prices. A cheaper SD keeps its own line.
+  - **Not priced on cards:** titles from recommendations and searches have no availability until their details are
+    loaded, so More like this and search hits that were never opened show no third line, as before.
 - **Still missing:** Viaplay's store has no price from any source. Shows are rarely priced (Apple's TV search finds
   no Swedish seasons). Prices are a week old at most, not live.
 - **Findings (2026-10-30):** in Sweden TMDB lists rent and buy at Apple TV, Viaplay, Rakuten TV, SF Anytime and

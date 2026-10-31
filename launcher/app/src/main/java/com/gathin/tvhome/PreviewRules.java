@@ -31,7 +31,7 @@ final class PreviewRules {
             return "Watch on " + name;
         }
         String price = Offers.price(o);
-        return paidVerb(o) + " on " + name + (price == null ? "" : " · " + price);
+        return paidVerb(o) + " on " + table.storeName(o.service) + (price == null ? "" : " · " + price);
     }
 
     /** "S1 E3", the show's next episode; "" when there is none. */
@@ -74,7 +74,9 @@ final class PreviewRules {
         Offer o = Offers.bestOffer(t, subscribed);
         if (o == null) return new Availability(null, "Not on your services", null);
         String name = table.name(o.service);
-        if (!Offers.isIncludedOffer(o, subscribed)) return new Availability(null, paidVerb(o) + " on " + name, null);
+        if (!Offers.isIncludedOffer(o, subscribed)) {
+            return new Availability(null, paidVerb(o) + " on " + table.storeName(o.service), null);
+        }
         Offer rent = Offers.cheapest(t, OfferType.RENT);
         String from = rent == null ? null : Offers.amount(rent);
         return new Availability(o.type == OfferType.FREE ? "Free" : "Included", "on " + name,

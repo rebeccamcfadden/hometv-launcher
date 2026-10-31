@@ -2,6 +2,8 @@ package com.gathin.tvhome;
 
 import android.content.Context;
 
+import java.util.Set;
+
 /**
  * The data every screen reads, made once in MainActivity.onCreate and handed out through {@link Router#data()}: the
  * catalogue (TMDB with a token in the build, else the mock one), the services on this TV, the household's lists
@@ -50,7 +52,16 @@ final class Data {
 
     /** The offer a title's Watch button uses on this TV (Offers.bestOffer with the subscribed services). */
     Offer bestOffer(Title t) {
-        return Offers.bestOffer(t, services.subscribed());
+        return Offers.bestOffer(PriceCards.ticked(t, stores()), services.subscribed());
+    }
+
+    /**
+     * The stores the household ticked, whose rent and buy offers count (design 07-prices A, Ticks); null means every
+     * store. Launcher settings can't tick stores yet (BACKLOG.md, Streaming availability and prices), so every store
+     * counts.
+     */
+    Set<ServiceId> stores() {
+        return null;
     }
 
     /** "Prime Video · Included", "Apple TV · Rent $3.99" ("Apple TV Store · Rent 39 kr") or "Not available". */
@@ -59,17 +70,17 @@ final class Data {
     }
 
     /**
-     * A card's offer line: {@link #offerLabel} of the best offer, or "" for a title whose details (and so its
-     * availability) haven't arrived, rather than "Not available".
+     * A small card's third line ({@link PriceCards#cardLine}): "Prime Video · Included", "Rent from 39 kr · 4
+     * stores", with the prices already known; "" for a title whose details (and so its availability) haven't arrived.
      */
     String offerLine(Title t) {
-        Offer o = shownOffer(t);
-        return o == null && !t.detailed ? "" : offerLabel(o);
+        if (!t.detailed && t.offers.isEmpty()) return "";
+        return PriceCards.cardLine(t, services.subscribed(), stores(), table);
     }
 
     /**
-     * The offer a card names: the best one, else a subscription the household doesn't have, so a title on a service
-     * that isn't set up reads "Apple TV · Subscription" rather than "Not available".
+     * The offer a library card names: the best one, else a subscription the household doesn't have, so a title on a
+     * service that isn't set up reads "Apple TV · Subscription" rather than "Not available".
      */
     Offer shownOffer(Title t) {
         Offer o = bestOffer(t);

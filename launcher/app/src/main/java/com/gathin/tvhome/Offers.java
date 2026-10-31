@@ -91,7 +91,7 @@ final class Offers {
             case FREE:
                 return name + " · Free";
             default:
-                return name + " · " + availability(o, subscribed);
+                return table.storeName(o.service) + " · " + availability(o, subscribed);
         }
     }
 

@@ -18,11 +18,13 @@ final class Services {
     private final Context ctx;
     private final ServiceTable table;
     private final Set<ServiceId> subscribed;
+    private final Set<ServiceId> installed;
 
-    private Services(Context ctx, ServiceTable table, Set<ServiceId> subscribed) {
+    private Services(Context ctx, ServiceTable table, Set<ServiceId> subscribed, Set<ServiceId> installed) {
         this.ctx = ctx;
         this.table = table;
         this.subscribed = subscribed;
+        this.installed = installed;
     }
 
     static Services from(Context ctx, Config cfg) {
@@ -36,7 +38,8 @@ final class Services {
         for (ServiceId s : ServiceId.values()) {
             for (String pkg : table.packages(s)) if (isInstalled(pm, pkg)) installed.add(pkg);
         }
-        return new Services(app, table, table.subscribed(installed, cfg.subscribedServices));
+        return new Services(app, table, table.subscribed(installed, cfg.subscribedServices),
+                table.installed(installed));
     }
 
     private static boolean isInstalled(PackageManager pm, String pkg) {
@@ -49,6 +52,11 @@ final class Services {
 
     Set<ServiceId> subscribed() {
         return subscribed;
+    }
+
+    /** The services, subscriptions and stores, whose app is installed and enabled, as read when Data was made. */
+    Set<ServiceId> installed() {
+        return installed;
     }
 
     boolean isSubscribed(ServiceId id) {

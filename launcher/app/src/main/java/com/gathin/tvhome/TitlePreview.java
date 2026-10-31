@@ -732,66 +732,43 @@ final class TitlePreview extends Screen {
     // ---- Where to watch -------------------------------------------------------------------------------------------
 
     /**
-     * One card per service, included and free ones first (Offers.byService); a note when there are none. On the real
-     * catalogue, the sources' credit below the row (V2 Phase 2): "Availability: JustWatch · Prices: Apple".
+     * Design 07-prices A: one card per service ({@link PriceCards#cards}): included and free ones first, then the
+     * stores, cheapest first, the cheapest tagged; a note when there are none. On the real catalogue, the sources'
+     * credit below the row, "Availability: JustWatch · Prices: Apple", and offline when the prices were saved.
      */
     private View whereToWatch() {
-        List<ServiceOffers> services = Offers.byService(t, subscribed);
+        List<PriceCards.Card> services = PriceCards.cards(t, subscribed, data.stores(), data.services.installed());
         View body;
         if (services.isEmpty()) {
             body = emptyNote(t.detailed ? R.string.prices_where_none : R.string.preview_not_loaded);
         } else {
             List<View> cards = new ArrayList<>();
-            for (int i = 0; i < services.size(); i++) cards.add(serviceCard(services.get(i), i == 0));
+            for (int i = 0; i < services.size(); i++) {
+                PriceCards.Card c = services.get(i);
+                ServiceId id = c.offers.service;
+                // The store's name only for a card that sells: an unsubscribed Viaplay is still "Viaplay".
+                boolean sells = c.offers.rent != null || c.offers.buy != null;
+                String name = sells && !c.offers.watchable() ? data.table.storeName(id) : data.table.name(id);
+                cards.add(PriceViews.serviceCard(ctx, c, name, G_WHERE, i == 0, v -> openService(c.offers)));
+            }
             body = row(cards);
         }
-        String credit = data.catalog.attribution(t);
+        String credit = PriceViews.credit(ctx, data.catalog, t);
         if (credit == null) return body;
+        // The box reaches ROOM past the content area, as the row does, so the focused card's ring isn't cut off.
+        int room = Ui.px(ROOM);
         FrameLayout box = Kit.unclip(new FrameLayout(ctx));
+        box.setPadding(room, room, room, room);
         box.addView(body);
         TextView caption = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
         caption.setText(credit);
         box.addView(caption, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START));
-        box.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        lp.setMargins(-room, -room, -room, -room);
+        box.setLayoutParams(lp);
         return box;
-    }
-
-    /** .service: 376 wide, the name with "Included" or "Free", the offer line and the quality. */
-    private View serviceCard(ServiceOffers s, boolean isDefault) {
-        RingFrame card = new RingFrame(ctx, Ui.RADIUS_L, false, Ui.SURFACE);
-        LinearLayout col = new LinearLayout(ctx);
-        col.setOrientation(LinearLayout.VERTICAL);
-        col.setPadding(Ui.px(24), Ui.px(22), Ui.px(24), Ui.px(22));
-        LinearLayout head = fact();
-        TextView name = Ui.line(ctx, Ui.T_H3, Ui.TEXT_1, Ui.MEDIUM);
-        name.setText(data.table.name(s.service));
-        head.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        String badge = PreviewRules.serviceBadge(s);
-        if (badge != null) head.addView(badge(ctx, badge));
-        col.addView(head);
-        TextView line = Ui.line(ctx, 22, Ui.TEXT_1, Ui.REGULAR);
-        line.setText(PreviewRules.serviceOffer(s));
-        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        llp.topMargin = Ui.px(10);
-        col.addView(line, llp);
-        TextView quality = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
-        quality.setText(s.quality);
-        LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        qlp.topMargin = Ui.px(4);
-        col.addView(quality, qlp);
-        card.content().addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        card.setLayoutParams(new ViewGroup.LayoutParams(Ui.px(376), ViewGroup.LayoutParams.WRAP_CONTENT));
-        StringBuilder said = new StringBuilder(name.getText());
-        if (badge != null) said.append(", ").append(badge);
-        said.append(", ").append(line.getText());
-        if (s.quality != null && !s.quality.isEmpty()) said.append(", ").append(s.quality);
-        card.setContentDescription(said);
-        return ringCard(card, G_WHERE, "svc-" + s.service.id, isDefault, v -> openService(s));
     }
 
     // ---- Cast & crew and More like this ---------------------------------------------------------------------------

@@ -44,14 +44,17 @@ import java.util.function.LongSupplier;
  */
 final class DiskCache {
 
-    /** What the cache holds for a key: its bytes, and whether they are still fresh. */
+    /** What the cache holds for a key: its bytes, whether they are still fresh, and when they were written. */
     static final class Entry {
         final byte[] bytes;
         final boolean fresh;
+        /** When the bytes were fetched (the file's modification time). */
+        final long savedAt;
 
-        Entry(byte[] bytes, boolean fresh) {
+        Entry(byte[] bytes, boolean fresh, long savedAt) {
             this.bytes = bytes;
             this.fresh = fresh;
+            this.savedAt = savedAt;
         }
 
         String text() {
@@ -85,8 +88,9 @@ final class DiskCache {
         if (!f.isFile()) return null;
         try (InputStream in = new FileInputStream(f)) {
             byte[] bytes = readAll(in);
-            long age = clock.getAsLong() - f.lastModified();
-            return new Entry(bytes, age >= 0 && age < ttl);
+            long modified = f.lastModified();
+            long age = clock.getAsLong() - modified;
+            return new Entry(bytes, age >= 0 && age < ttl, modified);
         } catch (IOException e) {
             return null;
         }

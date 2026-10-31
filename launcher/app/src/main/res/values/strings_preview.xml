@@ -28,12 +28,8 @@
     <string name="preview_episode">E%1$d</string>
     <string name="preview_up_next">Up next</string>
 
-    <!-- The rent/buy dialog: "Arrival on Apple TV", "4K · Dolby Vision. This opens the Apple TV app." -->
+    <!-- The rent/buy dialog (RentDialog, design 07-prices A): "Moon on Apple TV Store". -->
     <string name="preview_dialog_title">%1$s on %2$s</string>
-    <string name="preview_dialog_body">%1$s. This opens the %2$s app.</string>
-    <string name="preview_dialog_note">You finish paying in that app. Rentals usually give you 30 days to start and 48 hours once you press play.</string>
-    <string name="preview_rent">Rent · %1$s</string>
-    <string name="preview_buy">Buy · %1$s</string>
     <string name="preview_cancel">Cancel</string>
 
     <string name="preview_person_eyebrow">Person · not designed yet</string>
