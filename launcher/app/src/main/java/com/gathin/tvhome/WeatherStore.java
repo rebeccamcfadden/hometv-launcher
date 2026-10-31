@@ -82,6 +82,11 @@ final class WeatherStore {
         return weather;
     }
 
+    /** When {@link #current} was fetched, in epoch milliseconds (06-states A: "Offline · updated 19:52"). */
+    long fetchedAt() {
+        return fetchedAt;
+    }
+
     /**
      * Home came into view: the cached answer first (read off the main thread the first time), then a fresh one if
      * it is stale. Results arrive through the listener on the main thread.

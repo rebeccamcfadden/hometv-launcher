@@ -67,6 +67,24 @@ final class LibraryPage extends Screen {
     /** Kept in a field: the catalogue holds its listeners weakly. */
     private final Runnable onCatalog;
 
+    // 06-states A: loading, offline and "nothing saved" (CatalogState says which; StateUi draws them).
+    private static final String KEY_WIFI = "wifi-settings";
+    private static final String KEY_TRY = "try-again";
+    private static final long TRYING_MS = 1200;
+    private static final int SKELETON_CARDS = 8;
+    /** The longest the skeletons hold the grid once some titles are in (a slow network): 8 seconds. */
+    private static final long LOADING_MAX_MS = 8000;
+    private long loadingSince;
+    private final Runnable renderLater = this::renderIfShown;
+    private CatalogState.Lists state = CatalogState.Lists.ONLINE;
+    /** The lists have loaded once: later titles fill in where they are, without the skeletons. */
+    private boolean settled;
+    /** Try again is checking: its label says "Trying…" for a moment. */
+    private boolean retrying;
+    /** The amber pill that takes the scope line's place offline. */
+    private final View offlinePill;
+    private final TextView guideRight;
+
     static LibraryPage create(Context ctx, NavBar.Host host, Tab tab) {
         return new LibraryPage(ctx, host, tab, Pages.page(ctx, host, tab));
     }
@@ -116,7 +134,15 @@ final class LibraryPage extends Screen {
         scopeRow.setGravity(Gravity.CENTER_VERTICAL);
         scope = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
         scope.setText(scopeText());
-        scopeRow.addView(scope, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        // Offline, the amber pill takes the scope line's place (06-states A).
+        FrameLayout scopeSlot = new FrameLayout(ctx);
+        scopeSlot.addView(scope, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_VERTICAL));
+        offlinePill = StateUi.pill(ctx, "");
+        offlinePill.setVisibility(View.GONE);
+        scopeSlot.addView(offlinePill, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.START));
+        scopeRow.addView(scopeSlot, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         filterSummary = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
         scopeRow.addView(filterSummary, wrap());
         filtersButton = Kit.button(ctx, ctx.getString(R.string.library_filters), R.drawable.ic_ui_filter, Kit.SMALL,
@@ -149,20 +175,34 @@ final class LibraryPage extends Screen {
 
         root.addView(Kit.bottomFade(ctx));
         // The real catalogue's scores and availability are not illustrative (V2): say where they come from.
-        root.addView(Kit.guide(ctx, ctx.getString(data.catalog.isRemote() ? R.string.prices_library_guide
+        View guide = Kit.guide(ctx, ctx.getString(data.catalog.isRemote() ? R.string.prices_library_guide
                         : R.string.library_guide_left),
-                ctx.getString(R.string.library_guide_right)));
+                ctx.getString(R.string.library_guide_right));
+        guideRight = Kit.guideRight(guide);
+        root.addView(guide);
 
         // Titles fill in as their details arrive: what is cached shows first, the rest as it comes.
         onCatalog = () -> {
             if (shell.top() == this) render();
         };
         data.catalog.addListener(onCatalog);
+        // Offline and back online change the page in place (06-states A).
+        StateUi.watchInternet(root, host.navModel(), online -> {
+            if (shell.top() == this) render();
+        });
         render();
     }
 
     @Override
     View defaultFocus() {
+        // 06-states A: while loading, the selected list chip; offline with nothing saved, Wi-Fi settings.
+        if (state == CatalogState.Lists.LOADING) {
+            View chip = Focus.byKey(chips, chipKey(list));
+            if (chip != null) return chip;
+        } else if (state == CatalogState.Lists.OFFLINE_EMPTY) {
+            View wifi = Focus.byKey(grid, KEY_WIFI);
+            if (wifi != null) return wifi;
+        }
         List<View> items = Focus.all(grid);
         return items.isEmpty() ? pick : items.get(0);
     }
@@ -183,6 +223,12 @@ final class LibraryPage extends Screen {
     boolean onKey(Key key, View focused) {
         SpatialNav.Dir dir = Shell.dirOf(key);
         if (dir == null || focused == null) return false;
+        // Offline with nothing saved: ← and → stay on Wi-Fi settings and Try again rather than jump up to the chips.
+        View actions = StateUi.actions(focused);
+        if (actions != null && (dir == SpatialNav.Dir.LEFT || dir == SpatialNav.Dir.RIGHT)) {
+            if (shell.moveWithin(actions, dir)) box.playSoundEffect(sound(dir));
+            return true;
+        }
         // The list chips lead to Pick for me: Up from any chip, and Right from the last one (project lead,
         // 2026-10-29), so it is reached before the nav and instead of the grid.
         if (Focus.isInside(chips, focused) && (dir == SpatialNav.Dir.UP
@@ -273,17 +319,60 @@ final class LibraryPage extends Screen {
         // The filters judge the titles on their details: load those not in yet (the cache first, then TMDB).
         data.catalog.want(ids(pool));
 
+        // 06-states A: loading, offline from the saved copy, or offline with nothing saved yet.
+        int detailed = 0, pending = 0;
+        long[] savedAt = new long[pool.size()];
+        for (int i = 0; i < pool.size(); i++) {
+            Title t = pool.get(i);
+            if (t.detailed) {
+                detailed++;
+                savedAt[i] = data.catalog.savedAt(t.id);
+            } else if (data.catalog.pending(t.id)) {
+                pending++;
+            }
+        }
+        boolean online = StateUi.online(ctx);
+        // On a slow network the skeletons give way after a while to what has arrived; the rest fills in after.
+        long nowMs = android.os.SystemClock.uptimeMillis();
+        if (pending == 0) loadingSince = 0;
+        else if (loadingSince == 0) loadingSince = nowMs;
+        boolean waitedEnough = detailed > 0 && loadingSince != 0 && nowMs - loadingSince >= LOADING_MAX_MS;
+        long wait = loadingSince + LOADING_MAX_MS - nowMs;
+        // Past the deadline with nothing detailed, the catalogue's listener re-renders when the first title arrives.
+        if (pending > 0 && !settled && !waitedEnough && wait > 0) {
+            view.removeCallbacks(renderLater);
+            view.postDelayed(renderLater, wait);
+        }
+        CatalogState.Lists st = CatalogState.lists(data.catalog.isRemote(), online, pool.size(), detailed, pending,
+                settled || waitedEnough);
+        // Try again restarts the failed loads, which fail at once offline: the page stays as it is meanwhile.
+        if (retrying && st == CatalogState.Lists.LOADING && !online) st = CatalogState.Lists.OFFLINE_EMPTY;
+        if (st != CatalogState.Lists.LOADING) settled = true;
+        state = st;
+        boolean empty = st == CatalogState.Lists.OFFLINE_EMPTY;
+        boolean offline = empty || st == CatalogState.Lists.OFFLINE_SAVED;
+
         LibraryLists.Choice[] choices = LibraryLists.Choice.values();
         int[] counts = new int[choices.length];
-        StringBuilder chipKey = new StringBuilder(list.name());
+        StringBuilder chipKey = new StringBuilder(list.name()).append(empty ? ",none" : "");
         for (int i = 0; i < choices.length; i++) {
             counts[i] = LibraryLists.under(pool, choices[i], data.household).size();
             chipKey.append(',').append(counts[i]);
         }
         if (!chipKey.toString().equals(chipsBuilt)) {
             chipsBuilt = chipKey.toString();
-            buildChips(choices, counts);
+            buildChips(choices, empty ? null : counts);
         }
+
+        // Offline, the scope line becomes the amber pill: with the time of the saved copy, or just "Offline".
+        scope.setVisibility(offline ? View.GONE : View.VISIBLE);
+        offlinePill.setVisibility(offline ? View.VISIBLE : View.GONE);
+        if (offline) {
+            String saved = empty ? null : StateUi.saved(ctx, StateWords.oldest(savedAt));
+            StateUi.setPill(offlinePill, saved == null ? ctx.getString(R.string.states_offline)
+                    : ctx.getString(R.string.states_lists_saved, saved));
+        }
+        guideRight.setText(empty ? "" : ctx.getString(R.string.library_guide_right));
 
         int n = filters.activeCount();
         String summary = filters.summary();
@@ -296,21 +385,39 @@ final class LibraryPage extends Screen {
         listTitle.setText(listName(list));
         Resources r = ctx.getResources();
         boolean movies = kind == Kind.MOVIE;
-        listStatus.setText(shown.size() == chosen.size()
-                ? r.getQuantityString(movies ? R.plurals.library_movies_all : R.plurals.library_shows_all,
-                shown.size(), shown.size())
-                : r.getQuantityString(movies ? R.plurals.library_movies_filtered : R.plurals.library_shows_filtered,
-                chosen.size(), shown.size(), chosen.size()));
+        if (st == CatalogState.Lists.LOADING) {
+            listStatus.setText(R.string.states_loading_details);
+        } else if (empty) {
+            listStatus.setText("");
+        } else if (offline) {
+            String count = shown.size() == chosen.size()
+                    ? r.getQuantityString(movies ? R.plurals.states_movies : R.plurals.states_shows, shown.size(),
+                    shown.size())
+                    : r.getQuantityString(movies ? R.plurals.states_movies_of : R.plurals.states_shows_of,
+                    chosen.size(), chosen.size(), shown.size());
+            listStatus.setText(ctx.getString(R.string.states_prices_old, count));
+        } else {
+            listStatus.setText(shown.size() == chosen.size()
+                    ? r.getQuantityString(movies ? R.plurals.library_movies_all : R.plurals.library_shows_all,
+                    shown.size(), shown.size())
+                    : r.getQuantityString(movies ? R.plurals.library_movies_filtered : R.plurals.library_shows_filtered,
+                    chosen.size(), shown.size(), chosen.size()));
+        }
 
         String gridKey;
-        if (chosen.isEmpty()) gridKey = "empty-list:" + list;
+        if (st == CatalogState.Lists.LOADING) gridKey = "loading";
+        else if (empty) gridKey = "offline-empty";
+        else if (chosen.isEmpty()) gridKey = "empty-list:" + list;
         else if (shown.isEmpty()) gridKey = "empty-filters:" + chosen.size() + ":" + summary;
         else gridKey = "titles";
-        if (!gridKey.equals(gridBuilt) || (!shown.isEmpty() && !same(shown, gridTitles))) {
+        boolean titles = gridKey.equals("titles");
+        if (!gridKey.equals(gridBuilt) || (titles && !same(shown, gridTitles))) {
             gridBuilt = gridKey;
-            gridTitles = shown.isEmpty() ? null : shown;
+            gridTitles = titles ? shown : null;
             grid.removeAllViews();
-            if (chosen.isEmpty()) emptyList();
+            if (st == CatalogState.Lists.LOADING) buildSkeletons();
+            else if (empty) offlineEmpty();
+            else if (chosen.isEmpty()) emptyList();
             else if (shown.isEmpty()) emptyFilters(chosen.size(), summary);
             else buildGrid(shown);
             rememberRebuilt();
@@ -318,6 +425,15 @@ final class LibraryPage extends Screen {
         if (shell.top() == this) shell.refocus();
     }
 
+    private void renderIfShown() {
+        if (shell.top() == this) render();
+    }
+
+    private static String chipKey(LibraryLists.Choice c) {
+        return "list-" + c.name().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    /** buildChips' counts are null offline with nothing saved: the chips then show their names alone. */
     private void buildChips(LibraryLists.Choice[] choices, int[] counts) {
         chips.removeAllViews();
         TextView lead = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
@@ -327,8 +443,8 @@ final class LibraryPage extends Screen {
         chips.addView(lead, llp);
         for (int i = 0; i < choices.length; i++) {
             LibraryLists.Choice c = choices[i];
-            View chip = Kit.chip(ctx, ctx.getString(R.string.library_chip, listName(c), counts[i]), c == list, false,
-                    GROUP_LISTS, "list-" + c.name().toLowerCase(java.util.Locale.ROOT), c == list, v -> choose(c));
+            String label = counts == null ? listName(c) : ctx.getString(R.string.library_chip, listName(c), counts[i]);
+            View chip = Kit.chip(ctx, label, c == list, false, GROUP_LISTS, chipKey(c), c == list, v -> choose(c));
             LinearLayout.LayoutParams lp = wrap();
             lp.leftMargin = Ui.px(12);
             chips.addView(chip, lp);
@@ -362,6 +478,49 @@ final class LibraryPage extends Screen {
             lp.leftMargin = i % COLUMNS == 0 ? 0 : Ui.px(GAP_X);
             row.addView(card, lp);
         }
+    }
+
+    /** 06-states A: the page's shape at once, eight skeleton cards in the grid's place; none is focusable. */
+    private void buildSkeletons() {
+        LinearLayout row = null;
+        for (int i = 0; i < SKELETON_CARDS; i++) {
+            if (i % COLUMNS == 0) {
+                row = new LinearLayout(ctx);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                grid.addView(row, below(i == 0 ? 0 : GAP_Y));
+            }
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(CARD_W),
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.leftMargin = i % COLUMNS == 0 ? 0 : Ui.px(GAP_X);
+            row.addView(StateUi.libraryCardSkeleton(ctx), lp);
+        }
+    }
+
+    /**
+     * 06-states A, offline with nothing saved: the crossed-out Wi-Fi, what works without the internet, Wi-Fi
+     * settings (first focus) and Try again, which says "Trying…" for a moment and then, still offline, a toast.
+     */
+    private void offlineEmpty() {
+        View wifi = Kit.button(ctx, ctx.getString(R.string.states_wifi_settings), R.drawable.ic_ui_wifi, Kit.NORMAL,
+                false, null, KEY_WIFI, true, v -> StateUi.openWifiSettings(ctx, shell::toast));
+        View again = Kit.button(ctx, ctx.getString(retrying ? R.string.states_trying : R.string.states_try_again),
+                R.drawable.ic_state_retry, Kit.NORMAL, false, null, KEY_TRY, false, this::tryAgain);
+        grid.addView(StateUi.offlineBlock(ctx, ctx.getString(R.string.states_nothing_saved),
+                ctx.getString(R.string.states_lists_note, label), wifi, again), below(0));
+    }
+
+    private void tryAgain(View button) {
+        if (retrying) return;
+        retrying = true;
+        Kit.setLabel(button, ctx.getString(R.string.states_trying));
+        data.catalog.retryFailed();
+        view.postDelayed(() -> {
+            retrying = false;
+            Kit.setLabel(button, ctx.getString(R.string.states_try_again));
+            if (shell.top() != this) return;
+            render();
+            if (state == CatalogState.Lists.OFFLINE_EMPTY) shell.toast(ctx.getString(R.string.states_still_offline));
+        }, TRYING_MS);
     }
 
     /** .empty: a list with nothing on it. */

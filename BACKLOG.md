@@ -31,13 +31,31 @@ milestones: [docs/rework.md](docs/rework.md).
   (shows), on the US scale the filters use. A title without a US rating shows none and counts as not rated (NR) in
   Pick for me. **Open question:** use Sweden's ratings (Btl, 7, 11, 15) where TMDB has them, and how they map onto
   "Up to PG-13" and "Up to R".
-- **Loading, offline and error states:** not designed. Until they are: cards keep the raised placeholder while their
-  art loads (or for good offline with nothing cached); a title still loading shows what it has (its meta line and
-  the preview's details row leave out what isn't known yet), Cast & crew says "Not loaded yet.", More like this
-  is an empty row until it answers, and "Nothing similar found for this title." when TMDB has nothing. Movies and TV
-  Shows fill in as details arrive, with the filters judging only what is loaded (a stub has no score yet, so
-  "Review 7.0+" hides it). Nothing says the TV is offline. Wanted: designs for loading, offline and failure, in
-  Figma first.
+- **Loading, offline and error states (V2 design 06-states A):** built from the network (`NavModel.internet`, Android's
+  validated network) and the catalogue's own state (`Catalog.pending`, `failed`, `savedAt`; the rules in
+  `CatalogState`, `StateWords`, `OfflineSearch`, the pieces in `StateUi`). Movies and TV Shows show eight skeleton
+  cards while their lists first load (at most 8 seconds once some titles are in, so a slow network shows what has
+  come), the amber "Offline · showing your lists as saved today 19:52" pill (the oldest saved copy's time) with
+  "· prices may be out of date", or, offline with no title saved, the "nothing saved" block with Wi-Fi settings and
+  Try again. The preview shows its gradient and skeletons while a summary's details load, and the amber error box in
+  Overview, Where to watch, Cast & crew and Episodes when they failed with no saved copy; Retry and the network coming
+  back load them again. Until the availability is in, Watch shows only its play icon, with no label (OK on it after a
+  failure loads again): "Not on your services" only once it is in and there are no offers. Search offline looks at the saved titles only; Home's weather keeps the last forecast with "Offline ·
+  updated 19:52". The nav's Wi-Fi icon is crossed out whenever Android reaches no internet. Still as before: More like
+  this is an empty row until TMDB answers (it has no error state in the design), and a search card or a title whose
+  artwork was never fetched keeps the raised placeholder offline.
+  - **One request, one failure:** a title's details, cast, seasons and availability come in one TMDB request, so
+    they fail together: the error box shows in every tab that needs them, not in one tab as the prototype's State
+    menu shows it, Overview's too ("Couldn’t load details"; project lead, 2026-10-31). The header keeps what the card
+    that opened the preview knew.
+  - **TMDB down, network up:** offline means Android reaches no internet. When TMDB alone fails, the lists show
+    their saved copy without the amber pill, and a preview whose details never loaded shows the error box.
+  - **Not built here:** Settings offline (the Account, Sync and Weather panes; with the new Launcher settings page),
+    and the Where to watch credit's "Saved today 19:52, prices may be out of date" (with 07-prices A).
+  - **Not designed:** Search and Home's weather while loading (the spec's open list).
+- **Listeners kept from R8:** the catalogue holds screens' listeners weakly, and R8 dropped the `onCatalog` fields that
+  kept them (written, never read), so in release builds pages stopped hearing that titles filled in; Movies stayed on
+  its first render until a tab switch. `proguard-rules.pro` now keeps those fields (found building 06-states A).
 - **TMDB attribution:** TMDB's terms (developer.themoviedb.org/docs/faq, checked 2026-10-30) ask for the notice "This
   product uses the TMDB API but is not endorsed or certified by TMDB" in the app's About or Credits section, and for
   one of their approved logos (themoviedb.org/about/logos-attribution), less prominent than the app's own mark. For
@@ -235,7 +253,8 @@ From the old launcher; not in V1 by decision.
 - **Launcher settings page:** V1 opens the old `LauncherSettingsActivity`, cut to Animations, Open on start,
   Follow theme, Default Home and TV settings; V2 Phase 4 added Weather location and Temperature unit as plain rows.
   Wanted: the new page in the new UI, with designed pickers; the lead is drafting it in Figma.
-- **Network icon state:** the nav shows Wi-Fi, Ethernet or Wi-Fi crossed out when offline. The old pill could also
+- **Network icon state:** the nav shows the prototype's Wi-Fi arcs, on Ethernet too (the project lead, 2026-10-31), or the arcs crossed out when offline, which since 06-states A
+  includes a network with no internet behind it. The old pill could also
   tint by state (`wifi_status_color`, `wifi_status_warnings`); not designed for the new nav.
 - **README card:** since M1b `tools/gen_tables.py` no longer counts languages, and `docs/card.jpg` and
   `docs/stats.png` show TV models, brands and the launcher's size. Its "after", `docs/new-home.jpg`, is a screenshot
@@ -349,9 +368,7 @@ From the old launcher; not in V1 by decision.
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before
 it is built.
 
-- Offline, loading and error states: designed (06-states A, with Search and Home's weather offline added on
-  2026-10-30) and built in the prototype; not built in the launcher. Search and Home's weather while loading are
-  not designed.
+- Search and Home's weather while loading (06-states A designs offline and errors, not these).
 - First run and setup: the checklist (01-setup B) and its panes (r2-setup-checklist) are built in the prototype; not
   in the launcher. When it shows is open.
 - Launcher settings in the new UI: the split (05-settings A), the round-2 Account, Streaming services, Stores and

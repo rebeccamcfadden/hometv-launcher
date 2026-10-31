@@ -84,6 +84,8 @@ final class HomePage extends Screen {
     private final FrameLayout weatherFrame;
     private final TextView weatherTemp, weatherDesc;
     private final LinearLayout weatherHours;
+    /** 06-states A: the strip's "now" half, and what shows in the strip offline with no forecast saved. */
+    private final View weatherNow, weatherNone;
 
     private List<String> full = new ArrayList<>();
     private List<String> shownApps = new ArrayList<>();
@@ -269,6 +271,21 @@ final class HomePage extends Screen {
         weatherHours = new LinearLayout(ctx);
         weatherHours.setOrientation(LinearLayout.HORIZONTAL);
         strip.addView(weatherHours, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        weatherNow = now;
+        // .weather-none: the crossed-out Wi-Fi (28) and "Weather unavailable offline" (22 px, tertiary), 14 apart.
+        LinearLayout none = new LinearLayout(ctx);
+        none.setOrientation(LinearLayout.HORIZONTAL);
+        none.setGravity(Gravity.CENTER_VERTICAL);
+        none.addView(Ui.icon(ctx, R.drawable.ic_ui_wifi_off, 28, Ui.TEXT_3), new LinearLayout.LayoutParams(Ui.px(28),
+                Ui.px(28)));
+        TextView noneText = Ui.line(ctx, 22, Ui.TEXT_3, Ui.REGULAR);
+        noneText.setText(R.string.states_weather_unavailable);
+        LinearLayout.LayoutParams nlp = wrap();
+        nlp.leftMargin = Ui.px(14);
+        none.addView(noneText, nlp);
+        none.setVisibility(View.GONE);
+        weatherNone = none;
+        strip.addView(none, wrap());
         weatherFrame.setVisibility(View.GONE);
         weatherFrame.setContentDescription(ctx.getString(R.string.weather));
         Focus.make(weatherFrame, GROUP_WEATHER, "weather", false,
@@ -287,9 +304,12 @@ final class HomePage extends Screen {
             if (WeatherStore.networkBack(lastNetworkIcon, model.networkIcon, hadInternet, model.internet)) {
                 retryWeather = true;
             }
+            // 06-states A: offline, the weather says so (renderWeather); back online it doesn't.
+            boolean internetChanged = hadInternet != model.internet;
             lastNetworkIcon = model.networkIcon;
             hadInternet = model.internet;
             if (!visible) return;
+            if (internetChanged) renderWeather();
             if (retryWeather) {
                 retryWeather = false;
                 weatherStore.retry();
@@ -657,9 +677,14 @@ final class HomePage extends Screen {
         }
     }
 
-    /** The forecast under the clock and the weather strip, or neither while there is no weather to show. */
+    /**
+     * The forecast under the clock and the weather strip, or neither while there is no weather to show. Offline
+     * (06-states A) the last forecast stays, with "Offline · updated 19:52" in amber in place of the conditions; with
+     * none saved, the strip and the line under the clock say "Weather unavailable offline".
+     */
     private void renderWeather() {
         Weather w = weatherStore.current();
+        boolean offline = !hadInternet;
         long nowMs = System.currentTimeMillis();
         LocalDateTime now = w == null ? null : HomeClock.plausible(nowMs) ? w.localTime(nowMs)
                 : w.current != null ? w.current.time : null;
@@ -670,9 +695,23 @@ final class HomePage extends Screen {
             addForecast(w.day(today), R.string.weather_today);
             addForecast(w.day(today.plusDays(1)), R.string.weather_tomorrow);
         }
+        if (offline && w == null) {
+            TextView quiet = Ui.line(activity, 22, Ui.TEXT_3, Ui.REGULAR);
+            quiet.setText(R.string.states_weather_unavailable);
+            forecast.addView(quiet);
+        }
         // Invisible rather than gone, so the greeting keeps its place, aligned with the bottom of the clock.
         forecast.setVisibility(forecast.getChildCount() > 0 ? View.VISIBLE : View.INVISIBLE);
 
+        boolean unavailable = offline && w == null;
+        weatherNone.setVisibility(unavailable ? View.VISIBLE : View.GONE);
+        weatherNow.setVisibility(unavailable ? View.GONE : View.VISIBLE);
+        weatherHours.setVisibility(unavailable ? View.GONE : View.VISIBLE);
+        if (unavailable) {
+            weatherFrame.setVisibility(View.VISIBLE);
+            weatherFrame.setContentDescription(activity.getString(R.string.states_weather_unavailable));
+            return;
+        }
         if (reading == null) {
             boolean hadFocus = shell.focused() == weatherFrame;
             weatherFrame.setVisibility(View.GONE);
@@ -683,8 +722,15 @@ final class HomePage extends Screen {
         weatherTemp.setText(degrees(reading.temp));
         Weather.Day today = w.day(now.toLocalDate());
         String words = activity.getString(conditionText(Weather.condition(reading.code)));
-        weatherDesc.setText(today == null ? words
-                : activity.getString(R.string.weather_summary, words, degrees(today.max), degrees(today.min)));
+        String updated = offline ? StateUi.updated(activity, weatherStore.fetchedAt()) : null;
+        if (updated != null) {
+            weatherDesc.setText(activity.getString(R.string.states_weather_updated, updated));
+            weatherDesc.setTextColor(StateUi.amber());
+        } else {
+            weatherDesc.setText(today == null ? words
+                    : activity.getString(R.string.weather_summary, words, degrees(today.max), degrees(today.min)));
+            weatherDesc.setTextColor(Ui.TEXT_2);
+        }
         weatherHours.removeAllViews();
         boolean is24 = DateFormat.is24HourFormat(activity);
         for (Weather.Reading h : w.nextHours(now, HOURS)) {

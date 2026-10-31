@@ -84,6 +84,7 @@ final class SearchPage extends Screen {
     private final RingFrame bar;
     private final TextView typed, ghost;
     private final View hint;
+    private final View offlinePill;
     private final LinearLayout panel;
     private final TextView listHead;
     private final LinearLayout list;
@@ -113,6 +114,12 @@ final class SearchPage extends Screen {
     private final Runnable askRemote = this::askRemote;
     /** Kept in a field: the catalogue holds its listeners weakly. */
     private final Runnable onCatalog;
+    /**
+     * Offline, the ids of the titles saved on the TV, worked out once rather than on every key press; dropped when
+     * the catalogue, the household's lists or the network change.
+     */
+    private java.util.Set<String> savedIds;
+    private final Household.Listener onHousehold = () -> savedIds = null;
 
     static SearchPage create(MainActivity activity, NavBar.Host host) {
         return new SearchPage(activity, activity, Pages.page(activity, host, Tab.SEARCH));
@@ -150,6 +157,10 @@ final class SearchPage extends Screen {
         barRow.addView(new View(ctx), new LinearLayout.LayoutParams(0, 1, 1f));
         hint = resultsHint(ctx);
         barRow.addView(hint, gapBefore(16));
+        // 06-states A: offline, the amber pill takes the hint's place at the bar's end.
+        offlinePill = StateUi.pill(ctx, "");
+        offlinePill.setVisibility(View.GONE);
+        barRow.addView(offlinePill, gapBefore(16));
         bar.content().addView(barRow, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         bar.setOnFocusChangeListener((v, focused) -> bar.setRing(focused));
@@ -227,9 +238,33 @@ final class SearchPage extends Screen {
 
         // Recently viewed and From My list fill in as their titles' details arrive.
         onCatalog = () -> {
+            savedIds = null;
             if (shell.top() == this) render();
         };
         data.catalog.addListener(onCatalog);
+        // The household holds its listeners strongly: listen only while the page is on screen.
+        page.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                savedIds = null;
+                data.household.addListener(onHousehold);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                data.household.removeListener(onHousehold);
+            }
+        });
+        if (page.isAttachedToWindow()) data.household.addListener(onHousehold);
+        // Offline and back online change the page in place (06-states A); back online, TMDB is asked at once.
+        StateUi.watchInternet(page, StateUi.navModel(ctx), online -> {
+            savedIds = null;
+            if (online && !query.isEmpty()) {
+                view.removeCallbacks(askRemote);
+                view.post(askRemote);
+            }
+            if (shell.top() == this) render();
+        });
         render();
     }
 
@@ -306,7 +341,10 @@ final class SearchPage extends Screen {
         query = SearchQuery.clean(q);
         if (query.isEmpty()) expanded = false;
         view.removeCallbacks(askRemote);
-        if (data.catalog.isRemote() && query.trim().length() >= REMOTE_MIN) view.postDelayed(askRemote, DEBOUNCE_MS);
+        // Offline, TMDB isn't asked: the results come from the saved titles (06-states A).
+        if (data.catalog.isRemote() && StateUi.online(ctx) && query.trim().length() >= REMOTE_MIN) {
+            view.postDelayed(askRemote, DEBOUNCE_MS);
+        }
         render();
     }
 
@@ -316,7 +354,7 @@ final class SearchPage extends Screen {
      */
     private void askRemote() {
         String q = query;
-        if (q.trim().length() < REMOTE_MIN) return;
+        if (q.trim().length() < REMOTE_MIN || !StateUi.online(ctx)) return;
         data.catalog.search(q, f -> {
             if (!q.equals(query)) return;
             found = f;
@@ -391,7 +429,20 @@ final class SearchPage extends Screen {
      * inert; expand and collapse pass false and place focus themselves, so the keyboard's memory survives.
      */
     private void render(boolean refocus) {
-        results = query.isEmpty() ? null : index.search(query, remote());
+        // 06-states A, offline: the results come from the titles saved on the TV, without people; with nothing saved,
+        // the results area says so beside the keyboard.
+        boolean offline = data.catalog.isRemote() && !StateUi.online(ctx);
+        if (!offline) {
+            savedIds = null;
+        } else if (savedIds == null) {
+            savedIds = OfflineSearch.savedIds(data.household.titleIds(), data.catalog.all());
+        }
+        java.util.Set<String> saved = savedIds;
+        boolean nothingSaved = offline && nothingSaved(saved);
+        results = query.isEmpty() ? null : index.search(query, offline ? null : remote());
+        if (offline && results != null) {
+            results = OfflineSearch.filter(results, nothingSaved ? java.util.Collections.emptySet() : saved);
+        }
         hasMatches = results != null && results.hasMatches();
 
         // The bar.
@@ -407,7 +458,12 @@ final class SearchPage extends Screen {
         String g = SearchQuery.ghost(query, results, expanded);
         ghost.setText(g == null ? "" : ctx.getString(R.string.search_ghost, g));
         ghost.setVisibility(g == null ? View.GONE : View.VISIBLE);
-        hint.setVisibility(!expanded && hasMatches ? View.VISIBLE : View.GONE);
+        hint.setVisibility(!offline && !expanded && hasMatches ? View.VISIBLE : View.GONE);
+        offlinePill.setVisibility(offline ? View.VISIBLE : View.GONE);
+        if (offline) {
+            StateUi.setPill(offlinePill, ctx.getString(nothingSaved ? R.string.states_offline
+                    : R.string.states_search_saved_only));
+        }
 
         // The panel's list.
         list.removeAllViews();
@@ -436,7 +492,14 @@ final class SearchPage extends Screen {
 
         // The results area.
         body.removeAllViews();
-        if (query.isEmpty()) {
+        if (nothingSaved && (query.isEmpty() || !hasMatches)) {
+            View wifi = Kit.button(ctx, ctx.getString(R.string.states_wifi_settings), R.drawable.ic_ui_wifi,
+                    Kit.NORMAL, false, null, "search-wifi", false, v -> StateUi.openWifiSettings(ctx, shell::toast));
+            body.addView(StateUi.offlineBlock(ctx, query.isEmpty() ? ctx.getString(R.string.states_nothing_saved)
+                            : ctx.getString(R.string.states_search_no_match, query),
+                    ctx.getString(R.string.states_search_nothing_note), wifi), below(0));
+            body.setPadding(0, 0, 0, Ui.px(120));
+        } else if (query.isEmpty()) {
             // A fresh install starts with every list empty (V2 Phase 3): no heading over an empty row.
             addViewed();
             List<Title> mine = ids(data.household.myListIds());
@@ -445,11 +508,11 @@ final class SearchPage extends Screen {
             body.setPadding(0, 0, 0, Ui.px(120));
         } else if (!hasMatches) {
             TextView title = Ui.line(ctx, 34, Ui.TEXT_1, Ui.REGULAR);
-            title.setText(ctx.getString(R.string.search_no_matches, query));
+            title.setText(ctx.getString(offline ? R.string.states_search_no_match : R.string.search_no_matches, query));
             title.setPadding(0, Ui.px(16), 0, 0);
             body.addView(title, below(0));
             TextView note = Ui.text(ctx, 22, Ui.TEXT_2, Ui.REGULAR);
-            note.setText(R.string.search_no_matches_tip);
+            note.setText(offline ? R.string.states_search_no_match_note : R.string.search_no_matches_tip);
             LinearLayout.LayoutParams nlp = below(12);
             nlp.bottomMargin = Ui.px(40);
             body.addView(note, nlp);
@@ -457,7 +520,7 @@ final class SearchPage extends Screen {
             body.setPadding(0, 0, 0, Ui.px(120));
         } else {
             List<SearchIndex.Hit> items = index.items(results, filter, data.services.subscribed());
-            body.addView(resultsHead(items.size()), below(0));
+            body.addView(resultsHead(items.size(), offline), below(0));
             if (items.isEmpty()) {
                 TextView note = Ui.text(ctx, 22, Ui.TEXT_2, Ui.REGULAR);
                 note.setText(ctx.getString(R.string.search_filter_empty, ctx.getString(filterLabel(filter))));
@@ -685,6 +748,20 @@ final class SearchPage extends Screen {
         return out;
     }
 
+    /** Offline, whether no saved title's details are on the TV (CatalogState, as Movies and TV Shows judge it). */
+    private boolean nothingSaved(java.util.Set<String> saved) {
+        int known = 0, detailed = 0, pending = 0;
+        for (String id : saved) {
+            Title t = data.catalog.get(id);
+            if (t == null) continue;
+            known++;
+            if (t.detailed) detailed++;
+            else if (data.catalog.pending(id)) pending++;
+        }
+        return known == 0 || CatalogState.lists(true, false, known, detailed, pending, true)
+                == CatalogState.Lists.OFFLINE_EMPTY;
+    }
+
     /** A row of small cards running off the right edge (search.ts titleRow). */
     private View titleRow(int label, List<Title> titles, String group) {
         List<View> cards = new ArrayList<>();
@@ -715,14 +792,15 @@ final class SearchPage extends Screen {
         return row;
     }
 
-    /** "12 results" and the filter chips (.results-head). */
-    private View resultsHead(int count) {
+    /** "12 results" (offline, "12 results from saved titles") and the filter chips (.results-head). */
+    private View resultsHead(int count, boolean offline) {
         LinearLayout head = Kit.unclip(new LinearLayout(ctx));
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.setPadding(0, 0, 0, Ui.px(24));
         TextView n = Ui.line(ctx, Ui.T_H3, Ui.TEXT_1, Ui.REGULAR);
-        n.setText(ctx.getResources().getQuantityString(R.plurals.search_results_count, count, count));
+        n.setText(ctx.getResources().getQuantityString(offline ? R.plurals.states_search_saved_count
+                : R.plurals.search_results_count, count, count));
         head.addView(n);
         for (SearchIndex.Filter f : FILTERS) {
             View c = Kit.chip(ctx, ctx.getString(filterLabel(f)), f == filter, false, GROUP_FILTERS,

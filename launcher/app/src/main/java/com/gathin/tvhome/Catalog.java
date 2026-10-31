@@ -55,6 +55,24 @@ interface Catalog {
     /** The internet is back (or Home showed again): try once more what failed, such as a cold start before Wi-Fi. */
     default void retryFailed() {}
 
+    /**
+     * Whether t's details are on their way for the first time, or again after Retry or the network coming back, so a
+     * screen shows its skeleton (V2 design 06-states A). Never for the mock catalogue, which has everything at hand.
+     */
+    default boolean pending(String id) {
+        return false;
+    }
+
+    /** Whether t's details failed to load, with no saved copy to fall back on (offline, or TMDB didn't answer). */
+    default boolean failed(String id) {
+        return false;
+    }
+
+    /** When the copy of t's details was fetched from TMDB, in epoch milliseconds; 0 when not known. */
+    default long savedAt(String id) {
+        return 0;
+    }
+
     /** The title with its details (cast, seasons, rating, trailer). */
     default void details(Title t, Consumer<Title> done) {
         Title known = get(t.id);

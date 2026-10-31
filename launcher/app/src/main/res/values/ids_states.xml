@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 06-states A: marks the actions row of an offline block (StateUi.offlineBlock), where ← and → stay. -->
+<resources>
+    <item name="states_actions" type="id" />
+    <!-- A blank button's own padding, kept while it shows only its icon (StateUi.blank). -->
+    <item name="states_padding" type="id" />
+</resources>

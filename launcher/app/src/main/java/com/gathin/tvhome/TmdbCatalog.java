@@ -57,6 +57,8 @@ final class TmdbCatalog implements Catalog {
     private final Set<String> loading = new HashSet<>();
     private final Set<String> urgent = new HashSet<>();
     private final Map<String, Long> failedAt = new HashMap<>();
+    /** When each detailed title's copy was fetched from TMDB (06-states A: "as saved today 19:52"). */
+    private final Map<String, Long> savedAt = new HashMap<>();
     private final Map<String, List<Consumer<Title>>> waiting = new HashMap<>();
     private final List<WeakReference<Runnable>> listeners = new ArrayList<>();
     private boolean notifyPosted;
@@ -172,6 +174,30 @@ final class TmdbCatalog implements Catalog {
         List<String> ids = new ArrayList<>(failedAt.keySet());
         failedAt.clear();
         for (String id : ids) load(id, false);
+        // 06-states A: the screens that said "offline" or showed an error show their skeletons while these load.
+        changed();
+    }
+
+    @Override
+    public boolean pending(String id) {
+        if (id == null || TmdbApi.kindOf(id) == null || failedAt.containsKey(id)) return false;
+        Title k = known.get(id);
+        if (k != null && k.detailed) return false;
+        // Before the start everything the lists hold waits its turn (see the constructor).
+        return !started || loading.contains(id);
+    }
+
+    @Override
+    public boolean failed(String id) {
+        if (id == null || !failedAt.containsKey(id)) return false;
+        Title k = known.get(id);
+        return k == null || !k.detailed;
+    }
+
+    @Override
+    public long savedAt(String id) {
+        Long at = id == null ? null : savedAt.get(id);
+        return at == null ? 0 : at;
     }
 
     @Override
@@ -185,6 +211,8 @@ final class TmdbCatalog implements Catalog {
         List<Consumer<Title>> list = waiting.get(t.id);
         if (list == null) waiting.put(t.id, list = new ArrayList<>());
         list.add(done);
+        // Asked for now (a preview opening, or its Retry): it is loading again rather than failed (06-states A).
+        failedAt.remove(t.id);
         load(t.id, true);
     }
 
@@ -200,28 +228,35 @@ final class TmdbCatalog implements Catalog {
         run(now ? Job.HIGH : Job.LOW, () -> {
             Title t = null;
             ProviderAvailability a = null;
+            long at = 0;
             try {
-                JSONObject o = client.get(TmdbApi.details(id));
+                String path = TmdbApi.details(id);
+                JSONObject o = client.get(path);
                 t = TmdbParse.details(o, kind);
                 a = TmdbParse.availability(o);
+                at = client.savedAt(path);
             } catch (IOException | RuntimeException e) {
                 // Offline with nothing cached, or an odd answer: the stub stays, and the screen keeps what it shows.
             }
             Title result = t;
             ProviderAvailability where = a;
-            main.post(() -> loaded(id, result, where));
+            long saved = at;
+            main.post(() -> loaded(id, result, where, saved));
         });
     }
 
-    private void loaded(String id, Title t, ProviderAvailability where) {
+    private void loaded(String id, Title t, ProviderAvailability where, long saved) {
         loading.remove(id);
         urgent.remove(id);
         List<Consumer<Title>> list = waiting.remove(id);
         if (t == null) {
             failedAt.put(id, SystemClock.elapsedRealtime());
+            // The screens hear, so a skeleton waiting on this title turns into the offline or error state.
+            changed();
             return;
         }
         failedAt.remove(id);
+        if (saved > 0) savedAt.put(id, saved);
         if (where != null) availability.put(id, where);
         Title k = upsert(t);
         if (isKept(k)) wantPrices(k, false, null);

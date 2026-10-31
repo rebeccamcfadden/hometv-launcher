@@ -458,9 +458,16 @@ final class Kit {
         return g;
     }
 
+    private static final Object GUIDE_RIGHT = new Object();
+
+    /** The right-hand hint of a {@link #guide}, for pages that change it as they go. */
+    static TextView guideRight(View guide) {
+        return guide.findViewWithTag(GUIDE_RIGHT);
+    }
+
     /**
      * {@code .guide}: the hint line at the foot of a page, left and right (18 px, tertiary), at the title-safe
-     * bottom. Laid out for a FrameLayout page (Pages.page).
+     * bottom. Laid out for a FrameLayout page (Pages.page). {@link #guideRight} finds its right-hand hint.
      */
     static View guide(Context ctx, CharSequence left, CharSequence right) {
         FrameLayout g = new FrameLayout(ctx);
@@ -470,6 +477,7 @@ final class Kit {
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL));
         TextView r = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
         r.setText(right);
+        r.setTag(GUIDE_RIGHT);
         g.addView(r, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.CENTER_VERTICAL));
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,

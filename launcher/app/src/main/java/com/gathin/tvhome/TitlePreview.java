@@ -87,6 +87,20 @@ final class TitlePreview extends Screen {
     private ViewGroup episodeBox;
     private LinearLayout episodeStrip;
 
+    // 06-states A: the preview while its details load, and the error a tab shows when they failed.
+    /** The plain gradient in the art's place until the details are in. */
+    private final View artLoading;
+    private View trailer;
+    /** The other actions' shapes while the preview loads: two circles and a pill. */
+    private final List<View> actionSkeletons = new ArrayList<>();
+    /** Whether the header shows its skeletons now; once the first load has settled it never does again. */
+    private boolean headerLoading;
+    private boolean headerSettled;
+    /** What the tab showing was drawn as: its content, its skeleton or the error box. */
+    private CatalogState.Tab drawnState = CatalogState.Tab.READY;
+    /** Kept in a field: the catalogue holds its listeners weakly. */
+    private final Runnable onCatalog;
+
     /** Opening a preview records the title in the household's Recently viewed. */
     static TitlePreview create(Context ctx, Router router, Title t) {
         router.data().household.pushViewed(t.id);
@@ -121,6 +135,12 @@ final class TitlePreview extends Screen {
         root.addView(popup, plp);
 
         art = new ImageView(ctx);
+        // While the details load, a plain gradient holds the art's place (06-states A); the art draws over it.
+        artLoading = new View(ctx);
+        artLoading.setBackground(StateUi.artGradient());
+        artLoading.setVisibility(t.detailed ? View.GONE : View.VISIBLE);
+        popup.addView(artLoading, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
         popup.addView(art, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         Art.into(art, t.art, Ui.px(WIDTH), Ui.px(HEIGHT));
@@ -129,6 +149,7 @@ final class TitlePreview extends Screen {
 
         watch = Kit.button(ctx, PreviewRules.watchLabel(t, offer, subscribed, data.table), R.drawable.ic_ui_play,
                 Kit.PRIMARY, false, G_ACTIONS, KEY_WATCH, true, v -> watch());
+        paintWatch();
 
         tabs.add(Tab.OVERVIEW);
         if (!t.isMovie()) tabs.add(Tab.EPISODES);
@@ -177,6 +198,15 @@ final class TitlePreview extends Screen {
         // A title from a search or a list is a summary: its details fill the preview in as they arrive.
         if (!t.detailed) data.catalog.details(t, this::apply);
         else askPrices();
+        refreshState();
+        // The details failing, or loading again once the network is back (MainActivity retries what failed), change
+        // the header and the tab showing in place (06-states A).
+        onCatalog = () -> {
+            Title k = data.catalog.get(this.t.id);
+            if (k != null && k.detailed && !this.t.detailed) apply(k);
+            else refreshState();
+        };
+        data.catalog.addListener(onCatalog);
     }
 
     /**
@@ -207,7 +237,13 @@ final class TitlePreview extends Screen {
         detailsBox.removeAllViews();
         detailsBox.addView(details());
         Art.into(art, t.art, Ui.px(WIDTH), Ui.px(HEIGHT));
-        Kit.setLabel(watch, PreviewRules.watchLabel(t, offer, subscribed, data.table));
+        paintWatch();
+        // 06-states A: the header's skeletons go, and a tab that showed its skeleton or an error is drawn again.
+        refreshHeader();
+        if (drawnState != tabState(active)) {
+            redrawTab();
+            return;
+        }
         if (active == Tab.EPISODES && !seasonsChanged) {
             if (arrived != 0 && arrived != season) return;
             paintEpisodes(false);
@@ -230,6 +266,146 @@ final class TitlePreview extends Screen {
         active = null;
         setTab(tab);
         if (router.shell().top() == this) router.shell().refocus();
+    }
+
+    // ---- Loading and errors (06-states A) ---------------------------------------------------------------------------
+
+    /** The header's skeletons and the tab showing, brought up to date with what the catalogue says of the title. */
+    private void refreshState() {
+        refreshHeader();
+        if (active != null && drawnState != tabState(active)) redrawTab();
+    }
+
+    /**
+     * While the preview first loads, the title and Watch are real (known from the card that opened it), and the
+     * details row, the other actions and the art are placeholders. A later reload (Retry, back online) leaves the
+     * header as it is: only the tab shows its skeleton.
+     */
+    private void refreshHeader() {
+        boolean loading = !headerSettled
+                && CatalogState.headerLoading(data.catalog.isRemote(), t.detailed, data.catalog.pending(t.id));
+        if (!loading) headerSettled = true;
+        artLoading.setVisibility(t.detailed ? View.GONE : View.VISIBLE);
+        if (loading == headerLoading) return;
+        headerLoading = loading;
+        for (Toggle toggle : toggles) toggle.button.setVisibility(loading ? View.GONE : View.VISIBLE);
+        trailer.setVisibility(loading ? View.GONE : View.VISIBLE);
+        for (View s : actionSkeletons) s.setVisibility(loading ? View.VISIBLE : View.GONE);
+        detailsBox.removeAllViews();
+        detailsBox.addView(details());
+    }
+
+    private CatalogState.Tab tabState(Tab tab) {
+        boolean needsDetails = tab != Tab.MORE;
+        return CatalogState.tab(data.catalog.isRemote(), t.detailed, data.catalog.pending(t.id),
+                data.catalog.failed(t.id), needsDetails);
+    }
+
+    /** Whether the title's availability is still unknown, so Watch shows only its play icon. */
+    private boolean watchBlank() {
+        return CatalogState.watchBlank(data.catalog.isRemote(), t.detailed, !t.offers.isEmpty());
+    }
+
+    /** Watch's label, or only its play icon while the availability isn't in (rather than "Not on your services"). */
+    private void paintWatch() {
+        Kit.setLabel(watch, PreviewRules.watchLabel(t, offer, subscribed, data.table));
+        StateUi.blank(watch, watchBlank(), ctx.getString(R.string.states_watch_unknown));
+    }
+
+    /**
+     * Draws the tab showing again for a new state. Focus stays where it was; if it was on something in the tab that
+     * went (Retry), it moves to the tab itself, something real.
+     */
+    private void redrawTab() {
+        Shell shell = router.shell();
+        View focused = shell.focused();
+        boolean inContent = focused != null && Focus.isInside(content, focused);
+        Tab tab = active;
+        active = null;
+        setTab(tab);
+        if (shell.top() != this) return;
+        if (inContent && !focused.isAttachedToWindow()) shell.focus(tabViews.get(tabs.indexOf(tab)));
+        else shell.refocus();
+    }
+
+    /** Retry: focus waits on the tab while it loads again (its skeleton), then its content or the error again. */
+    private void retry(Tab tab) {
+        router.shell().focus(tabViews.get(tabs.indexOf(tab)));
+        reload();
+    }
+
+    /** Asks for the title's details again; the tab showing turns to its skeleton while they come. */
+    private void reload() {
+        data.catalog.details(t, this::apply);
+        if (active != null && drawnState != tabState(active)) redrawTab();
+    }
+
+    /** preview.ts SKELETONS: each tab's shape while it loads; nothing in it is focusable, so focus stays on the tabs. */
+    private View skeleton(Tab tab) {
+        List<View> items = new ArrayList<>();
+        switch (tab) {
+            case EPISODES: {
+                LinearLayout wrap = new LinearLayout(ctx);
+                wrap.setOrientation(LinearLayout.HORIZONTAL);
+                LinearLayout seasons = new LinearLayout(ctx);
+                seasons.setOrientation(LinearLayout.VERTICAL);
+                for (int i = 0; i < 2; i++) {
+                    View chip = StateUi.sk(ctx, 168, 54, Ui.RADIUS_PILL);
+                    ((LinearLayout.LayoutParams) chip.getLayoutParams()).topMargin = i == 0 ? 0 : Ui.px(10);
+                    seasons.addView(chip);
+                }
+                wrap.addView(seasons, new LinearLayout.LayoutParams(Ui.px(180), ViewGroup.LayoutParams.WRAP_CONTENT));
+                for (int i = 0; i < 4; i++) items.add(StateUi.episodeSkeleton(ctx));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                lp.leftMargin = Ui.px(28);
+                wrap.addView(skeletonRow(items), lp);
+                wrap.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
+                return wrap;
+            }
+            case WHERE:
+                for (int i = 0; i < 3; i++) items.add(StateUi.serviceSkeleton(ctx));
+                break;
+            case CAST:
+                for (int i = 0; i < 6; i++) items.add(StateUi.personSkeleton(ctx));
+                break;
+            case MORE:
+                for (int i = 0; i < 5; i++) items.add(StateUi.smallCardSkeleton(ctx));
+                break;
+            default:
+                return StateUi.overviewSkeleton(ctx);
+        }
+        View row = skeletonRow(items);
+        row.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        return row;
+    }
+
+    /** Skeleton items 20 apart in a row, as .pv-row lays out the real ones. */
+    private LinearLayout skeletonRow(List<View> items) {
+        LinearLayout strip = new LinearLayout(ctx);
+        strip.setOrientation(LinearLayout.HORIZONTAL);
+        for (View item : items) {
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(item.getLayoutParams());
+            lp.leftMargin = strip.getChildCount() == 0 ? 0 : Ui.px(20);
+            strip.addView(item, lp);
+        }
+        return strip;
+    }
+
+    /**
+     * .inline-err, inside the failing tab only: "Couldn't load where to watch" (Overview: "Couldn't load details"),
+     * that TMDB didn't answer, and Retry. The rest of the preview is what the catalogue had saved, or what the card
+     * that opened it knew.
+     */
+    private View tabError(Tab tab) {
+        String title = tab == Tab.OVERVIEW ? ctx.getString(R.string.states_overview_error)
+                : ctx.getString(R.string.states_tab_error,
+                        ctx.getString(tabLabel(tab)).toLowerCase(java.util.Locale.getDefault()));
+        View retry = Kit.button(ctx, ctx.getString(R.string.states_retry), R.drawable.ic_state_retry, Kit.NORMAL,
+                false, null, "retry-" + tab.name(), false, v -> retry(tab));
+        return StateUi.errorBox(ctx, title, ctx.getString(R.string.states_tab_error_note), retry);
     }
 
     @Override
@@ -291,8 +467,15 @@ final class TitlePreview extends Screen {
 
     // ---- Actions --------------------------------------------------------------------------------------------------
 
-    /** Included (or free): open the service. Paid: the rent/buy dialog for that store. None: the Router's toast. */
+    /**
+     * Included (or free): open the service. Paid: the rent/buy dialog for that store. None: the Router's toast. Blank
+     * (the availability isn't in): nothing while it loads, and after a failure the details are asked for again.
+     */
     private void watch() {
+        if (watchBlank()) {
+            if (data.catalog.failed(t.id)) reload();
+            return;
+        }
         if (offer != null && !data.isIncluded(offer)) {
             ServiceOffers s = PreviewRules.forService(t, offer.service, subscribed);
             if (s != null) {
@@ -388,7 +571,12 @@ final class TitlePreview extends Screen {
                 R.string.preview_favorite, R.string.preview_added_favorite, R.string.preview_removed_favorite,
                 h::isFavorite, h::toggleFavorite));
         View trailer = Kit.button(ctx, ctx.getString(R.string.preview_trailer), R.drawable.ic_ui_trailer, Kit.NORMAL,
-                false, G_ACTIONS, "trailer", false, v -> router.openTrailer(t));
+                false, G_ACTIONS, "trailer", false, v -> {
+                    // 06-states A: offline, the trailer says it needs the internet rather than open YouTube.
+                    if (StateUi.online(ctx)) router.openTrailer(t);
+                    else router.toast(ctx.getString(R.string.states_trailer_offline));
+                });
+        this.trailer = trailer;
 
         LinearLayout actions = Kit.unclip(new LinearLayout(ctx));
         actions.setOrientation(LinearLayout.HORIZONTAL);
@@ -397,9 +585,16 @@ final class TitlePreview extends Screen {
         buttons.add(watch);
         for (Toggle toggle : toggles) buttons.add(toggle.button);
         buttons.add(trailer);
+        // While the preview loads, the actions after Watch are two circles and a pill (preview.ts, loading).
+        actionSkeletons.add(StateUi.sk(ctx, 66, 66, 33));
+        actionSkeletons.add(StateUi.sk(ctx, 66, 66, 33));
+        actionSkeletons.add(StateUi.sk(ctx, 150, 66, 33));
+        for (View s : actionSkeletons) s.setVisibility(View.GONE);
+        buttons.addAll(actionSkeletons);
         for (View b : buttons) {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (actionSkeletons.contains(b)) lp = new LinearLayout.LayoutParams(b.getLayoutParams());
             lp.leftMargin = actions.getChildCount() == 0 ? 0 : Ui.px(12);
             actions.addView(b, lp);
         }
@@ -415,6 +610,16 @@ final class TitlePreview extends Screen {
         LinearLayout row = new LinearLayout(ctx);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
+        if (headerLoading) {
+            // 06-states A: the details row's shape while the preview loads.
+            float[] widths = {60, 140, 80};
+            for (float w : widths) {
+                View bar = StateUi.sk(ctx, w, 22);
+                ((LinearLayout.LayoutParams) bar.getLayoutParams()).leftMargin = row.getChildCount() == 0 ? 0 : Ui.px(12);
+                row.addView(bar);
+            }
+            return row;
+        }
         List<String> parts = new ArrayList<>();
         if (t.year > 0) parts.add(String.valueOf(t.year));
         if (!t.genres.isEmpty()) parts.add(TextUtils.join(", ", t.genres));
@@ -521,6 +726,10 @@ final class TitlePreview extends Screen {
 
     /** The tab's content, with FrameLayout params for the content area. */
     private View render(Tab tab) {
+        // 06-states A: the tab's skeleton while the title loads, or the error box when its data failed.
+        drawnState = tabState(tab);
+        if (drawnState == CatalogState.Tab.LOADING) return skeleton(tab);
+        if (drawnState == CatalogState.Tab.ERROR) return tabError(tab);
         switch (tab) {
             case EPISODES:
                 return episodes();

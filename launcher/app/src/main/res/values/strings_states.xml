@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- V2 design 06-states A: loading, offline and error states (design_preview/README.md, Loading, offline and errors;
+     the Offline bullets under Home and Search). The pieces of "today 19:52" are chosen in StateWords. -->
+<resources>
+    <!-- When a saved copy was made: "today 19:52", "yesterday 19:52", "on 28 Oct". -->
+    <string name="states_saved_today">today %1$s</string>
+    <string name="states_saved_yesterday">yesterday %1$s</string>
+    <string name="states_saved_earlier">on %1$s</string>
+
+    <string name="states_offline">Offline</string>
+    <string name="states_wifi_settings">Wi-Fi settings</string>
+    <string name="states_try_again">Try again</string>
+    <string name="states_trying">Trying…</string>
+    <string name="states_still_offline">Still offline. Check the Wi-Fi.</string>
+    <string name="states_nothing_saved">You’re offline, and nothing is saved yet</string>
+
+    <!-- Movies and TV Shows. -->
+    <string name="states_loading_details">Loading artwork and details…</string>
+    <string name="states_lists_saved">Offline · showing your lists as saved %1$s</string>
+    <string name="states_prices_old">%1$s · prices may be out of date</string>
+    <plurals name="states_movies">
+        <item quantity="one">%1$d movie</item>
+        <item quantity="other">%1$d movies</item>
+    </plurals>
+    <plurals name="states_movies_of">
+        <item quantity="one">%2$d of %1$d movie</item>
+        <item quantity="other">%2$d of %1$d movies</item>
+    </plurals>
+    <plurals name="states_shows">
+        <item quantity="one">%1$d show</item>
+        <item quantity="other">%1$d shows</item>
+    </plurals>
+    <plurals name="states_shows_of">
+        <item quantity="one">%2$d of %1$d show</item>
+        <item quantity="other">%2$d of %1$d shows</item>
+    </plurals>
+    <string name="states_lists_note">%1$s needs the internet once to fetch your lists. Apps, inputs and the clock on Home work without it.</string>
+
+    <!-- The title preview. -->
+    <string name="states_tab_error">Couldn’t load %1$s</string>
+    <!-- The Overview tab's box: the details are what it shows. -->
+    <string name="states_overview_error">Couldn’t load details</string>
+    <string name="states_tab_error_note">TMDB didn’t answer. The rest of the page is from the saved copy.</string>
+    <string name="states_retry">Retry</string>
+    <!-- What TalkBack says of the Watch button while it shows only its icon, before the title's availability is in. -->
+    <string name="states_watch_unknown">Watch, where to watch isn’t loaded yet</string>
+    <string name="states_trailer_offline">Offline: the trailer needs the internet</string>
+
+    <!-- Search. -->
+    <string name="states_search_saved_only">Offline · saved titles only</string>
+    <plurals name="states_search_saved_count">
+        <item quantity="one">%1$d result from saved titles</item>
+        <item quantity="other">%1$d results from saved titles</item>
+    </plurals>
+    <string name="states_search_no_match">No saved titles match “%1$s”</string>
+    <string name="states_search_no_match_note">Offline, Search looks only at the titles saved on this TV. The full catalogue needs the internet.</string>
+    <string name="states_search_nothing_note">Search needs the internet once to fetch the catalogue. Recent searches still work.</string>
+
+    <!-- Home's weather. -->
+    <string name="states_weather_updated">Offline · updated %1$s</string>
+    <string name="states_weather_unavailable">Weather unavailable offline</string>
+</resources>

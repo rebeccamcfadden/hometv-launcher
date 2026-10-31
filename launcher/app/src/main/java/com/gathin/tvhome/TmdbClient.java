@@ -84,6 +84,11 @@ final class TmdbClient {
         }
     }
 
+    /** When the copy of a v3 path's answer on disk was fetched from TMDB, in epoch milliseconds; 0 for none. */
+    long savedAt(String path) {
+        return json.file(path).lastModified();
+    }
+
     /** An image's bytes: from the disk cache, else image.tmdb.org; a week old is still used when offline. */
     byte[] image(String url) throws IOException {
         Object lock = locks.computeIfAbsent(url, k -> new Object());

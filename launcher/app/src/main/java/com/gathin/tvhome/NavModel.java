@@ -15,8 +15,8 @@ final class NavModel {
     boolean inputsShown;
     boolean networkShown = true;
     int networkIcon = R.drawable.ic_ui_wifi;
-    /** Android reached the internet (a validated network). The icon stays the same when only this changes, but Home
-     *  fetches the weather again when it comes back. */
+    /** Android reached the internet (a validated network). Without it the icon is crossed out (06-states A), and
+     *  Home fetches the weather again when it comes back. */
     boolean internet;
     private final List<Listener> listeners = new ArrayList<>();
 
