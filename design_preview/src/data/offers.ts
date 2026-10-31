@@ -1,6 +1,6 @@
 import type { Offer, OfferType, Quality, ServiceId, Title } from '../types';
 import { settings } from '../core/settings';
-import { DEFAULT_PRICE_SOURCE, PICK_SERVICES, PRICE_SOURCE, SERVICES } from './services';
+import { DEFAULT_PRICE_SOURCE, PICK_SERVICES, PICK_STORES, PRICE_SOURCE, SERVICES } from './services';
 
 // Offer rules. Prices are Swedish kronor, as the launcher's real catalogue has them (V2 Phase 2): a rent or buy
 // offer keeps a price per picture quality, and a store no price source priced has none at all.
@@ -151,7 +151,20 @@ export function offersByService(t: Title): ServiceOffers[] {
   const inc = all.filter(watchable);
   const stores = all.filter((s) => !watchable(s)).map((s, i) => ({ s, i, r: storeRank(s) }));
   stores.sort((a, b) => a.r[0] - b.r[0] || a.r[1] - b.r[1] || a.i - b.i);
-  return [...inc, ...stores.map((x) => x.s)];
+  const sorted = stores.map((x) => x.s);
+  // A tie on the deciding price goes to a store whose app is on the TV (decided 2026-10-31).
+  const lead = sorted[0];
+  if (lead && storeRank(lead)[0] < 2 && !hasApp(lead.service)) {
+    const [r, p] = storeRank(lead);
+    const tied = sorted.findIndex((s) => storeRank(s)[0] === r && storeRank(s)[1] === p && hasApp(s.service));
+    if (tied > 0) sorted.unshift(...sorted.splice(tied, 1));
+  }
+  return [...inc, ...sorted];
+}
+
+/** Whether the store's (or service's) app is installed on the mock TV. */
+function hasApp(id: ServiceId): boolean {
+  return (PICK_STORES.find((s) => s.id === id) ?? PICK_SERVICES.find((s) => s.id === id))?.installed ?? false;
 }
 
 /**
@@ -159,13 +172,9 @@ export function offersByService(t: Title): ServiceOffers[] {
  * stores have a price. Undefined otherwise.
  */
 export function cheapestStore(list: ServiceOffers[]): ServiceId | undefined {
+  // offersByService's order: the first priced store is the cheapest (an installed one of equals).
   const priced = list.filter((s) => !watchable(s) && storeRank(s)[0] < 2);
-  if (priced.length < 2) return undefined;
-  return priced.reduce((a, b) => {
-    const [ra, pa] = storeRank(a);
-    const [rb, pb] = storeRank(b);
-    return rb < ra || (rb === ra && pb < pa) ? b : a;
-  }).service;
+  return priced.length < 2 ? undefined : priced[0].service;
 }
 
 /** A store card's line for one quality, or for several that cost the same ("HD · 4K"). */

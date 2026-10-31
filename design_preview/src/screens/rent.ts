@@ -90,16 +90,20 @@ export function rentDialog(t: Title, s: ServiceOffers): Screen {
     ) as [OfferType, Offer][];
     replace(prices, shown.map(([type, o], i) => priceButton(type, o, i === 0)));
 
-    // A cheaper rental elsewhere, as the design's "SF Anytime has it for 39 kr (HD)."
+    // A cheaper offer elsewhere, of the type that decided Cheapest (rent against rent, buy against buy; decided
+    // 2026-10-31): "SF Anytime has it for 39 kr (HD)." or "… for 129 kr to buy (HD)."
     const all = offersByService(t);
     const best = cheapestStore(all);
     const bestOffers = all.find((x) => x.service === best);
-    const here = s.rent && cheapest(s.rent);
-    const there = bestOffers?.rent && cheapest(bestOffers.rent);
-    const q = bestOffers?.rent?.prices && (Object.keys(bestOffers.rent.prices) as Quality[]).find((x) => bestOffers.rent?.prices?.[x] === there);
+    const byRent = bestOffers?.rent !== undefined && cheapest(bestOffers.rent) !== undefined;
+    const theirs = byRent ? bestOffers?.rent : bestOffers?.buy;
+    const ours = byRent ? s.rent : s.buy;
+    const here = ours && cheapest(ours);
+    const there = theirs && cheapest(theirs);
+    const q = theirs?.prices && (Object.keys(theirs.prices) as Quality[]).find((x) => theirs.prices?.[x] === there);
     const cheaper =
       best && best !== s.service && there !== undefined && (here === undefined || there < here)
-        ? ` ${SERVICES[best].name} has it for ${kr(there)}${q ? ` (${q})` : ''}.`
+        ? ` ${SERVICES[best].name} has it for ${kr(there)}${byRent ? '' : ' to buy'}${q ? ` (${q})` : ''}.`
         : '';
     replace(detail, `Payment finishes in the ${app_} app.${cheaper}`);
   };
