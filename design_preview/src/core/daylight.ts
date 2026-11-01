@@ -21,44 +21,48 @@ interface Edge {
   starts: Phase;
 }
 
-/** Sunrise and sunset (ms) for the solar day around a moment; 'up' or 'down' when the sun doesn't cross the horizon. */
-function sun(noonMs: number): [number, number] | 'up' | 'down' {
-  const julian = noonMs / DAY_MS + 2440587.5;
-  const n = Math.ceil(julian - 2451545.0 + 0.0008 - 0.5);
+const cycleIndex = (ms: number) => ms / DAY_MS + 2440587.5 - 2451545.0 + 0.0008 + LON / 360;
+
+/** Solar cycle n at the place: transit, sunrise and sunset (ms); or the transit and 'up' or 'down' (as DayPhase.cycle). */
+function cycle(n: number): { transit: number; rise?: number; set?: number; polar?: 'up' | 'down' } {
   const jStar = n - LON / 360;
   const m = norm(357.5291 + 0.98560028 * jStar);
   const mr = rad(m);
   const c = 1.9148 * Math.sin(mr) + 0.02 * Math.sin(2 * mr) + 0.0003 * Math.sin(3 * mr);
   const lambda = rad(norm(m + c + 180 + 102.9372));
-  const transit = 2451545.0 + jStar + 0.0053 * Math.sin(mr) - 0.0069 * Math.sin(2 * lambda);
+  const transitJ = 2451545.0 + jStar + 0.0053 * Math.sin(mr) - 0.0069 * Math.sin(2 * lambda);
+  const ms = (j: number) => (j - 2440587.5) * DAY_MS;
   const sinDec = Math.sin(lambda) * Math.sin(rad(23.4397));
   const cosDec = Math.cos(Math.asin(sinDec));
   const cosW = (Math.sin(rad(-0.833)) - Math.sin(rad(LAT)) * sinDec) / (Math.cos(rad(LAT)) * cosDec);
-  if (cosW < -1) return 'up';
-  if (cosW > 1) return 'down';
+  if (cosW < -1) return { transit: ms(transitJ), polar: 'up' };
+  if (cosW > 1) return { transit: ms(transitJ), polar: 'down' };
   const w = Math.acos(cosW) / (2 * Math.PI);
-  const ms = (j: number) => (j - 2440587.5) * DAY_MS;
-  return [ms(transit - w), ms(transit + w)];
+  return { transit: ms(transitJ), rise: ms(transitJ - w), set: ms(transitJ + w) };
 }
 
 /**
- * The edges of the dates from the day before `d` to two days after, in time order. A polar date is one edge at its
- * midnight, and no other date's edge falls inside it; a sunset that runs into the next dawn hands straight over to it
- * halfway between the two (as DayPhase.handOver).
+ * The edges from the day before `d` to two days after, in time order. They come from every solar cycle at the place
+ * over that span (counted in UTC), so the browser's time zone and its daylight-saving changes never skip or repeat
+ * one. A polar cycle is one edge at the midnight of the local date it falls on, and no other edge falls inside that
+ * date; a sunset that runs into the next dawn hands straight over to it halfway between the two (as DayPhase.edges).
  */
 function timeline(d: Date): Edge[] {
   const out: Edge[] = [];
   const polar: [number, number][] = [];
-  for (let i = -1; i <= 2; i++) {
-    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i).getTime();
-    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i + 1).getTime();
-    const s = sun(new Date(d.getFullYear(), d.getMonth(), d.getDate() + i, 12).getTime());
-    if (s === 'up' || s === 'down') {
-      polar.push([start, end]);
-      out.push({ at: start, starts: s === 'up' ? 'day' : 'night' });
+  const from = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1).getTime();
+  const to = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 3).getTime();
+  for (let n = Math.floor(cycleIndex(from)) - 1; n <= Math.ceil(cycleIndex(to)) + 1; n++) {
+    const c = cycle(n);
+    if (c.polar) {
+      const t = new Date(c.transit);
+      const start = new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
+      if (polar.some(([a]) => a === start)) continue;
+      polar.push([start, new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1).getTime()]);
+      out.push({ at: start, starts: c.polar === 'up' ? 'day' : 'night' });
       continue;
     }
-    const [rise, set] = s;
+    const rise = c.rise as number, set = c.set as number;
     const e = [rise - 40 * MIN, rise + 50 * MIN, set - 50 * MIN, set + 40 * MIN];
     if (e[1] > e[2]) e[1] = e[2] = (rise + set) / 2;
     PHASES.forEach((p, k) => out.push({ at: e[k], starts: p }));

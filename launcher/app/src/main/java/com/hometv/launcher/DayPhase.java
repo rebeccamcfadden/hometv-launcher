@@ -66,21 +66,37 @@ enum DayPhase {
     }
 
     /**
-     * The edges of a run of dates, in time order. A polar date is one edge at its midnight, and no other date's edge
-     * falls inside it: a sunset spilling past midnight into a polar day is dropped, the sun no longer sets.
+     * The edges of a run of dates, in time order. They come from every solar cycle at the place over the run (one per
+     * transit, counted in UTC), so the TV's time zone and its daylight-saving changes never skip or repeat one, however
+     * far the zone is from the place. A polar cycle is one edge at the midnight of the TV's date it falls on, and no
+     * other edge falls inside that date: a sunset spilling past midnight into a polar day is dropped, the sun no longer
+     * sets. Without a place, each date has the fixed times.
      */
     static List<Edge> edges(LocalDate from, int days, ZoneId zone, double latitude, double longitude) {
         List<Edge> out = new ArrayList<>();
         List<Instant[]> polar = new ArrayList<>();
-        for (int i = 0; i < days; i++) {
-            LocalDate date = from.plusDays(i);
-            Day d = day(date, zone, latitude, longitude);
-            if (d.always != null) {
-                Instant start = date.atStartOfDay(zone).toInstant();
-                polar.add(new Instant[] {start, date.plusDays(1).atStartOfDay(zone).toInstant()});
-                out.add(new Edge(start, d.always));
-            } else {
+        if (!WeatherPlace.valid(latitude, longitude)) {
+            for (int i = 0; i < days; i++) {
+                Day d = day(from.plusDays(i), zone, latitude, longitude);
                 for (int k = 0; k < 4; k++) out.add(new Edge(d.edges[k], values()[k]));
+            }
+        } else {
+            double first = cycleIndex(julian(from.atStartOfDay(zone).toInstant()), longitude);
+            double last = cycleIndex(julian(from.plusDays(days).atStartOfDay(zone).toInstant()), longitude);
+            for (double n = Math.floor(first) - 1; n <= Math.ceil(last) + 1; n++) {
+                double[] c = cycle(n, latitude, longitude);
+                if (c.length == 2) {
+                    LocalDate date = julianToInstant(c[0]).atZone(zone).toLocalDate();
+                    Instant start = date.atStartOfDay(zone).toInstant();
+                    boolean seen = false;
+                    for (Instant[] span : polar) seen |= span[0].equals(start);
+                    if (seen) continue;
+                    polar.add(new Instant[] {start, date.plusDays(1).atStartOfDay(zone).toInstant()});
+                    out.add(new Edge(start, c[1] > 0 ? DAY : NIGHT));
+                } else {
+                    Instant[] e = windows(julianToInstant(c[1]), julianToInstant(c[2]));
+                    for (int k = 0; k < 4; k++) out.add(new Edge(e[k], values()[k]));
+                }
             }
         }
         out.removeIf(e -> {
@@ -134,7 +150,11 @@ enum DayPhase {
         double noon = date.atTime(12, 0).atZone(zone).toInstant().toEpochMilli() / 86_400_000.0 + 2440587.5;
         double[] riseSet = sun(noon, latitude, longitude);
         if (riseSet.length == 1) return new Day(null, riseSet[0] > 0 ? DAY : NIGHT);
-        Instant rise = julianToInstant(riseSet[0]), set = julianToInstant(riseSet[1]);
+        return new Day(windows(julianToInstant(riseSet[0]), julianToInstant(riseSet[1])), null);
+    }
+
+    /** Dawn, day, sunset and night starts around a sunrise and a sunset. */
+    private static Instant[] windows(Instant rise, Instant set) {
         Instant[] e = {
                 rise.minusSeconds(DAWN_BEFORE_MIN * 60), rise.plusSeconds(DAWN_AFTER_MIN * 60),
                 set.minusSeconds(SUNSET_BEFORE_MIN * 60), set.plusSeconds(SUNSET_AFTER_MIN * 60)};
@@ -144,7 +164,7 @@ enum DayPhase {
             e[1] = mid;
             e[2] = mid;
         }
-        return new Day(e, null);
+        return e;
     }
 
     /**
@@ -152,7 +172,26 @@ enum DayPhase {
      * stays up all day and negative when it stays down.
      */
     static double[] sun(double julian, double latitude, double longitude) {
-        double n = Math.ceil(julian - 2451545.0 + 0.0008 - 0.5);
+        // The solar cycle whose transit is nearest the moment, at this longitude: rounding without the longitude
+        // picks the neighbouring cycle on some days far from Greenwich (Auckland on 4 April 2026).
+        double[] c = cycle(Math.round(cycleIndex(julian, longitude)), latitude, longitude);
+        return c.length == 2 ? new double[] {c[1]} : new double[] {c[1], c[2]};
+    }
+
+    /** Solar cycle number n (a whole number) of a Julian date, at a longitude: transits fall at whole values. */
+    private static double cycleIndex(double julian, double longitude) {
+        return julian - 2451545.0 + 0.0008 + longitude / 360.0;
+    }
+
+    private static double julian(Instant t) {
+        return t.toEpochMilli() / 86_400_000.0 + 2440587.5;
+    }
+
+    /**
+     * Solar cycle n at a place: {transit, sunrise, sunset} as Julian dates, or {transit, ±1} when the sun stays up
+     * (+1) or down (−1) through it.
+     */
+    static double[] cycle(double n, double latitude, double longitude) {
         double jStar = n - longitude / 360.0;
         double m = norm(357.5291 + 0.98560028 * jStar);
         double mr = Math.toRadians(m);
@@ -163,10 +202,10 @@ enum DayPhase {
         double cosDec = Math.cos(Math.asin(sinDec));
         double phi = Math.toRadians(latitude);
         double cosW = (Math.sin(Math.toRadians(-0.833)) - Math.sin(phi) * sinDec) / (Math.cos(phi) * cosDec);
-        if (cosW < -1) return new double[] {1};
-        if (cosW > 1) return new double[] {-1};
+        if (cosW < -1) return new double[] {transit, 1};
+        if (cosW > 1) return new double[] {transit, -1};
         double w = Math.toDegrees(Math.acos(cosW)) / 360.0;
-        return new double[] {transit - w, transit + w};
+        return new double[] {transit, transit - w, transit + w};
     }
 
     private static double norm(double deg) {

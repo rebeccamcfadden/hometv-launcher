@@ -226,7 +226,8 @@ final class Backdrops {
         SHOW.execute(() -> {
             DayPhase now = ThemeStore.phase(activity, ZonedDateTime.now());
             main.post(() -> {
-                if (key == k && !activity.isDestroyed()) refresh(now);
+                // Home may have stopped, and release() dropped the picture, while the phase was worked out.
+                if (key == k && visible && !activity.isDestroyed()) refresh(now);
             });
         });
     }

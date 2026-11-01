@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -137,6 +138,51 @@ public class DayPhaseTest {
 
     private static DayPhase next(DayPhase p) {
         return DayPhase.values()[(p.ordinal() + 1) % 4];
+    }
+
+    @Test
+    public void noonIsDayEveryDayAllRoundTheWorld() {
+        // Each place's own solar cycle: rounding without the longitude picked the neighbouring one on some days far
+        // from Greenwich, such as Auckland on 4 April 2026, when New Zealand's clocks go back.
+        Object[][] places = {
+                {"Pacific/Auckland", -36.85, 174.76}, {"Pacific/Kiritimati", 1.87, -157.4},
+                {"Pacific/Apia", -13.83, -171.76}, {"Pacific/Honolulu", 21.31, -157.86},
+                {"America/Los_Angeles", 34.05, -118.24}, {"America/New_York", 40.71, -74.01},
+                {"America/New_York", NEW_YORK_LAT, NEW_YORK_LON}, {"Asia/Tokyo", 35.68, 139.69}};
+        for (Object[] place : places) {
+            ZoneId zone = ZoneId.of((String) place[0]);
+            double lat = (Double) place[1], lon = (Double) place[2];
+            for (LocalDate d = LocalDate.of(2026, 1, 1); d.getYear() == 2026; d = d.plusDays(1)) {
+                ZonedDateTime noon = d.atTime(13, 0).atZone(zone);
+                assertEquals(place[0] + " " + d, DayPhase.DAY, DayPhase.at(noon, lat, lon));
+            }
+        }
+        assertEquals(DayPhase.DAY, DayPhase.at(at(2026, 4, 4, 12, 0, ZoneId.of("Pacific/Auckland")), -36.85, 174.76));
+    }
+
+    @Test
+    public void theTvsZoneNeverSkipsACycleAtThePlace() {
+        // The TV in Pacific/Chatham (UTC+12:45, +13:45 in summer), the Weather place in New York: counting cycles by the
+        // TV's local noon skipped one across Chatham's daylight-saving change, and New York's noon read NIGHT.
+        ZoneId chatham = ZoneId.of("Pacific/Chatham");
+        ZonedDateTime newYorkNoon = Instant.parse("2026-04-04T10:00:00Z").atZone(chatham);
+        assertEquals(DayPhase.DAY, DayPhase.at(newYorkNoon, NEW_YORK_LAT, NEW_YORK_LON));
+        for (String tv : new String[] {"Pacific/Chatham", "Pacific/Kiritimati", "Pacific/Apia", "America/Los_Angeles"}) {
+            ZoneId zone = ZoneId.of(tv);
+            for (LocalDate d = LocalDate.of(2026, 1, 1); d.getYear() == 2026; d = d.plusDays(1)) {
+                ZonedDateTime noon = d.atTime(13, 0).atZone(SWEDEN).withZoneSameInstant(zone);
+                assertEquals(tv + " " + d, DayPhase.DAY, DayPhase.at(noon, NEW_YORK_LAT, NEW_YORK_LON));
+            }
+            // Across Chatham's change (5 April) and New York's (29 March): every phase holds until nextChange.
+            ZonedDateTime t = at(2026, 3, 27, 0, 0, zone);
+            while (t.isBefore(at(2026, 4, 8, 0, 0, zone))) {
+                DayPhase p = DayPhase.at(t, NEW_YORK_LAT, NEW_YORK_LON);
+                ZonedDateTime n = DayPhase.nextChange(t, NEW_YORK_LAT, NEW_YORK_LON);
+                assertTrue(n.isAfter(t));
+                assertEquals(tv + " " + t, p, DayPhase.at(n.minusSeconds(1), NEW_YORK_LAT, NEW_YORK_LON));
+                t = t.plusMinutes(11);
+            }
+        }
     }
 
     @Test
