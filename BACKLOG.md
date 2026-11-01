@@ -633,6 +633,12 @@ In order, one PR each:
    `tools/` builds, signs and uploads to a GitHub Release (`gh release create`) from the project lead's PC, with no CI
    release workflow: the APK, the installer script and a `SHA256SUMS` file for both. AGENTS.md's "This fork" gets a
    line allowing signed APKs on GitHub Releases, never in the tree and never with keys.
+   **Built:** `tools/release.ps1` and [tools/release.md](tools/release.md). `-NewKey` makes the key once, in
+   `%USERPROFILE%\.hometv`, and never replaces it. Its certificate's SHA-256 is committed as
+   `tools/release-cert.txt`. Each release is a public build (`-PpublicRelease=true`: the committed example settings,
+   no keys, `BuildConfig.PUBLIC_RELEASE`), signed with that key, checked, and drafted with `version.json` beside
+   `SHA256SUMS`. Gradle signs only that build with the release key. Every other build keeps the machine's debug key,
+   so the project lead's TV stays on her debug builds (her choice, 2026-11-01).
 4. **Family installer.** A PowerShell script. Two ways to start it, both from one tagged release, never from `main`:
    the release page's script, downloaded and checked against `SHA256SUMS` first (the first choice), or a one-liner
    pasted during the call (`irm <tagged url> | iex`), for when SmartScreen blocks the download; the one-liner is the

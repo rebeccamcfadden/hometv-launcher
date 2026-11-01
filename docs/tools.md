@@ -24,6 +24,7 @@ tools/theme.sh examples/<your tv>                            # push that TV's co
 | [`tools/b64push.py`](../tools/b64push.py) | Uploads large files such as APKs in base64 chunks and verifies the checksum. |
 | [`tools/relay.py`](../tools/relay.py) | Forwards a local port to the TV's ADB port, for assistants whose sandbox can't reach your network. Listens on this computer only. [Guide](../tools/relay.md). |
 | [`tools/ci-local.ps1`](../tools/ci-local.ps1) | Checks a pull request on your machine and posts `local-ci/*` statuses, which `main` requires: GitHub's CI runs only after a merge, to keep Actions usage low. Windows. |
+| [`tools/release.ps1`](../tools/release.ps1) | Builds a public APK with no keys in it, signs it with the release key and puts it on a draft GitHub Release with `version.json` and `SHA256SUMS`, for family installs. The project lead's PC only; read [release.md](../tools/release.md) first. Windows. |
 | [`tools/disable.sh`](../tools/disable.sh), [`restore.sh`](../tools/restore.sh) | Apply or undo a debloat list, the undo from the state recorded before the change. |
 | [`tools/recovery.py`](../tools/recovery.py) | Writes the record `disable.sh` needs to undo itself, and prints the restore batch. |
 | [`tools/check.py`](../tools/check.py) | Compares the TV with the list that was applied, for what a firmware update undid; `--fix` puts it back. |

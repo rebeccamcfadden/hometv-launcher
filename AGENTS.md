@@ -1,8 +1,8 @@
 # AGENTS.md
 
-Instructions for coding agents (Claude Code, Codex, Gemini CLI, Cursor, Copilot and others) working in
-this repository. People should start with [README.md](README.md) and [CONTRIBUTING.md](CONTRIBUTING.md);
-this file repeats their rules in the form an agent needs, and links to them for the detail.
+Instructions for coding agents working in this repository. People should start with [README.md](README.md) and
+[CONTRIBUTING.md](CONTRIBUTING.md); this file repeats their rules in the form an agent needs, and links to them for
+the detail.
 
 ## This fork
 
@@ -149,7 +149,8 @@ take them back from [upstream](https://github.com/Gathin23/cleanyourtv/tree/main
 
 Never do these in a PR:
 
-- **No prebuilt APKs or binaries** in the repo, not even as CI artifacts. People build from source.
+- **No prebuilt APKs or binaries** in the repo or from CI. Signed APKs go only to this fork's GitHub Releases, made
+  by `tools/release.ps1` on the project lead's PC (`tools/release.md`), never with keys.
 - **No uninstalling.** No `pm uninstall` in a list or a script. `pm hide` or `pm block` only with the matching
   undo written in the list header.
 - **No analytics or telemetry in the launcher.** Cache what the network supplies and never block Home on it. Avoid

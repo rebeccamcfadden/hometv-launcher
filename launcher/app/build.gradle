@@ -4,8 +4,12 @@ plugins {
 
 // The TV's build settings (docs/rework.md): launcher/tv.properties, gitignored, or the committed example while it is
 // missing. Checked here so a typo fails the build instead of giving the TV weather for nowhere.
+//
+// A public release (Family install step 3, tools/release.ps1, -PpublicRelease=true) reads the committed example alone,
+// so the APK carries no keys and no household's place or shortcut, and can be downloaded by anyone; checked below.
+def publicRelease = providers.gradleProperty('publicRelease').getOrElse('false') == 'true'
 def tvPropsFile = rootProject.file('tv.properties')
-if (!tvPropsFile.exists()) tvPropsFile = rootProject.file('tv.properties.example')
+if (publicRelease || !tvPropsFile.exists()) tvPropsFile = rootProject.file('tv.properties.example')
 def tvProps = new Properties()
 // UTF-8, so a weather_city such as Malmö can be written as it is spelled.
 tvPropsFile.withReader('UTF-8') { tvProps.load(it) }
@@ -75,6 +79,41 @@ def noteShortcutUrl = tvProps.getProperty('note_shortcut_url', '').trim()
 if (noteShortcutUrl && !(noteShortcutUrl ==~ /https:\/\/www\.icloud\.com\/shortcuts\/[A-Za-z0-9._:\/\-]{1,160}/)) {
     throw new GradleException("${tvPropsFile.name}: note_shortcut_url must be an https://www.icloud.com/shortcuts/ link")
 }
+if (publicRelease) {
+    // Keys reach a family's TV through its own key page, never inside a public APK; a key in the example is a mistake.
+    if (tmdbToken || watchmodeKey || movieOfTheNightKey || streamingAvailabilityKey || noteShortcutUrl) {
+        throw new GradleException("${tvPropsFile.name}: a public release carries no keys and no shortcut link; " +
+                "remove them from the example")
+    }
+    // Wherever the TV is: its region chooses °C or °F, and the weather place is chosen on the TV (First run).
+    temperatureUnit = ''
+    weatherCity = ''
+}
+
+// Release signing (Family install step 3): tools/release.ps1 passes -PreleaseSigning=<properties file>, kept outside
+// the repo, naming the release keystore (storeFile) and its key (keyAlias). The password comes from the environment
+// (HOMETV_STORE_PASSWORD, and HOMETV_KEY_PASSWORD when the key's differs), never from a file or the command line. Only
+// a public release is signed with it. Every other build, the install scripts' included, keeps this machine's debug
+// key, so it still installs over what is on the TV.
+def releaseSigning = providers.gradleProperty('releaseSigning').getOrNull()
+def releaseKey = null
+if (releaseSigning) {
+    if (!publicRelease) throw new GradleException('releaseSigning: only a public release (-PpublicRelease=true) is signed with the release key')
+    def signingFile = new File(releaseSigning)
+    if (!signingFile.isFile()) throw new GradleException("releaseSigning: ${releaseSigning} is not a file")
+    def signing = new Properties()
+    signingFile.withReader('UTF-8') { signing.load(it) }
+    def storePath = signing.getProperty('storeFile')?.trim()
+    def alias = signing.getProperty('keyAlias')?.trim()
+    if (!storePath || !alias) throw new GradleException("releaseSigning: ${signingFile.name} needs storeFile and keyAlias")
+    def store = new File(storePath)
+    if (!store.isAbsolute()) store = new File(signingFile.parentFile, storePath)
+    if (!store.isFile()) throw new GradleException("releaseSigning: the keystore ${store} is not there")
+    def storePassword = System.getenv('HOMETV_STORE_PASSWORD')
+    if (!storePassword) throw new GradleException('releaseSigning: set HOMETV_STORE_PASSWORD (tools/release.ps1 asks for it)')
+    releaseKey = [store: store, alias: alias, storePassword: storePassword,
+                  keyPassword: System.getenv('HOMETV_KEY_PASSWORD') ?: storePassword]
+}
 
 android {
     namespace 'com.hometv.launcher'
@@ -98,6 +137,20 @@ android {
         buildConfigField 'String', 'STREAMING_AVAILABILITY_KEY', "\"${streamingAvailabilityKey}\""
         buildConfigField 'String', 'THEME_ASSETS_URL', "\"${themeAssetsUrl}\""
         buildConfigField 'String', 'NOTE_SHORTCUT_URL', "\"${noteShortcutUrl}\""
+        // True only in a release build signed with the release key (below): the only APKs that can take an update from
+        // a GitHub Release, so the only ones that may offer one. A public build without the key stays false.
+        buildConfigField 'boolean', 'PUBLIC_RELEASE', 'false'
+    }
+
+    signingConfigs {
+        if (releaseKey) {
+            release {
+                storeFile releaseKey.store
+                storePassword releaseKey.storePassword
+                keyAlias releaseKey.alias
+                keyPassword releaseKey.keyPassword
+            }
+        }
     }
 
     buildFeatures {
@@ -110,8 +163,10 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Sideloaded over ADB, never published: sign with the debug key so it installs over a debug build.
-            signingConfig signingConfigs.debug
+            // Sideloaded over ADB: signed with the debug key so it installs over a debug build, unless tools/release.ps1
+            // signs a public release with the release key (above).
+            signingConfig releaseKey ? signingConfigs.release : signingConfigs.debug
+            buildConfigField 'boolean', 'PUBLIC_RELEASE', (releaseKey != null).toString()
         }
     }
 
