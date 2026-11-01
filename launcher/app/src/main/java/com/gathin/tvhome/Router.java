@@ -12,6 +12,9 @@ interface Router {
     /** The title preview popup (M5). */
     void openTitle(Title t);
 
+    /** The title preview on its More like this tab (F3, the title menu). */
+    void openMoreLike(Title t);
+
     /** The person page (M5), with what the catalogue knows they are in. */
     void openPerson(Person p);
 

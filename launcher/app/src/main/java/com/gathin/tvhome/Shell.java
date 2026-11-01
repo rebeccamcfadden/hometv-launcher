@@ -25,6 +25,11 @@ final class Shell {
         Screen create(Screen.Tab tab);
     }
 
+    /** A hold-OK the top screen didn't take, offered on any screen: the title menu on a title card (TitleMenu). */
+    interface LongOk {
+        boolean onLongOk(View focused);
+    }
+
     static final String NAV_GROUP = "nav";
 
     final FrameLayout stage;
@@ -48,6 +53,7 @@ final class Shell {
     private View okTarget;
     private boolean okLongTried;
     private boolean okHeld;
+    private LongOk longOk;
     /** The key whose character a screen took as typing, so its key-up is taken too (M6). */
     private int typedKey = KeyEvent.KEYCODE_UNKNOWN;
 
@@ -74,6 +80,10 @@ final class Shell {
     /** Told after every change to what shows (MainActivity moves the import pill). */
     void setOnShown(Runnable r) {
         onShown = r;
+    }
+
+    void setLongOk(LongOk l) {
+        longOk = l;
     }
 
     /** Whether the page showing, under any popups and dialogs over it, wants the import pill at the top. */
@@ -299,7 +309,7 @@ final class Shell {
                 } else if (!okLongTried && okTarget != null && okTarget == focused) {
                     okLongTried = true;
                     Screen s = top();
-                    okHeld = s != null && s.onLongOk(focused);
+                    okHeld = s != null && (s.onLongOk(focused) || longOk != null && longOk.onLongOk(focused));
                 }
             } else {
                 boolean act = !e.isCanceled() && !okHeld && okTarget != null && okTarget == focused;

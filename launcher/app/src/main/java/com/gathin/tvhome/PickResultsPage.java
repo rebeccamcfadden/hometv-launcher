@@ -235,7 +235,9 @@ final class PickResultsPage extends Screen {
         tile.addView(row, PickSetupPage.below(10));
 
         tile.addView(small(TitleText.meta(t), Ui.TEXT_2), PickSetupPage.below(4));
-        tile.addView(small(TitleText.provenance(t, household), Ui.TEXT_3), PickSetupPage.below(2));
+        TextView lists = small(TitleText.provenance(t, household), Ui.TEXT_3);
+        tile.addView(lists, PickSetupPage.below(2));
+        tile.setTag(R.id.kit_provenance, lists);
         View rule = new View(ctx);
         rule.setBackgroundColor(Ui.LINE);
         LinearLayout.LayoutParams rulelp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -255,7 +257,7 @@ final class PickResultsPage extends Screen {
             float s = focused ? 1.03f : 1f;
             art.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
-        return Focus.make(tile, GROUP_PICKS, "pk-" + i, i == 0, v -> router.openTitle(t));
+        return Kit.titleCard(Focus.make(tile, GROUP_PICKS, "pk-" + i, i == 0, v -> router.openTitle(t)), t);
     }
 
     private TextView small(CharSequence text, int color) {

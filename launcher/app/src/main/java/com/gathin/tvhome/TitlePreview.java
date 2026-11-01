@@ -28,7 +28,8 @@ import java.util.function.Predicate;
  * covers the whole page, nav included. The art runs across the top under a fade, with a Back button on it. The
  * header has the title, its details and the actions (Watch, My list, Mark seen, Favorite, Trailer); the tabs below
  * it show Overview, Episodes (shows only), Where to watch, Cast &amp; crew and More like this in an area of fixed
- * height, so the card never jumps. Landing on a tab shows it. First focus is Watch; Back closes the popup and the
+ * height, so the card never jumps. Landing on a tab shows it. First focus is Watch (the More like this tab when the
+ * title menu's More like this opened it); Back closes the popup and the
  * Shell puts focus back on the card it was opened from.
  */
 final class TitlePreview extends Screen {
@@ -67,6 +68,8 @@ final class TitlePreview extends Screen {
     private final List<TextView> tabViews = new ArrayList<>();
     private final FrameLayout content;
     private Tab active;
+    /** The tab it opened on: Overview, or More like this from the title menu (first focus then goes to that tab). */
+    private final Tab startTab;
     private boolean shown;
     /** More like this, once the catalogue has answered; asked for the first time the tab shows. */
     private List<Title> similar;
@@ -97,11 +100,16 @@ final class TitlePreview extends Screen {
 
     /** Opening a preview records the title in the household's Recently viewed. */
     static TitlePreview create(Context ctx, Router router, Title t) {
-        router.data().household.pushViewed(t.id);
-        return new TitlePreview(ctx, router, t, new FrameLayout(ctx));
+        return create(ctx, router, t, false);
     }
 
-    private TitlePreview(Context ctx, Router router, Title t, FrameLayout root) {
+    /** As create; {@code moreLike} opens it on More like this, with focus on that tab (the title menu, F3). */
+    static TitlePreview create(Context ctx, Router router, Title t, boolean moreLike) {
+        router.data().household.pushViewed(t.id);
+        return new TitlePreview(ctx, router, t, new FrameLayout(ctx), moreLike);
+    }
+
+    private TitlePreview(Context ctx, Router router, Title t, FrameLayout root, boolean moreLike) {
         super(t.name, root, Layer.POPUP);
         this.ctx = ctx;
         this.router = router;
@@ -189,7 +197,8 @@ final class TitlePreview extends Screen {
         backLp.topMargin = Ui.px(40);
         popup.addView(back, backLp);
 
-        setTab(tabs.get(0));
+        startTab = moreLike ? Tab.MORE : tabs.get(0);
+        setTab(startTab);
         // A title from a search or a list is a summary: its details fill the preview in as they arrive.
         if (!t.detailed) data.catalog.details(t, this::apply);
         else askPrices();
@@ -405,7 +414,7 @@ final class TitlePreview extends Screen {
 
     @Override
     View defaultFocus() {
-        return watch;
+        return startTab == Tab.MORE ? tabViews.get(tabs.indexOf(Tab.MORE)) : watch;
     }
 
     /** Landing on a tab shows it; landing on a season shows its episodes. */

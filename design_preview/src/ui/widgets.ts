@@ -134,6 +134,7 @@ export function libraryCard(t: Title, opts: FocusOpts): HTMLElement {
   return focusable(
     h(
       'div.card.card--library',
+      { 'data-title': t.id },
       h('div.card-art', h('img', { src: imgUrl(t.art), alt: '' })),
       h(
         'div.card-row',
@@ -141,7 +142,7 @@ export function libraryCard(t: Title, opts: FocusOpts): HTMLElement {
         h('div.card-provider', h('div', o ? SERVICES[o.service].name : ''), h('div.card-avail', availability(o))),
       ),
       h('div.card-meta', titleMeta(t)),
-      h('div.card-sub', provenance(t)),
+      h('div.card-sub', { 'data-lists': '' }, provenance(t)),
     ),
     opts,
   );
@@ -162,6 +163,7 @@ export function smallCard(t: Title, opts: FocusOpts & { name?: Node | string } =
   return focusable(
     h(
       'div.card.card--small',
+      { 'data-title': t.id },
       h('div.card-art', h('img', { src: imgUrl(t.art), alt: '' })),
       h('div.card-name', opts.name ?? t.name),
       h('div.card-meta', `${t.kind === 'movie' ? 'Movie' : 'TV show'} · ${t.year}`),

@@ -294,8 +294,10 @@ final class Kit {
         card.addView(top, below(10));
 
         card.addView(textLine(ctx, TitleText.meta(t), Ui.TEXT_2), below(4));
-        card.addView(textLine(ctx, TitleText.provenance(t, data.household), Ui.TEXT_3), below(2));
-        return focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name);
+        TextView lists = textLine(ctx, TitleText.provenance(t, data.household), Ui.TEXT_3);
+        card.addView(lists, below(2));
+        card.setTag(R.id.kit_provenance, lists);
+        return titleCard(focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name), t);
     }
 
     /**
@@ -315,7 +317,29 @@ final class Kit {
         card.addView(name, below(12));
         card.addView(textLine(ctx, TitleText.kindYear(t), Ui.TEXT_2), below(4));
         card.addView(textLine(ctx, data.offerLine(t), Ui.TEXT_3), below(2));
-        return focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name);
+        return titleCard(focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name), t);
+    }
+
+    /** Marks v as a card for t, so holding OK on it opens the title menu (TitleMenu). Returns v. */
+    static View titleCard(View v, Title t) {
+        v.setTag(R.id.kit_title, t);
+        return v;
+    }
+
+    /**
+     * Brings a title card's list line ("My list · Sci-fi") up to date in place, after the title menu put the title on a
+     * list or took it off; cards without one (Search's) are left as they are.
+     */
+    static void refreshTitleCard(View card, Data data) {
+        Title t = titleOf(card);
+        Object line = card == null ? null : card.getTag(R.id.kit_provenance);
+        if (t != null && line instanceof TextView) ((TextView) line).setText(TitleText.provenance(t, data.household));
+    }
+
+    /** The title a card was made for ({@link #titleCard}), or null. */
+    static Title titleOf(View v) {
+        Object t = v == null ? null : v.getTag(R.id.kit_title);
+        return t instanceof Title ? (Title) t : null;
     }
 
     /**

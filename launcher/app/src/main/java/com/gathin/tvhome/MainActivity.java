@@ -223,6 +223,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
         shell = new Shell(stage, this);
         shell.setOnShown(() -> pill.atTop(shell.pillAtTop()));
+        // F3: holding OK on a title card, wherever one shows, opens the title menu.
+        shell.setLongOk(v -> TitleMenu.open(this, v));
         refreshNav();
         shell.goTab(Screen.Tab.HOME, false);
 
@@ -288,6 +290,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     public void openTitle(Title t) {
         shell.push(TitlePreview.create(this, this, t));
+    }
+
+    /** F3: the title preview on its More like this tab (the title menu's More like this). */
+    @Override
+    public void openMoreLike(Title t) {
+        shell.push(TitlePreview.create(this, this, t, true));
     }
 
     /** M5: the person page, pushed over the preview or the search it was opened from. */

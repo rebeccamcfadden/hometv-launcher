@@ -1111,6 +1111,18 @@
 .menu-row.is-focused .menu-status {
   color: var(--on-active);
 }
+/* The title menu's lists: a tick in front of each list that holds the title (titleMenu.ts). */
+.menu-tick {
+  display: flex;
+  color: var(--text-1);
+  visibility: hidden;
+}
+.menu-tick.is-on {
+  visibility: visible;
+}
+.menu-row.is-focused .menu-tick {
+  color: var(--on-active);
+}
 .menu-header {
   display: flex;
   align-items: center;

@@ -61,14 +61,17 @@ const SKELETONS: Record<string, () => HTMLElement> = {
   'More like this': () => h('div.pv-row', [0, 1, 2, 3, 4].map(() => smallCardSkeleton())),
 };
 
-/** Title preview, Option C: art on top, essentials and actions on the card, tabs for the rest. */
-export function titlePreview(t: Title): Screen {
+/**
+ * Title preview, Option C: art on top, essentials and actions on the card, tabs for the rest. `moreLike` opens it on
+ * More like this, with focus on that tab (the title menu's More like this).
+ */
+export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Screen {
   store.pushViewed(t.id);
   const isShow = t.kind === 'show';
   const tabs = isShow
     ? ['Overview', 'Episodes', 'Where to watch', 'Cast & crew', 'More like this']
     : ['Overview', 'Where to watch', 'Cast & crew', 'More like this'];
-  let active = tabs[0];
+  let active = opts.moreLike ? 'More like this' : tabs[0];
   let season = t.next?.season ?? 1;
   const offer = bestOffer(t);
   const svcName = offer ? SERVICES[offer.service].name : '';
@@ -415,7 +418,8 @@ export function titlePreview(t: Title): Screen {
   const popup = h('div.popup');
   const el = h('div.screen.layer-popup', h('div.scrim'), popup);
   replace(popup, build());
-  const screen: Screen = { label: t.name, el, layer: 'popup', defaultFocus: () => popup.querySelector<HTMLElement>('[data-key="watch"]') };
+  const first = opts.moreLike ? '[data-key="tab-More like this"]' : '[data-key="watch"]';
+  const screen: Screen = { label: t.name, el, layer: 'popup', defaultFocus: () => popup.querySelector<HTMLElement>(first) };
   const stop = net.on(() => {
     if (!app.has(screen)) return void stop();
     // A new simulated state starts over: a failing tab fails again until Retry.

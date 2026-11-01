@@ -38,4 +38,20 @@ final class MenuPlace {
         int over = Math.max(safeY, Math.min(Math.max(tt - gap - ph, minTop), maxBottom - ph));
         return new MenuPlace(under, over, Side.ABOVE);
     }
+
+    /**
+     * Where focus goes when the menu closes and its tile has gone (a title the menu took off the list a row shows):
+     * the other keys of the tile's row or grid, nearest first, the one after it before the one before it. Empty when
+     * {@code key} isn't in {@code row}.
+     */
+    static java.util.List<String> nearest(java.util.List<String> row, String key) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        int i = row.indexOf(key);
+        if (i < 0) return out;
+        for (int d = 1; d < row.size(); d++) {
+            if (i + d < row.size()) out.add(row.get(i + d));
+            if (i - d >= 0) out.add(row.get(i - d));
+        }
+        return out;
+    }
 }

@@ -20,7 +20,8 @@ import java.util.concurrent.Executors;
  * The TMDB account on this TV (BACKLOG.md, TMDB sign-in and watchlist sync; docs/rework.md, Accounts, 2026-10-30):
  * signing in by QR code ({@link SignInFlow}), keeping My list, Favorites and Seen in step with the account
  * ({@link AccountSync}), and reading the TMDB lists shown as chips, by name: chosen on the TV ({@link ListChoices}) or
- * set in config.xml ({@link AccountConfig}). Signing in is optional: signed out, everything stays on the TV.
+ * set in config.xml ({@link AccountConfig}); the title menu puts a title on one of them or takes it off
+ * ({@link #setOnShownList}). Signing in is optional: signed out, everything stays on the TV.
  *
  * <p>Threads: everything here runs on the main thread except the network and the sync ledger, which live on one
  * low-priority worker thread, so Home never waits on TMDB. Network only while Home (or the sign-in page) is on
@@ -51,6 +52,8 @@ final class Accounts implements Household.Recorder {
         return t;
     });
     private final List<Runnable> listeners = new ArrayList<>();
+    /** The title menu's shown-list changes out to TMDB (main thread). */
+    private final ShownEdits shownEdits = new ShownEdits();
     private final AccountHttp http;
     /** A shown list's name until TMDB gives it: "List 8221116". */
     private final java.util.function.LongFunction<String> unnamed;
@@ -379,6 +382,87 @@ final class Accounts implements Household.Recorder {
         loadImported();
     }
 
+    /**
+     * Puts a title on one of the shown TMDB lists, or takes it off (the title menu, F3): shown on the TV at once, then
+     * sent to TMDB on the worker, after any sync queued before it. {@code done} hears on the main thread whether TMDB
+     * took it; refused or offline, the list's copy goes back to what it held before (nothing is queued for later). Only
+     * while signed in, for a list with a number and a TMDB title (TitleMenuRules.lists). Returns false, sending
+     * nothing and without calling {@code done}, while a change to the same title on the same list is still out
+     * ({@link #isShownPending}).
+     */
+    boolean setOnShownList(long listId, String titleId, boolean on, java.util.function.Consumer<Boolean> done) {
+        TmdbSession s = session;
+        if (s == null || listId <= 0 || TmdbAccountApi.mediaType(titleId) == null) {
+            done.accept(false);
+            return true;
+        }
+        if (!shownEdits.start(listId, titleId, on, shownHas(listId, titleId))) return false;
+        // Where the title stood, so a refused removal puts it back in the same place ("Recently added" reads it).
+        int at = on ? -1 : shownIndex(listId, titleId);
+        editShown(listId, titleId, on);
+        worker.execute(() -> {
+            boolean ok;
+            try {
+                TmdbAccountParse.done(http.send(TmdbAccountApi.listItems(listId,
+                        java.util.Collections.singletonList(titleId), on)));
+                ok = true;
+            } catch (IOException | TmdbAccountParse.Failure e) {
+                ok = false;
+            }
+            boolean took = ok;
+            main.post(() -> {
+                Boolean now = shownEdits.finish(listId, titleId, took);
+                // Signed out meanwhile: the TV's copy is still this account's, so a refusal still undoes it. Another
+                // account signed in since: its copies aren't touched.
+                if (now != null && (s == session || session == null)) {
+                    if (!took && now && at >= 0) editShownAt(listId, titleId, at);
+                    else editShown(listId, titleId, now);
+                }
+                done.accept(took);
+            });
+        });
+        return true;
+    }
+
+    /** Where titleId stands on the saved copy of the shown list numbered listId, or -1. */
+    private int shownIndex(long listId, String titleId) {
+        for (ImportedLists.Entry e : ImportedLists.restore(shownRefs(), prefs.getString(IMPORTED, null), unnamed)) {
+            if (e.id == listId) return e.ids.indexOf(titleId);
+        }
+        return -1;
+    }
+
+    /** The saved copy of the shown list numbered listId with titleId put back at {@code at}, shown at once. */
+    private void editShownAt(long listId, String titleId, int at) {
+        List<ImportedLists.Entry> saved = ImportedLists.restore(shownRefs(), prefs.getString(IMPORTED, null), unnamed);
+        List<ImportedLists.Entry> next = ImportedLists.withTitleAt(saved, listId, titleId, at);
+        if (next.equals(saved)) return;
+        prefs.edit().putString(IMPORTED, ImportedLists.save(next)).apply();
+        loadImported();
+    }
+
+    /** Whether a title menu change to titleId on the shown list numbered listId is still out to TMDB. */
+    boolean isShownPending(long listId, String titleId) {
+        return shownEdits.isPending(listId, titleId);
+    }
+
+    /** Whether the saved copy of the shown list numbered listId holds titleId. */
+    private boolean shownHas(long listId, String titleId) {
+        for (ImportedLists.Entry e : ImportedLists.restore(shownRefs(), prefs.getString(IMPORTED, null), unnamed)) {
+            if (e.id == listId) return e.ids.contains(titleId);
+        }
+        return false;
+    }
+
+    /** The saved copy of the shown list numbered listId, with titleId on it or off, shown at once. */
+    private void editShown(long listId, String titleId, boolean on) {
+        List<ImportedLists.Entry> saved = ImportedLists.restore(shownRefs(), prefs.getString(IMPORTED, null), unnamed);
+        List<ImportedLists.Entry> next = ImportedLists.withTitle(saved, listId, titleId, on);
+        if (next.equals(saved)) return;
+        prefs.edit().putString(IMPORTED, ImportedLists.save(next)).apply();
+        loadImported();
+    }
+
     private static List<Long> listIds(List<TmdbAccountParse.ListInfo> lists) {
         List<Long> out = new ArrayList<>();
         if (lists != null) for (TmdbAccountParse.ListInfo l : lists) out.add(l.id);
@@ -439,6 +523,8 @@ final class Accounts implements Household.Recorder {
             ImportedLists.Entry fresh = asked.contains(e.ref.toString()) ? read.get(e.ref.toString()) : null;
             out.add(fresh != null ? fresh : e);
         }
+        // A title menu change TMDB hasn't answered yet may not be in what was read: keep showing it.
+        out = shownEdits.apply(out);
         prefs.edit().putString(IMPORTED, ImportedLists.save(out)).apply();
         loadImported();
         // The Account pane names the shown lists.

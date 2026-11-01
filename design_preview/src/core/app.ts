@@ -20,6 +20,8 @@ export interface Screen {
   defaultFocus?(): HTMLElement | null;
   /** Return true to stop the default handling. */
   onKey?(key: Key, focused: HTMLElement | null): boolean;
+  /** OK held down on an item (the hold-OK menus). Return true when used. */
+  onLongOk?(focused: HTMLElement | null): boolean;
   /** Printable characters, for screens that take typing. Return true when used. */
   onText?(ch: string): boolean;
   onFocus?(el: HTMLElement): void;
@@ -40,6 +42,8 @@ export interface Screen {
 
 export const STAGE_W = 1920;
 export const STAGE_H = 1080;
+/** How long OK is held before it opens a hold-OK menu, as Android's long press. */
+const HOLD_MS = 500;
 
 class App {
   stage!: HTMLElement;
@@ -52,6 +56,14 @@ class App {
   private readonly overlays: HTMLElement[] = [];
   private toastTimer = 0;
   private listeners: (() => void)[] = [];
+  /** OK pressed and not yet released: acted on at release, or held past HOLD_MS for the hold-OK menus. */
+  private okTimer = 0;
+  private okDown = false;
+  private okHeld = false;
+  private okTarget: HTMLElement | null = null;
+  private okScreen: Screen | null = null;
+  /** A hold-OK the top screen didn't take, offered on any screen: the title menu on a title card (titleMenu.ts). */
+  longOk: ((focused: HTMLElement) => boolean) | null = null;
 
   init(stage: HTMLElement, factories: Record<TabId, () => Screen>) {
     this.stage = stage;
@@ -59,6 +71,9 @@ class App {
     this.toastEl = h('div.toast');
     stage.append(this.toastEl);
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
+    window.addEventListener('keyup', (e) => this.onKeyUp(e));
+    // A right-click stands in for holding OK, for the mouse.
+    stage.addEventListener('contextmenu', (e) => this.onContextMenu(e));
     window.addEventListener('resize', () => this.fit());
     stage.addEventListener('click', (e) => this.onClick(e));
     this.fit();
@@ -292,6 +307,13 @@ class App {
     handlerOf(this.focused)?.onOk?.();
   }
 
+  /** OK held on the focused item: the top screen's hold-OK menu, else the app's (a title card's). */
+  longOkOn(el: HTMLElement | null): boolean {
+    const s = this.top();
+    if (!s || !el) return false;
+    return !!s.onLongOk?.(el) || !!this.longOk?.(el);
+  }
+
   private onKeyDown(e: KeyboardEvent) {
     const target = e.target as HTMLElement | null;
     if (target && /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(target.tagName)) return;
@@ -302,8 +324,18 @@ class App {
       e.preventDefault();
       this.move(dirs[e.key]);
     } else if (e.key === 'Enter') {
+      // As on the TV, OK acts when it's let go, unless it was held long enough to open a hold-OK menu instead.
       e.preventDefault();
-      this.ok();
+      if (e.repeat || this.okDown) return;
+      this.okDown = true;
+      this.okHeld = false;
+      const held = this.focused;
+      this.okTarget = held;
+      this.okScreen = s ?? null;
+      this.okTimer = window.setTimeout(() => {
+        this.okTimer = 0;
+        this.okHeld = this.focused === held && this.longOkOn(held);
+      }, HOLD_MS);
     } else if (e.key === 'Escape') {
       e.preventDefault();
       this.back();
@@ -316,6 +348,29 @@ class App {
       if (s?.onText?.(e.key)) e.preventDefault();
       else this.remoteKeys[e.key.toLowerCase()]?.();
     }
+  }
+
+  private onKeyUp(e: KeyboardEvent) {
+    if (e.key !== 'Enter' || !this.okDown) return;
+    e.preventDefault();
+    this.okDown = false;
+    clearTimeout(this.okTimer);
+    this.okTimer = 0;
+    // Only the item OK went down on, on the screen it was on: a move or Back while it was held cancels it, as on the TV.
+    const same = this.focused === this.okTarget && this.top() === this.okScreen;
+    if (!this.okHeld && same) this.ok();
+    this.okHeld = false;
+    this.okTarget = null;
+    this.okScreen = null;
+  }
+
+  private onContextMenu(e: MouseEvent) {
+    const s = this.top();
+    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-focus]');
+    if (!s || !el || !s.el.contains(el) || el.closest('[data-inert]')) return;
+    e.preventDefault();
+    this.focus(el);
+    this.longOkOn(el);
   }
 
   /** Remote buttons other than the D-pad, OK and Back (Home, Settings), mapped to letter keys by main.ts. */

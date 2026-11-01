@@ -83,4 +83,19 @@ public class MenuPlaceTest {
         MenuPlace p = at(SX, 500, W - SX, 900, HERO);
         assertTrue(p.top >= HERO);
         insideSafeArea(p);
-    }}
+    }
+
+    @Test
+    public void aGoneTileHandsFocusToItsNearestNeighbourAfterItFirst() {
+        java.util.List<String> row = java.util.Arrays.asList("a", "b", "c", "d", "e");
+        assertEquals(java.util.Arrays.asList("d", "b", "e", "a"), MenuPlace.nearest(row, "c"));
+        assertEquals(java.util.Arrays.asList("d", "c", "b", "a"), MenuPlace.nearest(row, "e"));
+        assertEquals(java.util.Arrays.asList("b", "c", "d", "e"), MenuPlace.nearest(row, "a"));
+    }
+
+    @Test
+    public void aTileAloneOrNotInTheRowHasNoNeighbour() {
+        assertTrue(MenuPlace.nearest(java.util.Collections.singletonList("a"), "a").isEmpty());
+        assertTrue(MenuPlace.nearest(java.util.Arrays.asList("a", "b"), "x").isEmpty());
+    }
+}

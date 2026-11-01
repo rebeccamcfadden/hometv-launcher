@@ -19,6 +19,7 @@ import { titlePreview } from './screens/preview';
 import { searchScreen } from './screens/search';
 import { launcherSettings } from './screens/settings';
 import { setupScreen } from './screens/setup';
+import { titleMenu } from './screens/titleMenu';
 import { notes } from './core/notes';
 import { importPill } from './ui/importPill';
 
@@ -51,6 +52,8 @@ app.init(stage, {
   search: searchScreen,
 });
 app.overlay(importPill());
+// Holding OK on a title card, wherever one shows, opens the title menu (F3).
+app.longOk = titleMenu;
 // ?notes=on starts with Launcher settings › Phone notes switched on.
 if (params.get('notes') === 'on') notes.setOn(true);
 

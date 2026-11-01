@@ -267,6 +267,7 @@ function pickResults(s: PickState): Screen {
         return focusable(
           h(
             'div.pick-tile',
+            { 'data-title': t.id },
             h('div.card-art', h('img', { src: imgUrl(t.art), alt: '' })),
             h(
               'div.card-row',
@@ -274,7 +275,7 @@ function pickResults(s: PickState): Screen {
               h('div.card-provider', h('div', o ? SERVICES[o.service].name : ''), h('div.card-avail', availability(o))),
             ),
             h('div.card-meta', titleMeta(t)),
-            h('div.card-sub', provenance(t)),
+            h('div.card-sub', { 'data-lists': '' }, provenance(t)),
             h('div.pick-blurb', t.synopsis),
           ),
           { group: 'picks', key: `pk-${i}`, isDefault: i === 0, onFocus: () => setFocus(t), onOk: () => app.push(titlePreview(t)) },

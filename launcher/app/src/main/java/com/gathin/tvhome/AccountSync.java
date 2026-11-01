@@ -21,7 +21,7 @@ final class AccountSync {
     /** Which TMDB lists are Seen and the lists shown as chips (config.xml and Choose lists; see {@link ListRef}). */
     static final class Settings {
         final ListRef seen;
-        /** The lists shown as chips, in chip order; the TV only reads them. */
+        /** The lists shown as chips, in chip order; a sync only reads them (the title menu changes them, Accounts). */
         final List<ListRef> shown;
         /** Whether to make a private list named as {@link #seen} says when the account has none. */
         final boolean createSeen;

@@ -8,4 +8,12 @@
     <item name="kit_icon" type="id" />
     <item name="kit_check" type="id" />
     <item name="kit_icon_only" type="id" />
+    <!-- The Title on a title card, for the hold-OK title menu (TitleMenu). -->
+    <item name="kit_title" type="id" />
+    <!-- A title card's list line, brought up to date in place by the title menu (Kit.refreshTitleCard). -->
+    <item name="kit_provenance" type="id" />
+    <!-- A menu row's tick (MenuPanel.Row.check). -->
+    <item name="menu_check" type="id" />
+    <!-- The keys of a hold-OK tile's row, nearest first: focus lands there when the tile has gone (TileMenu.close). -->
+    <item name="menu_near" type="id" />
 </resources>

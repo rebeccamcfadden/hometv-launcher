@@ -230,6 +230,27 @@ clunky.) Rows are 72 px; the panel is opaque (no blur).
 | Settings icon | Quick settings (design final-quick-settings), 600 px wide, ten rows in four groups divided: **TV settings** (the TV's settings) and **Launcher settings** › (the split page); **Picture** (the TV's display settings), **Sound, Network & Wi-Fi, Inputs** (the TV's own pages; a toast here); **TMDB account** (status), **Streaming services** ("8 ticked"), **Weather** ("New York · °C"; before a place is chosen, the build's city), each with a chevron, opening that section's pane; **Motion** (Full / Reduced / Off; never Full on a TV whose config sets reduced motion), where OK steps the value in place, the menu stays open, and small dots show the position. No Sleep timer row (the project lead's decision, 2026-10-31) |
 | Remote's Settings key | The TV maker's own panel, untouched by the launcher. The preview's S key shows the base launcher's stand-in: TV system settings, Picture, Network, Apps ("Re-enable"), Launcher settings |
 
+### Title menu
+
+Holding OK on a title card, wherever one shows (Movies, TV Shows, Pick for me's results, Search, the person page and
+the title preview's More like this), opens a menu in the dropdowns' glass panel, hung from the card: under it, else
+over it, else beside it, inside the title-safe area (the project lead, F3, 2026-11-01). As on the TV, OK acts when
+it is let go, so a held OK opens the menu instead of the preview; in the preview a right-click stands in for it.
+Home has no title cards yet.
+
+| Row | What it does |
+|---|---|
+| **Mark seen** / **Mark unseen** | Toggles Seen |
+| **Favorite** / **Unfavorite** | Toggles Favorites |
+| **Add to a list** / **Change lists**, with "On My list", "On Family picks" or "On 2 lists" | Signed in to TMDB: a second menu at the same card with My list, then the shown TMDB lists (past the chip cap too), a tick on each that holds the title. OK puts it on or takes it off and the menu stays open; Back closes it. A TMDB list is ticked at once and unticked again, with a toast, when TMDB doesn't take the change (offline) |
+| **Add to My list** / **Remove from My list** | In place of the lists row when My list is the only list the TV can change: signed out (the TMDB lists need the account), or a title TMDB doesn't know |
+| **More like this** | The title preview, opened on its More like this tab |
+
+Seen, Favorites and My list are kept on the TV and sent to the TMDB account when signed in, as the preview's buttons
+are, so they stay signed out. Each change updates the card's list line in place, with a toast; the menu closes on
+OK (except in the lists menu), on Back, or when the D-pad moves past its edge, and focus returns to the card, or to
+the one beside it when the change took the card off the page (a title removed from the list a row shows).
+
 ## Screens
 
 ### Home
@@ -630,8 +651,9 @@ width with 243 px art.
   fall back to opening Wi-Fi settings.
 - **Phone notes:** the address assumes the TV keeps its IP (a DHCP reservation in the router); what Apple Notes and
   Keep put in the shared text (checklist ticks, the note's title) is to be checked on the phones.
-- **Not designed yet:** hold-OK menus (the base uses them for tile Move / Remove / App info and a Settings
-  menu), the screensaver, removing recent searches, voice search, progress on started titles, the Sort chip, a
+- **Not designed yet:** hold-OK menus in Figma (the base uses them for tile Move / Remove / App info and a Settings
+  menu; the title menu is built here without a design), the screensaver, removing recent searches, voice search,
+  progress on started titles, the Sort chip, a
   person page design, Search and Home's weather while loading, the Home row apps pane (built here without a design),
   and right-to-left layouts (the base supports Hebrew).
 

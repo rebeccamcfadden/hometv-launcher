@@ -25,10 +25,12 @@ const MEMBERS: Record<string, (t: Title, i: number) => boolean> = {
   docs: (t) => t.genres.includes('Documentary'),
   kids: (t) => t.genres.includes('Animation') || t.rating === 'PG',
 };
+/** Titles the title menu put on a TMDB list or took off it, by "list:title" (on the TV, the list's saved copy). */
+const edits = new Map<string, boolean>();
 const holdsCache = new Map<string, (t: Title) => boolean>();
 const holds = (id: string) => {
   let fn = holdsCache.get(id);
-  if (!fn) holdsCache.set(id, (fn = (t: Title) => MEMBERS[id]?.(t, INDEX.get(t.id) ?? 0) ?? false));
+  if (!fn) holdsCache.set(id, (fn = (t: Title) => edits.get(`${id}:${t.id}`) ?? MEMBERS[id]?.(t, INDEX.get(t.id) ?? 0) ?? false));
   return fn;
 };
 
@@ -46,6 +48,18 @@ let importedKey = '';
 let importedCache: ShownList[] = [];
 
 export const lists = {
+  my: MY,
+  /**
+   * The lists the title menu can put a title on (titleMenu.ts): signed in, the shown TMDB lists, past the cap too.
+   * Signed out there are none: the mock Household and Friends are only read.
+   */
+  editable(): ShownList[] {
+    return account.get() === 'in' ? lists.imported() : [];
+  },
+  /** Puts a title on a TMDB list or takes it off, as TMDB answered (the title menu). */
+  setOn(id: string, t: Title, on: boolean) {
+    edits.set(`${id}:${t.id}`, on);
+  },
   /** Every shown list after My list, in the account's order: chips and those past the cap alike. */
   imported(): ShownList[] {
     const signedIn = account.get() === 'in';

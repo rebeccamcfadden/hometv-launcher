@@ -29,6 +29,13 @@ final class MenuPanel {
         boolean good;
         boolean divider;
         boolean checked;
+        /** OK runs the action and leaves the menu open (TileMenu), as in the title menu's lists. */
+        boolean stay;
+        /** Drawn with a tick in front, shown while {@link #ticked}; see {@link #setTicked}. */
+        boolean tickable;
+        boolean ticked;
+        /** The row's view once built, for {@link #setTicked}. */
+        View view;
 
         Row(CharSequence label, int icon, Runnable action) {
             this.label = label;
@@ -54,7 +61,38 @@ final class MenuPanel {
             checked = on;
             return this;
         }
+
+        /** OK leaves the menu open. */
+        Row stay() {
+            stay = true;
+            return this;
+        }
+
+        /** A tick in front of the label while on; the row reads as a checkbox to accessibility services. */
+        Row tick(boolean on) {
+            tickable = true;
+            ticked = on;
+            return this;
+        }
     }
+
+    /** Ticks or unticks a built {@link Row#tick} row in place. */
+    static void setTicked(Row r, boolean on) {
+        r.ticked = on;
+        if (r.view == null) return;
+        Object tick = r.view.getTag(R.id.menu_check);
+        if (tick instanceof View) ((View) tick).setVisibility(on ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    private static final View.AccessibilityDelegate CHECK_A11Y = new View.AccessibilityDelegate() {
+        @Override
+        public void onInitializeAccessibilityNodeInfo(View host, android.view.accessibility.AccessibilityNodeInfo info) {
+            super.onInitializeAccessibilityNodeInfo(host, info);
+            Object tick = host.getTag(R.id.menu_check);
+            info.setCheckable(true);
+            info.setChecked(tick instanceof View && ((View) tick).getVisibility() == View.VISIBLE);
+        }
+    };
 
     interface OnRow {
         void picked(Row row);
@@ -112,6 +150,18 @@ final class MenuPanel {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(Ui.px(22), 0, Ui.px(22), 0);
         row.setBackground(Ui.states(Ui.round(0, 18), null, Ui.round(Ui.ACTIVE, 18)));
+        if (r.tickable) {
+            ImageView tick = new ImageView(ctx);
+            tick.setImageResource(R.drawable.ic_ui_check);
+            tick.setImageTintList(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACTIVE));
+            tick.setDuplicateParentStateEnabled(true);
+            tick.setVisibility(r.ticked ? View.VISIBLE : View.INVISIBLE);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(28), Ui.px(28));
+            lp.rightMargin = Ui.px(18);
+            row.addView(tick, lp);
+            row.setTag(R.id.menu_check, tick);
+            row.setAccessibilityDelegate(CHECK_A11Y);
+        }
         if (r.icon != 0) {
             ImageView icon = new ImageView(ctx);
             icon.setImageResource(r.icon);
@@ -144,6 +194,7 @@ final class MenuPanel {
         Focus.make(row, GROUP, "m-" + index, isDefault, v -> onRow.picked(r));
         CharSequence said = r.status == null ? r.label : r.label + ", " + r.status;
         row.setContentDescription(r.checked ? ctx.getString(R.string.menu_checked, said) : said);
+        r.view = row;
         return row;
     }
 

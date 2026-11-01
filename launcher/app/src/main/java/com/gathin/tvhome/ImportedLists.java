@@ -18,7 +18,8 @@ import java.util.function.LongFunction;
  * The lists after My list (docs/rework.md, Lists by name, 2026-10-31): either the mock catalogue's Household and
  * Friends, which a TV keeps until it has had a TMDB account, or the TMDB lists shown in Choose lists or set in
  * config.xml, each with its TMDB name and the titles last read from TMDB (none until the first read), in chip order.
- * The TV only reads these lists, and keeps the last copy of each for offline ({@link #save}, {@link #restore}).
+ * The TV reads these lists, and keeps the last copy of each for offline ({@link #save}, {@link #restore}); the title
+ * menu puts a title on one or takes it off ({@link #withTitle}, Accounts#setOnShownList).
  * Pure Java, unit-tested (ImportedListsTest).
  */
 final class ImportedLists {
@@ -122,6 +123,44 @@ final class ImportedLists {
     List<String> ids(ShownList list) {
         Set<String> s = byKey.get(list.key);
         return s == null ? Collections.<String>emptyList() : new ArrayList<>(s);
+    }
+
+    /**
+     * The copies with a title put on (at the end) or taken off the TMDB list numbered {@code listId}, as the title menu
+     * changes it on the TV before TMDB answers (TitleMenu); every other list as it was.
+     */
+    static List<Entry> withTitle(List<Entry> lists, long listId, String titleId, boolean on) {
+        List<Entry> out = new ArrayList<>();
+        for (Entry e : lists) {
+            if (listId <= 0 || e.id != listId || e.ids.contains(titleId) == on) {
+                out.add(e);
+                continue;
+            }
+            List<String> ids = new ArrayList<>(e.ids);
+            if (on) ids.add(titleId);
+            else ids.remove(titleId);
+            out.add(new Entry(e.ref, e.id, e.name, ids));
+        }
+        return out;
+    }
+
+    /**
+     * The copies with a title put back on the TMDB list numbered {@code listId} at {@code at} (clamped to the list),
+     * where it stood before a removal TMDB refused, so its "Recently added" place comes back too; every other list as
+     * it was, and nothing changes when the title is already on it.
+     */
+    static List<Entry> withTitleAt(List<Entry> lists, long listId, String titleId, int at) {
+        List<Entry> out = new ArrayList<>();
+        for (Entry e : lists) {
+            if (listId <= 0 || e.id != listId || e.ids.contains(titleId)) {
+                out.add(e);
+                continue;
+            }
+            List<String> ids = new ArrayList<>(e.ids);
+            ids.add(Math.max(0, Math.min(at, ids.size())), titleId);
+            out.add(new Entry(e.ref, e.id, e.name, ids));
+        }
+        return out;
     }
 
     // ---- The copies kept for offline ---------------------------------------------------------------------------
