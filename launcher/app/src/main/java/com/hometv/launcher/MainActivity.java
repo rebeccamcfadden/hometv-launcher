@@ -327,7 +327,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             return;
         }
         Intent link = data.services.linkIntent(offer.service, data.catalog.link(t, offer.service));
-        start(link != null ? link : i);
+        // An app can claim the link and still refuse it (an activity it doesn't export): then its home screen, as
+        // without a link.
+        if (link != null && tryStart(link)) return;
+        start(i);
     }
 
     /**
@@ -346,11 +349,9 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         tries.add(new Intent(Intent.ACTION_SEARCH).setPackage(youtube).putExtra(SearchManager.QUERY, query));
         tries.add(new Intent(Intent.ACTION_VIEW,
                 Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(query))).setPackage(youtube));
+        // A link YouTube claims but refuses moves on to the next way in, as Watch does (tryStart).
         for (Intent i : tries) {
-            if (i.resolveActivity(getPackageManager()) != null) {
-                start(i);
-                return;
-            }
+            if (i.resolveActivity(getPackageManager()) != null && tryStart(i)) return;
         }
         shell.toast(getString(R.string.router_no_trailer));
     }
@@ -518,11 +519,17 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     }
 
     void start(Intent i) {
+        if (!tryStart(i)) shell.toast(getString(R.string.not_available));
+    }
+
+    /** Starts i in a task of its own; false when nothing would take it or it is refused. */
+    private boolean tryStart(Intent i) {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             startActivity(i);
+            return true;
         } catch (ActivityNotFoundException | SecurityException e) {
-            shell.toast(getString(R.string.not_available));
+            return false;
         }
     }
 
