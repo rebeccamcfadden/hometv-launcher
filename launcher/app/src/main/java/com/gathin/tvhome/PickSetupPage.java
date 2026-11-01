@@ -199,7 +199,8 @@ final class PickSetupPage extends Screen {
     }
 
     private List<Title> matches() {
-        return PickRules.matches(state, data.catalog.all(), household, data.services.subscribed());
+        return PickRules.matches(state, data.catalog.all(), household, data.services.subscribed(),
+                data.services.installed());
     }
 
     /** Shows the current choices and counts the matches, as the prototype's render() does, without a rebuild. */

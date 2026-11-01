@@ -6,7 +6,7 @@ import { lists } from '../core/lists';
 import { net } from '../core/net';
 import { store } from '../core/store';
 import { byId, TITLES } from '../data/catalog';
-import { isIncluded } from '../data/offers';
+import { isOwnIncluded } from '../data/offers';
 import type { Title } from '../types';
 import { icon } from '../ui/icons';
 import { button, chip, navBar, rowOf, smallCard } from '../ui/widgets';
@@ -224,7 +224,7 @@ export function searchScreen(): Screen {
         if (filter === 'all') return true;
         if (filter === 'person') return x.kind === 'person';
         if (x.kind === 'person') return false;
-        if (filter === 'included') return isIncluded(x.title!);
+        if (filter === 'included') return isOwnIncluded(x.title!);
         return x.title!.kind === filter;
       });
       replace(

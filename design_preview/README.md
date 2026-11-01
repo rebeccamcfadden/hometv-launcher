@@ -334,15 +334,20 @@ clunky.) Rows are 72 px; the panel is opaque (no blur).
 - **Card line:** each card's third line says how to watch it: "Prime Video · Included", "YouTube · Free", or the
   cheapest way to pay across the stores, "Rent from 39 kr · 4 stores" (else "Buy from 99 kr · 2 stores"; one store:
   "Apple TV Store · Rent 29 kr", or "Rakuten TV · Rent" when its price isn't known; a show's seasons: "Buy a season
-  from 199 kr · 2 stores"). Quality is left to Where to watch. The title preview's More like this and the person
-  page use the same cards.
+  from 199 kr · 2 stores"). Quality is left to Where to watch. Only the household's services and stores count (F1,
+  2026-11-01): a subscription it ticked in Streaming services, a free service (SVT Play, Pluto TV, Cineast, YouTube)
+  whose app is installed or that is ticked, and the stores ticked in Stores; when none of them has the title the line
+  is blank. The Movies and TV Shows cards' provider and "Included", "Free" or price follow the same rule; the title
+  preview (Watch, Where to watch) still shows every offer. The title preview's More like this and the person page use
+  the same cards.
 
 ### Prices
 
 V2 design 07-prices A. Mock prices in kronor, shaped like the launcher's real data (`PricedOffer`): each store's rent
 and buy offers carry a price per picture quality (SD, HD, 4K), or none at all when no price source priced the store.
 
-- **Ticks:** a title is Included only on the streaming services ticked in Launcher settings, and prices come only
+- **Ticks:** a title is Included only on the streaming services ticked in Launcher settings, or free on a service
+  that is ticked or whose app is installed (as the cards count it). Prices come only
   from the ticked stores: an unticked store's offers are left out everywhere (cards, Watch, Where to watch).
 - **Where to watch:** one card per service, one D-pad stop each. Included and free services first ("With your
   subscription", "Free with ads", the quality), then the stores, cheapest first: rentals with a price, cheapest

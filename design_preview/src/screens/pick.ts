@@ -4,7 +4,7 @@ import { focusable } from '../core/focus';
 import { lists } from '../core/lists';
 import { store } from '../core/store';
 import { TITLES } from '../data/catalog';
-import { availability, bestOffer, subscribedCount, isIncluded, isIncludedOffer, offerLabel, paidAction } from '../data/offers';
+import { availability, bestOffer, subscribedCount, isOwnIncluded, isIncludedOffer, offerLabel, paidAction } from '../data/offers';
 import { SERVICES } from '../data/services';
 import type { Kind, Title } from '../types';
 import { icon } from '../ui/icons';
@@ -53,7 +53,7 @@ const FIELDS: Field[] = [
     id: 'avail',
     label: () => 'Availability',
     options: ['Included + paid', 'Included only'],
-    test: (t, i) => i === 0 || isIncluded(t),
+    test: (t, i) => i === 0 || isOwnIncluded(t),
   },
 ];
 
@@ -71,7 +71,7 @@ function matches(s: PickState): Title[] {
     if (t.kind !== s.kind) return false;
     if (s.source === 'lists') {
       if (!on.some((l) => l.has(t))) return false;
-    } else if (!isIncluded(t)) return false;
+    } else if (!isOwnIncluded(t)) return false;
     return FIELDS.every((f) => f.test(t, s.values[f.id] ?? 0));
   });
 }

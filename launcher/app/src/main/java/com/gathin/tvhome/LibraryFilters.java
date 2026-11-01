@@ -60,24 +60,32 @@ final class LibraryFilters {
     /**
      * @param genres     every genre in the catalogue, sorted (Catalog.genres)
      * @param subscribed the household's services, for "Included"
+     * @param installed  the services whose app is installed: a free one counts as included only when installed or
+     *                   ticked ({@link Offers#isOwnIncluded}); null counts every free service
      * @param seen       whether the household has seen a title (Household.isSeen), read each time a filter runs
      */
-    LibraryFilters(Kind kind, List<String> genres, Set<ServiceId> subscribed, Predicate<String> seen) {
+    LibraryFilters(Kind kind, List<String> genres, Set<ServiceId> subscribed, Set<ServiceId> installed,
+                   Predicate<String> seen) {
         this.kind = kind;
-        this.defs = Collections.unmodifiableList(defs(kind, genres, subscribed, seen));
+        this.defs = Collections.unmodifiableList(defs(kind, genres, subscribed, installed, seen));
         this.values = new int[defs.size()];
         reset();
     }
 
-    static List<Def> defs(Kind kind, List<String> genres, Set<ServiceId> subscribed, Predicate<String> seen) {
+    LibraryFilters(Kind kind, List<String> genres, Set<ServiceId> subscribed, Predicate<String> seen) {
+        this(kind, genres, subscribed, null, seen);
+    }
+
+    static List<Def> defs(Kind kind, List<String> genres, Set<ServiceId> subscribed, Set<ServiceId> installed,
+                          Predicate<String> seen) {
         List<String> g = new ArrayList<>();
         for (String genre : genres) if (kind == Kind.MOVIE || !MOVIE_ONLY_GENRES.contains(genre)) g.add(genre);
         List<Def> out = new ArrayList<>();
         out.add(new Def(AVAILABILITY, "Availability",
                 Arrays.asList("Everything", "Included only", "Included + rentals"),
                 Arrays.asList("", "Included only", "Included + rentals"),
-                (t, i) -> i == 0 || (i == 1 ? Offers.isIncluded(t, subscribed)
-                        : Offers.isIncluded(t, subscribed) || hasRental(t))));
+                (t, i) -> i == 0 || (i == 1 ? Offers.isOwnIncluded(t, subscribed, installed)
+                        : Offers.isOwnIncluded(t, subscribed, installed) || hasRental(t))));
         out.add(new Def(SCORE, "Review score",
                 Arrays.asList("Any score", "7.0 and above", "8.0 and above"),
                 Arrays.asList("", "Review 7.0+", "Review 8.0+"),

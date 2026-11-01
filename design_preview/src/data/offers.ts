@@ -1,6 +1,6 @@
 import type { Offer, OfferType, Quality, ServiceId, Title } from '../types';
 import { settings } from '../core/settings';
-import { DEFAULT_PRICE_SOURCE, PICK_SERVICES, PICK_STORES, PRICE_SOURCE, SERVICES } from './services';
+import { DEFAULT_PRICE_SOURCE, HOME_APPS, PICK_SERVICES, PICK_STORES, PRICE_SOURCE, SERVICES } from './services';
 
 // Offer rules. Prices are Swedish kronor, as the launcher's real catalogue has them (V2 Phase 2): a rent or buy
 // offer keeps a price per picture quality, and a store no price source priced has none at all.
@@ -64,12 +64,35 @@ export const offersOf = (t: Title) =>
 
 export const isIncludedOffer = (o: Offer) => o.type === 'free' || (o.type === 'sub' && isSubscribed(o.service));
 
-export const isIncluded = (t: Title) => offersOf(t).some(isIncludedOffer);
+/** A catalogue service the household ticked in the Streaming services pane. */
+const isTicked = (id: ServiceId) =>
+  PICK_SERVICES.some((p) => p.catalog === id && settings.get().services.includes(p.id));
+
+/** Whether the service's app is on the mock TV: as the Streaming services pane has it, else on the Home row. */
+const isInstalled = (id: ServiceId) =>
+  PICK_SERVICES.find((p) => p.catalog === id)?.installed ?? HOME_APPS.some((a) => a.id === id);
+
+/**
+ * The offers a card counts (F1, 2026-11-01): a subscription the household ticked, a free service whose app is
+ * installed or that is ticked, and rent and buy only from a store ticked in the Stores pane (one the pane doesn't
+ * list never names a card). The title preview still shows every offer.
+ */
+export const cardOffersOf = (t: Title) =>
+  offersOf(t).filter((o) =>
+    o.type === 'sub'
+      ? isTicked(o.service)
+      : o.type === 'free'
+        ? isInstalled(o.service) || isTicked(o.service)
+        : settings.get().stores.includes(o.service),
+  );
+
+/** "Included only" in Movies and TV Shows, Pick for me and Search: the cards' rule ({@link cardOffersOf}). */
+export const isOwnIncluded = (t: Title) => cardOffersOf(t).some(isIncludedOffer);
 
 /** The cheapest offer of a type: a priced one beats an unpriced one, which is only picked when none is priced. */
-function cheapestOf(t: Title, type: OfferType): Offer | undefined {
+function cheapestOf(offers: Offer[], type: OfferType): Offer | undefined {
   let best: Offer | undefined;
-  for (const o of offersOf(t)) {
+  for (const o of offers) {
     if (o.type !== type) continue;
     const p = cheapest(o);
     const b = best && cheapest(best);
@@ -80,7 +103,16 @@ function cheapestOf(t: Title, type: OfferType): Offer | undefined {
 
 /** The offer the Watch button uses: included first, then the cheapest rental, then the cheapest purchase. */
 export function bestOffer(t: Title): Offer | undefined {
-  return offersOf(t).find(isIncludedOffer) ?? cheapestOf(t, 'rent') ?? cheapestOf(t, 'buy');
+  return bestOf(offersOf(t));
+}
+
+/** The offer a card names: the best of the household's own offers ({@link cardOffersOf}), or none. */
+export function cardOffer(t: Title): Offer | undefined {
+  return bestOf(cardOffersOf(t));
+}
+
+function bestOf(offers: Offer[]): Offer | undefined {
+  return offers.find(isIncludedOffer) ?? cheapestOf(offers, 'rent') ?? cheapestOf(offers, 'buy');
 }
 
 /** The library card's second provider line: "Included", "Free", "Rent 39 kr", "Buy from 99 kr" or just "Rent". */
@@ -99,12 +131,13 @@ export function offerLabel(o: Offer | undefined): string {
 /**
  * The line on search and row cards: "Prime Video · Included" when a service the household has includes it; else
  * the cheapest rental across the stores, "Rent from 39 kr · 3 stores", else "Buy from 99 kr · 2 stores" (one store:
- * "SF Anytime · Rent 39 kr"); a show's season "Buy a season from 199 kr". Quality is left to Where to watch.
+ * "SF Anytime · Rent 39 kr"); a show's season "Buy a season from 199 kr". Quality is left to Where to watch. Only the
+ * household's offers count ({@link cardOffersOf}): blank when none of its services or stores has the title.
  */
 export function cardLine(t: Title): string {
-  const o = bestOffer(t);
-  if (!o) return t.offers.length ? 'Not on your services' : 'Not available';
-  const offers = offersOf(t);
+  const offers = cardOffersOf(t);
+  const o = bestOf(offers);
+  if (!o) return '';
   if (isIncludedOffer(o)) return offerLabel(o);
   const stores = new Set(offers.filter((x) => x.type === o.type).map((x) => x.service)).size;
   const min = cheapest(o);

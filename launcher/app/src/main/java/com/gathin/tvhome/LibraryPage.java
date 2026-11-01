@@ -104,7 +104,8 @@ final class LibraryPage extends Screen {
         this.shell = host.shell();
         this.kind = tab == Tab.TV ? Kind.SHOW : Kind.MOVIE;
         Household household = data.household;
-        filters = new LibraryFilters(kind, data.catalog.genres(kind), data.services.subscribed(), household::isSeen);
+        filters = new LibraryFilters(kind, data.catalog.genres(kind), data.services.subscribed(),
+                data.services.installed(), household::isSeen);
 
         box = ScrollBox.vertical(ctx, SCROLL_PAD);
         LinearLayout col = Kit.unclip(new LinearLayout(ctx));

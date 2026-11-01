@@ -209,7 +209,8 @@ public class PriceCardsTest {
         assertEquals(5, cards.size());
         assertEquals(ServiceId.VIAPLAY, cards.get(1).offers.service);
         assertTrue(cards.get(1).cheapest);
-        assertEquals("Rent from 45 kr · 4 stores", PriceCards.cardLine(moon(), EnumSet.noneOf(ServiceId.class), noSf, table));
+        assertEquals("Rent from 45 kr · 4 stores", PriceCards.cardLine(moon(), EnumSet.noneOf(ServiceId.class), null,
+                noSf, table));
         // A subscription service with a store keeps its subscription when its store isn't ticked.
         Title t = title(Kind.MOVIE, sub(ServiceId.VIAPLAY), rent(ServiceId.VIAPLAY, HD, 45));
         Title kept = PriceCards.ticked(t, EnumSet.noneOf(ServiceId.class));
@@ -425,30 +426,146 @@ public class PriceCardsTest {
     @Test
     public void cardLines() {
         Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
-        assertEquals("HBO Max · Included", PriceCards.cardLine(moon(), MAX_ONLY, null, table));
+        assertEquals("HBO Max · Included", PriceCards.cardLine(moon(), MAX_ONLY, null, null, table));
         assertEquals("YouTube · Free", PriceCards.cardLine(title(Kind.MOVIE,
                 new Offer(ServiceId.YOUTUBE, OfferType.FREE, 0, null, null, false, true), rent(ServiceId.APPLETV, HD, 29)),
-                none, null, table));
+                none, EnumSet.of(ServiceId.YOUTUBE), null, table));
         // Rakuten has no known price but still counts as a store.
-        assertEquals("Rent from 39 kr · 5 stores", PriceCards.cardLine(moon(), none, null, table));
+        assertEquals("Rent from 39 kr · 5 stores", PriceCards.cardLine(moon(), none, null, null, table));
         assertEquals("Buy from 99 kr · 2 stores", PriceCards.cardLine(title(Kind.MOVIE,
-                buy(ServiceId.APPLETV, HD, 149), buy(ServiceId.SFANYTIME, HD, 99)), none, null, table));
+                buy(ServiceId.APPLETV, HD, 149), buy(ServiceId.SFANYTIME, HD, 99)), none, null, null, table));
         assertEquals("Apple TV Store · Rent 29 kr", PriceCards.cardLine(title(Kind.MOVIE,
-                rent(ServiceId.APPLETV, HD, 29), buy(ServiceId.APPLETV, HD, 99)), none, null, table));
+                rent(ServiceId.APPLETV, HD, 29), buy(ServiceId.APPLETV, HD, 99)), none, null, null, table));
         assertEquals("Apple TV Store · Rent from 29 kr", PriceCards.cardLine(title(Kind.MOVIE,
-                rent(ServiceId.APPLETV, HD, 29, UHD, 39)), none, null, table));
-        assertEquals("Rakuten TV · Rent", PriceCards.cardLine(title(Kind.MOVIE, rent(ServiceId.RAKUTEN)), none, null, table));
+                rent(ServiceId.APPLETV, HD, 29, UHD, 39)), none, null, null, table));
+        assertEquals("Rakuten TV · Rent", PriceCards.cardLine(title(Kind.MOVIE, rent(ServiceId.RAKUTEN)), none, null,
+                null, table));
         assertEquals("Viaplay Store · Rent 45 kr", PriceCards.cardLine(title(Kind.MOVIE,
-                sub(ServiceId.VIAPLAY), rent(ServiceId.VIAPLAY, HD, 45)), none, null, table));
+                sub(ServiceId.VIAPLAY), rent(ServiceId.VIAPLAY, HD, 45)), none, null, null, table));
         assertEquals("Buy a season from 199 kr · 2 stores", PriceCards.cardLine(title(Kind.SHOW,
                 priced(ServiceId.APPLETV, OfferType.BUY, true, HD, 199),
-                priced(ServiceId.SFANYTIME, OfferType.BUY, true, HD, 219)), none, null, table));
+                priced(ServiceId.SFANYTIME, OfferType.BUY, true, HD, 219)), none, null, null, table));
         assertEquals("Buy a season from 199 kr", PriceCards.cardLine(title(Kind.SHOW,
-                priced(ServiceId.APPLETV, OfferType.BUY, true, HD, 199)), none, null, table));
-        assertEquals("Not on your services", PriceCards.cardLine(title(Kind.MOVIE, sub(ServiceId.NETFLIX)), none, null, table));
-        assertEquals("Not available", PriceCards.cardLine(title(Kind.MOVIE), none, null, table));
+                priced(ServiceId.APPLETV, OfferType.BUY, true, HD, 199)), none, null, null, table));
+        // Neither a subscription the household doesn't have nor nothing at all names anything (F1).
+        assertEquals("", PriceCards.cardLine(title(Kind.MOVIE, sub(ServiceId.NETFLIX)), none, null, null, table));
+        assertEquals("", PriceCards.cardLine(title(Kind.MOVIE), none, null, null, table));
         // Only unticked stores sell it.
-        assertEquals("Not available", PriceCards.cardLine(title(Kind.MOVIE, rent(ServiceId.RAKUTEN)), none, none, table));
+        assertEquals("", PriceCards.cardLine(title(Kind.MOVIE, rent(ServiceId.RAKUTEN)), none, null, none, table));
+    }
+
+    // ---- Cards count only the household's services and stores (F1, 2026-11-01) ------------------------------------
+
+    private static Offer free(ServiceId s) {
+        return new Offer(s, OfferType.FREE, 0, null, null, false, true);
+    }
+
+    @Test
+    public void theRuleOfferByOffer() {
+        Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
+        Set<ServiceId> netflix = EnumSet.of(ServiceId.NETFLIX);
+        Set<ServiceId> sfOnly = EnumSet.of(ServiceId.SFANYTIME);
+        assertTrue(PriceCards.isYours(sub(ServiceId.NETFLIX), netflix, none, none));
+        assertFalse(PriceCards.isYours(sub(ServiceId.NETFLIX), none, netflix, null));
+        assertTrue(PriceCards.isYours(free(ServiceId.SVTPLAY), none, EnumSet.of(ServiceId.SVTPLAY), none));
+        assertTrue(PriceCards.isYours(free(ServiceId.SVTPLAY), EnumSet.of(ServiceId.SVTPLAY), none, none));
+        assertTrue(PriceCards.isYours(free(ServiceId.SVTPLAY), EnumSet.of(ServiceId.SVTPLAY), null, none));
+        assertFalse(PriceCards.isYours(free(ServiceId.SVTPLAY), netflix, netflix, null));
+        assertTrue(PriceCards.isYours(rent(ServiceId.SFANYTIME, HD, 39), none, none, sfOnly));
+        assertFalse(PriceCards.isYours(rent(ServiceId.APPLETV, HD, 29), netflix, EnumSet.of(ServiceId.APPLETV),
+                sfOnly));
+        assertFalse(PriceCards.isYours(buy(ServiceId.APPLETV, HD, 99), none, none, none));
+        // Null stores: no Stores choice made, every store counts.
+        assertTrue(PriceCards.isYours(buy(ServiceId.APPLETV, HD, 99), none, none, null));
+    }
+
+    @Test
+    public void aTickedSubscriptionIsIncluded() {
+        Title t = title(Kind.MOVIE, sub(ServiceId.NETFLIX), rent(ServiceId.APPLETV, HD, 29));
+        assertEquals("Netflix · Included", PriceCards.cardLine(t, EnumSet.of(ServiceId.NETFLIX), null, null, table));
+        assertEquals(ServiceId.NETFLIX, PriceCards.cardOffer(t, EnumSet.of(ServiceId.NETFLIX), null, null).service);
+    }
+
+    @Test
+    public void anUntickedSubscriptionIsHidden() {
+        Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
+        Title t = title(Kind.MOVIE, sub(ServiceId.NETFLIX));
+        assertEquals("", PriceCards.cardLine(t, MAX_ONLY, null, null, table));
+        assertNull(PriceCards.cardOffer(t, MAX_ONLY, null, null));
+        // Its app being installed doesn't make it the household's: only the tick does.
+        assertEquals("", PriceCards.cardLine(t, none, EnumSet.of(ServiceId.NETFLIX), null, table));
+        // A store that has it still shows, the subscription left out.
+        Title rented = title(Kind.MOVIE, sub(ServiceId.NETFLIX), rent(ServiceId.APPLETV, HD, 29));
+        assertEquals("Apple TV Store · Rent 29 kr", PriceCards.cardLine(rented, MAX_ONLY, null, null, table));
+    }
+
+    @Test
+    public void aFreeServiceShowsWhenInstalledOrTicked() {
+        Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
+        Title t = title(Kind.MOVIE, free(ServiceId.SVTPLAY));
+        assertEquals("SVT Play · Free", PriceCards.cardLine(t, none, EnumSet.of(ServiceId.SVTPLAY), null, table));
+        assertEquals("SVT Play · Free", PriceCards.cardLine(t, EnumSet.of(ServiceId.SVTPLAY), none, null, table));
+        assertEquals(ServiceId.SVTPLAY, PriceCards.cardOffer(t, none, EnumSet.of(ServiceId.SVTPLAY), null).service);
+    }
+
+    @Test
+    public void aFreeServiceNeitherInstalledNorTickedIsHidden() {
+        Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
+        Title t = title(Kind.MOVIE, free(ServiceId.PLUTOTV));
+        assertEquals("", PriceCards.cardLine(t, none, EnumSet.of(ServiceId.SVTPLAY), null, table));
+        assertEquals("", PriceCards.cardLine(t, MAX_ONLY, null, null, table));
+        assertNull(PriceCards.cardOffer(t, none, none, null));
+        // A ticked store's rental shows instead of the free service the household doesn't have.
+        Title rented = title(Kind.MOVIE, free(ServiceId.PLUTOTV), rent(ServiceId.SFANYTIME, HD, 39));
+        assertEquals("SF Anytime · Rent 39 kr", PriceCards.cardLine(rented, none, none,
+                EnumSet.of(ServiceId.SFANYTIME), table));
+    }
+
+    @Test
+    public void aTickedStoresPriceShowsAndAnUntickedOnesDoesNot() {
+        Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
+        Set<ServiceId> sfOnly = ServicePicks.counted(EnumSet.of(ServiceId.SFANYTIME));
+        Title t = title(Kind.MOVIE, rent(ServiceId.APPLETV, HD, 29), rent(ServiceId.SFANYTIME, HD, 39));
+        assertEquals("SF Anytime · Rent 39 kr", PriceCards.cardLine(t, none, null, sfOnly, table));
+        Offer o = PriceCards.cardOffer(t, none, null, sfOnly);
+        assertEquals(ServiceId.SFANYTIME, o.service);
+        Title apple = title(Kind.MOVIE, rent(ServiceId.APPLETV, HD, 29));
+        assertEquals("", PriceCards.cardLine(apple, none, null, sfOnly, table));
+        assertNull(PriceCards.cardOffer(apple, none, null, sfOnly));
+    }
+
+    @Test
+    public void nothingOfTheHouseholdsLeavesTheLineBlank() {
+        Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
+        Title t = title(Kind.MOVIE, sub(ServiceId.NETFLIX), free(ServiceId.PLUTOTV), rent(ServiceId.APPLETV, HD, 29));
+        assertEquals("", PriceCards.cardLine(t, none, none, none, table));
+        assertNull(PriceCards.cardOffer(t, none, none, none));
+        assertEquals("", Offers.availability(PriceCards.cardOffer(t, none, none, none), none));
+    }
+
+    @Test
+    public void includedOnlyFollowsTheCardsRule() {
+        Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
+        Set<ServiceId> svt = EnumSet.of(ServiceId.SVTPLAY);
+        Title pluto = title(Kind.MOVIE, free(ServiceId.PLUTOTV));
+        Title svtFree = title(Kind.MOVIE, free(ServiceId.SVTPLAY));
+        Title netflix = title(Kind.MOVIE, sub(ServiceId.NETFLIX));
+        // A free service counts only when its app is installed or it is ticked; null installed counts every one.
+        assertFalse(Offers.isOwnIncluded(pluto, none, svt));
+        assertTrue(Offers.isOwnIncluded(svtFree, none, svt));
+        assertTrue(Offers.isOwnIncluded(pluto, EnumSet.of(ServiceId.PLUTOTV), none));
+        assertTrue(Offers.isOwnIncluded(pluto, none, null));
+        assertTrue(Offers.isOwnIncluded(netflix, EnumSet.of(ServiceId.NETFLIX), none));
+        assertFalse(Offers.isOwnIncluded(netflix, none, EnumSet.of(ServiceId.NETFLIX)));
+        // Movies and TV Shows' Availability › Included only.
+        LibraryFilters f = new LibraryFilters(Kind.MOVIE, Collections.emptyList(), none, svt, id -> false);
+        f.clear();
+        f.set(LibraryFilters.AVAILABILITY, 1);
+        assertFalse(f.passes(pluto));
+        assertTrue(f.passes(svtFree));
+        // Pick for me's Availability › Included only.
+        assertFalse(PickRules.test(PickRules.AVAIL, 1, pluto, null, none, svt));
+        assertTrue(PickRules.test(PickRules.AVAIL, 1, svtFree, null, none, svt));
     }
 
     @Test
@@ -459,7 +576,7 @@ public class PriceCardsTest {
                 PriceCards.prices(new Offer(ServiceId.YOUTUBE, OfferType.BUY, 9.99, "HD")));
         assertTrue(PriceCards.prices(new Offer(ServiceId.PRIME, OfferType.SUB, 0, "4K · HDR")).isEmpty());
         Title t = title(Kind.MOVIE, apple, new Offer(ServiceId.GOOGLETV, OfferType.RENT, 3.99, "4K"));
-        assertEquals("Rent from $3.99 · 2 stores", PriceCards.cardLine(t, EnumSet.noneOf(ServiceId.class), null,
+        assertEquals("Rent from $3.99 · 2 stores", PriceCards.cardLine(t, EnumSet.noneOf(ServiceId.class), null, null,
                 new ServiceTable()));
     }
 }

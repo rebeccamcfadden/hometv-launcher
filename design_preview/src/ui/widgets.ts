@@ -3,7 +3,7 @@ import { h, imgUrl, initials } from '../core/dom';
 import { focusable, type FocusOpts } from '../core/focus';
 import { lists } from '../core/lists';
 import { net } from '../core/net';
-import { availability, bestOffer, cardLine, runtimeLabel } from '../data/offers';
+import { availability, cardLine, cardOffer, runtimeLabel } from '../data/offers';
 import { SERVICES } from '../data/services';
 import type { Title } from '../types';
 import { icon, type IconName } from './icons';
@@ -129,9 +129,9 @@ export function provenance(t: Title): string {
   return `${lists.provenance(t)} · ${t.genres[0]}`;
 }
 
-/** The library card from the V1 Movies and TV Shows screens. */
+/** The library card from the V1 Movies and TV Shows screens; its provider is the household's own ({@link cardOffer}). */
 export function libraryCard(t: Title, opts: FocusOpts): HTMLElement {
-  const o = bestOffer(t);
+  const o = cardOffer(t);
   return focusable(
     h(
       'div.card.card--library',

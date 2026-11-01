@@ -245,10 +245,14 @@ final class SearchIndex {
     /**
      * The cards of the results grid (search.ts render): the matching titles, then, when the best genre matched well,
      * that genre's other titles (with nothing highlighted), then the people; kept by the filter. A query that is a
-     * genre's name puts the genre's titles first. Included only keeps titles with a free offer or one on a
-     * subscribed service.
+     * genre's name puts the genre's titles first. Included only keeps titles on a subscribed service, or free on a
+     * ticked service or one whose app is {@code installed} ({@link Offers#isOwnIncluded}; null: any free one).
      */
     List<Hit> items(Results r, Filter filter, Set<ServiceId> subscribed) {
+        return items(r, filter, subscribed, null);
+    }
+
+    List<Hit> items(Results r, Filter filter, Set<ServiceId> subscribed, Set<ServiceId> installed) {
         List<Hit> genre = new ArrayList<>();
         for (Title t : r.genreTitles) genre.add(new Hit(HitKind.TITLE, t.name, NO_MATCH, t, null));
         List<Hit> all = new ArrayList<>();
@@ -257,18 +261,18 @@ final class SearchIndex {
         if (!r.genreFirst) all.addAll(genre);
         all.addAll(r.people);
         List<Hit> out = new ArrayList<>();
-        for (Hit h : all) if (keeps(filter, h, subscribed)) out.add(h);
+        for (Hit h : all) if (keeps(filter, h, subscribed, installed)) out.add(h);
         return out;
     }
 
-    private static boolean keeps(Filter filter, Hit h, Set<ServiceId> subscribed) {
+    private static boolean keeps(Filter filter, Hit h, Set<ServiceId> subscribed, Set<ServiceId> installed) {
         switch (filter) {
             case ALL:
                 return true;
             case PEOPLE:
                 return h.kind == HitKind.PERSON;
             case INCLUDED:
-                return h.kind == HitKind.TITLE && Offers.isIncluded(h.title, subscribed);
+                return h.kind == HitKind.TITLE && Offers.isOwnIncluded(h.title, subscribed, installed);
             case MOVIES:
                 return h.kind == HitKind.TITLE && h.title.kind == Kind.MOVIE;
             default:

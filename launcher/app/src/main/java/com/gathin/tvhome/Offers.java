@@ -49,8 +49,22 @@ final class Offers {
         return o != null && (o.type == OfferType.FREE || (o.type == OfferType.SUB && subscribed.contains(o.service)));
     }
 
+    /** Whether any offer is included ({@link #isIncludedOffer}), counting every free service. */
     static boolean isIncluded(Title t, Set<ServiceId> subscribed) {
-        for (Offer o : t.offers) if (isIncludedOffer(o, subscribed)) return true;
+        return isOwnIncluded(t, subscribed, null);
+    }
+
+    /**
+     * Whether "Included only" (Movies and TV Shows, Pick for me, Search) counts the title for the household, by the
+     * cards' rule ({@link PriceCards#isYours}, F1): a subscription on a ticked service, or a free service that is
+     * ticked or whose app is installed. {@code installed} null counts every free service.
+     */
+    static boolean isOwnIncluded(Title t, Set<ServiceId> subscribed, Set<ServiceId> installed) {
+        for (Offer o : t.offers) {
+            if (!isIncludedOffer(o, subscribed)) continue;
+            if (o.type != OfferType.FREE || installed == null || subscribed.contains(o.service)
+                    || installed.contains(o.service)) return true;
+        }
         return false;
     }
 

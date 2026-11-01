@@ -519,7 +519,8 @@ final class SearchPage extends Screen {
             addViewed();
             body.setPadding(0, 0, 0, Ui.px(120));
         } else {
-            List<SearchIndex.Hit> items = index.items(results, filter, data.services.subscribed());
+            List<SearchIndex.Hit> items = index.items(results, filter, data.services.subscribed(),
+                    data.services.installed());
             body.addView(resultsHead(items.size(), offline), below(0));
             if (items.isEmpty()) {
                 TextView note = Ui.text(ctx, 22, Ui.TEXT_2, Ui.REGULAR);

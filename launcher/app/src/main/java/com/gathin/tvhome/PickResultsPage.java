@@ -156,7 +156,8 @@ final class PickResultsPage extends Screen {
     /** Draws a new set of picks: never the same four again while there are more. */
     private void roll() {
         Set<ServiceId> subscribed = data.services.subscribed();
-        List<Title> matches = PickRules.matches(state, data.catalog.all(), household, subscribed);
+        List<Title> matches = PickRules.matches(state, data.catalog.all(), household, subscribed,
+                data.services.installed());
         picks = PickRules.roll(matches, picks, random);
         int n = PickRules.pickCount(matches.size());
         context.setText(PickRules.resultsContext(picks.size(), state, subscribed.size()));

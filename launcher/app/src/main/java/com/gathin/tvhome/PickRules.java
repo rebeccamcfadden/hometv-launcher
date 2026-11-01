@@ -130,6 +130,11 @@ final class PickRules {
      * without a US rating counts as not rated, as NR does in the prototype.
      */
     static boolean test(int field, int i, Title t, Household h, Set<ServiceId> subscribed) {
+        return test(field, i, t, h, subscribed, null);
+    }
+
+    /** {@code installed}: a free service counts as included only when installed or ticked; null counts every one. */
+    static boolean test(int field, int i, Title t, Household h, Set<ServiceId> subscribed, Set<ServiceId> installed) {
         switch (field) {
             case LENGTH:
                 if (i == 0) return true;
@@ -150,7 +155,8 @@ final class PickRules {
             default:
                 // "Included + paid" still needs a way to watch: in the prototype every SUB service is subscribed, so
                 // no title lacks one; here a SUB offer on a service the TV doesn't have is neither.
-                return i == 0 ? Offers.bestOffer(t, subscribed) != null : Offers.isIncluded(t, subscribed);
+                return i == 0 ? Offers.bestOffer(t, subscribed) != null
+                        : Offers.isOwnIncluded(t, subscribed, installed);
         }
     }
 
@@ -175,6 +181,12 @@ final class PickRules {
      * titles too; and passing every field.
      */
     static List<Title> matches(State s, List<Title> all, Household h, Set<ServiceId> subscribed) {
+        return matches(s, all, h, subscribed, null);
+    }
+
+    /** As above; {@code installed} as for {@link #test(int, int, Title, Household, Set, Set)}. */
+    static List<Title> matches(State s, List<Title> all, Household h, Set<ServiceId> subscribed,
+                               Set<ServiceId> installed) {
         List<Title> out = new ArrayList<>();
         for (Title t : all) {
             if (t.kind != s.kind) continue;
@@ -182,11 +194,11 @@ final class PickRules {
             if (!t.detailed) continue;
             if (s.source == Source.LISTS) {
                 if (!onAnyList(t, s, h)) continue;
-            } else if (!Offers.isIncluded(t, subscribed)) {
+            } else if (!Offers.isOwnIncluded(t, subscribed, installed)) {
                 continue;
             }
             boolean pass = true;
-            for (int f = 0; f < IDS.length && pass; f++) pass = test(f, s.values[f], t, h, subscribed);
+            for (int f = 0; f < IDS.length && pass; f++) pass = test(f, s.values[f], t, h, subscribed, installed);
             if (pass) out.add(t);
         }
         return out;

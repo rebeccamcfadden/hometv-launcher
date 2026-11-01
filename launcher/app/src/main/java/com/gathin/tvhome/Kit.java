@@ -264,7 +264,8 @@ final class Kit {
 
     /**
      * The library card from Movies and TV Shows ({@code .card--library}): 417 wide, art 172 tall with radius 16; the
-     * name (25 px, medium) with the provider and "Included" or a price right-aligned (18 px); the meta line and the
+     * name (25 px, medium) with the provider and "Included" or a price right-aligned (18 px), from the household's
+     * services and stores only ({@link Data#cardOffer}; blank when none has it); the meta line and the
      * provenance line. Focused: the 4 px accent ring on the art and the art scaled 1.03; the text stays as it is.
      */
     static View libraryCard(Context ctx, Title t, Data data, String group, String key, boolean isDefault,
@@ -273,7 +274,7 @@ final class Kit {
         RingFrame art = art(ctx, t, 417, 172, Ui.RADIUS_L);
         card.addView(art, new LinearLayout.LayoutParams(Ui.px(417), Ui.px(172)));
 
-        Offer o = data.shownOffer(t);
+        Offer o = data.cardOffer(t);
         LinearLayout top = new LinearLayout(ctx);
         top.setOrientation(LinearLayout.HORIZONTAL);
         TextView name = Ui.line(ctx, 25, Ui.TEXT_1, Ui.MEDIUM);
@@ -304,7 +305,8 @@ final class Kit {
     /**
      * The smaller card of Search and the title preview's rows ({@code .card--small}): 271 wide, art 152 with radius
      * 14, the name (22 px) or {@code nameOverride} (Search's highlighted match, see {@link #highlight}), "Movie · 2016"
-     * and the best offer's label. Focused like the library card.
+     * and the card line ({@link Data#offerLine}, the household's services and stores only). Focused like the library
+     * card.
      */
     static View smallCard(Context ctx, Title t, CharSequence nameOverride, Data data, String group, String key,
                           boolean isDefault, View.OnClickListener onOk) {

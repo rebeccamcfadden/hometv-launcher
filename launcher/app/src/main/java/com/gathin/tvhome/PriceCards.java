@@ -463,17 +463,53 @@ final class PriceCards {
     // ---- The card line --------------------------------------------------------------------------------------------
 
     /**
+     * Whether a card counts the offer as the household's (README, Search, Card line; F1, 2026-11-01): a subscription
+     * only on a ticked service ({@code subscribed}); a free service only when its app is {@code installed} or it is
+     * ticked; a rental or purchase only from the ticked {@code stores} (null means every store). The title page
+     * doesn't use this: its Watch button and Where to watch still show every offer.
+     */
+    static boolean isYours(Offer o, Set<ServiceId> subscribed, Set<ServiceId> installed, Set<ServiceId> stores) {
+        switch (o.type) {
+            case SUB:
+                return subscribed.contains(o.service);
+            case FREE:
+                return subscribed.contains(o.service) || (installed != null && installed.contains(o.service));
+            default:
+                return stores == null || stores.contains(o.service);
+        }
+    }
+
+    /** The title with only the offers a card counts ({@link #isYours}); the same title when none is left out. */
+    static Title yours(Title t, Set<ServiceId> subscribed, Set<ServiceId> installed, Set<ServiceId> stores) {
+        List<Offer> kept = new ArrayList<>(t.offers.size());
+        for (Offer o : t.offers) if (isYours(o, subscribed, installed, stores)) kept.add(o);
+        if (kept.size() == t.offers.size()) return t;
+        Title.Draft d = new Title.Draft(t);
+        d.offers = kept;
+        return d.build();
+    }
+
+    /**
+     * The offer a card names (the library card's provider and its "Included", "Free" or price): the best of the
+     * household's own offers ({@link #yours}), or null when none of its services or stores has the title.
+     */
+    static Offer cardOffer(Title t, Set<ServiceId> subscribed, Set<ServiceId> installed, Set<ServiceId> stores) {
+        return Offers.bestOffer(yours(t, subscribed, installed, stores), subscribed);
+    }
+
+    /**
      * The small cards' third line (README, Search, Card line): "Prime Video · Included", "YouTube · Free"; else the
      * cheapest way to pay across the ticked stores, "Rent from 39 kr · 4 stores", "Buy from 99 kr · 2 stores"; one
      * store "Apple TV Store · Rent 29 kr" or "Rakuten TV · Rent" when its price isn't known; a show's seasons "Buy a
-     * season from 199 kr · 2 stores". "Not on your services" when only subscriptions the household doesn't have
-     * offer it, "Not available" when nothing does. Quality is left to Where to watch. Only the prices already known
-     * are used: a card never asks for one.
+     * season from 199 kr · 2 stores". Only the household's offers count ({@link #isYours}): "" when none of its
+     * services or stores has the title. Quality is left to Where to watch. Only the prices already known are used: a
+     * card never asks for one.
      */
-    static String cardLine(Title t, Set<ServiceId> subscribed, Set<ServiceId> stores, ServiceTable table) {
-        Title k = ticked(t, stores);
+    static String cardLine(Title t, Set<ServiceId> subscribed, Set<ServiceId> installed, Set<ServiceId> stores,
+                           ServiceTable table) {
+        Title k = yours(t, subscribed, installed, stores);
         Offer o = Offers.bestOffer(k, subscribed);
-        if (o == null) return k.offers.isEmpty() ? "Not available" : "Not on your services";
+        if (o == null) return "";
         if (Offers.isIncludedOffer(o, subscribed)) return Offers.offerLabel(o, subscribed, table);
         Set<ServiceId> sellers = EnumSet.noneOf(ServiceId.class);
         for (Offer x : k.offers) if (x.type == o.type) sellers.add(x.service);
