@@ -116,7 +116,7 @@ final class Themes {
         return SEASONAL.contains(choice(id)) ? Theme.Group.SEASONAL : Theme.Group.CLASSIC;
     }
 
-    /** The English name of a choice; the picker shows {@link #nameRes}. */
+    /** The English name of a choice; the picker shows ThemeWords.nameRes. */
     static String name(String id) {
         switch (choice(id)) {
             case "daylight": return "Daylight";
@@ -130,20 +130,8 @@ final class Themes {
         }
     }
 
-    static int nameRes(String id) {
-        switch (choice(id)) {
-            case "daylight": return R.string.theme_daylight;
-            case "oled": return R.string.theme_oled;
-            case "high-contrast": return R.string.theme_high_contrast;
-            case "cinema": return R.string.theme_cinema;
-            case "landscapes": return R.string.theme_landscapes;
-            case "seasonal-vector": return R.string.theme_seasonal_vector;
-            case "seasonal-8bit": return R.string.theme_seasonal_8bit;
-            default: return R.string.theme_midnight;
-        }
-    }
 
-    /** The English name of a period, a resolved Seasonal theme's name; the picker shows {@link #periodRes}. */
+    /** The English name of a period, a resolved Seasonal theme's name; the picker shows ThemeWords.periodRes. */
     static String periodName(SeasonCalendar.Period period) {
         switch (period) {
             case SNOW: return "Snow";
@@ -159,20 +147,6 @@ final class Themes {
         }
     }
 
-    static int periodRes(SeasonCalendar.Period period) {
-        switch (period) {
-            case SNOW: return R.string.season_snow;
-            case THAW: return R.string.season_thaw;
-            case SPRING_RAIN: return R.string.season_spring_rain;
-            case BLOOM: return R.string.season_bloom;
-            case PRIDE: return R.string.season_pride;
-            case MIDSUMMER: return R.string.season_midsummer;
-            case LATE_SUMMER: return R.string.season_late_summer;
-            case AUTUMN: return R.string.season_autumn;
-            case HALLOWEEN: return R.string.season_halloween;
-            default: return R.string.season_christmas;
-        }
-    }
 
     private static Palette palette(SeasonCalendar.Period period) {
         switch (period) {

@@ -84,7 +84,7 @@ public class ThemesTest {
             assertEquals(id, Themes.choice(t.id));
             assertEquals(id, Themes.group(id), t.group);
             assertFalse(id, Themes.name(id).isEmpty());
-            assertTrue(id, names.add(Themes.nameRes(id)));
+            assertTrue(id, names.add(ThemeWords.nameRes(id)));
         }
         for (String id : Themes.CLASSIC) {
             Theme t = Themes.resolve(id, DAY);
@@ -118,7 +118,7 @@ public class ThemesTest {
         Set<String> ids = new HashSet<>();
         Set<Integer> periods = new HashSet<>();
         for (SeasonCalendar.Period p : SeasonCalendar.Period.values()) {
-            assertTrue(p.name(), periods.add(Themes.periodRes(p)));
+            assertTrue(p.name(), periods.add(ThemeWords.periodRes(p)));
             for (String id : Themes.SEASONAL) {
                 Theme t = Themes.seasonal(id, p);
                 assertEquals(id + ":" + Themes.slug(p), t.id);

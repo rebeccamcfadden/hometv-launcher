@@ -5,7 +5,7 @@ import java.time.LocalDate;
 /**
  * The Theme pane's wording, chosen without Android so it is tested on the JVM: each theme's and each period's name,
  * and what the Theme section's row says ("Midnight", or "Vector art · Halloween" for a Seasonal theme on 30 October).
- * Stands in for Themes.nameRes / Themes.periodRes until the theme registry carries its own names (M9 track B).
+ * The names live here only (strings_theme_pane.xml); Themes keeps the English names a resolved Theme carries.
  */
 final class ThemeWords {
     private ThemeWords() {}
