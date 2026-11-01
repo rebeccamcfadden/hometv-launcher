@@ -12,8 +12,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -389,7 +387,7 @@ final class Config {
     }
 
     private static String fileStamp(File file) {
-        return file != null && file.isFile() ? file.length() + "@" + file.lastModified() : "absent";
+        return OverlayFile.stamp(file);
     }
 
     private static String revisionToken(File file) {
@@ -403,46 +401,23 @@ final class Config {
         }
     }
 
-    /** Reads and parses the overlay; any problem means "no overlay", never a crash on the home screen. */
     /**
-     * The overlay, or before external storage is mounted, the copy kept from the last time it was read. Home can
-     * start before the card is mounted (seen at every boot on a Xiaomi MiTV-MTEQ0), and without the copy it comes
-     * up with the built-in dock order. A missing file on mounted storage still means no overlay.
+     * The overlay, or before external storage is mounted, the copy kept from the last time it was read (OverlayFile).
+     * Read from storage only when the file changed; parsed for each caller, so none shares another's object. Any
+     * problem means "no overlay", never a crash on the home screen.
      */
     private static JSONObject readOverlay(Context ctx, File file, boolean mounted) {
-        File copy = new File(ctx.getFilesDir(), FILE_NAME);
-        if (!mounted) return read(copy);
-        JSONObject json = read(file);
-        if (json == null) {
-            copy.delete();
-        } else {
-            try (FileOutputStream out = new FileOutputStream(copy)) {
-                out.write(json.toString().getBytes(StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                Log.w(TAG, "could not keep a copy of " + file + ": " + e.getMessage());
-            }
-        }
-        return json;
-    }
-
-    private static JSONObject read(File file) {
-        if (file == null || !file.isFile()) return null;
-        if (file.length() > 64 * 1024) {
-            Log.w(TAG, "ignoring " + file + ": larger than 64 KB");
-            return null;
-        }
-        try (InputStream in = new FileInputStream(file)) {
-            byte[] buf = new byte[(int) file.length()];
-            int n = 0, r;
-            while (n < buf.length && (r = in.read(buf, n, buf.length - n)) > 0) n += r;
-            String text = new String(buf, 0, n, StandardCharsets.UTF_8);
-            if (text.startsWith("\uFEFF")) text = text.substring(1);   // Windows editors add a BOM
+        String text = OVERLAY.read(file, new File(ctx.getFilesDir(), FILE_NAME), mounted);
+        if (text == null) return null;
+        try {
             return new JSONObject(text);
         } catch (Exception e) {
             Log.w(TAG, "ignoring " + file + ": " + e.getMessage());
             return null;
         }
     }
+
+    private static final OverlayFile OVERLAY = new OverlayFile(message -> Log.w(TAG, message));
 
     private static String string(JSONObject o, String key, String fallback) {
         Object v = o.opt(key);
