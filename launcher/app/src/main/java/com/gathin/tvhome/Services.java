@@ -32,10 +32,6 @@ final class Services {
         this.subscribed = subscribed;
     }
 
-    static Services from(Context ctx, Config cfg) {
-        return from(ctx, cfg, new ServiceTable());
-    }
-
     static Services from(Context ctx, Config cfg, ServiceTable table) {
         Context app = ctx.getApplicationContext();
         PackageManager pm = app.getPackageManager();
@@ -65,10 +61,6 @@ final class Services {
         return installedServices;
     }
 
-    boolean isSubscribed(ServiceId id) {
-        return subscribed.contains(id);
-    }
-
     /**
      * The household ticked or unticked a service in Launcher settings: saved on the TV, and the subscribed set from
      * now on. Screens built before keep what they read until they are built again.
@@ -86,10 +78,6 @@ final class Services {
 
     String name(ServiceId id) {
         return table.name(id);
-    }
-
-    boolean isStore(ServiceId id) {
-        return table.isStore(id);
     }
 
     ServiceTable table() {

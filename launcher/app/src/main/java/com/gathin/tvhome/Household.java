@@ -186,13 +186,6 @@ final class Household implements ListMembership {
         if (lists == null ? imported.setMock() : imported.set(lists)) notifyListeners();
     }
 
-    /** Back to a fresh household: empty lists. */
-    void reset() {
-        prefs.edit().remove(KEY).apply();
-        state = HouseholdState.defaults(catalog);
-        version++;
-        notifyListeners();
-    }
 
     void addListener(Listener l) {
         if (!listeners.contains(l)) listeners.add(l);

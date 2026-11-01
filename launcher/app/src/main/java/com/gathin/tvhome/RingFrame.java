@@ -67,10 +67,6 @@ final class RingFrame extends FrameLayout {
         invalidate();
     }
 
-    boolean ringOn() {
-        return ringOn;
-    }
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);

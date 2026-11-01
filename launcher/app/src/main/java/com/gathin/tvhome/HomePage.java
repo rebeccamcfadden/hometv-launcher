@@ -536,7 +536,7 @@ final class HomePage extends Screen {
         int at = appRow.indexOfChild(tile);
         full = AppRow.remove(full, tile.pkg);
         apps.save(full);
-        int next = LibraryApps.nextAfterRemoval(at, appRow.getChildCount());
+        int next = AppRow.nextAfterRemoval(at, appRow.getChildCount());
         String nextKey = next < 0 ? KEY_EMPTY : Focus.key(appRow.getChildAt(next));
         refreshApps(true);
         View target = Focus.byKey(appRow, nextKey);

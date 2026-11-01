@@ -78,11 +78,6 @@ final class Data {
         return tickedStores == null ? null : tickedStores.get();
     }
 
-    /** "Prime Video · Included", "Apple TV · Rent $3.99" ("Apple TV Store · Rent 39 kr") or "Not available". */
-    String offerLabel(Offer o) {
-        return Offers.offerLabel(o, services.subscribed(), table);
-    }
-
     /**
      * A small card's third line ({@link PriceCards#cardLine}): "Prime Video · Included", "Rent from 39 kr · 4
      * stores", with the prices already known, from the household's ticked services, its installed free ones and its

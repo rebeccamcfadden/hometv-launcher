@@ -113,4 +113,28 @@ public class AppRowTest {
                 AppRow.visible(nine, installed("a", "c", "d", "e", "f", "g", "h", "i")));
         assertTrue(AppRow.hasRoom(list("a", "b"), all));
     }
+
+    @Test
+    public void removingATileFocusesTheNextOrThePreviousAtTheEnd() {
+        assertEquals(1, AppRow.nextAfterRemoval(0, 5));
+        assertEquals(3, AppRow.nextAfterRemoval(2, 5));
+        assertEquals(3, AppRow.nextAfterRemoval(4, 5));
+        assertEquals(-1, AppRow.nextAfterRemoval(0, 1));
+        assertEquals(-1, AppRow.nextAfterRemoval(0, 0));
+        assertEquals(1, AppRow.nextAfterRemoval(-1, 3));
+        assertEquals(1, AppRow.nextAfterRemoval(9, 3));
+    }
+
+    @Test
+    public void onlyWellFormedPackageNamesAreValid() {
+        assertTrue(AppRow.validPackage("com.netflix.ninja"));
+        assertTrue(AppRow.validPackage("a_b.c1"));
+        assertFalse(AppRow.validPackage(null));
+        assertFalse(AppRow.validPackage(""));
+        assertFalse(AppRow.validPackage("com..netflix"));
+        assertFalse(AppRow.validPackage(".com"));
+        assertFalse(AppRow.validPackage("com."));
+        assertFalse(AppRow.validPackage("com.1app"));
+        assertFalse(AppRow.validPackage("com.net flix"));
+    }
 }

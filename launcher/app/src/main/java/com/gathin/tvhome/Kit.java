@@ -256,10 +256,6 @@ final class Kit {
         if (tick != null) tick.setVisibility(selected ? View.VISIBLE : View.GONE);
     }
 
-    static boolean isSelected(View chip) {
-        return chip.isActivated();
-    }
-
     // ---- Cards ----------------------------------------------------------------------------------------------------
 
     /**

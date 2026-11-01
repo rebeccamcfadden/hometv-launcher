@@ -208,10 +208,6 @@ final class Ui {
         reducedMotion = reduced || animator == 0f;
     }
 
-    static float scale() {
-        return scale;
-    }
-
     /** Reduced motion (config reduced_motion, animations off, or the system's animator scale at 0). */
     static boolean reducedMotion() {
         return reducedMotion;

@@ -103,9 +103,34 @@ final class AppRow {
         List<String> out = new ArrayList<>();
         for (String line : text.split("\n")) {
             String pkg = line.trim();
-            if (LibraryApps.validPackage(pkg)) out.add(pkg);
+            if (validPackage(pkg)) out.add(pkg);
         }
         return dedupe(out);
+    }
+
+    /** A well-formed package name: dot-separated parts, each a letter or _ then letters, digits or _. */
+    static boolean validPackage(String pkg) {
+        if (pkg == null || pkg.isEmpty() || pkg.length() > 255) return false;
+        boolean first = true;
+        for (int i = 0; i < pkg.length(); i++) {
+            char c = pkg.charAt(i);
+            if (c == '.') {
+                if (first) return false;
+                first = true;
+            } else {
+                boolean letter = c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_';
+                if (!letter && (first || c < '0' || c > '9')) return false;
+                first = false;
+            }
+        }
+        return !first;
+    }
+
+    /** Focus after a tile leaves the row: the next one, or the previous one at the end; -1 when none is left. */
+    static int nextAfterRemoval(int current, int count) {
+        if (count <= 1) return -1;
+        current = Math.max(0, Math.min(current, count - 1));
+        return current + 1 < count ? current + 1 : current - 1;
     }
 
     private static List<String> dedupe(List<String> list) {

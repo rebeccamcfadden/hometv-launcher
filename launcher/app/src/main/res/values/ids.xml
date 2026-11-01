@@ -5,7 +5,6 @@
     <item name="ui_focus_group" type="id" />
     <item name="ui_focus_key" type="id" />
     <item name="ui_focus_default" type="id" />
-    <item name="ui_focus_ok" type="id" />
     <item name="ui_nav" type="id" />
     <item name="ui_still" type="id" />
 </resources>
