@@ -246,7 +246,18 @@
   gap: 22px;
 }
 .library .chips {
-  margin-top: 16px;
+  margin-top: 8px;
+  /* One row however many lists are shown (Choose lists); it scrolls with focus. Room for the focus ring and glow. */
+  flex-wrap: nowrap;
+  overflow: hidden;
+  scroll-behavior: smooth;
+  padding: 8px;
+  margin-left: -8px;
+  margin-right: -8px;
+  margin-bottom: -8px;
+}
+.library .chips > * {
+  flex: none;
 }
 .lib-list-head {
   display: flex;
@@ -1982,6 +1993,9 @@
   margin-top: 2px;
   font-size: var(--t-min);
   color: var(--text-3);
+}
+.lists-past {
+  color: var(--star);
 }
 
 /* Streaming services (r2-services B, tiles) */

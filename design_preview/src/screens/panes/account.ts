@@ -1,6 +1,7 @@
 import { app } from '../../core/app';
 import { h } from '../../core/dom';
-import { account, IMPORT_STEPS, USERNAME, type ListRole } from '../../core/account';
+import { account, USERNAME } from '../../core/account';
+import { CHIP_CAP, lists } from '../../core/lists';
 import { store } from '../../core/store';
 import { icon } from '../../ui/icons';
 import { qrSvg } from '../../ui/qr';
@@ -41,7 +42,7 @@ export function accountPane(host: PaneHost): Pane {
     h(
       'div.ben',
       benefit('sync', 'My list, Seen and Favorites, in step', 'Add a title on your phone and it shows here too'),
-      benefit('list', 'Household and Friends lists', 'Pick which of your TMDB lists they come from'),
+      benefit('list', 'All your TMDB lists', 'Pick which ones show in Movies and TV Shows, by name'),
       benefit('lock', 'Your password stays with TMDB', 'This TV only gets a sign-in key; sign out any time'),
     ),
     h('div.pane-actions', entry(button('Sign in with your phone', { icon: 'phone', primary: true, key: 'acc-signin', onOk: account.signIn }))),
@@ -92,9 +93,9 @@ export function accountPane(host: PaneHost): Pane {
           h('div.acc-steps', steps(2)),
           h(
             'div.acc-count',
-            h('div.acc-import', h('span', 'Importing your lists…'), h('span', `${account.imported()} of ${IMPORT_STEPS}`)),
-            h('div.bar.good', h('i', { style: `width:${Math.round((account.imported() / IMPORT_STEPS) * 100)}%` })),
-            h('div.pane-note.pane-note--tiny', account.imported() < 3 ? 'My list, Seen and Favorites first; Household and Friends next' : 'My list, Seen and Favorites done; Household and Friends next'),
+            h('div.acc-import', h('span', 'Importing your lists…'), h('span', `${account.imported()} of ${account.importSteps()}`)),
+            h('div.bar.good', h('i', { style: `width:${Math.round((account.imported() / account.importSteps()) * 100)}%` })),
+            h('div.pane-note.pane-note--tiny', account.imported() < 3 ? 'My list, Seen and Favorites first; then the lists shown as chips' : 'My list, Seen and Favorites done; the lists shown as chips next'),
           ),
         ),
       ),
@@ -132,16 +133,19 @@ export function accountPane(host: PaneHost): Pane {
     );
 
   const signedIn = () => {
-    const hh = account.roleOf('household');
-    const fr = account.roleOf('friends');
+    const chips = lists.chipped();
+    const past = lists.overflow().length;
+    // Names while they fit on the row; past three, a count ("6 lists · +1 in All lists").
+    const shownText = chips.length
+      ? (chips.length <= 3 ? chips.map((l) => l.name).join(', ') : `${chips.length} lists`) + (past ? ` · +${past} in All lists` : '')
+      : 'None';
     return [
       h('div.eyebrow', 'Account'),
       h('div.acc-user', h('div.avatar', USERNAME[0].toUpperCase()), h('div', h('div.pane-title', USERNAME), h('div.pane-good', h('span', { html: icon('check', 22) }), 'Signed in to TMDB'))),
       h(
         'div.kvs',
         h('div.kv', h('span', 'My list · Seen · Favorites'), h('b', `${store.myListIds().length} · 118 · 12`)),
-        h('div.kv', h('span', 'Household'), h('b', hh ? `${hh.name} · ${hh.count} titles` : 'Not used')),
-        h('div.kv', h('span', 'Friends'), h('b', fr ? `${fr.name} · ${fr.count} titles` : 'Not used')),
+        h('div.kv', h('span', 'Shown as chips'), h('b', shownText)),
         h('div.kv', h('span', 'Last synced'), h('b', account.lastSynced())),
       ),
       h(
@@ -168,7 +172,7 @@ export function accountPane(host: PaneHost): Pane {
             app.push(
               confirmDialog({
                 title: 'Sign out of TMDB?',
-                body: 'My list, Seen and Favorites stay on this TV. Household and Friends are hidden until you sign in again.',
+                body: 'My list, Seen and Favorites stay on this TV. Your other TMDB lists are hidden until you sign in again.',
                 actions: [{ label: 'Sign out', primary: true, onOk: account.signOut }],
               }),
             ),
@@ -177,37 +181,53 @@ export function accountPane(host: PaneHost): Pane {
     ];
   };
 
-  const ROLES: [ListRole, string][] = [
-    ['household', 'Household'],
-    ['friends', 'Friends'],
-    ['none', 'Not used'],
+  const SHOW: ['show' | 'hide', string][] = [
+    ['show', 'Show'],
+    ['hide', 'Hidden'],
   ];
 
-  // Choose lists (r2-account B): one row per TMDB list with a Household / Friends / Not used switch. Giving a list a
-  // role takes it from the list that had it.
-  const chooseLists = () => [
-    h('div.crumb', h('span', { html: icon('back', 20) }), 'Account'),
-    h('div.pane-title', 'Choose lists'),
-    h('div.pane-sub', 'All your TMDB lists. Mark one as Household and one as Friends; ←/→ moves along a row, OK picks.'),
-    h(
-      'div.lists',
-      account.lists().map((l, i) =>
-        h(
-          'div.lists-row',
-          h('div.lists-name', h('div.nm', l.name), h('div.ct', `${l.count} titles · updated ${l.updated}`)),
-          segmented<ListRole>({
-            options: ROLES,
-            get: () => l.role,
-            set: (role) => account.setRole(l.id, role),
-            group: `list-${l.id}`,
-            small: true,
-            entry: i === 0,
-          }),
-        ),
+  // Choose lists (r2-account B's rows): one row per TMDB list with a Show / Hidden switch. The first six shown lists, in
+  // this order, become chips in Movies, TV Shows and Pick for me after All lists and My list, by their TMDB names; a list
+  // shown past six has no chip, but its titles are still in All lists (the project lead, 2026-10-31).
+  const chooseLists = () => {
+    const shownIds = lists.imported().map((l) => l.id);
+    const chipped = shownIds.length;
+    return [
+      h('div.crumb', h('span', { html: icon('back', 20) }), 'Account'),
+      h(
+        'div.pane-headrow',
+        h('div.pane-title', 'Choose lists'),
+        h('span.pane-count', `${Math.min(chipped, CHIP_CAP)} of ${CHIP_CAP} chips`),
       ),
-    ),
-    h('div.pane-note', 'My list, Seen and Favorites always come from the account itself. Back returns.'),
-  ];
+      h(
+        'div.pane-sub',
+        `Your TMDB lists. Up to ${CHIP_CAP} shown ones become chips in Movies and TV Shows, by these names and in this order; more are still in All lists. ←/→ moves along a row, OK picks.`,
+      ),
+      h(
+        'div.lists',
+        account.lists().map((l, i) => {
+          const past = shownIds.indexOf(l.id) >= CHIP_CAP;
+          return h(
+            'div.lists-row',
+            h(
+              'div.lists-name',
+              h('div.nm', l.name),
+              h('div.ct', `${lists.count(l.id)} titles · updated ${l.updated}`, past ? h('span.lists-past', ' · No chip: in All lists') : null),
+            ),
+            segmented<'show' | 'hide'>({
+              options: SHOW,
+              get: () => (l.shown ? 'show' : 'hide'),
+              set: (v) => account.setShown(l.id, v === 'show'),
+              group: `list-${l.id}`,
+              small: true,
+              entry: i === 0,
+            }),
+          );
+        }),
+      ),
+      h('div.pane-note', 'My list, Seen and Favorites always come from the account itself. Back returns.'),
+    ];
+  };
 
   return {
     render() {

@@ -336,5 +336,3 @@ export function getTitle(id: string): Title {
 }
 
 export const GENRES = [...new Set(TITLES.flatMap((t) => t.genres))].sort();
-
-export const LIST_NAMES: Record<ListId, string> = { my: 'My list', household: 'Household', friends: 'Friends' };

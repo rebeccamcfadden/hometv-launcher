@@ -16,31 +16,32 @@ export const ACCOUNT_STATES: [AccountState, string][] = [
   ['refused', 'Couldn’t reach TMDB'],
 ];
 
-export type ListRole = 'household' | 'friends' | 'none';
-
 export interface TmdbList {
   id: string;
   name: string;
-  count: number;
   updated: string;
-  role: ListRole;
+  /** Shown as a chip in Movies, TV Shows and Pick for me (Choose lists). */
+  shown: boolean;
 }
 
 export const USERNAME = 'evening_cinema';
 /** Codes last 15 minutes. */
 const CODE_SECONDS = 15 * 60;
-/** Import steps: My list, Seen, Favorites, Household, Friends. */
-export const IMPORT_STEPS = 5;
+/** Import steps: My list, Seen, Favorites, then each list shown as a chip. */
+const importSteps = () => 3 + lists.filter((l) => l.shown).length;
 
 const lists: TmdbList[] = [
-  { id: 'family', name: 'Family picks', count: 23, updated: 'today', role: 'household' },
-  { id: 'weekend', name: 'Weekend movies', count: 41, updated: '3 days ago', role: 'none' },
-  { id: 'tips', name: 'Friends’ tips', count: 18, updated: 'yesterday', role: 'friends' },
-  { id: 'club', name: 'Film club', count: 35, updated: 'last week', role: 'none' },
-  { id: 'together', name: 'Watch together', count: 12, updated: 'last month', role: 'none' },
+  { id: 'family', name: 'Family picks', updated: 'today', shown: true },
+  { id: 'weekend', name: 'Weekend movies', updated: '3 days ago', shown: false },
+  { id: 'tips', name: 'Friends’ tips', updated: 'yesterday', shown: true },
+  { id: 'club', name: 'Film club', updated: 'last week', shown: false },
+  { id: 'together', name: 'Watch together', updated: 'last month', shown: false },
+  { id: 'docs', name: 'Documentaries', updated: 'last month', shown: false },
+  { id: 'kids', name: 'Kids’ night', updated: 'in August', shown: false },
 ];
 
 let state: AccountState = 'out';
+let everSignedIn = false;
 let expiresAt = 0;
 let imported = 0;
 let lastSynced = 'Today 19:52';
@@ -59,6 +60,7 @@ function stopTimer() {
 function go(s: AccountState) {
   stopTimer();
   state = s;
+  if (s === 'in') everSignedIn = true;
   if (s === 'getting') timer = window.setTimeout(() => go('waiting'), 1200);
   if (s === 'waiting') {
     expiresAt = Date.now() + CODE_SECONDS * 1000;
@@ -71,7 +73,7 @@ function go(s: AccountState) {
     imported = 0;
     timer = window.setInterval(() => {
       imported++;
-      if (imported >= IMPORT_STEPS) {
+      if (imported >= importSteps()) {
         lastSynced = 'Just now';
         return go('in');
       }
@@ -102,9 +104,11 @@ export const account = {
   /** How much of the code's time is left, 0–1. */
   fraction: () => secondsLeft() / CODE_SECONDS,
   imported: () => imported,
+  importSteps,
   lastSynced: () => lastSynced,
   lists: () => lists,
-  roleOf: (role: ListRole) => lists.find((l) => l.role === role),
+  /** Signed in at least once: after a sign-out the mock Household and Friends don't come back. */
+  everSignedIn: () => everSignedIn,
   /** Sign in, New code and Try again: offline, TMDB can't be reached. */
   signIn: () => go(net.isOffline() ? 'refused' : 'getting'),
   cancel: () => go('out'),
@@ -115,12 +119,11 @@ export const account = {
     emit();
     return true;
   },
-  /** One list per role: giving a list a role takes it from the one that had it. */
-  setRole(id: string, role: ListRole) {
-    for (const l of lists) {
-      if (l.id === id) l.role = role;
-      else if (role !== 'none' && l.role === role) l.role = 'none';
-    }
+  /** Show a list as a chip, or hide it; any number can show. */
+  setShown(id: string, shown: boolean) {
+    const l = lists.find((x) => x.id === id);
+    if (!l || l.shown === shown) return;
+    l.shown = shown;
     emit();
   },
   /** Section values in Launcher settings: the username, or what the sign-in is doing. */

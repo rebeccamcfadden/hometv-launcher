@@ -1,8 +1,8 @@
 import { app, type TabId } from '../core/app';
 import { h, imgUrl, initials } from '../core/dom';
 import { focusable, type FocusOpts } from '../core/focus';
+import { lists } from '../core/lists';
 import { net } from '../core/net';
-import { LIST_NAMES } from '../data/catalog';
 import { availability, bestOffer, cardLine, runtimeLabel } from '../data/offers';
 import { SERVICES } from '../data/services';
 import type { Title } from '../types';
@@ -126,8 +126,7 @@ export function titleMeta(t: Title): string {
 }
 
 export function provenance(t: Title): string {
-  const list = t.lists[0];
-  return `${list ? LIST_NAMES[list] : 'Catalogue'} · ${t.genres[0]}`;
+  return `${lists.provenance(t)} · ${t.genres[0]}`;
 }
 
 /** The library card from the V1 Movies and TV Shows screens. */

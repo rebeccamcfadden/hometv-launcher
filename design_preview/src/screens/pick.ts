@@ -1,11 +1,12 @@
 import { app, type Screen } from '../core/app';
 import { h, imgUrl, replace } from '../core/dom';
 import { focusable } from '../core/focus';
+import { lists } from '../core/lists';
 import { store } from '../core/store';
-import { LIST_NAMES, TITLES } from '../data/catalog';
+import { TITLES } from '../data/catalog';
 import { availability, bestOffer, subscribedCount, isIncluded, isIncludedOffer, offerLabel, paidAction } from '../data/offers';
 import { SERVICES } from '../data/services';
-import type { Kind, ListId, Title } from '../types';
+import type { Kind, Title } from '../types';
 import { icon } from '../ui/icons';
 import { button, chip, guide, navBar, provenance, titleMeta } from '../ui/widgets';
 import { titlePreview } from './preview';
@@ -59,16 +60,17 @@ const FIELDS: Field[] = [
 interface PickState {
   kind: Kind;
   source: 'lists' | 'services';
-  lists: Set<ListId>;
+  /** List ids from {@link lists}: 'my' and shown TMDB (or mock) lists. */
+  lists: Set<string>;
   values: Record<string, number>;
 }
 
 function matches(s: PickState): Title[] {
+  const on = lists.all().filter((l) => s.lists.has(l.id));
   return TITLES.filter((t) => {
     if (t.kind !== s.kind) return false;
     if (s.source === 'lists') {
-      const on = [...s.lists].some((l) => (l === 'my' ? store.inMyList(t.id) : t.lists.includes(l)));
-      if (!on) return false;
+      if (!on.some((l) => l.has(t))) return false;
     } else if (!isIncluded(t)) return false;
     return FIELDS.every((f) => f.test(t, s.values[f.id] ?? 0));
   });
@@ -84,7 +86,13 @@ const shuffle = <T>(a: T[]) => {
 };
 
 const sourceText = (s: PickState) =>
-  s.source === 'services' ? `Everything included on your ${subscribedCount()} services` : [...s.lists].map((l) => LIST_NAMES[l]).join(' + ') || 'No lists';
+  s.source === 'services'
+    ? `Everything included on your ${subscribedCount()} services`
+    : lists
+        .all()
+        .filter((l) => s.lists.has(l.id))
+        .map((l) => l.name)
+        .join(' + ') || 'No lists';
 
 const filterText = (s: PickState) =>
   [s.kind === 'movie' ? 'Movies' : 'TV Shows', ...FIELDS.map((f) => f.options[s.values[f.id] ?? 0]).filter((v) => !/^Any/.test(v))].join(' · ');
@@ -93,7 +101,8 @@ export function pickSetup(kind: Kind): Screen {
   const s: PickState = {
     kind,
     source: 'lists',
-    lists: new Set<ListId>(['my', 'household']),
+    // My list and the first imported list, as Household was before the lists came from the account.
+    lists: new Set<string>(lists.all().slice(0, 2).map((l) => l.id)),
     values: { length: 1, genre: 1, score: 1, rating: 2, watch: 0, avail: 0 },
   };
 
@@ -134,15 +143,15 @@ export function pickSetup(kind: Kind): Screen {
     );
     replace(
       listsRow,
-      (['my', 'household', 'friends'] as ListId[]).map((l) =>
-        chip(LIST_NAMES[l], {
-          selected: s.lists.has(l),
+      lists.all().map((l) =>
+        chip(l.name, {
+          selected: s.lists.has(l.id),
           check: true,
           group: 'lists',
-          key: `pl-${l}`,
+          key: `pl-${l.id}`,
           onOk: () => {
-            if (s.lists.has(l)) s.lists.delete(l);
-            else s.lists.add(l);
+            if (s.lists.has(l.id)) s.lists.delete(l.id);
+            else s.lists.add(l.id);
             render();
           },
         }),

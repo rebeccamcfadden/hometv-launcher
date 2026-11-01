@@ -2,6 +2,7 @@ import { app, type Screen } from '../core/app';
 import { h, highlight, initials, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { search, titlesInGenre, type Hit } from '../core/fuzzy';
+import { lists } from '../core/lists';
 import { net } from '../core/net';
 import { store } from '../core/store';
 import { byId, TITLES } from '../data/catalog';
@@ -122,7 +123,7 @@ export function searchScreen(): Screen {
    * Offline (06-states A): the keyboard, recent searches and the rows of titles saved on the TV still work; results
    * come from the saved titles only (those on the lists and those viewed), and say so. People need the internet.
    */
-  const savedIds = () => new Set([...TITLES.filter((t) => t.lists.length).map((t) => t.id), ...store.myListIds(), ...store.viewed()]);
+  const savedIds = () => new Set([...TITLES.filter(lists.saved).map((t) => t.id), ...store.viewed()]);
   const offlinePill = (text: string) => h('span.offline-pill', h('span', { html: icon('wifiOff', 24) }), text);
 
   function render() {

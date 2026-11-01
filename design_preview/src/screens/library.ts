@@ -1,10 +1,10 @@
 import { app, type Screen } from '../core/app';
 import { h, replace } from '../core/dom';
+import { lists } from '../core/lists';
 import { net, SAVED_AT } from '../core/net';
-import { store } from '../core/store';
-import { LIST_NAMES, TITLES } from '../data/catalog';
+import { TITLES } from '../data/catalog';
 import { subscribedCount } from '../data/offers';
-import type { Kind, ListId, Title } from '../types';
+import type { Kind, Title } from '../types';
 import { icon } from '../ui/icons';
 import { button, chip, guide, libraryCard, libraryCardSkeleton, navBar } from '../ui/widgets';
 import { activeCount, applyFilters, defaultFilters, filterDefs, summary } from './filterDefs';
@@ -12,10 +12,11 @@ import { filtersDrawer } from './filters';
 import { pickSetup } from './pick';
 import { titlePreview } from './preview';
 
-type ListChoice = 'all' | ListId;
+/** 'all', or a list id from {@link lists}. */
+type ListChoice = string;
 
-const inList = (t: Title, l: ListChoice) =>
-  l === 'all' ? t.lists.length > 0 || store.inMyList(t.id) : l === 'my' ? store.inMyList(t.id) : t.lists.includes(l);
+const inList = (t: Title, l: ListChoice) => (l === 'all' ? lists.saved(t) : (lists.byId(l)?.has(t) ?? false));
+const listName = (l: ListChoice) => (l === 'all' ? 'All lists' : (lists.byId(l)?.name ?? 'All lists'));
 
 /** V1 Movies / TV Shows: imported watchlists only, no Explore rows. */
 export function libraryScreen(kind: Kind): Screen {
@@ -27,7 +28,7 @@ export function libraryScreen(kind: Kind): Screen {
 
   const pool = () => TITLES.filter((t) => t.kind === kind && inList(t, 'all'));
 
-  const chipsEl = h('div.chips');
+  const chipsEl = h('div.chips', { 'data-scroll': 'x', 'data-scroll-pad': 48 });
   const scopeEl = h('span.lib-scope-slot');
   const guideEl = guide('Illustrative services, scores & availability', 'OK for title details');
   /** Try again on the offline page is checking: its label says so for a moment. */
@@ -35,6 +36,7 @@ export function libraryScreen(kind: Kind): Screen {
   const filterSummary = h('span.lib-filter-summary');
   const filterBtnSlot = h('span');
   const listTitle = h('div.lib-list-title');
+  const contextEl = h('div.page-context');
   const listStatus = h('div.lib-list-status');
   const grid = h('div.lib-grid');
 
@@ -43,12 +45,14 @@ export function libraryScreen(kind: Kind): Screen {
     // Offline with nothing saved yet: no lists to count or show (06-states A).
     const empty = state === 'offline-empty';
     const all = empty ? [] : pool();
-    const choices: ListChoice[] = ['all', 'my', 'household', 'friends'];
+    // A list hidden or gone since (Choose lists, a sign-out) falls back to All lists.
+    if (list !== 'all' && !lists.byId(list)) list = 'all';
+    const choices: ListChoice[] = ['all', ...lists.all().map((l) => l.id)];
     replace(
       chipsEl,
       h('span.chips-label', 'Imported watchlists'),
       choices.map((c) =>
-        chip(`${c === 'all' ? 'All lists' : LIST_NAMES[c]}${empty ? '' : ` · ${all.filter((t) => inList(t, c)).length}`}`, {
+        chip(`${listName(c)}${empty ? '' : ` · ${all.filter((t) => inList(t, c)).length}`}`, {
           selected: c === list,
           group: 'lists',
           key: `list-${c}`,
@@ -76,7 +80,7 @@ export function libraryScreen(kind: Kind): Screen {
 
     const inChosen = all.filter((t) => inList(t, list));
     const shown = applyFilters(defs, filters, inChosen);
-    replace(listTitle, list === 'all' ? 'All lists' : LIST_NAMES[list]);
+    replace(listTitle, listName(list));
     const count = shown.length === inChosen.length ? `${shown.length} ${noun}` : `${shown.length} of ${inChosen.length} ${noun}`;
     replace(
       listStatus,
@@ -95,8 +99,9 @@ export function libraryScreen(kind: Kind): Screen {
       scopeEl,
       net.isOffline()
         ? h('span.offline-pill', h('span', { html: icon('wifiOff', 24) }), empty ? 'Offline' : `Offline · showing your lists as saved ${SAVED_AT}`)
-        : h('span.lib-scope-text', `3 imported watchlists · All ${subscribedCount()} services`),
+        : h('span.lib-scope-text', `${lists.watchlists()} imported watchlist${lists.watchlists() === 1 ? '' : 's'} · All ${subscribedCount()} services`),
     );
+    replace(contextEl, `Your collection · ${lists.names()}`);
     replace(guideEl.lastElementChild!, empty ? '' : 'OK for title details');
 
     if (empty) {
@@ -137,7 +142,7 @@ export function libraryScreen(kind: Kind): Screen {
         grid,
         h(
           'div.empty',
-          h('div.empty-title', `Nothing on ${list === 'all' ? 'your lists' : LIST_NAMES[list]} yet`),
+          h('div.empty-title', `Nothing on ${list === 'all' ? 'your lists' : listName(list)} yet`),
           h('div.empty-note', 'Add titles with + My list in any title preview, or import a watchlist in Settings.'),
         ),
       );
@@ -175,7 +180,7 @@ export function libraryScreen(kind: Kind): Screen {
     { 'data-scroll': 'y', 'data-scroll-pad': 70 },
     h(
       'div.lib-intro',
-      h('div', h('h1.page-title', heading), h('div.page-context', 'Your collection · My list, Household & Friends')),
+      h('div', h('h1.page-title', heading), contextEl),
       pickBtn,
     ),
     h(
@@ -211,6 +216,10 @@ export function libraryScreen(kind: Kind): Screen {
         ? chipsEl.querySelector<HTMLElement>('.chip.is-selected')
         : (grid.querySelector<HTMLElement>('[data-default]') ?? grid.querySelector<HTMLElement>('[data-focus]') ?? pickBtn),
     onShow: render,
+    // Back on the first chip, the row returns to its start so the label shows again.
+    onFocus(el) {
+      if (el.dataset.key === 'list-all') chipsEl.scrollLeft = 0;
+    },
     // The list chips lead to Pick for me: Up from any chip, and Right from the last one, before the nav or the grid.
     onKey(key, f) {
       if (!f) return false;
