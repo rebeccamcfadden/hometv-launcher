@@ -121,7 +121,7 @@ final class NoteBook {
             List<NoteMatch.Ask> asks = new ArrayList<>();
             for (NoteMatch.Ask a : s.asks) {
                 NoteMatch.Ask b = before.get(a.key);
-                asks.add(a.top.isEmpty() && b != null && !b.top.isEmpty() ? a.with(b.top) : a);
+                asks.add(!a.looked && b != null && b.looked ? a.with(b.top) : a);
             }
             s = new Send(s.list, s.at, s.lines, s.added, asks);
         }
@@ -129,7 +129,7 @@ final class NoteBook {
         while (sends.size() > MAX_SENDS) sends.remove(sends.size() - 1);
     }
 
-    /** TMDB's answers were found for a line of the list's last send that had none: they are kept with it. */
+    /** TMDB was asked again for a line of the list's last send: its answers (perhaps none) replace the line's. */
     synchronized void offered(String list, String lineKey, List<NoteMatch.Candidate> top) {
         String key = NoteLines.key(list);
         for (int i = 0; i < sends.size(); i++) {

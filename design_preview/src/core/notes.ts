@@ -95,6 +95,12 @@ export const notes = {
     const unmatched = sends.reduce((n, s) => n + s.unmatched.length, 0);
     return unmatched ? { text: `${unmatched} not matched`, warn: true } : { text: 'On' };
   },
+  /** Search again found these answers (perhaps none) for a line: they are kept with it, as on the TV. */
+  offer(list: string, line: string, top: NoteCandidate[]) {
+    const ask = sends.find((x) => x.list === list)?.unmatched.find((a) => a.line === line);
+    if (ask) ask.top = top;
+    emit();
+  },
   /**
    * The picker answered a line (the project lead, 2026-11-01): `pick` goes onto the list (Seen, for a ticked line),
    * or null is "None of these", remembered so the line isn't asked again. Either way it leaves Last sends.

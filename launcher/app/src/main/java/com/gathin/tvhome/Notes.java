@@ -279,25 +279,25 @@ final class Notes {
     }
 
     /**
-     * Looks up TMDB's answers for an asked line that has none saved, keeps them with the send, and hands back the line
-     * with them (none if TMDB had none; null when it couldn't be reached). Main thread.
+     * Looks up TMDB's answers for an asked line, by {@code query} (the line's text, or what the household typed to
+     * search again), keeps them with the send, and hands back the line with them (none if TMDB had none; null when it
+     * couldn't be reached). Main thread.
      */
-    void lookUp(String list, NoteMatch.Ask ask, java.util.function.Consumer<NoteMatch.Ask> done) {
+    void lookUp(String list, NoteMatch.Ask ask, String query, java.util.function.Consumer<NoteMatch.Ask> done) {
         Accounts a = accounts;
         if (a == null) {
             done.accept(null);
             return;
         }
-        a.runLookUp(ask.query, top -> {
+        a.runLookUp(query, top -> {
             if (top == null) {
                 done.accept(null);
                 return;
             }
-            if (!top.isEmpty()) {
-                book.offered(list, ask.key, top);
-                prefs.edit().putString(SENDS, book.sendsJson()).apply();
-                changed();
-            }
+            // Kept even when there were none, so reopening the line shows that search, not an older one.
+            book.offered(list, ask.key, top);
+            prefs.edit().putString(SENDS, book.sendsJson()).apply();
+            changed();
             done.accept(ask.with(top));
         });
     }

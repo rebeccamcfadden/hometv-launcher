@@ -234,6 +234,10 @@ basterds · Choose". OK on it shows TMDB's three best answers as posters with th
 keyboard first ("Inglourious Basterds"):
 
 - **OK on a poster** puts that title on the list, or on Seen if the line was ticked. The line leaves Last sends.
+- **Search again** opens the line's text over the on-screen keyboard (as in Search; a keyboard or a remote with keys
+  types too): fix the spelling or shorten it, then **Search**, and pick from what that finds. TMDB's search doesn't
+  forgive a misspelled word: "Dead poet society" finds only a band, "dead poets" finds the film. Back returns to the
+  answers.
 - **None of these** stops asking about the line; the TV remembers that, so sending the note again doesn't bring it
   back.
 - **Back** leaves the line there for later. Sending the note again keeps its answers.

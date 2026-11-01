@@ -75,8 +75,9 @@ The prototype goes further than Figma in places. These exist only here: the filt
 the Episodes, Cast & crew and More like this tabs, the Inputs, Wi-Fi and quick-settings dropdowns, the person
 page stub, the empty and no-match states of Movies and TV Shows, the focusable search bar on the full results,
 the Seen icon (an eye, so it no longer matches My list's tick), and Phone notes' picker for a line TMDB didn't match
-exactly (TMDB's best three as posters with title and year, and None of these; drawn as the confirm dialog, with no
-design yet; the project lead, 2026-11-01).
+exactly (TMDB's best three as posters with title and year, Search again to fix the text with Search's keyboard
+and look it up again, and None of these; drawn as the confirm dialog, with no design yet; the project lead,
+2026-11-01, F9).
 
 ### V2 designs
 

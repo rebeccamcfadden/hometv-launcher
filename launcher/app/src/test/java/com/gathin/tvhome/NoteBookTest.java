@@ -133,4 +133,24 @@ public class NoteBookTest {
         NoteBook old = NoteBook.restore(null, "[{\"list\":\"A\",\"at\":1,\"lines\":2,\"added\":1,\"unmatched\":[\"Qq\"]}]");
         assertEquals(java.util.Collections.singletonList("Qq"), old.sends().get(0).unmatched);
     }
+
+    @Test
+    public void aSearchThatFoundNothingIsKeptAndNotLookedUpAgain() {
+        NoteBook b = new NoteBook();
+        NoteMatch.Candidate c = new NoteMatch.Candidate("movie:207", "Dead Poets Society", "", 1989, null, 4, 0);
+        b.record(new NoteBook.Send("Rebecca", 1, 1, 0, java.util.Collections.singletonList(
+                new NoteMatch.Ask("x", "X", false, java.util.Collections.singletonList(c)))));
+        // Search again found nothing: that replaces the earlier answers, and the line counts as looked up.
+        b.offered("Rebecca", "x", java.util.Collections.<NoteMatch.Candidate>emptyList());
+        NoteMatch.Ask a = b.sends().get(0).asks.get(0);
+        assertTrue(a.top.isEmpty());
+        assertTrue(a.looked);
+        NoteMatch.Ask back = NoteBook.restore(null, b.sendsJson()).sends().get(0).asks.get(0);
+        assertTrue("saved as looked up", back.looked);
+        // An older TV's plain line, and a line resent without a look-up, aren't.
+        assertFalse(NoteMatch.Ask.fromJson("X").looked);
+        assertFalse(new NoteMatch.Ask("x", "X", false, null).looked);
+        assertFalse(a.unanswered().looked);
+        assertTrue(a.unanswered().top.isEmpty());
+    }
 }

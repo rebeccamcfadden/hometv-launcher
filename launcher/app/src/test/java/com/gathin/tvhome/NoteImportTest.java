@@ -170,6 +170,14 @@ public class NoteImportTest {
     }
 
     @Test
+    public void searchingAgainLooksUpWhatWasTypedNotTheLine() {
+        // Search again (F9): the household fixes "Dun" to "dune" on the TV, and that text is what TMDB is asked.
+        List<NoteMatch.Candidate> top = new NoteImport(tmdb, SESSION, seen::addAll).lookUp("dune");
+        assertEquals("movie:438631", top.get(0).id);
+        assertTrue(new NoteImport(tmdb, SESSION, seen::addAll).lookUp("   ").isEmpty());
+    }
+
+    @Test
     public void aPickForAListThatIsGoneMakesIt() {
         NoteImport.Outcome o = new NoteImport(tmdb, SESSION, seen::addAll).pick("Grandma",
                 new NoteMatch.Ask("x", "X", false, null), "movie:438631", null);
@@ -345,6 +353,8 @@ public class NoteImportTest {
         }
 
         private void add(String key, JSONObject result) {
+            // TMDB's search ignores case.
+            key = key.toLowerCase(java.util.Locale.ROOT);
             JSONArray a = search.get(key);
             if (a == null) search.put(key, a = new JSONArray());
             a.put(result);
@@ -362,7 +372,7 @@ public class NoteImportTest {
                     assertEquals(Auth.APP, call.auth);
                     String text = URLDecoder.decode(q.get("query"), "UTF-8");
                     if (text.equals(searchDown)) throw new IOException("timeout");
-                    JSONArray a = search.get(p[3] + ":" + text);
+                    JSONArray a = search.get((p[3] + ":" + text).toLowerCase(java.util.Locale.ROOT));
                     return new Reply(200, new JSONObject().put("results", a == null ? new JSONArray() : a).toString());
                 }
                 if (revoked) return new Reply(401, "{\"success\":false,\"status_code\":3}");

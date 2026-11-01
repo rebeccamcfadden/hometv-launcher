@@ -13,7 +13,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -41,9 +40,7 @@ final class WeatherSection implements SettingsSection {
     static final long DEBOUNCE_MS = 450;
     /** The matches that fit beside the keyboard. */
     private static final int SHOWN = 6;
-    private static final String[] KEY_ROWS = {"abcdef", "ghijkl", "mnopqr", "stuvwx", "yz1234", "567890"};
     private static final String KEY_CHANGE = "w-change";
-    private static final float KEY = 56, KEY_GAP = 8;
 
     private enum Search { IDLE, SEARCHING, FOUND, NONE, OFFLINE, FAILED }
 
@@ -345,68 +342,9 @@ final class WeatherSection implements SettingsSection {
         paintSearch();
     }
 
-    /** {@code .kbp}: the 6 × 6 keyboard of Search, then Space, ⌫ and Clear. */
+    /** {@code .kbp}: Search's keyboard ({@link KeyPad}). */
     private View keyboard() {
-        LinearLayout panel = Kit.unclip(new LinearLayout(ctx));
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(Ui.px(24), Ui.px(22), Ui.px(24), Ui.px(22));
-        panel.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_XL, Ui.LINE, Ui.LINE_W));
-        for (String row : KEY_ROWS) {
-            LinearLayout r = keyRow(panel);
-            for (char ch : row.toCharArray()) {
-                key(r, String.valueOf(ch), "wk-" + ch, KEY, ch == 'a', v -> setQuery(SearchQuery.type(query, ch)));
-            }
-        }
-        LinearLayout last = keyRow(panel);
-        key(last, ctx.getString(R.string.search_key_space), "wk-space", 184, false,
-                v -> setQuery(SearchQuery.clean(query + " ")));
-        FrameLayout del = new FrameLayout(ctx);
-        ImageView icon = new ImageView(ctx);
-        icon.setImageResource(R.drawable.ic_ui_backspace);
-        icon.setImageTintList(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACCENT));
-        icon.setDuplicateParentStateEnabled(true);
-        del.addView(icon, new FrameLayout.LayoutParams(Ui.px(26), Ui.px(26), Gravity.CENTER));
-        del.setContentDescription(ctx.getString(R.string.search_key_delete));
-        keyLook(del);
-        Focus.make(del, "wkb", "wk-del", false, v -> setQuery(SearchQuery.delete(query)));
-        last.addView(del, keyParams(last, KEY));
-        key(last, ctx.getString(R.string.search_key_clear), "wk-clear", 120, false, v -> setQuery(""));
-        return panel;
-    }
-
-    private LinearLayout keyRow(LinearLayout panel) {
-        LinearLayout r = Kit.unclip(new LinearLayout(ctx));
-        r.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = panel.getChildCount() == 0 ? 0 : Ui.px(KEY_GAP);
-        panel.addView(r, lp);
-        return r;
-    }
-
-    /** {@code .key}: 56 px square on the surface; focused, the accent fill, semibold, scaled 1.08. */
-    private void key(LinearLayout row, String label, String key, float width, boolean isDefault,
-                     View.OnClickListener onOk) {
-        TextView k = Ui.line(ctx, Ui.T_BODY, Ui.TEXT_1, Ui.REGULAR);
-        k.setText(label);
-        k.setGravity(Gravity.CENTER);
-        k.setTextColor(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.ON_ACCENT));
-        k.setOnFocusChangeListener((v, focused) -> k.setTypeface(focused ? Ui.MEDIUM : Ui.REGULAR));
-        keyLook(k);
-        Focus.make(k, "wkb", key, isDefault, onOk);
-        row.addView(k, keyParams(row, width));
-    }
-
-    private static void keyLook(View k) {
-        k.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_M, Ui.LINE, Ui.LINE_W), null,
-                Ui.round(Ui.ACCENT, Ui.RADIUS_M, Ui.ACCENT, Ui.LINE_W)));
-        Ui.scaleOnFocus(k, 1.08f);
-    }
-
-    private static LinearLayout.LayoutParams keyParams(LinearLayout row, float width) {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(width), Ui.px(KEY));
-        lp.leftMargin = row.getChildCount() == 0 ? 0 : Ui.px(KEY_GAP);
-        return lp;
+        return KeyPad.panel(ctx, "wkb", "wk-", change -> setQuery(change.apply(query)));
     }
 
     /** A new query: the bar shows it at once; the search waits until the typing pauses. */

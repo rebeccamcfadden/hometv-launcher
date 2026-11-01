@@ -50,24 +50,37 @@ final class NoteMatch {
 
     /**
      * A line that wasn't matched exactly, as written, with TMDB's best answers to pick from on the TV (none when TMDB
-     * had none). {@link #key} is the line's key in {@link Memory}; a ticked line's pick goes to Seen.
+     * had none). {@link #key} is the line's key in {@link Memory}; a ticked line's pick goes to Seen. {@link #looked}
+     * tells answers TMDB was asked for (perhaps none) from a line never looked up (a resend of a line looked up
+     * before, or an older TV's saved text), which the picker looks up when it opens.
      */
     static final class Ask {
         final String key, query;
-        final boolean ticked;
+        final boolean ticked, looked;
         final List<Candidate> top;
 
+        /** {@code top} null: not looked up. */
         Ask(String key, String query, boolean ticked, List<Candidate> top) {
+            this(key, query, ticked, top, top != null);
+        }
+
+        Ask(String key, String query, boolean ticked, List<Candidate> top, boolean looked) {
             this.key = key;
             this.query = query;
             this.ticked = ticked;
+            this.looked = looked;
             this.top = top == null ? Collections.<Candidate>emptyList()
                     : Collections.unmodifiableList(new ArrayList<>(top));
         }
 
-        /** The same line with other answers. */
+        /** The same line with the answers TMDB gave for it (perhaps none). */
         Ask with(List<Candidate> other) {
-            return new Ask(key, query, ticked, other);
+            return new Ask(key, query, ticked, other, true);
+        }
+
+        /** The same line without answers, as it shows while they are looked up. */
+        Ask unanswered() {
+            return new Ask(key, query, ticked, null, false);
         }
 
         JSONObject toJson() throws JSONException {
@@ -76,7 +89,8 @@ final class NoteMatch {
                 a.put(new JSONObject().put("id", c.id).put("title", c.title).put("year", c.year)
                         .put("poster", c.poster == null ? "" : c.poster));
             }
-            return new JSONObject().put("key", key).put("query", query).put("ticked", ticked).put("top", a);
+            return new JSONObject().put("key", key).put("query", query).put("ticked", ticked).put("looked", looked)
+                    .put("top", a);
         }
 
         /** An ask as saved, or as an older TV saved an unmatched line (just its text); null if unreadable. */
@@ -99,7 +113,9 @@ final class NoteMatch {
                 top.add(new Candidate(id, c.optString("title", ""), "", c.optInt("year", 0),
                         TmdbApi.isImagePath(poster) ? poster : null, 0, i));
             }
-            return new Ask(j.optString("key", NoteLines.key(q)), q, j.optBoolean("ticked", false), top);
+            // Saved before "looked" was: answers mean it was looked up; none, that it may not have been.
+            return new Ask(j.optString("key", NoteLines.key(q)), q, j.optBoolean("ticked", false), top,
+                    j.optBoolean("looked", !top.isEmpty()));
         }
     }
 

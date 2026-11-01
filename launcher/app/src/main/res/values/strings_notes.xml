@@ -68,6 +68,13 @@
     <string name="notes_pick_to_seen">It’s ticked, so the one you pick goes to Seen.</string>
     <string name="notes_pick_nothing">Fix the line in the note and send it again, or stop asking about it.</string>
     <string name="notes_pick_none">None of these</string>
+    <!-- Search again (F9): the line's text over Search's keyboard, to fix and look up again. -->
+    <string name="notes_pick_edit">Search again</string>
+    <string name="notes_pick_edit_title">Search TMDB</string>
+    <string name="notes_pick_edit_body">For “%1$s” in the note for %2$s. Fix the spelling or shorten it, then Search.</string>
+    <string name="notes_pick_edit_hint">Type a title</string>
+    <string name="notes_pick_search">Search</string>
+    <string name="notes_pick_results">Results for “%1$s”.</string>
     <string name="notes_pick_stop">Stop asking</string>
     <string name="notes_pick_movie">Movie</string>
     <string name="notes_pick_show">TV show</string>

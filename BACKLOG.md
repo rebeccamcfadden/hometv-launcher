@@ -193,7 +193,8 @@ milestones: [docs/rework.md](docs/rework.md).
   in iCloud Drive › Shortcuts › `Send to TV.txt`, asking for the list name; after New code a phone just pairs again;
   the project lead, 2026-11-01), and the address and value to copy into a simple hand-built one. New code (asks first),
   How to set up a phone, and each list's last send with the lines not matched exactly, each a button that opens a picker
-  (`NotePicker`: TMDB's best three answers as posters with title and year, and None of these, which is remembered; no
+  (`NotePicker`: TMDB's best three answers as posters with title and year, Search again to fix the text with Search's
+  keyboard and look it up again (F9, `KeyPad`, shared with Weather), and None of these, which is remembered; no
   Figma design yet; the project lead, 2026-11-01); the row reads Off, On or, in amber,
   "3 not matched". While on, `NoteInbox` listens on port 8765 for `POST /notes` (and `GET /setup`, the QR's page)
   from private addresses only, one
