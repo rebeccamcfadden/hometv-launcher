@@ -4,7 +4,7 @@ import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { net } from '../core/net';
 import { theme } from '../core/theme';
-import { MOTION_LABELS, settings, START_LABELS } from '../core/settings';
+import { settings, START_LABELS } from '../core/settings';
 import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
 import { button } from '../ui/widgets';
@@ -12,13 +12,21 @@ import { accountPane } from './panes/account';
 import { notesPane } from './panes/notes';
 import { notes } from '../core/notes';
 import { appsPane } from './panes/apps';
-import { aboutPane, homePane, motionPane, tvPane } from './panes/misc';
+import { aboutPane, homePane, performancePane, startPane, tvPane } from './panes/misc';
 import type { Pane, PaneHost } from './panes/pane';
 import { servicesPane, storesPane } from './panes/services';
 import { themePane } from './panes/theme';
 import { weatherPane } from './panes/weather';
 
-export type SectionId = 'account' | 'notes' | 'services' | 'stores' | 'weather' | 'apps' | 'theme' | 'motion' | 'start' | 'home' | 'tv' | 'about';
+/** "All on" while every Performance choice draws and moves everything, "Light mode" at the lightest, else "Custom". */
+function performanceValue(): string {
+  const s = settings.get();
+  const all = s.motion === 'full' && s.cardShadows === 'on' && s.focusGlow && s.backdropPicture === 'photo' && s.movingDetails;
+  if (all) return 'All on';
+  const light = s.motion === 'off' && s.cardShadows === 'off' && !s.focusGlow && s.backdropPicture === 'plain' && !s.movingDetails;
+  return light ? 'Light mode' : 'Custom';
+}
+export type SectionId = 'account' | 'notes' | 'services' | 'stores' | 'weather' | 'apps' | 'theme' | 'performance' | 'start' | 'home' | 'tv' | 'about';
 
 interface Section {
   id: SectionId;
@@ -38,7 +46,7 @@ const SECTIONS: Section[] = [
   { id: 'weather', label: 'Weather', setupLabel: 'Weather city', icon: 'cloud', value: () => ({ text: placeById(settings.get().place).name }) },
   { id: 'apps', label: 'Home row apps', icon: 'apps', value: () => ({ text: String(settings.get().homeApps.length) }) },
   { id: 'theme', label: 'Theme', icon: 'palette', value: () => ({ text: theme.label() }) },
-  { id: 'motion', label: 'Motion', icon: 'motion', value: () => ({ text: MOTION_LABELS[settings.get().motion] }) },
+  { id: 'performance', label: 'Performance', icon: 'gauge', value: () => ({ text: performanceValue() }) },
   { id: 'start', label: 'Open on start', icon: 'power', value: () => ({ text: START_LABELS[settings.get().openOnStart] }) },
   { id: 'home', label: 'Default Home', icon: 'home', value: () => ({ text: 'On' }) },
   { id: 'tv', label: 'TV settings', icon: 'settings', value: () => ({ text: '' }) },
@@ -91,8 +99,8 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     weather: weatherPane(host),
     apps: appsPane(host),
     theme: themePane(),
-    motion: motionPane('motion'),
-    start: motionPane('start'),
+    performance: performancePane(host),
+    start: startPane(),
     home: homePane(),
     tv: tvPane(),
     about: aboutPane(),

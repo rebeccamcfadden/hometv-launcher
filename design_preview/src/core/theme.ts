@@ -257,7 +257,16 @@ function apply() {
   root.dataset.font = s.themeFont;
   applyFonts(t, s.themeFont === 'system');
   // The date override picks the period; the hour stays real, so Landscapes keeps rotating while previewing a date.
-  applyBackdrop(t.backdrop(periodAt(now), new Date().getHours()));
+  // Launcher settings › Performance › Backdrop picture: Plain colour shows the theme's sky gradient without the picture
+  // (a theme with no backdrop keeps its plain background).
+  const b = t.backdrop(periodAt(now), new Date().getHours());
+  if (s.backdropPicture === 'plain' && b.kind !== 'none') {
+    root.dataset.backdrop = 'plain';
+    wanted = '';
+    setImage(null);
+  } else {
+    applyBackdrop(b);
+  }
   // Landscapes changes on the hour and the period at midnight: look again at the top of the next hour.
   clearTimeout(timer);
   timer = window.setTimeout(apply, 3_600_000 - (Date.now() % 3_600_000) + 1000);

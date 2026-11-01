@@ -770,7 +770,7 @@
 }
 
 /* A downloaded backdrop sits on the theme's sky, which is all there is while it loads or when it can't be fetched. */
-html:is([data-backdrop='url'], [data-backdrop='pixel']) {
+html:is([data-backdrop='url'], [data-backdrop='pixel'], [data-backdrop='plain']) {
   --sky: linear-gradient(var(--sky-top), var(--sky-mid) 55%, var(--horizon));
 }
 

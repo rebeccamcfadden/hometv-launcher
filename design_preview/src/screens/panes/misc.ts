@@ -1,32 +1,152 @@
-import { app } from '../../core/app';
+import { app, type Key } from '../../core/app';
 import { h } from '../../core/dom';
-import { MOTION_LABELS, settings, START_LABELS, type Motion, type OpenOnStart } from '../../core/settings';
+import {
+  BACKDROP_LABELS,
+  MOTION_LABELS,
+  settings,
+  SHADOW_LABELS,
+  START_LABELS,
+  type BackdropPicture,
+  type CardShadows,
+  type Motion,
+  type OpenOnStart,
+} from '../../core/settings';
 import { icon, type IconName } from '../../ui/icons';
 import { button, segmented } from '../../ui/widgets';
 import { confirmDialog } from '../confirm';
 import { placeholder } from '../placeholder';
-import { paneHead, type Pane } from './pane';
+import { paneHead, type Pane, type PaneHost } from './pane';
 
 const entry = (el: HTMLElement) => ((el.dataset.entry = ''), el);
 
-/** Motion and Open on start share one pane, as in the design ("Motion and start"); each section enters its own. */
-export const motionPane = (first: 'motion' | 'start'): Pane => ({
+/** A Performance choice's row: its name over what it is, and its segmented control on the right. */
+const perfRow = (title: string, sub: string, control: HTMLElement) =>
+  h('div.perf-row', h('div.perf-text', h('div.perf-title', title), h('div.perf-sub', sub)), h('div.perf-ctl', control));
+
+const onOff = (group: string, get: () => boolean, set: (on: boolean) => void) =>
+  segmented<'on' | 'off'>({
+    options: [
+      ['on', 'On'],
+      ['off', 'Off'],
+    ],
+    get: () => (get() ? 'on' : 'off'),
+    set: (v) => set(v === 'on'),
+    group,
+    small: true,
+  });
+
+/**
+ * Launcher settings › Performance (the project lead's decision, 2026-11-01): Motion, card shadows, the focus glow, the
+ * backdrop picture and the animated details, each a segmented choice. Light mode at the top (the project lead,
+ * 2026-11-01) sets every choice to its lightest, Motion Off included; each stays a choice of its own afterwards. A low-RAM TV starts at the
+ * light end (no shadows, Motion Reduced, nothing animated); the prototype is a TV with memory to spare, so it starts
+ * with everything on. It draws no card shadows or glow, so those two are saved only; Motion and the backdrop apply.
+ */
+export const performancePane = (host: PaneHost): Pane => ({
+  /**
+   * ↓ goes to the next row's control, on its selected option, and → stays within its control: the controls have
+   * different widths, so the spatial D-pad would skip a narrow one or jump rows. ↑ already goes row by row.
+   */
+  onKey(key: Key, focused: HTMLElement) {
+    // → stays in its own control: at a narrow control's last option, the page's spatial D-pad would jump to a wider
+    // control on the next row.
+    if (key === 'right') {
+      const seg = focused.closest('.seg');
+      if (!seg) return false;
+      const opts = [...seg.querySelectorAll<HTMLElement>('.seg-opt')];
+      const next = opts[opts.indexOf(focused) + 1];
+      if (next?.dataset.key) host.focusKey(next.dataset.key);
+      return true;
+    }
+    if (key !== 'down') return false;
+    const s = settings.get();
+    const rows = [
+      'perf-light',
+      `seg-motion-${s.motion}`,
+      `seg-shadows-${s.cardShadows}`,
+      `seg-glow-${s.focusGlow ? 'on' : 'off'}`,
+      `seg-backdrop-${s.backdropPicture}`,
+      `seg-details-${s.movingDetails ? 'on' : 'off'}`,
+    ];
+    const groups = ['perf-light', 'seg-motion', 'seg-shadows', 'seg-glow', 'seg-backdrop', 'seg-details'];
+    const at = groups.findIndex((g) => focused.dataset.key === g || focused.dataset.key?.startsWith(`${g}-`));
+    if (at < 0 || at === rows.length - 1) return false;
+    host.focusKey(rows[at + 1]);
+    return true;
+  },
   render: () => [
-    h('div.eyebrow', 'Motion and start'),
-    h('div.pane-title', 'Motion'),
-    h('div.pane-sub', 'Page slides, focus scale and fades. Reduced keeps the fades only.'),
+    h('div.eyebrow', 'Performance'),
+    h('div.pane-title', 'Performance'),
+    h('div.pane-sub', 'How much the launcher draws and moves. Lighter choices keep it smooth on TVs with little memory; what it shows stays the same.'),
     h(
-      'div.pane-seg',
-      segmented<Motion>({
-        options: (Object.keys(MOTION_LABELS) as Motion[]).map((m) => [m, MOTION_LABELS[m]]),
-        get: () => settings.get().motion,
-        set: (motion) => settings.set({ motion }),
-        group: 'seg-motion',
-        entry: first === 'motion',
-      }),
+      'div.pane-actions',
+      entry(
+        button('Light mode', {
+          icon: 'gauge',
+          primary: true,
+          key: 'perf-light',
+          onOk: () => {
+            settings.set({ motion: 'off', cardShadows: 'off', focusGlow: false, backdropPicture: 'plain', movingDetails: false });
+            app.toast('Light mode: every choice at its lightest');
+          },
+        }),
+      ),
     ),
-    h('div.pane-divider'),
-    h('div.pane-title.pane-title--small', 'Open on start'),
+    h('div.pane-note', 'Sets every choice below to its lightest: Motion off, no card shadows or glow, a plain backdrop and nothing animated.'),
+    h(
+      'div.perf-rows',
+      perfRow(
+        'Motion',
+        'Page slides, focus scale and fades',
+        segmented<Motion>({
+          options: (Object.keys(MOTION_LABELS) as Motion[]).map((m) => [m, MOTION_LABELS[m]]),
+          get: () => settings.get().motion,
+          set: (motion) => settings.set({ motion }),
+          group: 'seg-motion',
+          small: true,
+        }),
+      ),
+      perfRow(
+        'Card shadows',
+        'The soft shadow under artwork and tiles (Midnight has none)',
+        segmented<CardShadows>({
+          options: (Object.keys(SHADOW_LABELS) as CardShadows[]).map((s) => [s, SHADOW_LABELS[s]]),
+          get: () => settings.get().cardShadows,
+          set: (cardShadows) => settings.set({ cardShadows }),
+          group: 'seg-shadows',
+          small: true,
+        }),
+      ),
+      perfRow(
+        'Focus glow',
+        'The theme’s light around the focused tile; the focus ring stays',
+        onOff('seg-glow', () => settings.get().focusGlow, (focusGlow) => settings.set({ focusGlow })),
+      ),
+      perfRow(
+        'Backdrop picture',
+        'The photo or drawing behind Home, or the theme’s plain sky colour',
+        segmented<BackdropPicture>({
+          options: (Object.keys(BACKDROP_LABELS) as BackdropPicture[]).map((b) => [b, BACKDROP_LABELS[b]]),
+          get: () => settings.get().backdropPicture,
+          set: (backdropPicture) => settings.set({ backdropPicture }),
+          group: 'seg-backdrop',
+          small: true,
+        }),
+      ),
+      perfRow(
+        'Animated details',
+        'Snow, rain, leaves and bats drifting over Seasonal backdrops',
+        onOff('seg-details', () => settings.get().movingDetails, (movingDetails) => settings.set({ movingDetails })),
+      ),
+    ),
+  ],
+});
+
+/** Open on start: what the TV shows after it is switched on (Motion moved to Performance). */
+export const startPane = (): Pane => ({
+  render: () => [
+    h('div.eyebrow', 'Open on start'),
+    h('div.pane-title', 'Open on start'),
     h('div.pane-sub', 'What the TV shows after it is switched on.'),
     h(
       'div.pane-seg',
@@ -35,12 +155,11 @@ export const motionPane = (first: 'motion' | 'start'): Pane => ({
         get: () => settings.get().openOnStart,
         set: (openOnStart) => settings.set({ openOnStart }),
         group: 'seg-start',
-        entry: first === 'start',
+        entry: true,
       }),
     ),
   ],
 });
-
 export const homePane = (): Pane => ({
   render: () => [
     h('div.eyebrow', 'Default Home'),

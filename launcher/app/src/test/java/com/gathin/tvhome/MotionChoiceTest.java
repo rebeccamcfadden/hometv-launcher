@@ -85,4 +85,16 @@ public class MotionChoiceTest {
             assertEquals(m.next(true), MotionChoice.resolve(m.next(true).code, true, true));
         }
     }
+
+    @Test
+    public void aLightStartTvStartsAtReducedUntilAChoiceIsSaved() {
+        assertEquals(MotionChoice.REDUCED, MotionChoice.resolve(null, true, false, true));
+        assertEquals(MotionChoice.OFF, MotionChoice.resolve(null, false, false, true));
+        assertEquals(MotionChoice.FULL, MotionChoice.resolve("full", true, false, true));
+        assertEquals(MotionChoice.OFF, MotionChoice.resolve("off", true, false, true));
+        // reduced_motion still keeps a saved Full from being Full.
+        assertEquals(MotionChoice.REDUCED, MotionChoice.resolve("full", true, true, true));
+        // Not a light start: as before.
+        assertEquals(MotionChoice.FULL, MotionChoice.resolve(null, true, false, false));
+    }
 }

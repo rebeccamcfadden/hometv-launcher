@@ -221,6 +221,12 @@
          pushed config.json; false keeps the normal motion. -->
     <bool name="reduced_motion">false</bool>
 
+    <!-- Where Launcher settings › Performance starts on this TV: "on" starts at the light end (no card shadows,
+         nothing animated, Motion Reduced), "off" with everything the theme draws, "auto" by Android's low-RAM flag
+         (most 1 GB TVs report it). Choices made on the TV win over it. Set it here or with "light_defaults" in a
+         pushed config.json. -->
+    <string name="light_defaults" translatable="false">auto</string>
+
     <!-- The streaming services the household pays for, so their titles read "Included". Lowercase ids: netflix,
          prime, disney, max (HBO Max), appletvplus (Apple TV), hulu, youtube, appletv (the Apple TV Store),
          googletv, amazonvideo, viaplay, skyshowtime, svtplay, tv4play, sfanytime, rakuten, tele2play, teliaplay,

@@ -92,6 +92,7 @@ A new key needs one there in the same pull request.
 | `boot_to_live_tv` | bool | Open the Live TV app (`live_tv_package`) on the first Home after the TV starts, once per boot |
 | `open_on_start_choice` | bool | `true` adds an **Open on start** row to Launcher settings: pick an app on the TV, and the first Home after each boot opens it instead (once per boot; `boot_to_live_tv` wins when both are set; an app that is gone or disabled leaves Home on screen). Off by default |
 | `first_run_checklist` | bool | First run's checklist (Set up your Home screen) shows by itself once, on the first start of Home after a fresh install, never after an update. On by default; `false` never shows it by itself. `adb shell am start -a com.gathin.tvhome.action.FIRST_RUN -n com.gathin.tvhome/.MainActivity` opens it at any time |
+| `light_defaults` | string | Where Launcher settings › Performance starts on this TV: `on` starts at the light end (no card shadows, Motion Reduced, no animated details), `off` with everything the theme draws, `auto` (the default) by Android's low-RAM flag. Choices made on the TV win; a push clears them |
 | `focus_overshoot` | bool | The highlight and the focused tile swing past their target before settling (`true` by default); `false` glides straight there with smooth scrolling |
 | `vpn_app` | string | App the network pill opens when a VPN is configured; also shows a red "VPN off" badge while no VPN is up |
 | `animations` | bool | Basic focus, glass, title and tile entrance motion; true by default |

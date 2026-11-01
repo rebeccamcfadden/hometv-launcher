@@ -77,8 +77,12 @@ final class RingFrame extends FrameLayout {
         // Behind the content: the focus glow, or a resting tile's shadow (nothing in Midnight).
         box.set(0, 0, getWidth(), getHeight());
         float r = oval ? Math.min(getWidth(), getHeight()) / 2f : radius;
-        if (ringOn) Glow.focus(canvas, box, r, 255);
-        else Glow.rest(canvas, box, r, 255);
+        if (ringOn) {
+            Glow.focusShadow(canvas, box, r, 255);
+            Glow.focus(canvas, box, r, 255);
+        } else {
+            Glow.rest(canvas, box, r, 255);
+        }
     }
 
     @Override

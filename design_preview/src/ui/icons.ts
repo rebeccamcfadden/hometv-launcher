@@ -41,6 +41,7 @@ const P = {
   info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5h.01',
   power: 'M12 3v8M6.3 6.3a8 8 0 1 0 11.4 0',
   motion: 'M4 12h3M4 7h6M4 17h6M14 7l6 5-6 5',
+  gauge: 'M4.5 17a8 8 0 1 1 15 0M12 14l4-5M12 14h.01',
   apps: 'M5 5h4v4H5zM10 5h4v4h-4zM15 5h4v4h-4zM5 10h4v4H5zM10 10h4v4h-4zM15 10h4v4h-4zM5 15h4v4H5zM10 15h4v4h-4zM15 15h4v4h-4z',
   tag: 'M3.5 12.5v-8h8l9 9-8 8zM8 8h.01',
   cart: 'M3 4.5h2.5l2.2 10h10.1l2.2-7H6.6M9 19.5h.01M17 19.5h.01',

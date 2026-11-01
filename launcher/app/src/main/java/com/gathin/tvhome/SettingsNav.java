@@ -13,7 +13,7 @@ final class SettingsNav {
 
     /** The sections in the order the list shows them (SettingsSection.id). */
     static final List<String> ORDER = Collections.unmodifiableList(Arrays.asList(
-            "account", "notes", "services", "stores", "weather", "apps", "theme", "motion", "start", "home", "tv",
+            "account", "notes", "services", "stores", "weather", "apps", "theme", "performance", "start", "home", "tv",
             "about"));
 
     enum Action {

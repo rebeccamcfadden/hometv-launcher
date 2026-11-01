@@ -14,10 +14,6 @@
     <string name="theme_typeface_sub">System font uses Roboto</string>
     <string name="theme_font_theme">Theme font</string>
     <string name="theme_font_system">System font</string>
-    <string name="theme_moving">Moving details</string>
-    <string name="theme_moving_sub">Snow, rain, leaves and bats drift slowly</string>
-    <string name="theme_moving_on">On</string>
-    <string name="theme_moving_off">Off</string>
 
     <string name="theme_name_midnight">Midnight</string>
     <string name="theme_name_daylight">Daylight</string>

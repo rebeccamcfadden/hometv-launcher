@@ -43,7 +43,7 @@ final class TileFrame extends Drawable {
 
     /** A focused fill that is its own focus look (Home's Inputs and Shortcuts tiles), with the theme's glow behind. */
     static Drawable glowBehind(Drawable fill, float radius) {
-        if (!Glow.focusOn()) return fill;
+        if (!Glow.focusOn() && !Glow.focusShadowOn()) return fill;
         return new LayerDrawable(new Drawable[]{new TileFrame(0, radius, true, false), fill});
     }
 
@@ -63,6 +63,7 @@ final class TileFrame extends Drawable {
             Glow.rest(c, tile, r, alpha);
             return;
         }
+        Glow.focusShadow(c, tile, r, alpha);
         Glow.focus(c, tile, r, alpha);
         if (!ring || Ui.FOCUS_W <= 0) return;
         // As Ui.round(0, radius + ring, ACCENT, ring) drew it: the stroke's middle half a stroke outside the tile,

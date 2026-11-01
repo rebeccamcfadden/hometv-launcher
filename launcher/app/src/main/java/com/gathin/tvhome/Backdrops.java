@@ -101,10 +101,16 @@ final class Backdrops {
         this.filesDir = activity.getFilesDir();
     }
 
-    /** Shows a theme's backdrop. Main thread. */
+    /** Shows a theme's backdrop, or its plain sky when Performance's backdrop picture is Plain colour. Main thread. */
     void show(Theme t) {
         key = BackdropKeys.parse(t.backdrop);
         stop();
+        if (PerfChoices.current().plainBackdrop && key.kind != BackdropKeys.Kind.NONE) {
+            view.setBackground(sky(t));
+            // Nothing to fetch, refresh or rotate hourly.
+            key = BackdropKeys.Key.NONE;
+            return;
+        }
         switch (key.kind) {
             case NONE:
                 view.setBackground(null);

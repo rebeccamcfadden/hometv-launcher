@@ -15,13 +15,13 @@ import java.util.List;
 
 /**
  * Launcher settings' Theme section (Figma lwShqRaciMpDUDW5dYljNw, "Settings · Theme picker", frame 18:10): the
- * Classic and Seasonal swatches, then Typeface and Moving details side by side. Every swatch is drawn from its own
+ * Classic and Seasonal swatches, then Typeface (Moving details moved to Performance as Animated details, the project
+ * lead's decision of 2026-11-01). Every swatch is drawn from its own
  * theme (a Seasonal one in today's period), and the pane's chrome from Ui's tokens, so it is themed too.
  *
- * <p>The swatches are one grid with the two option rows under them, moved through by the page's spatial D-pad.
- * Moving only highlights; OK selects (the project lead's rule for segmented choices, applied to the swatches too).
- * A new theme or typeface re-applies and rebuilds the launcher through {@link Host#themeChanged()}; Moving details is
- * only saved in M9 (nothing animates yet), so it asks for {@link Host#valueChanged()} alone.
+ * <p>The swatches are one grid with the option row under them, moved through by the page's spatial D-pad. Moving only
+ * highlights; OK selects (the project lead's rule for segmented choices, applied to the swatches too). A new theme or
+ * typeface re-applies and rebuilds the launcher through {@link Host#themeChanged()}.
  */
 final class ThemeSection implements SettingsSection {
     private static final String SWATCH_GROUP = "theme-swatch";
@@ -126,19 +126,6 @@ final class ThemeSection implements SettingsSection {
         options.addView(optionRow(ctx, R.string.theme_typeface, R.string.theme_typeface_sub, typeface),
                 new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
-        LinearLayout moving = segmented(ctx, "theme-moving",
-                new String[]{"theme-moving-on", "theme-moving-off"},
-                new CharSequence[]{ctx.getString(R.string.theme_moving_on), ctx.getString(R.string.theme_moving_off)},
-                ThemeStore.movingDetails(ctx) ? 0 : 1, (seg, i) -> {
-                    boolean on = i == 0;
-                    if (on == ThemeStore.movingDetails(ctx)) return;
-                    ThemeStore.setMovingDetails(ctx, on);
-                    select(seg, i);
-                    host.valueChanged();
-                });
-        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-        mlp.leftMargin = Ui.px(8);
-        options.addView(optionRow(ctx, R.string.theme_moving, R.string.theme_moving_sub, moving), mlp);
 
         LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -213,7 +200,7 @@ final class ThemeSection implements SettingsSection {
         return Typeface.create("sans-serif-light", Typeface.NORMAL);
     }
 
-    // ---- Typeface and Moving details ------------------------------------------------------------------------------
+    // ---- Typeface -------------------------------------------------------------------------------------------------
 
     /** A half-width row: its name and a line under it, then its segmented control (Figma "Row · Typeface"). */
     private static View optionRow(Context ctx, int label, int note, View control) {

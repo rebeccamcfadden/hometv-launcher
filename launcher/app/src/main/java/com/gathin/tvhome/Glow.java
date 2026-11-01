@@ -72,14 +72,23 @@ final class Glow {
         }
     }
 
-    /** Whether a focused tile draws anything here; false in Midnight. */
+    /** Whether a focused tile draws anything here; false in Midnight, and with Performance's focus glow off. */
     static boolean focusOn() {
         Theme t = Ui.theme();
-        return t.tileGlow && (t.glowColor >>> 24) != 0;
+        return t.tileGlow && (t.glowColor >>> 24) != 0 && PerfChoices.current().glow;
     }
 
-    /** Whether a resting tile draws a shadow; false in Midnight. */
+    /** Whether a resting tile draws a shadow; false in Midnight, and unless Performance's card shadows are On. */
     static boolean restOn() {
+        return themeShadow() && PerfChoices.current().shadows == PerfChoices.Shadows.ON;
+    }
+
+    /** Whether the focused tile draws the theme's shadow under its glow (Performance: Focused card only). */
+    static boolean focusShadowOn() {
+        return themeShadow() && PerfChoices.current().shadows == PerfChoices.Shadows.FOCUS;
+    }
+
+    private static boolean themeShadow() {
         Theme t = Ui.theme();
         return t.tileShadow && (t.shadowColor >>> 24) != 0;
     }
@@ -100,6 +109,16 @@ final class Glow {
     /** A resting tile's shadow under tile, in screen px. */
     static void rest(Canvas c, RectF tile, float radius, int alpha) {
         if (!restOn()) return;
+        shadow(c, tile, radius, alpha);
+    }
+
+    /** The focused tile's shadow, under its glow, when Performance keeps shadows for the focused card only. */
+    static void focusShadow(Canvas c, RectF tile, float radius, int alpha) {
+        if (!focusShadowOn()) return;
+        shadow(c, tile, radius, alpha);
+    }
+
+    private static void shadow(Canvas c, RectF tile, float radius, int alpha) {
         Theme t = Ui.theme();
         draw(c, tile, radius, Ui.px(t.shadowBlur), 0, 0, Ui.px(t.shadowOffset), t.shadowColor, alpha);
     }

@@ -42,6 +42,9 @@ SCREENSHOT_WANTED = {
     # First run's checklist (V2): on by default as an opt-out, as the project lead decided on 2026-10-31 (BACKLOG.md,
     # First run); its screenshot comes with the real-TV run, like subscribed_services.
     "first_run_checklist",
+    # Launcher settings › Performance's starting point (the project lead, 2026-11-01); its screenshot comes with the
+    # real-TV run.
+    "light_defaults",
 }
 
 

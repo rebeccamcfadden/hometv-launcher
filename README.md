@@ -632,6 +632,7 @@ This product uses the TMDB API but is not endorsed or certified by TMDB.
 [`config.xml`](launcher/app/src/main/res/values/config.xml) holds what differs from TV to TV: the apps Home's row
 starts with (`dock_apps`) and the ones never shown (`hidden_apps`), the Live TV app and the quirks of a set's
 Inputs, an optional VPN app for the Wi-Fi dropdown, `reduced_motion` for TVs whose GPU cannot keep up,
+`light_defaults` for where Launcher settings › Performance starts,
 `subscribed_services`, and the remote-key switches. A `config.json` with the same keys, pushed with
 `tools/theme.sh`, overrides it without a rebuild; several [`examples/`](examples/) folders carry one. The old
 launcher's look and layout keys are not read any more; [themes/README.md](themes/README.md) keeps them for V2.
@@ -663,8 +664,11 @@ launcher's look and layout keys are not read any more; [themes/README.md](themes
   - **Weather**: the place Home's weather is for, with the weather there now. Change city searches Open-Meteo's
     places as you type, on the on-screen keyboard or a real one; Use default goes back to the place in
     `tv.properties`. The temperature in °C, °F or the TV default, which follows the TV's region.
-  - **Motion**: Full, or Reduced, where pages, menus and Home's scroll switch without moving, as with
-    `reduced_motion`. Pushing or resetting a `config.json` clears the choice.
+  - **Performance**: how much the launcher draws and moves. Light mode sets everything below to its lightest. Motion (Full, or Reduced and Off, where pages, menus and
+    Home's scroll switch without moving, as with `reduced_motion`), card shadows (On, Focused card only, Off), the
+    focus glow, the backdrop picture (Photo or the theme's plain colour) and animated details. A low-RAM TV starts with
+    the lighter choices (no card shadows, Motion Reduced), as does any TV whose `light_defaults` says `on`. Pushing
+    or resetting a `config.json` clears the choices.
   - **Open on start**, only with `open_on_start_choice`: Home, or an app that opens instead of Home the first
     time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
   - **Default Home** says whether this launcher is Home and opens Android's home picker; **TV settings** opens the

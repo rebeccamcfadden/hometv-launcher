@@ -207,7 +207,7 @@ From [AGENTS.md](../AGENTS.md) and the design:
   which section or icon was used last or is nearest; Pick for me's section is Movies or TV Shows.
 - Switching animates: the new page's content slides 90 px in from the side of the tab you switched towards and fades
   in (360 ms); the old content slides 60 px the other way and fades out (240 ms). The nav stays still. With the
-  system's reduced motion, pages switch without animating; Launcher settings' Motion (Reduced, Off) is described
+  system's reduced motion, pages switch without animating; Launcher settings › Performance › Motion (Reduced, Off) is described
   under [Launcher settings](#launcher-settings).
 
 ### Top-bar dropdowns
@@ -398,7 +398,7 @@ on the right.
 - **Sections and values:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing in…", "Code
   expired", or the username), Phone notes (Off, On, or amber "3 not matched"), Streaming services ("8 ticked"), Stores
   for rent and buy ("5 ticked"), Weather (the city), Home row apps (7), Theme (Midnight, or "Nature · Halloween"),
-  Motion (Full), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values update live. The list
+  Performance (All on, or Custom), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values update live. The list
   stays inside title-safe and scrolls with focus when its sections don't fit.
 - **Moving:** landing on a section shows its pane at once, as a preview. → or OK enters the pane, on its first control
   (the selected option in a segmented control), and the pane's border brightens. ← from the pane's left edge
@@ -406,7 +406,7 @@ on the right.
   then closes the page. ↑/↓ on the list stay on it.
 - **Highlight:** the focused section has the accent fill; while the pane has focus, its section stays lit (white at
   10%, bold).
-- **Segmented controls** (Motion, Open on start, the unit, a list's role): moving only highlights an option; OK
+- **Segmented controls** (Performance's choices, Open on start, the unit, a list's role): moving only highlights an option; OK
   selects it, and it gets the accent ring.
 
 #### Account
@@ -490,9 +490,8 @@ picks another theme.
 - **Pane:** "Theme", "Colours, type and the picture behind Home. Rows, apps and data stay as they are.", then two
   groups of 156 × 100 swatches: **Classic** and **Seasonal · follows the date · today: Halloween** (today's period).
   Each swatch is drawn from that theme's own tokens: its sky, the horizon and a shelf of three mini tiles, the first
-  focused with the accent ring, and "Aa" in its display face. Under them, two half-width rows: **Typeface** (Theme
-  font / System font; "System font uses Roboto") and **Moving details** (On / Off; "Snow, rain, leaves and bats drift
-  slowly"). Moving highlights a swatch with the accent fill; OK selects it, it gets the accent ring, and the whole
+  focused with the accent ring, and "Aa" in its display face. Under them, a half-width row: **Typeface** (Theme
+  font / System font; "System font uses Roboto"). Moving details moved to Performance as Animated details. Moving highlights a swatch with the accent fill; OK selects it, it gets the accent ring, and the whole
   preview wears it at once. OK on a row switches its value. The pane enters on the selected theme.
 - **Themes** (ids for `?theme=`): Classic, which keep their look all year: Midnight `midnight`, Daylight `daylight`,
   OLED Black `oled`, High Contrast `high-contrast`, Cinema `cinema`, Landscapes `landscapes`. Seasonal, which follow the
@@ -514,7 +513,6 @@ picks another theme.
   `seasonal/vector-2/<period>.webp` and 8-bit's `seasonal/8bit/<period>.png`, 160 × 90 pixels scaled up without
   smoothing. While a picture loads, when it can't be fetched, and offline when it never arrived, the theme's sky shows
   instead: a gradient from its sky to its horizon colour. Cinema adds a soft vignette.
-- **Moving details** is saved only: nothing moves yet, on the TV either.
 - **Not taken from Figma:** shadows under tiles and the focus glow (Midnight has none today), and the photo or
   drawing inside the Seasonal swatches (the swatches show the sky instead).
 
@@ -524,9 +522,18 @@ picks another theme.
   apps. OK on a tile on Home picks it up, as Home's hold-OK Move does: it lifts with arrows on its sides, ← → move
   it, OK puts it down, ↓ takes it off Home (one must stay) and Back puts it back where it was. OK on another app adds
   it at the end, already picked up to place (the row holds seven). Home's row follows at once.
-- **Motion and Open on start** share one pane ("Motion and start"): Full / Reduced / Off and Home / Last app /
-  Live TV. Reduced drops slides, rises and focus scale-ups and keeps the fades (Home's scroll jumps; its dimming
-  fades); Off stops every animation. The prototype applies Motion; Open on start is only saved.
+- **Performance** (the project lead's decision, 2026-11-01): "How much the launcher draws and moves", a **Light mode**
+  button (first focus) that sets every choice to its lightest (Motion Off, card shadows Off, glow Off, Plain colour,
+  animated details Off; each stays its own choice afterwards; the section's value reads "Light mode"), then a row per
+  choice, its name and a line on the left and a small segmented control on the right: **Motion** (Full / Reduced /
+  Off; Reduced drops slides, rises and focus scale-ups and keeps the fades, Home's scroll jumps and its dimming fades;
+  Off stops every animation), **Card shadows** (On / Focused card only / Off), **Focus glow** (On / Off), **Backdrop
+  picture** (Photo / Plain colour: the theme's sky without the picture) and **Animated details** (On / Off; the old
+  Moving details, saved only: nothing moves yet, on the TV either). A low-RAM TV starts at the light
+  end (no card shadows, Motion Reduced, no animated details; glow and picture on) until the household chooses, and the
+  pane says so; config.xml or config.json `light_defaults` can set or stop that per TV. The prototype starts with
+  everything on; it applies Motion and the backdrop, and saves the card shadows and glow, which it doesn't draw.
+- **Open on start:** Home / Last app / Live TV, only saved.
 - **Default Home:** "This launcher is Home", "The remote’s Home button opens it", and **Choose Home app** (Android's
   Home app setting).
 - **TV settings:** a note and **Open TV settings**, Picture, Network, Apps.

@@ -37,8 +37,16 @@ enum MotionChoice {
      * ({@code configReduced}) the result is at least Reduced: a saved Full is Reduced there, a saved Off stays Off.
      */
     static MotionChoice resolve(String saved, boolean animations, boolean configReduced) {
+        return resolve(saved, animations, configReduced, false);
+    }
+
+    /**
+     * As {@link #resolve(String, boolean, boolean)}, on a TV that starts at the light end ({@code light}, PerfChoices):
+     * without a saved choice, Motion there is Reduced rather than Full until the household picks one.
+     */
+    static MotionChoice resolve(String saved, boolean animations, boolean configReduced, boolean light) {
         MotionChoice m = parse(saved);
-        if (m == null) m = animations ? FULL : OFF;
+        if (m == null) m = !animations ? OFF : light ? REDUCED : FULL;
         return configReduced && m == FULL ? REDUCED : m;
     }
 

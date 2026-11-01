@@ -89,6 +89,11 @@ final class Config {
     final boolean reducedMotion;
     /** The Motion in effect: the household's, over the Animations switch and reduced_motion (MotionChoice). */
     final MotionChoice motion;
+    /**
+     * Whether this TV starts Launcher settings › Performance at the light end (PerfChoices.light): config.xml or
+     * config.json light_defaults, else Android's low-RAM flag. Choices saved on the TV win over it.
+     */
+    final boolean lightDefaults;
     /** Open the Live TV app on the first Home after the TV starts (config.xml, boot_to_live_tv). */
     final boolean bootToLiveTv;
     /** Show the Open on start row in Launcher settings (config.xml, open_on_start_choice). */
@@ -163,7 +168,7 @@ final class Config {
                    List<String> subscribedServices,
                    boolean fillDock, boolean appLibrary, int backgroundColor, int columns, int rowsBelowDock,
                    String greetingName, boolean iconOnlyButtons, int wifiLabelWidth, boolean tileMenu,
-                   boolean wallpaperEnabled) {
+                   boolean wallpaperEnabled, boolean lightDefaults) {
         this.subscribedServices = Collections.unmodifiableList(subscribedServices);
         this.handleViewInputs = handleViewInputs;
         this.inputKeycodes = inputKeycodes;
@@ -206,6 +211,7 @@ final class Config {
         this.wifiLabelWidth = wifiLabelWidth;
         this.tileMenu = tileMenu;
         this.wallpaperEnabled = wallpaperEnabled;
+        this.lightDefaults = lightDefaults;
     }
 
     /** The folder the theme tools push into; null when external storage is unavailable. */
@@ -263,6 +269,7 @@ final class Config {
         int wifiLabelWidth = res.getInteger(R.integer.wifi_label_width);
         boolean tileMenu = res.getBoolean(R.bool.tile_menu);
         boolean wallpaperEnabled = true;
+        String lightDefaults = res.getString(R.string.light_defaults).trim();
 
         File dir = dir(ctx);
         File file = dir != null ? new File(dir, FILE_NAME) : null;
@@ -310,6 +317,8 @@ final class Config {
             wifiLabelWidth = integer(json, "wifi_label_width", wifiLabelWidth, 0, 300);
             tileMenu = bool(json, "tile_menu", tileMenu);
             wallpaperEnabled = bool(json, "wallpaper", true);
+            Object light = json.opt("light_defaults");
+            if (light instanceof Boolean || light instanceof String) lightDefaults = String.valueOf(light);
         }
         // A theme push or reset invalidates choices made on the TV. On first use, remember the
         // current theme without clearing choices from an older launcher version.
@@ -319,8 +328,11 @@ final class Config {
         animations = choices.getBoolean("animations", animations);
         // Motion from the quick-settings dropdown (MotionChoice): a saved choice wins over the switch; without one
         // they mean what they did before. reduced_motion stays this TV's own, and keeps Motion from being Full.
+        // A TV that starts at the light end (a low-RAM one) starts Motion at Reduced too.
+        android.app.ActivityManager am = (android.app.ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
+        boolean light = PerfChoices.light(lightDefaults, am != null && am.isLowRamDevice());
         MotionChoice motion = MotionChoice.resolve(choices.getString(MotionChoice.KEY, null), animations,
-                reducedMotion);
+                reducedMotion, light);
         animations = motion.animations();
 
         return new Config(dock, hidden, liveTv, liveTvAction, liveTvInputId, packageMap(appLabels),
@@ -330,7 +342,7 @@ final class Config {
                 appKeys, stockHomeRedirect, keyFilter, handleViewInputs, gamepadPassthrough, consumeVolumeKeys,
                 subscribedServices,
                 fillDock, library, background, Math.max(1, columns), Math.max(0, rowsBelow), greetingName,
-                iconOnlyButtons, wifiLabelWidth, tileMenu, wallpaperEnabled);
+                iconOnlyButtons, wifiLabelWidth, tileMenu, wallpaperEnabled, light);
     }
 
     private static void syncThemeChoices(SharedPreferences choices, File dir, File config) {
@@ -352,15 +364,16 @@ final class Config {
     }
 
     /**
-     * Launcher settings › About › Follow theme: drops the on-TV choices a pushed config.json would set (Motion, the old
-     * Animations switch, Open on start, the old layout keys), so config.xml or the pushed file decides again. The Theme
+     * Launcher settings › About › Follow theme: drops the on-TV choices a pushed config.json would set (Performance's
+     * Motion, card shadows, focus glow, backdrop picture and animated details, the old Animations switch, Open on start,
+     * the old layout keys), so config.xml or the pushed file decides again. The Theme
      * picker, weather, account and the service and store ticks stay (the project lead, 2026-10-31). False when there
      * was nothing to drop.
      */
     static boolean followTheme(Context ctx) {
         SharedPreferences choices = ctx.getSharedPreferences(SETTINGS_NAME, Context.MODE_PRIVATE);
         boolean any = choices.contains("animations") || choices.contains(MotionChoice.KEY)
-                || choices.contains(OpenOnStart.KEY);
+                || choices.contains(OpenOnStart.KEY) || PerfChoices.anySaved(choices.getAll());
         for (String key : OLD_CHOICES) any |= choices.contains(key);
         if (!any) return false;
         SharedPreferences.Editor editor = choices.edit().remove(OpenOnStart.KEY);
@@ -371,6 +384,7 @@ final class Config {
 
     private static void clearChoices(SharedPreferences.Editor editor) {
         editor.remove("animations").remove(MotionChoice.KEY);
+        for (String key : PerfChoices.KEYS) editor.remove(key);
         for (String key : OLD_CHOICES) editor.remove(key);
     }
 

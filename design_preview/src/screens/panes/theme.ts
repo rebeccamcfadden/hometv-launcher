@@ -20,7 +20,8 @@ export function swatch(t: ThemeDef, period: Period): HTMLElement {
 
 /**
  * Launcher settings › Theme (Figma page "Settings · Theme picker", frame 18:10): Classic and Seasonal swatches, then
- * Typeface and Moving details. Moving only highlights a swatch; OK selects it, and the whole preview wears it at once.
+ * Typeface (Moving details moved to Performance as Animated details). Moving only highlights a swatch; OK selects it,
+ * and the whole preview wears it at once.
  */
 export const themePane = (): Pane => ({
   render: () => {
@@ -54,9 +55,6 @@ export const themePane = (): Pane => ({
         'div.theme-rows',
         row('theme-font', 'Typeface', 'System font uses Roboto', FONT_LABELS[s.themeFont], false, () =>
           settings.set({ themeFont: s.themeFont === 'theme' ? 'system' : 'theme' }),
-        ),
-        row('theme-moving', 'Moving details', 'Snow, rain, leaves and bats drift slowly', s.movingDetails ? 'On' : 'Off', s.movingDetails, () =>
-          settings.set({ movingDetails: !s.movingDetails }),
         ),
       ),
     ];

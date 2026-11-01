@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher settings › Performance (PerformanceSection; the project lead's decision, 2026-11-01). -->
+<resources>
+    <string name="perf_sub">How much the launcher draws and moves. Lighter choices keep it smooth on TVs with little memory; what it shows stays the same.</string>
+    <string name="perf_light_note">This TV starts with the lighter choices, as it has little memory (or its config asks for them): no card shadows, Reduced motion and no animated details. What you choose here wins.</string>
+
+    <string name="perf_light_mode">Light mode</string>
+    <string name="perf_light_mode_sub">Sets every choice below to its lightest: Motion off, no card shadows or glow, a plain backdrop and nothing animated.</string>
+    <string name="perf_light_mode_done">Light mode: every choice at its lightest</string>
+
+    <string name="perf_motion">Motion</string>
+    <string name="perf_motion_sub">Page slides, focus scale and fades</string>
+    <string name="perf_shadows">Card shadows</string>
+    <string name="perf_shadows_sub">The soft shadow under artwork and tiles (Midnight has none)</string>
+    <string name="perf_shadows_focus">Focused card only</string>
+    <string name="perf_glow">Focus glow</string>
+    <string name="perf_glow_sub">The theme\'s light around the focused tile; the focus ring stays</string>
+    <string name="perf_backdrop">Backdrop picture</string>
+    <string name="perf_backdrop_sub">The photo or drawing behind Home, or the theme\'s plain sky colour</string>
+    <string name="perf_backdrop_photo">Photo</string>
+    <string name="perf_backdrop_plain">Plain colour</string>
+    <string name="perf_details">Animated details</string>
+    <string name="perf_details_sub">Snow, rain, leaves and bats drifting over Seasonal backdrops</string>
+    <string name="perf_on">On</string>
+    <string name="perf_off">Off</string>
+
+    <!-- The section's value in the list. -->
+    <string name="perf_value_all_on">All on</string>
+    <string name="perf_value_lighter">Lighter</string>
+    <string name="perf_value_light_mode">Light mode</string>
+    <string name="perf_value_custom">Custom</string>
+</resources>

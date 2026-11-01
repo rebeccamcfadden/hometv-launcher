@@ -329,7 +329,8 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 
 - **Retro themes** (Retro CRT, Synthwave '84, Groovy '70s, 8-bit Arcade): designed in Figma, with their tokens and the
   scanline overlay ready; not in the picker yet.
-- **Moving details:** the switch is saved, but nothing moves yet (petals, snow, leaves, bats).
+- **Animated details** (Launcher settings › Performance, formerly the Theme pane's Moving details): the switch is
+  saved, but nothing moves yet (petals, snow, leaves, bats).
 - **Southern hemisphere:** the Seasonal periods follow the northern calendar everywhere.
 - **Fonts:** downloaded through Google Play services' font provider and kept on the TV; a family the provider can't
   serve comes straight from Google Fonts' CSS API over HTTPS (the TrueType file, at most 2 MB; still none in the APK).
@@ -365,8 +366,27 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   So the resting shadows cost about 19 points of jank and 15 ms of movement on the TCL; PSS and cold start move
   between runs either way. A third shadows-on run measured 102 keys instead of 72 (48.7 %), a different set of frames,
   and is left out. The TCL's Mali-470 has no `buffer_age`, so every frame redraws the whole screen, and each resting
-  shadow is fill on every frame. What to do about it is open with the project lead; the default stays as it is until
-  then.
+  shadow is fill on every frame. A pre-drawn nine-patch per shape, the same look in one draw (#39, closed), benched the
+  same (70.0 %, 71.3 %): the cost is the shadow's pixels, not how they are drawn.
+
+  **Decided** (the project lead, 2026-11-01): a Launcher settings › Performance page. Card shadows On, Focused card
+  only or Off, the focus glow, the backdrop picture (Photo or the theme's plain sky) and Animated details, beside Motion.
+  A Light mode button at its top sets every choice to its lightest (Motion Off included).
+
+  **With the low-RAM start**, on the TCL (#41's build, `tools/bench.py` 36 keys × 3, 2026-11-01):
+
+  | | Jank | Movement p50 | Response p50 | Cold start p50 | PSS |
+  |---|---|---|---|---|---|
+  | Midnight, low-RAM start | 1.3 % | 19 ms | 19 ms | 798 ms | 30 MB |
+  | Daylight, low-RAM start | 1.4 % | 19 ms | 19 ms | 803 ms | 37 MB |
+  | Daylight, everything on (main, the runs above) | 71.2 %, 70.6 % | 212, 213 ms | 24 ms | 701, 709 ms | 51, 45 MB |
+
+  Reduced motion makes moves instant, so nearly no frame is late; the focus glow and the photo, which the low-RAM
+  start keeps, cost nothing visible next to that. Cold start was about 100 ms slower in these runs, not yet explained
+  (Reduced motion shouldn't add to it; worth a trace).
+  A low-RAM TV (`ActivityManager.isLowRamDevice()`, which the TCL reports) or one whose config.xml or config.json
+  sets `light_defaults` to on starts at the light end: no card shadows, Motion Reduced, no animated details; the focus
+  glow (one tile) and the picture stay. The household's choices win; Follow theme and a theme push drop them.
 - **Focus glow:** checked on the TCL: a theme's glow shows in full on Home's Inputs and Shortcuts tiles, edges
   included.
 
@@ -375,8 +395,9 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 - **Launcher settings page:** M9 replaced the old `LauncherSettingsActivity` with the split page of V2 design
   05-settings A (`LauncherSettingsPage`, its sections in `SettingsSections`, shared controls in `SettingsKit`).
   Every section has its pane: Account, Streaming services, Stores for rent and buy, Weather, Home row apps, Theme,
-  Motion (Full, Reduced or Off, on `MotionChoice`), Open on start, Default Home, TV settings and About. Not built:
-  About's Open-source licences and Clear cache. Follow theme is a button in About: it drops Motion, Open on start
+  Performance (Motion: Full, Reduced or Off on `MotionChoice`; card shadows, focus glow, backdrop picture, animated
+  details), Open on start, Default Home, TV settings and About. Not built:
+  About's Open-source licences and Clear cache. Follow theme is a button in About: it drops Performance's choices, Open on start
   and the old layout choices so `config.xml` or a pushed `config.json` decides again; the Theme, weather, account and
   the service and store ticks stay (the project lead, 2026-10-31). A `config.json` push still clears the same.
   Home's row holds seven apps, as the spec: Home row apps and All Apps' Add to Home say so when it is full.

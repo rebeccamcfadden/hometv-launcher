@@ -27,7 +27,7 @@ final class SettingsSections {
         out.add(new WeatherSection());
         if (home != null) out.add(new HomeAppsSection(new HomeApps(home, config)));
         out.add(new ThemeSection());
-        out.add(new MotionSection(config));
+        out.add(new PerformanceSection(config));
         if (config.openOnStartChoice) out.add(new OpenOnStartSection());
         out.add(new DefaultHomeSection());
         out.add(new TvSettingsSection());

@@ -8,6 +8,8 @@ export type Motion = 'full' | 'reduced' | 'off';
 export type OpenOnStart = 'home' | 'last' | 'live';
 export type Unit = 'c' | 'f' | 'tv';
 export type ThemeFont = 'theme' | 'system';
+export type CardShadows = 'on' | 'focus' | 'off';
+export type BackdropPicture = 'photo' | 'plain';
 
 interface Saved {
   motion: Motion;
@@ -25,7 +27,14 @@ interface Saved {
   /** Launcher settings › Theme: the chosen theme (a Seasonal one follows the date), and whether it uses its own fonts. */
   theme: ThemeId;
   themeFont: ThemeFont;
-  /** Petals, snow and leaves drifting over Seasonal backdrops. Saved only: nothing moves yet, on the TV either. */
+  /**
+   * Launcher settings › Performance (with Motion): card shadows, the focus glow, the backdrop picture and the animated
+   * details (petals, snow and leaves drifting over Seasonal backdrops; saved only, nothing moves yet, on the TV either).
+   * The prototype draws no card shadows or glow, so those two are saved only; the backdrop applies.
+   */
+  cardShadows: CardShadows;
+  focusGlow: boolean;
+  backdropPicture: BackdropPicture;
   movingDetails: boolean;
 }
 
@@ -46,6 +55,9 @@ const defaults = (): Saved => ({
   unit: 'tv',
   theme: 'midnight',
   themeFont: 'theme',
+  cardShadows: 'on',
+  focusGlow: true,
+  backdropPicture: 'photo',
   movingDetails: true,
 });
 
@@ -102,6 +114,8 @@ export const START_LABELS: Record<OpenOnStart, string> = { home: 'Home', last: '
 export const TV_UNIT: 'c' | 'f' = 'c';
 export const UNIT_LABELS: Record<Unit, string> = { c: '°C', f: '°F', tv: `TV default (°${TV_UNIT.toUpperCase()})` };
 export const FONT_LABELS: Record<ThemeFont, string> = { theme: 'Theme font', system: 'System font' };
+export const SHADOW_LABELS: Record<CardShadows, string> = { on: 'On', focus: 'Focused card only', off: 'Off' };
+export const BACKDROP_LABELS: Record<BackdropPicture, string> = { photo: 'Photo', plain: 'Plain colour' };
 
 /** A temperature kept in °C, shown in the chosen unit: "14°". */
 export function deg(c: number): string {

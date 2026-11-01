@@ -13,10 +13,11 @@ final class MotionPrefs {
 
     /**
      * The Motion in effect: the saved choice, else what the Animations switch makes it, never Full on a TV whose
-     * config sets reduced_motion (MotionChoice.resolve).
+     * config sets reduced_motion, Reduced while unsaved on a TV that starts at the light end (MotionChoice.resolve).
      */
     static MotionChoice load(Context ctx, Config cfg) {
-        return MotionChoice.resolve(prefs(ctx).getString(MotionChoice.KEY, null), cfg.animations, cfg.reducedMotion);
+        return MotionChoice.resolve(prefs(ctx).getString(MotionChoice.KEY, null), cfg.animations, cfg.reducedMotion,
+                cfg.lightDefaults);
     }
 
     static void save(Context ctx, MotionChoice m) {

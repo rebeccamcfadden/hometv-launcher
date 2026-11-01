@@ -9,7 +9,7 @@
     <string name="settings_services">Streaming services</string>
     <string name="settings_stores">Stores for rent and buy</string>
     <string name="settings_weather">Weather</string>
-    <string name="settings_motion">Motion</string>
+    <string name="settings_performance">Performance</string>
     <string name="settings_start">Open on start</string>
     <string name="settings_home">Default Home</string>
     <string name="settings_tv">TV settings</string>
@@ -52,8 +52,7 @@
     <string name="weather_place_failed">Search failed; try again later</string>
     <string name="weather_place_saved">Weather for %1$s</string>
 
-    <!-- Motion. -->
-    <string name="motion_sub">Full: pages slide and focused items grow. Reduced and Off: pages, menus and Home\'s scroll switch at once, without moving.</string>
+    <!-- Motion (on Launcher settings › Performance). -->
     <string name="motion_full">Full</string>
     <string name="motion_reduced">Reduced</string>
     <string name="motion_off">Off</string>
@@ -87,7 +86,7 @@
     <string name="wifi_switch_refused">This TV did not let the launcher switch networks</string>
     <!-- About: Follow theme. -->
     <string name="follow_theme">Follow theme (reset on-TV choices)</string>
-    <string name="follow_theme_hint">Motion and Open on start go back to what config.xml or a pushed config.json says. The Theme, weather, account, services and stores stay as they are.</string>
-    <string name="follow_theme_done">Motion and Open on start follow the config again</string>
+    <string name="follow_theme_hint">Performance and Open on start go back to what config.xml or a pushed config.json says. The Theme, weather, account, services and stores stay as they are.</string>
+    <string name="follow_theme_done">Performance and Open on start follow the config again</string>
     <string name="follow_theme_nothing">Nothing to reset: the config already decides</string>
 </resources>
