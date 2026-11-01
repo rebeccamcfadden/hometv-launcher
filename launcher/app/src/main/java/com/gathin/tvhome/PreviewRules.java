@@ -7,8 +7,9 @@ import java.util.Set;
 
 /**
  * What the title preview says and picks, ported from design_preview/src/screens/preview.ts and person.ts (with
- * core/fuzzy.ts, titlesForPerson): the Watch button's label, the Overview's availability line, the Where to watch
- * cards' text, the similar titles, the episodes' watched and "Up next" state, and the titles a person appears in.
+ * core/fuzzy.ts, titlesForPerson): the Watch button's label, the Overview's availability line, which offer OK on a
+ * Where to watch card opens (the cards' text is PriceCards'), the similar titles, the episodes' watched and "Up next"
+ * state, and the titles a person appears in.
  * Pure Java and English only, like Offers and TitleText, so it is unit-tested against the prototype's outputs.
  */
 final class PreviewRules {
@@ -109,26 +110,6 @@ final class PreviewRules {
     }
 
     // ---- Where to watch -------------------------------------------------------------------------------------------
-
-    /** The card's badge: "Free", "Included" or null for a store. */
-    static String serviceBadge(ServiceOffers s) {
-        if (s.free) return "Free";
-        return s.included ? "Included" : null;
-    }
-
-    /**
-     * The card's offer line: "With your subscription", "Free with ads", "Rent $3.99 · Buy $9.99", or "Subscription"
-     * for a service the household doesn't subscribe to that has nothing to rent or buy (the prototype assumes every
-     * service is subscribed, so it never shows this).
-     */
-    static String serviceOffer(ServiceOffers s) {
-        if (s.included) return "With your subscription";
-        if (s.free) return "Free with ads";
-        List<String> parts = new ArrayList<>(2);
-        if (s.rent != null) parts.add(Offers.paid(s.rent));
-        if (s.buy != null) parts.add(Offers.paid(s.buy));
-        return parts.isEmpty() ? "Subscription" : String.join(" · ", parts);
-    }
 
     /** The title's subscription offer on that service, or null. */
     static Offer subscriptionOffer(Title t, ServiceId service) {

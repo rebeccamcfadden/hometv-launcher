@@ -1,9 +1,7 @@
 package com.gathin.tvhome;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,10 +27,6 @@ final class PricedOffer {
         this.seasonal = seasonal;
     }
 
-    boolean hasPrice() {
-        return !prices.isEmpty();
-    }
-
     /** The cheapest price in any quality (the best quality of equal prices), or null. */
     Money cheapest() {
         Quality q = cheapestQuality();
@@ -48,16 +42,6 @@ final class PricedOffer {
         return best;
     }
 
-    /**
-     * "49 kr" when there is one price, "from 39 kr" when qualities cost different amounts or the price is per
-     * season, null without a price.
-     */
-    String priceLabel() {
-        Money min = cheapest();
-        if (min == null) return null;
-        return isFrom() ? min.formatFrom() : min.format();
-    }
-
     /** Several prices: qualities that cost different amounts, or per-season prices. */
     boolean isFrom() {
         Money min = cheapest();
@@ -65,23 +49,6 @@ final class PricedOffer {
         boolean several = seasonal;
         for (Money m : prices.values()) several |= !m.equals(min);
         return several;
-    }
-
-    /** "Rent 49 kr", "Buy from 99 kr", or just "Rent" when no source priced it. SUB and FREE: "". */
-    String label() {
-        if (type != OfferType.RENT && type != OfferType.BUY) return "";
-        String verb = type == OfferType.RENT ? "Rent" : "Buy";
-        String price = priceLabel();
-        return price == null ? verb : verb + " " + price;
-    }
-
-    /** One line per quality for the rent dialog, SD first: "HD · 49 kr". */
-    List<String> qualityLines() {
-        List<String> out = new ArrayList<>(prices.size());
-        for (Map.Entry<Quality, Money> e : prices.entrySet()) {
-            out.add(e.getKey().label + " · " + (seasonal ? e.getValue().formatFrom() : e.getValue().format()));
-        }
-        return out;
     }
 
     /**

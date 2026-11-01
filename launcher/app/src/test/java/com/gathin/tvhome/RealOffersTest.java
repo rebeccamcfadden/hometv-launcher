@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The preview's and Pick for me's wording with real offers (V2 Phase 2): prices in kronor, "from" prices, and stores
@@ -70,12 +72,13 @@ public class RealOffersTest {
     @Test
     public void whereToWatchCards() {
         List<ServiceOffers> by = Offers.byService(movie(NETFLIX, SF_RENT, APPLE_RENT, APPLE_BUY), NETFLIX_ONLY);
-        assertEquals("With your subscription", PreviewRules.serviceOffer(by.get(0)));
+        assertTrue(by.get(0).included);
         // A real offer without a quality shows none, rather than the prototype's "HD".
         assertEquals("", by.get(0).quality);
-        assertEquals("Rent", PreviewRules.serviceOffer(by.get(1)));
+        assertNotNull(by.get(1).rent);
         assertEquals("", by.get(1).quality);
-        assertEquals("Rent 39 kr · Buy 79 kr", PreviewRules.serviceOffer(by.get(2)));
+        assertNotNull(by.get(2).rent);
+        assertNotNull(by.get(2).buy);
         assertEquals("HD", by.get(2).quality);
     }
 

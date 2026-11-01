@@ -23,7 +23,8 @@ import static org.junit.Assert.assertTrue;
  * The title preview's rules against design_preview/src/screens/preview.ts and core/fuzzy.ts. The expected values in
  * src/test/resources/prototype_preview.tsv and prototype_people.tsv are the prototype's own outputs for every title
  * and person in the mock catalogue, with every service the prototype marks subscribed: the Watch label, the
- * Overview's availability line, the similar titles, the Where to watch cards and each episode's state. They were
+ * Overview's availability line, the similar titles and each episode's state. (Where to watch's cards are drawn by
+ * PriceCards since 07-prices, and tested in PriceCardsTest.) They were
  * made the way PrototypeTitles describes, with the prototype's preview.ts logic copied into the throwaway script
  * (it builds DOM, so it can't be imported); regenerate them the same way if the prototype changes.
  */
@@ -40,15 +41,14 @@ public class PreviewRulesTest {
         return t;
     }
 
-    /** A subscription the household doesn't have, with nothing to rent or buy: the card says so, and OK opens the
-     *  app (Router.watch with the subscription offer) instead of an empty rent/buy dialog. */
+    /** A subscription the household doesn't have, with nothing to rent or buy: OK opens the app (Router.watch with the
+     *  subscription offer) instead of an empty rent/buy dialog. The card's "Subscription" wording is PriceCardsTest's. */
     @Test
-    public void unsubscribedServiceWithNoStoreOffersSaysSubscription() {
+    public void unsubscribedServiceWithNoStoreOffersOpensItsSubscription() {
         Title mitchells = t("mitchells");
         ServiceOffers netflix = PreviewRules.forService(mitchells, ServiceId.NETFLIX, NONE);
         assertNotNull(netflix);
         org.junit.Assert.assertFalse(netflix.watchable());
-        org.junit.Assert.assertEquals("Subscription", PreviewRules.serviceOffer(netflix));
         Offer sub = PreviewRules.subscriptionOffer(mitchells, ServiceId.NETFLIX);
         assertNotNull(sub);
         org.junit.Assert.assertEquals(OfferType.SUB, sub.type);
@@ -87,20 +87,8 @@ public class PreviewRulesTest {
             assertEquals(t.id + " overview", f[2], PreviewRules.availability(t, OffersTest.PROTOTYPE, table).toString());
             List<String> similar = f[3].isEmpty() ? Collections.emptyList() : Arrays.asList(f[3].split(","));
             assertEquals(t.id + " similar", similar, ids(PreviewRules.similar(t, catalog.all())));
-            assertEquals(t.id + " services", f[4], services(t));
-            assertEquals(t.id + " episodes", f[5], episodes(t));
+            assertEquals(t.id + " episodes", f[4], episodes(t));
         }
-    }
-
-    /** "Prime Video|Included|With your subscription|4K · HDR / Apple TV|-|Rent $3.99 · Buy $9.99|4K · Dolby Vision". */
-    private String services(Title t) {
-        List<String> cards = new ArrayList<>();
-        for (ServiceOffers s : Offers.byService(t, OffersTest.PROTOTYPE)) {
-            String badge = PreviewRules.serviceBadge(s);
-            cards.add(table.name(s.service) + "|" + (badge == null ? "-" : badge) + "|" + PreviewRules.serviceOffer(s)
-                    + "|" + s.quality);
-        }
-        return String.join(" / ", cards);
     }
 
     /** "1.1:w:48m · Watched 1.3:n*:53m 1.4:-:51m": watched, up next or neither, * for the row's default. */
@@ -220,8 +208,6 @@ public class PreviewRulesTest {
         ServiceOffers apple = PreviewRules.forService(arrival, ServiceId.APPLETV, OffersTest.PROTOTYPE);
         assertNotNull(apple);
         assertFalse(apple.watchable());
-        assertNull(PreviewRules.serviceBadge(apple));
-        assertEquals("Rent $3.99 · Buy $9.99", PreviewRules.serviceOffer(apple));
         assertNull(PreviewRules.forService(arrival, ServiceId.NETFLIX, OffersTest.PROTOTYPE));
 
         Offer prime = PreviewRules.includedOffer(arrival, ServiceId.PRIME, OffersTest.PROTOTYPE);

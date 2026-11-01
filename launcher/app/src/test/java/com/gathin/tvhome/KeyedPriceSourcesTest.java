@@ -69,7 +69,7 @@ public class KeyedPriceSourcesTest {
         ProviderAvailability a = ProviderAvailability.parse(Fixtures.read("tmdb_wp_movie_157336.json"), "SE");
         List<String> rent = new ArrayList<>();
         for (PricedOffer o : OfferMerge.merge(a, p, table).offers) {
-            if (o.type == OfferType.RENT) rent.add(o.provider.key + " " + o.label());
+            if (o.type == OfferType.RENT) rent.add(o.provider.key + " " + OfferMergeTest.label(o));
         }
         assertEquals(Arrays.asList("appletv Rent 39 kr", "rakuten Rent 39 kr", "sfanytime Rent 49 kr",
                 "amazonvideo Rent 39 kr"), rent);

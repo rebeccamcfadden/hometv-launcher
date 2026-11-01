@@ -24,10 +24,19 @@ public class OfferMergeTest {
     private static List<String> labels(OfferMerge.Result r) {
         List<String> out = new ArrayList<>();
         for (PricedOffer o : r.offers) {
-            String label = o.label();
+            String label = label(o);
             out.add(o.provider.key + " " + o.type + (label.isEmpty() ? "" : " " + label));
         }
         return out;
+    }
+
+    /** "Rent 49 kr", "Buy from 99 kr", or just "Rent" when no source priced it; "" for SUB and FREE. */
+    static String label(PricedOffer o) {
+        if (o.type != OfferType.RENT && o.type != OfferType.BUY) return "";
+        String verb = o.type == OfferType.RENT ? "Rent" : "Buy";
+        Money min = o.cheapest();
+        if (min == null) return verb;
+        return verb + " " + (o.isFrom() ? min.formatFrom() : min.format());
     }
 
     private OfferMerge.Result arrival() throws JSONException {
@@ -60,12 +69,17 @@ public class OfferMergeTest {
         assertEquals("appletv", buy.provider.key);
         // Watchmode's 4K and iTunes' SD and HD, all 79 kr: the best quality at the cheapest price.
         assertEquals(Quality.UHD, buy.cheapestQuality());
-        assertEquals(Arrays.asList("SD · 79 kr", "HD · 79 kr", "4K · 79 kr"), buy.qualityLines());
+        Money kr79 = new Money(7900, "SEK");
+        assertEquals(kr79, buy.prices.get(Quality.SD));
+        assertEquals(kr79, buy.prices.get(Quality.HD));
+        assertEquals(kr79, buy.prices.get(Quality.UHD));
         PricedOffer amazon = r.offers.get(4);
         assertEquals(new Money(4900, "SEK"), amazon.cheapest());
         assertEquals(Quality.HD, amazon.cheapestQuality());
-        assertEquals("from 49 kr", amazon.priceLabel());
-        assertEquals(Arrays.asList("HD · 49 kr", "4K · 59.50 kr"), amazon.qualityLines());
+        assertTrue("qualities cost different amounts", amazon.isFrom());
+        assertEquals(new Money(4900, "SEK"), amazon.prices.get(Quality.HD));
+        assertEquals(new Money(5950, "SEK"), amazon.prices.get(Quality.UHD));
+        assertEquals(2, amazon.prices.size());
     }
 
     @Test
@@ -103,7 +117,8 @@ public class OfferMergeTest {
         OfferMerge.Result r = OfferMerge.merge(a, prices, table);
         assertEquals(Arrays.asList("appletv BUY Buy from 199 kr", "amazonvideo BUY Buy from 149 kr"), labels(r));
         assertTrue(r.offers.get(0).seasonal);
-        assertEquals(Collections.singletonList("HD · from 199 kr"), r.offers.get(0).qualityLines());
+        assertEquals(Collections.singleton(Quality.HD), r.offers.get(0).prices.keySet());
+        assertEquals(new Money(19900, "SEK"), r.offers.get(0).prices.get(Quality.HD));
     }
 
     @Test
@@ -146,9 +161,9 @@ public class OfferMergeTest {
     @Test
     public void subscriptionOffersHaveNoPrice() {
         PricedOffer sub = new PricedOffer(table.byKey("netflix"), OfferType.SUB, null, false);
-        assertFalse(sub.hasPrice());
-        assertEquals("", sub.label());
-        assertNull(sub.priceLabel());
+        assertTrue(sub.prices.isEmpty());
+        assertEquals("", label(sub));
+        assertNull(sub.cheapest());
         Offer o = sub.toOffer();
         assertEquals(ServiceId.NETFLIX, o.service);
         assertEquals(0, o.price, 0);
