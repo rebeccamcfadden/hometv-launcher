@@ -137,3 +137,9 @@ dependencies {
     // Android's own org.json is a stub on the JVM; the weather parser's tests need a real one.
     testImplementation 'org.json:json:20240303'
 }
+
+// Some unit tests read files under src/main/res straight from disk (NoteWordsTest, MockCatalogTest); declaring them as
+// inputs keeps the build cache from reusing a passing result after only those files changed.
+tasks.withType(Test).configureEach {
+    inputs.dir('src/main/res').withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName('mainRes')
+}

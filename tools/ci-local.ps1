@@ -14,7 +14,8 @@ Jobs:
             ~148 environment failures on main too, so "no new failures" stands in for CI's green).
   tables    tools/gen_tables.py --check. Stale tables (exit 1) pass on a PR, since they are regenerated after merging,
             and fail on a ref; invalid input (exit 2) always fails.
-  launcher  gradlew testReleaseUnitTest lintRelease assembleRelease, 0 lint errors, release APK <= 1,048,576 B.
+  launcher  gradlew testReleaseUnitTest lintRelease assembleRelease (with the local build cache), 0 lint errors,
+            release APK <= 1,048,576 B.
 Builds without launcher/tv.properties, as CI does (no keys: the mock catalogue).
 #>
 param([int]$Pr, [string]$Ref, [switch]$NoPost)
@@ -106,7 +107,8 @@ try {
     # launcher
     Push-Location "$dir\launcher"
     if (Test-Path tv.properties) { Remove-Item tv.properties }
-    .\gradlew.bat --no-daemon testReleaseUnitTest lintRelease assembleRelease *> "$dir\gradle.log"
+    # The local build cache (~\.gradle\caches\build-cache-1) lets each fresh worktree reuse outputs of earlier runs.
+    .\gradlew.bat --no-daemon --build-cache testReleaseUnitTest lintRelease assembleRelease *> "$dir\gradle.log"
     $ok = $LASTEXITCODE -eq 0
     $tests = 0; $tf = 0
     Get-ChildItem app\build\test-results\testReleaseUnitTest\*.xml -ErrorAction SilentlyContinue | ForEach-Object {
