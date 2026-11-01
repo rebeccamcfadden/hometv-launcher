@@ -10,14 +10,14 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * Apple TV store prices from Apple's public iTunes Search API (no key), in kronor with {@code country=se}. Since late
+ * Apple TV store prices from Apple's public iTunes Search API (no key), in the region's store ({@code country=se}
+ * gives kronor, {@code us} dollars; the currency comes with each answer). Since late
  * 2025 its search finds no movies in any country, and no TV seasons in Sweden; its lookup by id still answers. So a
  * title is looked up by the iTunes ids Wikidata keeps (P6398 for a movie, several per film, one per storefront: the
- * Swedish one is the one that answers; P6381 for a show's seasons), and only without an answer is it searched for by
+ * region's one is the one that answers; P6381 for a show's seasons), and only without an answer is it searched for by
  * name and year ({@link TitleMatch}). Apple prices rentals and purchases in SD and HD; HD includes 4K where Apple has
  * it. Seasons are bought, never rented. Apple asks for no more than about 20 requests a minute.
  */
@@ -27,6 +27,11 @@ final class ItunesPrices implements PriceSource {
     private static final String BASE = "https://itunes.apple.com/";
     private static final Pattern ITUNES_ID = Pattern.compile("[1-9]\\d{0,11}");
 
+    private final Region region;
+
+    ItunesPrices(Region region) {
+        this.region = region;
+    }
     @Override
     public String id() {
         return ID;
@@ -40,25 +45,21 @@ final class ItunesPrices implements PriceSource {
     /** A lookup, and a search when the lookup finds nothing. */
     @Override
     public int cost(PriceTitle t) {
-        return lookupUrl(t) != null ? 2 : 1;
+        return lookupUrl(t, region) != null ? 2 : 1;
     }
 
-    /** The lookup for the title's iTunes ids in the Swedish store, or null when it has none. */
-    static String lookupUrl(PriceTitle t) {
+    /** The lookup for the title's iTunes ids in the region's store, or null when it has none. */
+    static String lookupUrl(PriceTitle t, Region region) {
         List<String> ids = new ArrayList<>();
         for (String id : t.itunesIds) if (ITUNES_ID.matcher(id).matches() && !ids.contains(id)) ids.add(id);
         if (ids.isEmpty()) return null;
-        return BASE + "lookup?id=" + String.join(",", ids) + "&country=" + country();
+        return BASE + "lookup?id=" + String.join(",", ids) + "&country=" + region.country;
     }
 
-    /** The search by name: movies, or a show's seasons. */
-    static String searchUrl(PriceTitle t) {
-        return BASE + "search?term=" + encode(t.name) + "&country=" + country()
+    /** The search by name in the region's store: movies, or a show's seasons. */
+    static String searchUrl(PriceTitle t, Region region) {
+        return BASE + "search?term=" + encode(t.name) + "&country=" + region.country
                 + (t.isMovie() ? "&media=movie&entity=movie&limit=10" : "&media=tvShow&entity=tvSeason&limit=25");
-    }
-
-    private static String country() {
-        return WatchProviders.REGION.toLowerCase(Locale.ROOT);
     }
 
     private static String encode(String s) {
@@ -72,19 +73,19 @@ final class ItunesPrices implements PriceSource {
     @Override
     public List<StorePrice> prices(PriceTitle t, HttpGet http) throws IOException {
         try {
-            String lookup = lookupUrl(t);
+            String lookup = lookupUrl(t, region);
             if (t.isMovie()) {
                 if (lookup != null) {
                     List<StorePrice> found = parseMovies(http.get(lookup, Collections.emptyMap()), t, true);
                     if (!found.isEmpty()) return found;
                 }
-                return parseMovies(http.get(searchUrl(t), Collections.emptyMap()), t, false);
+                return parseMovies(http.get(searchUrl(t, region), Collections.emptyMap()), t, false);
             }
             if (lookup != null) {
                 List<StorePrice> found = parseSeasons(http.get(lookup, Collections.emptyMap()), t);
                 if (!found.isEmpty()) return found;
             }
-            return parseSeasons(http.get(searchUrl(t), Collections.emptyMap()), t);
+            return parseSeasons(http.get(searchUrl(t, region), Collections.emptyMap()), t);
         } catch (JSONException e) {
             throw new IOException("iTunes: unexpected answer", e);
         }

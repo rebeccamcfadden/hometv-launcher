@@ -45,6 +45,9 @@ SCREENSHOT_WANTED = {
     # Launcher settings › Performance's starting point (the project lead, 2026-11-01); its screenshot comes with the
     # real-TV run.
     "light_defaults",
+    # The region, SE or US (Family install step 2, BACKLOG.md › Two regions); the PR carries emulator captures of the
+    # US panes, and its screenshot here comes with the real-TV run, like subscribed_services.
+    "region",
 }
 
 

@@ -6,7 +6,9 @@ import java.util.Locale;
 
 /**
  * The TMDB requests the catalogue makes (BACKLOG.md, Real catalogue): their v3 paths, how long each answer stays
- * good on disk, and the image URLs at the sizes the screens show. English (en-US) everywhere; the region is SE.
+ * good on disk, and the image URLs at the sizes the screens show. English (en-US) everywhere; the region
+ * ({@link Region}) picks the country of Discover's release dates and of the availability read from a title's answer,
+ * which holds every country, so a title's path is the same in every region.
  * Pure Java, unit-tested (TmdbApiTest). The token is never part of a path: {@link TmdbClient} sends it as a header.
  */
 final class TmdbApi {
@@ -15,7 +17,6 @@ final class TmdbApi {
     static final String BASE = "https://api.themoviedb.org/3";
     static final String IMAGES = "https://image.tmdb.org/t/p/";
     static final String LANGUAGE = "en-US";
-    static final String REGION = "SE";
 
     static final long MINUTE = 60_000L, HOUR = 60 * MINUTE, DAY = 24 * HOUR;
     /** How long an answer stays fresh, after cleanyourtv-ui's Tmdb.ttl (BACKLOG.md, Findings). */
@@ -83,10 +84,10 @@ final class TmdbApi {
     }
 
     /** The most popular titles of one TMDB genre, with enough votes for the score to mean something. */
-    static String discover(Kind kind, int genreId) {
+    static String discover(Kind kind, int genreId, Region region) {
         return "/discover/" + (kind == Kind.MOVIE ? "movie" : "tv") + "?with_genres=" + genreId
                 + "&sort_by=popularity.desc&vote_count.gte=200&include_adult=false&language=" + LANGUAGE
-                + (kind == Kind.MOVIE ? "&region=" + REGION : "") + "&page=1";
+                + (kind == Kind.MOVIE ? "&region=" + region.code : "") + "&page=1";
     }
 
     /** How long the answer to a path stays fresh: search an hour, lists 3 hours, a title 12, the rest a week. */

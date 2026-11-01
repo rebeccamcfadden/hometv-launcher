@@ -86,15 +86,31 @@ public class RealOffersTest {
     public void detailsCarryTheirSwedishAvailability() throws Exception {
         org.json.JSONObject o = new org.json.JSONObject("{\"id\":329865,\"title\":\"Arrival\",\"release_date\":\"2016-11-10\"}");
         o.put("watch/providers", new org.json.JSONObject(Fixtures.read("tmdb_wp_movie_329865.json")));
-        Title t = TmdbParse.details(o, Kind.MOVIE);
+        Title t = TmdbParse.details(o, Kind.MOVIE, Region.SE);
         // Blockbuster (closed) is dropped; nothing is priced until a price source answers.
         assertEquals(10, t.offers.size());
         assertEquals(ServiceId.APPLETV, t.offers.get(0).service);
         assertEquals(OfferType.RENT, t.offers.get(0).type);
         assertNull(Offers.price(t.offers.get(0)));
-        assertEquals(5, TmdbParse.availability(o).of(ProviderAvailability.Type.BUY).size() - 1);
+        assertEquals(5, TmdbParse.availability(o, Region.SE).of(ProviderAvailability.Type.BUY).size() - 1);
         // A details answer without watch providers (the cache from before V2 Phase 2) has no offers.
-        assertEquals(0, TmdbParse.details(new org.json.JSONObject("{\"id\":1,\"title\":\"X\"}"), Kind.MOVIE).offers.size());
+        assertEquals(0, TmdbParse.details(new org.json.JSONObject("{\"id\":1,\"title\":\"X\"}"), Kind.MOVIE, Region.SE)
+                .offers.size());
+    }
+
+    @Test
+    public void theSameDetailsReadForTheUsCarryUsAvailability() throws Exception {
+        org.json.JSONObject o = new org.json.JSONObject(
+                "{\"id\":329865,\"title\":\"Arrival\",\"release_date\":\"2016-11-10\"}");
+        o.put("watch/providers", new org.json.JSONObject(Fixtures.read("tmdb_wp_movie_329865.json")));
+        java.util.Set<String> got = new java.util.TreeSet<>();
+        for (Offer off : TmdbParse.details(o, Kind.MOVIE, Region.US).offers) got.add(off.service.id + " " + off.type);
+        // Paramount+'s Amazon and Roku channels, Kanopy and the small stores are left out; no Swedish store shows.
+        assertEquals(new java.util.TreeSet<>(Arrays.asList(
+                "paramountplus SUB", "peacock SUB",
+                "amazonvideo RENT", "appletv RENT", "googletv RENT", "youtube RENT", "fandango RENT", "plex RENT",
+                "amazonvideo BUY", "appletv BUY", "googletv BUY", "youtube BUY", "fandango BUY")), got);
+        assertEquals("US", TmdbParse.availability(o, Region.US).region);
     }
 
     @Test

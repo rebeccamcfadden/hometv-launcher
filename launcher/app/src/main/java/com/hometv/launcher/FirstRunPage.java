@@ -327,7 +327,7 @@ final class FirstRunPage extends Screen {
             case "services":
                 Set<ServiceId> ticked = activity.data().services.subscribed();
                 return ctx.getString(R.string.settings_ticked, ServicePicks.count(ticked,
-                        ServicePicks.listed(ticked)));
+                        ServicePicks.listed(activity.data().region, ticked)));
             case "stores":
                 return ctx.getString(R.string.first_run_stores_line);
             default:
@@ -346,15 +346,19 @@ final class FirstRunPage extends Screen {
      */
     private CharSequence valueOf(String id) {
         Services services = activity.data().services;
+        Region region = activity.data().region;
         ServiceTable table = services.table();
         List<String> names = new ArrayList<>();
         switch (id) {
             case "services":
                 Set<ServiceId> ticked = services.subscribed();
-                for (ServiceId s : FirstRunRules.ticked(ServicePicks.listed(ticked), ticked)) names.add(table.name(s));
+                for (ServiceId s : FirstRunRules.ticked(ServicePicks.listed(region, ticked), ticked)) {
+                    names.add(table.name(s));
+                }
                 return FirstRunRules.names(names);
             case "stores":
-                for (ServiceId s : FirstRunRules.ticked(ServicePicks.STORES, ServiceChoices.stores(ctx))) {
+                for (ServiceId s : FirstRunRules.ticked(ServicePicks.stores(region),
+                        ServiceChoices.stores(ctx, region))) {
                     names.add(StoresSection.storeName(ctx, table, s));
                 }
                 return FirstRunRules.names(names);
@@ -412,12 +416,12 @@ final class FirstRunPage extends Screen {
         int done = FirstRunRules.doneCount(steps, opened);
         if (id != null) {
             SettingsKit.add(help, SettingsKit.eyebrow(ctx, titleOf(ctx, id, section(id))), 0);
-            helpTitle(ctx.getString(helpRes(id, 0)));
-            helpBody(ctx.getString(helpRes(id, 1)));
+            helpTitle(ctx.getString(helpRes(id, 0, activity.data().region)));
+            helpBody(ctx.getString(helpRes(id, 1, activity.data().region)));
             helpDivider();
             String note = done > 0 && !FirstRunRules.done(id, opened)
                     ? ctx.getResources().getQuantityString(R.plurals.first_run_done_note, done, done)
-                    : ctx.getString(helpRes(id, 2));
+                    : ctx.getString(helpRes(id, 2, activity.data().region));
             help.addView(helpNote(note));
             return;
         }
@@ -443,7 +447,7 @@ final class FirstRunPage extends Screen {
     }
 
     /** A row's help: 0 the title, 1 the body, 2 the note. */
-    private static int helpRes(String id, int part) {
+    private static int helpRes(String id, int part, Region region) {
         switch (id) {
             case "account":
                 return part == 0 ? R.string.first_run_account_help_title
@@ -452,8 +456,10 @@ final class FirstRunPage extends Screen {
                 return part == 0 ? R.string.first_run_services_help_title
                         : part == 1 ? R.string.first_run_services_help_body : R.string.first_run_services_help_note;
             case "stores":
+                int body = region == Region.US ? R.string.first_run_stores_help_body_us
+                        : R.string.first_run_stores_help_body;
                 return part == 0 ? R.string.first_run_stores_help_title
-                        : part == 1 ? R.string.first_run_stores_help_body : R.string.first_run_stores_help_note;
+                        : part == 1 ? body : R.string.first_run_stores_help_note;
             default:
                 return part == 0 ? R.string.first_run_weather_help_title
                         : part == 1 ? R.string.first_run_weather_help_body : R.string.first_run_weather_help_note;

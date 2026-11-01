@@ -49,8 +49,8 @@ public class PriceLookupTest {
     };
 
     private PriceLookup lookup(String watchmodeKey, HttpGet watchmodeHttp, HttpGet itunesHttp) {
-        return new PriceLookup(wikidata, new WatchmodePrices(watchmodeKey), watchmodeHttp,
-                new StreamingAvailabilityPrices(""), never, new ItunesPrices(), itunesHttp);
+        return new PriceLookup(wikidata, new WatchmodePrices(watchmodeKey, Region.SE), watchmodeHttp,
+                new StreamingAvailabilityPrices("", Region.SE), never, new ItunesPrices(Region.SE), itunesHttp);
     }
 
     private PriceLookup.Result arrival(PriceLookup l) {
@@ -132,7 +132,8 @@ public class PriceLookupTest {
         PriceLookup.Entry old = PriceLookup.Entry.after(null, arrival(lookup("", never, itunesOk)), true, BACKGROUND, NOW);
         PriceLookup down = new PriceLookup((url, headers) -> {
             throw new IOException("offline");
-        }, new WatchmodePrices(""), never, new StreamingAvailabilityPrices(""), never, new ItunesPrices(), itunesDown);
+        }, new WatchmodePrices("", Region.SE), never, new StreamingAvailabilityPrices("", Region.SE), never,
+                new ItunesPrices(Region.SE), itunesDown);
         PriceLookup.Result r = down.run(Kind.MOVIE, 329865, "Arrival", 2016, true);
         assertFalse(r.idsOk);
         PriceLookup.Entry e = PriceLookup.Entry.after(old, r, true, BACKGROUND, NOW + 8 * D);
@@ -149,8 +150,8 @@ public class PriceLookupTest {
             asked.add("watchmode");
             return Fixtures.read("watchmode_movie_157336.json");
         };
-        PriceLookup l = new PriceLookup(wikidata, new WatchmodePrices("key"), watchmodeReal,
-                new StreamingAvailabilityPrices("key"), never, new ItunesPrices(), never);
+        PriceLookup l = new PriceLookup(wikidata, new WatchmodePrices("key", Region.SE), watchmodeReal,
+                new StreamingAvailabilityPrices("key", Region.SE), never, new ItunesPrices(Region.SE), never);
         PriceLookup.Result r = l.run(Kind.MOVIE, 157336, "Interstellar", 2014, true);
         // Watchmode priced every store, Apple included: neither Movie of the Night nor iTunes is asked.
         assertEquals(java.util.Arrays.asList("wikidata", "watchmode"), asked);
@@ -172,8 +173,8 @@ public class PriceLookupTest {
             asked.add("motn");
             return Fixtures.read("motn_movie_157336.json");
         };
-        PriceLookup l = new PriceLookup(wikidata, new WatchmodePrices("key"), watchmodeEmpty,
-                new StreamingAvailabilityPrices("key"), motn, new ItunesPrices(), never);
+        PriceLookup l = new PriceLookup(wikidata, new WatchmodePrices("key", Region.SE), watchmodeEmpty,
+                new StreamingAvailabilityPrices("key", Region.SE), motn, new ItunesPrices(Region.SE), never);
         PriceLookup.Result r = l.run(Kind.MOVIE, 157336, "Interstellar", 2014, true);
         assertEquals(java.util.Arrays.asList("wikidata", "watchmode", "motn"), asked);
         assertTrue(r.pricesOk);
@@ -186,8 +187,8 @@ public class PriceLookupTest {
             asked.add("motn");
             throw new CachedHttp.OverBudget(StreamingAvailabilityPrices.ID);
         };
-        PriceLookup l = new PriceLookup(wikidata, new WatchmodePrices("key"), watchmodeSpent,
-                new StreamingAvailabilityPrices("key"), motnSpent, new ItunesPrices(), itunesOk);
+        PriceLookup l = new PriceLookup(wikidata, new WatchmodePrices("key", Region.SE), watchmodeSpent,
+                new StreamingAvailabilityPrices("key", Region.SE), motnSpent, new ItunesPrices(Region.SE), itunesOk);
         PriceLookup.Result r = arrival(l);
         assertEquals(java.util.Arrays.asList("wikidata", "watchmode", "motn", "itunes"), asked);
         assertTrue(r.budgetBlocked);

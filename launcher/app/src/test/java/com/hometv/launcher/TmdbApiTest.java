@@ -38,9 +38,11 @@ public class TmdbApiTest {
                 TmdbApi.search(" Amy Adams "));
         assertEquals("/search/multi?query=9-1-1%3A%20lone%20star&include_adult=false&language=en-US&page=1",
                 TmdbApi.search("9-1-1: lone star"));
-        assertTrue(TmdbApi.discover(Kind.MOVIE, 18).startsWith("/discover/movie?with_genres=18&"));
-        assertTrue(TmdbApi.discover(Kind.MOVIE, 18).contains("&region=SE"));
-        assertTrue(TmdbApi.discover(Kind.SHOW, 18).startsWith("/discover/tv?with_genres=18&"));
+        assertTrue(TmdbApi.discover(Kind.MOVIE, 18, Region.SE).startsWith("/discover/movie?with_genres=18&"));
+        assertTrue(TmdbApi.discover(Kind.MOVIE, 18, Region.SE).contains("&region=SE"));
+        assertTrue(TmdbApi.discover(Kind.SHOW, 18, Region.SE).startsWith("/discover/tv?with_genres=18&"));
+        assertTrue(TmdbApi.discover(Kind.MOVIE, 18, Region.US).contains("&region=US"));
+        assertFalse(TmdbApi.discover(Kind.SHOW, 18, Region.US).contains("region="));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -52,7 +54,7 @@ public class TmdbApiTest {
     public void timeToLiveFollowsWhatThePathIs() {
         long hour = 3_600_000L;
         assertEquals(hour, TmdbApi.ttl(TmdbApi.search("dune")));
-        assertEquals(3 * hour, TmdbApi.ttl(TmdbApi.discover(Kind.MOVIE, 18)));
+        assertEquals(3 * hour, TmdbApi.ttl(TmdbApi.discover(Kind.MOVIE, 18, Region.SE)));
         assertEquals(12 * hour, TmdbApi.ttl(TmdbApi.details("movie:1")));
         assertEquals(12 * hour, TmdbApi.ttl(TmdbApi.details("tv:1")));
         assertEquals(7 * 24 * hour, TmdbApi.ttl(TmdbApi.season("tv:1", 1)));

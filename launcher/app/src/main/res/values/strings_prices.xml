@@ -6,6 +6,7 @@
     <string name="prices_cheapest">Cheapest</string>
     <!-- Where to watch, for a title TMDB knows no service or store for in Sweden. -->
     <string name="prices_where_none">Not on any service or store in Sweden.</string>
+    <string name="prices_where_none_us">Not on any service or store in the US.</string>
     <!-- The Movies, TV Shows and Pick for me guide lines on the real catalogue, instead of "Illustrative …". -->
     <string name="prices_library_guide">Scores from TMDB · Where to watch from JustWatch</string>
     <string name="prices_pick_guide">Picks from your lists · Scores from TMDB · Where to watch from JustWatch</string>

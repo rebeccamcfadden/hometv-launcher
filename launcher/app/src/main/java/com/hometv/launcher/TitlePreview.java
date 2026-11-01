@@ -954,7 +954,8 @@ final class TitlePreview extends Screen {
         List<PriceCards.Card> services = PriceCards.cards(t, subscribed, data.stores(), data.services.installed());
         View body;
         if (services.isEmpty()) {
-            body = emptyNote(t.detailed ? R.string.prices_where_none : R.string.preview_not_loaded);
+            int none = data.region == Region.US ? R.string.prices_where_none_us : R.string.prices_where_none;
+            body = emptyNote(t.detailed ? none : R.string.preview_not_loaded);
         } else {
             List<View> cards = new ArrayList<>();
             for (int i = 0; i < services.size(); i++) {

@@ -38,6 +38,43 @@ public class WatchProvidersTest {
     }
 
     @Test
+    public void theUsServicesMap() {
+        assertEquals("netflix", table.byTmdbId(1796).key);
+        assertEquals("prime", table.byTmdbId(9).key);
+        assertEquals("prime", table.byTmdbId(119).key);
+        assertEquals("hulu", table.byTmdbId(15).key);
+        assertEquals("max", table.byTmdbId(1899).key);
+        assertEquals("peacock", table.byTmdbId(386).key);
+        assertEquals("peacock", table.byTmdbId(387).key);
+        assertEquals("paramountplus", table.byTmdbId(2303).key);
+        assertEquals("paramountplus", table.byTmdbId(2616).key);
+        assertEquals("tubi", table.byTmdbId(73).key);
+        assertEquals("rokuchannel", table.byTmdbId(207).key);
+        assertEquals("fandango", table.byTmdbId(7).key);
+        assertEquals("fandango", table.byTmdbId(332).key);
+        assertEquals("googletv", table.byTmdbId(3).key);
+        assertNull(table.byTmdbId(613));   // Prime Video Free with Ads: free to everyone, not the subscription
+        assertNull(table.byTmdbId(582));   // Paramount+ Amazon Channel
+        assertNull(table.byTmdbId(633));   // Paramount+ Roku Premium Channel
+        assertNull(table.byTmdbId(2528));  // YouTube TV: live TV, not asked for
+    }
+
+    @Test
+    public void usServicesKindsAndApps() {
+        WatchProviders.Entry fandango = table.byKey("fandango");
+        assertTrue(fandango.store && fandango.free && !fandango.subscription);
+        assertTrue(table.byKey("tubi").free);
+        assertTrue(table.byKey("peacock").subscription);
+        assertEquals(Arrays.asList("com.peacocktv.peacockandroid"), table.byKey("peacock").packages);
+        assertEquals(Arrays.asList("com.cbs.ott"), table.byKey("paramountplus").packages);
+        assertEquals(Arrays.asList("com.tubitv"), table.byKey("tubi").packages);
+        assertEquals(Arrays.asList("com.roku.web.trc"), table.byKey("rokuchannel").packages);
+        assertEquals(Arrays.asList("air.com.vudu.air.DownloaderTablet"), table.byKey("fandango").packages);
+        assertEquals("fandango", table.storeForName("VUDU").key);
+        assertEquals("fandango", table.storeForName("Fandango At Home").key);
+    }
+
+    @Test
     public void closedServicesAndChannelsAreLeftOut() {
         assertNull(table.byTmdbId(423));   // Blockbuster, closed
         assertNull(table.byTmdbId(1825));  // HBO Max Amazon Channel

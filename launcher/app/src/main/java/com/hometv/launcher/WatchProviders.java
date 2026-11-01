@@ -10,26 +10,26 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The streaming services and stores of Sweden as TMDB's watch providers name them (JustWatch data), and what the
- * launcher knows about each: its key (its {@link ServiceId}'s lowercase id), name, TMDB provider ids,
- * the Android TV app packages that open it, whether it streams with a subscription, for free or sells and rents, and
- * the names price sources give it. The names follow current branding (Apple's subscription is "Apple TV", its store
- * "Apple TV Store"); {@link ServiceTable} keeps the prototype's for the mock catalogue. Pure Java and unit-tested
- * (WatchProvidersTest).
+ * The streaming services and stores of the launcher's regions ({@link Region}) as TMDB's watch providers name them
+ * (JustWatch data), and what the launcher knows about each: its key (its {@link ServiceId}'s lowercase id), name, TMDB
+ * provider ids, the Android TV app packages that open it, whether it streams with a subscription, for free or sells
+ * and rents, and the names price sources give it. TMDB's provider ids are the same in every region, so one table
+ * serves them all; which services a region lists is {@link ServicePicks}' business. The names follow current
+ * branding (Apple's subscription is "Apple TV", its store "Apple TV Store"); {@link ServiceTable} keeps the
+ * prototype's for the mock catalogue. Pure Java and unit-tested (WatchProvidersTest).
  *
  * <p>The TMDB ids were read from {@code /watch/providers/movie} and {@code /tv} with {@code watch_region=SE} on
- * 2026-10-30. The packages were checked on Google Play: each one exists and lists TV as a device, except
- * {@code com.hbo.hbonow}, the old HBO Max app ServiceTable already tries. TMDB's add-on channels ("HBO Max Amazon
- * Channel", "Apple TV Amazon Channel") and niche services are left out, so their offers are dropped; Blockbuster
- * (423) closed in 2025 but is still in TMDB's data, so it is dropped on purpose.
+ * 2026-10-30, and with {@code watch_region=US} on 2026-11-01. The packages were checked on Google Play: each one
+ * exists and lists TV as a device, except {@code com.hbo.hbonow}, the old HBO Max app ServiceTable already tries.
+ * TMDB's add-on channels ("HBO Max Amazon Channel", "Apple TV Amazon Channel", "Paramount+ Roku Premium Channel") and
+ * niche services are left out, so their offers are dropped; Blockbuster (423) closed in 2025 but is still in TMDB's
+ * data, so it is dropped on purpose. "Prime Video Free with Ads" (613) is left out too: Prime Video's entry is a
+ * subscription, and those titles are free to everyone.
  */
 final class WatchProviders {
 
-    /** The region every Phase 2 lookup uses (docs/rework.md, Region). */
-    static final String REGION = "SE";
-
     /** The one table the launcher uses; immutable once made. */
-    static final WatchProviders SE = new WatchProviders();
+    static final WatchProviders TABLE = new WatchProviders();
 
     static final class Entry {
         final String key;
@@ -77,7 +77,7 @@ final class WatchProviders {
     WatchProviders() {
         // Subscriptions the launcher already knows.
         put("netflix", "Netflix", ids(8, 175, 1796), SUB, pk("com.netflix.ninja"));
-        put("prime", "Prime Video", ids(119), SUB, pk("com.amazon.amazonvideo.livingroom"));
+        put("prime", "Prime Video", ids(119, 9), SUB, pk("com.amazon.amazonvideo.livingroom"));
         put("disney", "Disney+", ids(337), SUB, pk("com.disney.disneyplus"));
         put("max", "HBO Max", ids(1899, 384), SUB, pk("com.wbd.stream", "com.hbo.hbonow"));
         // Apple renamed Apple TV+ to Apple TV in 2025, as TMDB now calls it; its store is the "Apple TV Store".
@@ -113,6 +113,15 @@ final class WatchProviders {
         put("plutotv", "Pluto TV", ids(300), FREE, pk("tv.pluto.android"));
         put("plex", "Plex", ids(538), FREE, pk("com.plexapp.android"));
         put("cineasterna", "Cineast", ids(496), FREE, pk("com.cineasterna.tv"));
+        // The US's own (Family install step 2). Prime Video is 9 there (119 in Sweden), added above. Paramount+ has
+        // two tiers; Peacock's Premium and Premium Plus; Fandango at Home (once Vudu) rents and sells, with a free
+        // tier with ads (332).
+        put("peacock", "Peacock", ids(386, 387), SUB, pk("com.peacocktv.peacockandroid"));
+        put("paramountplus", "Paramount+", ids(2303, 2616), SUB, pk("com.cbs.ott"));
+        put("tubi", "Tubi", ids(73), FREE, pk("com.tubitv"));
+        put("rokuchannel", "The Roku Channel", ids(207), FREE, pk("com.roku.web.trc"));
+        put("fandango", "Fandango at Home", ids(7, 332), FREE | STORE, pk("air.com.vudu.air.DownloaderTablet"),
+                "Fandango at Home", "Fandango", "Vudu", "VUDU");
     }
 
     private static int[] ids(int... ids) {

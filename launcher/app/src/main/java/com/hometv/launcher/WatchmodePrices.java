@@ -26,9 +26,11 @@ final class WatchmodePrices implements PriceSource {
     private static final String BASE = "https://api.watchmode.com/v1/title/";
 
     private final String key;
+    private final Region region;
 
-    WatchmodePrices(String key) {
+    WatchmodePrices(String key, Region region) {
         this.key = key == null ? "" : key.trim();
+        this.region = region;
     }
 
     @Override
@@ -46,8 +48,8 @@ final class WatchmodePrices implements PriceSource {
         return 2;
     }
 
-    static String url(PriceTitle t) {
-        return BASE + (t.isMovie() ? "movie-" : "tv-") + t.tmdbId + "/sources/?regions=" + WatchProviders.REGION;
+    static String url(PriceTitle t, Region region) {
+        return BASE + (t.isMovie() ? "movie-" : "tv-") + t.tmdbId + "/sources/?regions=" + region.code;
     }
 
     Map<String, String> headers() {
@@ -58,7 +60,7 @@ final class WatchmodePrices implements PriceSource {
     public List<StorePrice> prices(PriceTitle t, HttpGet http) throws IOException {
         if (!configured()) return Collections.emptyList();
         try {
-            return parse(http.get(url(t), headers()), WatchProviders.REGION, WatchProviders.SE);
+            return parse(http.get(url(t, region), headers()), region.code, WatchProviders.TABLE);
         } catch (JSONException e) {
             throw new IOException("Watchmode: unexpected answer", e);
         }

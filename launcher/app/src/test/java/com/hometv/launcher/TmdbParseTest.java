@@ -28,7 +28,7 @@ public class TmdbParseTest {
 
     @Test
     public void movieDetails() {
-        Title t = TmdbParse.details(fixture("movie.json"), Kind.MOVIE);
+        Title t = TmdbParse.details(fixture("movie.json"), Kind.MOVIE, Region.SE);
         assertEquals("movie:329865", t.id);
         assertEquals(Kind.MOVIE, t.kind);
         assertEquals("Arrival", t.name);
@@ -45,12 +45,12 @@ public class TmdbParseTest {
 
     @Test
     public void movieRatingIsTheUsTheatricalOne() {
-        assertEquals("PG-13", TmdbParse.details(fixture("movie.json"), Kind.MOVIE).rating);
+        assertEquals("PG-13", TmdbParse.details(fixture("movie.json"), Kind.MOVIE, Region.SE).rating);
     }
 
     @Test
     public void castKeepsCharactersAndPhotos() {
-        Title t = TmdbParse.details(fixture("movie.json"), Kind.MOVIE);
+        Title t = TmdbParse.details(fixture("movie.json"), Kind.MOVIE, Region.SE);
         assertEquals(3, t.cast.size());
         Person amy = t.cast.get(0);
         assertEquals("Amy Adams", amy.name);
@@ -64,7 +64,7 @@ public class TmdbParseTest {
 
     @Test
     public void crewIsDirectorFirstThenTheJobsTheCardsShow() {
-        Title t = TmdbParse.details(fixture("movie.json"), Kind.MOVIE);
+        Title t = TmdbParse.details(fixture("movie.json"), Kind.MOVIE, Region.SE);
         assertEquals(4, t.crew.size());
         assertEquals("Denis Villeneuve", t.crew.get(0).name);
         assertEquals("Director", t.crew.get(0).role);
@@ -78,14 +78,14 @@ public class TmdbParseTest {
 
     @Test
     public void trailerIsTheOfficialYouTubeTrailer() {
-        assertEquals("officialKey1", TmdbParse.details(fixture("movie.json"), Kind.MOVIE).trailer);
-        assertNull(TmdbParse.details(fixture("tv.json"), Kind.SHOW).trailer);
+        assertEquals("officialKey1", TmdbParse.details(fixture("movie.json"), Kind.MOVIE, Region.SE).trailer);
+        assertNull(TmdbParse.details(fixture("tv.json"), Kind.SHOW, Region.SE).trailer);
         assertNull(TmdbParse.trailer(null));
     }
 
     @Test
     public void showDetails() {
-        Title t = TmdbParse.details(fixture("tv.json"), Kind.SHOW);
+        Title t = TmdbParse.details(fixture("tv.json"), Kind.SHOW, Region.SE);
         assertEquals("tv:95396", t.id);
         assertEquals("Severance", t.name);
         assertEquals(2022, t.year);
@@ -163,7 +163,7 @@ public class TmdbParseTest {
 
     @Test
     public void missingFieldsGiveEmptyValues() throws Exception {
-        Title t = TmdbParse.details(new JSONObject("{\"id\": 5}"), Kind.MOVIE);
+        Title t = TmdbParse.details(new JSONObject("{\"id\": 5}"), Kind.MOVIE, Region.SE);
         assertEquals("movie:5", t.id);
         assertEquals("", t.name);
         assertEquals(0, t.year);

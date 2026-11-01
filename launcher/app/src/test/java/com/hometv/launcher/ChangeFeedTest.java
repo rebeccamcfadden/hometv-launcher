@@ -30,15 +30,17 @@ public class ChangeFeedTest {
 
     @Test
     public void theRequest() throws Exception {
-        String url = ChangeFeed.url(NOW - D, NOW, null);
+        String url = ChangeFeed.url(NOW - D, NOW, null, Region.SE);
         assertTrue(url.startsWith("https://api.movieofthenight.com/v4/changes?country=se&change_type=updated"
                 + "&item_type=show&catalogs="));
         assertTrue(URLDecoder.decode(url, "UTF-8").contains("catalogs=apple.rent,apple.buy,prime.rent,prime.buy"));
         assertTrue(url.endsWith("&from=" + (NOW - D) / 1000));
         // Never read: a week back, as far as kept prices go.
-        assertTrue(ChangeFeed.url(0, NOW, null).endsWith("&from=" + (NOW - 7 * D) / 1000));
+        assertTrue(ChangeFeed.url(0, NOW, null, Region.SE).endsWith("&from=" + (NOW - 7 * D) / 1000));
+        assertTrue(ChangeFeed.url(0, NOW, null, Region.US)
+                .startsWith("https://api.movieofthenight.com/v4/changes?country=us&"));
         // The next page, its cursor escaped.
-        assertTrue(ChangeFeed.url(NOW - D, NOW, "a?b&c").endsWith("&cursor=a%3Fb%26c"));
+        assertTrue(ChangeFeed.url(NOW - D, NOW, "a?b&c", Region.SE).endsWith("&cursor=a%3Fb%26c"));
     }
 
     @Test

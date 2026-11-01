@@ -14,7 +14,7 @@ import java.util.Map;
  * Turns TMDB's answers into the launcher's titles, seasons and people (BACKLOG.md, Real catalogue): a list item
  * becomes a summary title, a details page a detailed one (runtime or seasons, US rating, cast and crew, trailer), a
  * season its episodes, a person their best-known titles. Missing fields give empty values, never an exception.
- * A details page's offers come from its watch providers in Sweden ({@link #availability}), without prices; the
+ * A details page's offers come from its watch providers in the region ({@link #availability}), without prices; the
  * imported watchlists are not TMDB's: {@link MockOverlay} adds them. Pure Java with org.json, unit-tested with
  * hand-written answers (TmdbParseTest).
  */
@@ -61,8 +61,8 @@ final class TmdbParse {
         return new ArrayList<>(out.values());
     }
 
-    /** A details answer (/movie/{id} or /tv/{id} with credits, ratings and videos appended). */
-    static Title details(JSONObject o, Kind kind) {
+    /** A details answer (/movie/{id} or /tv/{id}, credits, ratings and videos appended), with the region's offers. */
+    static Title details(JSONObject o, Kind kind, Region region) {
         Title.Draft d = new Title.Draft(TmdbApi.id(kind, o.optInt("id")), kind, name(o, kind));
         d.year = year(o.optString(kind == Kind.MOVIE ? "release_date" : "first_air_date", ""));
         List<Integer> genreIds = new ArrayList<>();
@@ -94,16 +94,16 @@ final class TmdbParse {
         }
         crew.addAll(crew(credits, kind));
         d.crew = dedupe(crew, CREW_MAX);
-        d.offers = OfferMerge.merge(availability(o), Collections.emptyList(), WatchProviders.SE).toOffers();
+        d.offers = OfferMerge.merge(availability(o, region), Collections.emptyList(), WatchProviders.TABLE).toOffers();
         d.detailed = true;
         return d.build();
     }
 
-    /** Where a details page (with watch/providers appended) says the title can be watched in Sweden. */
-    static ProviderAvailability availability(JSONObject details) {
+    /** Where a details page (with watch/providers appended, every country) says the title can be watched there. */
+    static ProviderAvailability availability(JSONObject details, Region region) {
         JSONObject providers = details.optJSONObject("watch/providers");
-        return providers == null ? ProviderAvailability.empty(WatchProviders.REGION)
-                : ProviderAvailability.parse(providers, WatchProviders.REGION);
+        return providers == null ? ProviderAvailability.empty(region.code)
+                : ProviderAvailability.parse(providers, region.code);
     }
 
     /** More like this: the recommendations, or the similar titles when there are none. */

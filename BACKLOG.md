@@ -131,7 +131,13 @@ milestones: [docs/rework.md](docs/rework.md).
 - **V1:** SE only.
 - **Wanted:** search SE and US together, since the household also watches through a VPN, and label each result
   with its region.
-- **Planned:** the region as a setting, SE or US, comes first with the [family install](#family-install) (step 2).
+- **Family install step 2:** one region at a time, SE or US (`Region`, `RegionChoice`): the TV's own choice (saved
+  in the launcher's settings; First run's step and its Launcher settings row are F12), else `region` in config.xml
+  or a pushed config.json, else SE. It picks TMDB's Discover region and availability, the Streaming services and
+  Stores panes' lists (`ServicePicks`; the US adds Peacock, Paramount+, Tubi, The Roku Channel and Fandango at
+  Home), the price sources' country (Watchmode `regions`, Movie of the Night and iTunes `country`) and so the
+  currency. Store ticks are kept per region; the services ticked are the household's in either. A change shows once
+  Home is rebuilt.
 
 ### TMDB sign-in and watchlist sync
 - **V1:** My list, Seen, Favorites, recent searches and recently viewed are stored on the TV only.
@@ -257,6 +263,12 @@ milestones: [docs/rework.md](docs/rework.md).
 - **Mock or missing:** episodes still open the show. TV4 Play, Viaplay, SkyShowtime and the Swedish stores have no
   Wikidata property, so they open on their home screen. The emulator has none of these apps: whether each TV app
   takes its link is still to be checked on the TV.
+- **US (Family install step 2):** Netflix, Disney+, Apple TV, HBO Max and Prime Video open the title in the US too
+  (the same Wikidata ids). Hulu has `P6466`/`P6467` (about 1,650 movies and 1,600 series on Wikidata, 2026-11-01),
+  Peacock `P11815` (about 40), Paramount+ `P13147` (about 210), Tubi `P7760`/`P7761` (about 3,200 and 400) and
+  Fandango at Home `P7334` (about 6,600); The Roku Channel has only a channel id. Until those are added to
+  `WikidataIds` and `DeepLinks`, with each TV app's link format checked on a TV that has the app, these open on
+  their home screen.
 ### Choosing the household's services
 - **V1:** subscribed services come from the installed apps, with an override: `subscribed_services` in
   `config.xml` or a pushed `config.json`, a list of lowercase ids (`["netflix", "prime"]`; an unknown id is

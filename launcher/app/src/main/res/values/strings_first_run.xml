@@ -32,6 +32,7 @@
     <string name="first_run_services_help_note">OK opens the same page as Launcher settings › Streaming services.</string>
     <string name="first_run_stores_help_title">Where may we show prices from?</string>
     <string name="first_run_stores_help_body">Rent and buy prices in kronor come from these stores, the cheapest first.</string>
+    <string name="first_run_stores_help_body_us">Rent and buy prices in dollars come from these stores, the cheapest first.</string>
     <string name="first_run_stores_help_note">OK opens the same page as Launcher settings › Stores for rent and buy.</string>
     <string name="first_run_weather_help_title">The forecast on Home.</string>
     <string name="first_run_weather_help_body">Home shows today’s and tomorrow’s weather, and an hourly strip below the apps. The city starts as the build’s default.</string>

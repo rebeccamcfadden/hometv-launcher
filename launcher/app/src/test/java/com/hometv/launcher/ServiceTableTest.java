@@ -47,7 +47,7 @@ public class ServiceTableTest {
         Set<ServiceId> stores = EnumSet.noneOf(ServiceId.class);
         for (ServiceId s : ServiceId.values()) if (table.isStore(s)) stores.add(s);
         assertEquals(EnumSet.of(ServiceId.YOUTUBE, ServiceId.APPLETV, ServiceId.GOOGLETV, ServiceId.AMAZONVIDEO,
-                ServiceId.SFANYTIME, ServiceId.RAKUTEN), stores);
+                ServiceId.SFANYTIME, ServiceId.RAKUTEN, ServiceId.FANDANGO), stores);
     }
 
     @Test
@@ -80,15 +80,18 @@ public class ServiceTableTest {
     }
 
     @Test
-    public void everyAppInstalledGivesThePrototypesSetAndSwedensServices() {
+    public void everyAppInstalledGivesThePrototypesSetAndEveryRegionsServices() {
         Set<String> all = new HashSet<>();
         for (ServiceId s : ServiceId.values()) all.addAll(table.packages(s));
         Set<ServiceId> want = EnumSet.copyOf(OffersTest.PROTOTYPE);
-        // Every subscription or free service, Viaplay and Tele2 Play too though they also sell; no store alone.
+        // Every subscription or free service, Viaplay and Tele2 Play too though they also sell; no store alone, and
+        // Fandango at Home, which is free with ads but a store first (as YouTube is, which the prototype counts).
         want.addAll(EnumSet.range(ServiceId.VIAPLAY, ServiceId.CINEASTERNA));
+        want.addAll(EnumSet.range(ServiceId.PEACOCK, ServiceId.ROKUCHANNEL));
         want.removeAll(EnumSet.of(ServiceId.SFANYTIME, ServiceId.RAKUTEN));
         assertEquals(want, table.subscribed(all, AUTO));
         assertFalse(table.subscribed(all, AUTO).contains(ServiceId.SFANYTIME));
+        assertFalse(table.subscribed(all, AUTO).contains(ServiceId.FANDANGO));
     }
 
     @Test

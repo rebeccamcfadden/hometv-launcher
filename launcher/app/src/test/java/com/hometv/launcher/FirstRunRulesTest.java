@@ -131,10 +131,10 @@ public class FirstRunRulesTest {
     public void theTickedFollowThePanesOrder() {
         Set<ServiceId> ticked = new HashSet<>(Arrays.asList(ServiceId.MAX, ServiceId.NETFLIX, ServiceId.HAYU));
         assertEquals(Arrays.asList(ServiceId.NETFLIX, ServiceId.MAX, ServiceId.HAYU),
-                FirstRunRules.ticked(ServicePicks.listed(ticked), ticked));
-        assertEquals(Collections.singletonList(ServiceId.VIAPLAY), FirstRunRules.ticked(ServicePicks.STORES,
+                FirstRunRules.ticked(ServicePicks.listed(Region.SE, ticked), ticked));
+        assertEquals(Collections.singletonList(ServiceId.VIAPLAY), FirstRunRules.ticked(ServicePicks.SE_STORES,
                 new HashSet<>(Arrays.asList(ServiceId.VIAPLAY, ServiceId.NETFLIX))));
-        assertTrue(FirstRunRules.ticked(ServicePicks.STORES, Collections.emptySet()).isEmpty());
+        assertTrue(FirstRunRules.ticked(ServicePicks.SE_STORES, Collections.emptySet()).isEmpty());
     }
 
     @Test

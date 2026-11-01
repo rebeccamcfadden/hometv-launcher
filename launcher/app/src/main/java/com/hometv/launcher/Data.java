@@ -16,15 +16,19 @@ final class Data {
     final ServiceTable table;
     /** V2 Phase 3: the optional TMDB account, which keeps My list and Favorites in step (Accounts). */
     final Accounts accounts;
+    /** The country whose services, stores and prices show ({@link RegionChoice}), fixed for this Data's life. */
+    final Region region;
     /** Loads the titles the household keeps; held here because the catalogue holds its listeners weakly. */
     private final Household.Listener wantHousehold;
 
-    private Data(Catalog catalog, Services services, Household household, ServiceTable table, Accounts accounts) {
+    private Data(Catalog catalog, Services services, Household household, ServiceTable table, Accounts accounts,
+                 Region region) {
         this.catalog = catalog;
         this.services = services;
         this.household = household;
         this.table = table;
         this.accounts = accounts;
+        this.region = region;
         wantHousehold = () -> {
             catalog.want(household.titleIds());
             catalog.keepPriced(household.listedIds());
@@ -42,15 +46,16 @@ final class Data {
 
     static Data create(Context ctx, Config cfg) {
         String token = BuildConfig.TMDB_TOKEN;
-        Catalog catalog = token.isEmpty() ? new MockCatalog() : new TmdbCatalog(ctx, token);
-        catalog.setPriceStores(ServiceChoices.stores(ctx));
+        Region region = RegionChoice.get(ctx);
+        Catalog catalog = token.isEmpty() ? new MockCatalog() : new TmdbCatalog(ctx, token, region);
+        catalog.setPriceStores(ServiceChoices.stores(ctx, region));
         // The real catalogue names services as they are branded now; the mock one keeps the prototype's names.
         ServiceTable table = token.isEmpty() ? new ServiceTable() : ServiceTable.branded();
         Household household = new Household(ctx, catalog);
         Data data = new Data(catalog, Services.from(ctx, cfg, table), household, table,
-                new Accounts(ctx, household, token));
+                new Accounts(ctx, household, token), region);
         Context app = ctx.getApplicationContext();
-        data.tickedStores = () -> ServiceChoices.stores(app);
+        data.tickedStores = () -> ServiceChoices.stores(app, region);
         return data;
     }
 
@@ -67,7 +72,7 @@ final class Data {
      * every store the Stores pane doesn't list ({@link ServicePicks#counted}); null means every store.
      */
     Set<ServiceId> stores() {
-        return tickedStores == null ? null : ServicePicks.counted(tickedStores.get());
+        return tickedStores == null ? null : ServicePicks.counted(region, tickedStores.get());
     }
 
     /**

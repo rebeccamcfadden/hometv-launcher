@@ -42,7 +42,7 @@ final class ServiceTable {
 
     private ServiceTable(boolean branded) {
         this.branded = branded;
-        for (WatchProviders.Entry e : WatchProviders.SE.all()) {
+        for (WatchProviders.Entry e : WatchProviders.TABLE.all()) {
             String name = e.name;
             if (!branded) {
                 if (e.service == ServiceId.MAX) name = "Max";

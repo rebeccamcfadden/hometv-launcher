@@ -230,13 +230,18 @@
     <!-- The streaming services the household pays for, so their titles read "Included". Lowercase ids: netflix,
          prime, disney, max (HBO Max), appletvplus (Apple TV), hulu, youtube, appletv (the Apple TV Store),
          googletv, amazonvideo, viaplay, skyshowtime, svtplay, tv4play, sfanytime, rakuten, tele2play, teliaplay,
-         hayu, mubi, crunchyroll, britbox, curiositystream, plutotv, plex, cineasterna. Empty (the default) works
+         hayu, mubi, crunchyroll, britbox, curiositystream, plutotv, plex, cineasterna, and in the US peacock,
+         paramountplus, tubi, rokuchannel, fandango (Fandango at Home). Empty (the default) works
          them out from the installed apps: every subscription or free service whose TV app is installed, and
          YouTube; a store alone (the Apple TV Store, Amazon Video, SF Anytime, Rakuten TV) never counts. An id the
          launcher doesn't know is ignored, so ["none"] means no services. Can also be set with
          "subscribed_services": ["netflix", "prime"] in a pushed config.json. -->
     <string-array name="subscribed_services" translatable="false">
     </string-array>
+
+    <!-- The country whose services, stores, prices and TMDB lists show: SE (Sweden) or US. Empty (the default) is
+         SE. A region chosen on the TV wins over this. Can also be set with "region": "US" in a pushed config.json. -->
+    <string name="region" translatable="false"></string>
 
     <!-- V2 Phase 3, the TMDB account (signing in is optional, from Launcher settings). The Movies and TV Shows chips
          after My list are the account's TMDB lists shown in Launcher settings' Account → Choose lists, by their TMDB

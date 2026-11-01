@@ -59,7 +59,7 @@ final class ServicesSection implements SettingsSection {
     @Override
     public CharSequence value(Context ctx) {
         Set<ServiceId> ticked = ticked();
-        return ctx.getString(R.string.settings_ticked, ServicePicks.count(ticked, ServicePicks.listed(ticked)));
+        return ctx.getString(R.string.settings_ticked, ServicePicks.count(ticked, ServicePicks.listed(region(), ticked)));
     }
 
     @Override
@@ -78,10 +78,14 @@ final class ServicesSection implements SettingsSection {
         return router.data().services.subscribed();
     }
 
+    private Region region() {
+        return router.data().region;
+    }
+
     private void fill(Context ctx, Host host) {
         column.removeAllViews();
         Set<ServiceId> ticked = ticked();
-        boolean shown = ServicePicks.moreShown(opened, ticked);
+        boolean shown = ServicePicks.moreShown(region(), opened, ticked);
         // Shown because one of its services is ticked, it stays open when that one is unticked under the D-pad.
         opened = shown;
         TextView[] c = new TextView[1];
@@ -91,21 +95,23 @@ final class ServicesSection implements SettingsSection {
         updateCount(ctx);
 
         List<View> main = new ArrayList<>();
-        for (int i = 0; i < ServicePicks.MAIN.size(); i++) main.add(tile(ctx, host, ServicePicks.MAIN.get(i), i == 0));
+        List<ServiceId> grid = ServicePicks.main(region());
+        for (int i = 0; i < grid.size(); i++) main.add(tile(ctx, host, grid.get(i), i == 0));
         main.add(moreTile(ctx, host, shown, ticked));
         first = main.get(0);
         column.addView(grid(ctx, main), PaneParts.wide(24));
         if (shown) {
             column.addView(PaneParts.groupHeader(ctx, ctx.getString(R.string.services_more)), PaneParts.wide(26));
             List<View> more = new ArrayList<>();
-            for (ServiceId s : ServicePicks.more(ticked)) more.add(tile(ctx, host, s, false));
+            for (ServiceId s : ServicePicks.more(region(), ticked)) more.add(tile(ctx, host, s, false));
             column.addView(grid(ctx, more), PaneParts.wide(12));
         }
     }
 
     private void updateCount(Context ctx) {
         Set<ServiceId> ticked = ticked();
-        List<ServiceId> all = ServicePicks.moreShown(opened, ticked) ? ServicePicks.listed(ticked) : ServicePicks.MAIN;
+        List<ServiceId> all = ServicePicks.moreShown(region(), opened, ticked) ? ServicePicks.listed(region(), ticked)
+                : ServicePicks.main(region());
         count.setText(ctx.getString(R.string.settings_ticked_of, ServicePicks.count(ticked, all), all.size()));
     }
 
@@ -182,7 +188,7 @@ final class ServicesSection implements SettingsSection {
             Set<ServiceId> next = ServicePicks.toggle(ticked(), s);
             services.choose(next);
             host.valueChanged();
-            if (ServicePicks.MAIN.contains(s)) {
+            if (ServicePicks.main(region()).contains(s)) {
                 PaneParts.setTicked(tile, next.contains(s));
                 updateCount(ctx);
                 return;
@@ -202,7 +208,7 @@ final class ServicesSection implements SettingsSection {
 
     /** "+7 More services" with "Hayu, MUBI, Plex…" under it; open, "Fewer services". */
     private View moreTile(Context ctx, Host host, boolean shown, Set<ServiceId> ticked) {
-        boolean moreTicked = ServicePicks.moreShown(false, ticked);
+        boolean moreTicked = ServicePicks.moreShown(region(), false, ticked);
         LinearLayout tile = PaneParts.column(ctx);
         LinearLayout face = PaneParts.column(ctx);
         face.setGravity(Gravity.CENTER);
@@ -211,22 +217,23 @@ final class ServicesSection implements SettingsSection {
         face.setDuplicateParentStateEnabled(true);
         TextView big = Ui.line(ctx, Ui.T_H3, Ui.TEXT_2, Ui.REGULAR);
         big.setText(shown ? ctx.getString(R.string.services_fewer_mark)
-                : ctx.getString(R.string.services_more_count, ServicePicks.MORE.size()));
+                : ctx.getString(R.string.services_more_count, ServicePicks.moreServices(region()).size()));
         face.addView(big);
         TextView label = Ui.line(ctx, 19, Ui.TEXT_2, Ui.REGULAR);
         label.setText(shown ? R.string.services_fewer : R.string.services_more);
         face.addView(label, PaneParts.below(4));
         tile.addView(face, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(92)));
         TextView cap = Ui.line(ctx, 19, Ui.TEXT_2, Ui.REGULAR);
-        cap.setText(!shown ? ctx.getString(R.string.services_more_cap) : moreTicked
+        int moreCap = region() == Region.US ? R.string.services_more_cap_us : R.string.services_more_cap;
+        cap.setText(!shown ? ctx.getString(moreCap) : moreTicked
                 ? ctx.getString(R.string.services_fewer_cap_ticked)
-                : ctx.getString(R.string.services_fewer_cap, ServicePicks.MORE.size()));
+                : ctx.getString(R.string.services_fewer_cap, ServicePicks.moreServices(region()).size()));
         tile.addView(cap, PaneParts.wide(8));
         tile.setContentDescription(label.getText());
         Focus.make(tile, GROUP, "svc-more", false, v -> {
             Set<ServiceId> now = ticked();
-            boolean open = ServicePicks.moreShown(opened, now);
-            if (open && ServicePicks.moreShown(false, now)) {
+            boolean open = ServicePicks.moreShown(region(), opened, now);
+            if (open && ServicePicks.moreShown(region(), false, now)) {
                 host.shell().toast(ctx.getString(R.string.services_untick_first));
                 return;
             }

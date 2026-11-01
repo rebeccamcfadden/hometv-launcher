@@ -6,6 +6,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -43,7 +44,9 @@ final class StoresSection implements SettingsSection {
 
     @Override
     public CharSequence value(Context ctx) {
-        return ctx.getString(R.string.settings_ticked, ServicePicks.count(ServiceChoices.stores(ctx), ServicePicks.STORES));
+        Region r = region();
+        return ctx.getString(R.string.settings_ticked, ServicePicks.count(ServiceChoices.stores(ctx, r),
+                ServicePicks.stores(r)));
     }
 
     @Override
@@ -59,17 +62,18 @@ final class StoresSection implements SettingsSection {
         ServiceTable table = services.table();
         LinearLayout rows = PaneParts.column(ctx);
         first = null;
-        for (ServiceId s : ServicePicks.STORES) {
+        for (ServiceId s : ServicePicks.stores(region())) {
             String name = storeName(ctx, table, s);
             TextView opens = PaneParts.hint(ctx, ctx.getString(R.string.stores_opens, table.appName(s)), false);
             boolean installed = services.isInstalled(s);
             TextView app = PaneParts.hint(ctx, ctx.getString(installed ? R.string.settings_hint_installed
                     : R.string.settings_hint_no_app), installed);
             LinearLayout[] row = new LinearLayout[1];
-            row[0] = PaneParts.checkRow(ctx, name, Arrays.asList(opens, app), ServiceChoices.stores(ctx).contains(s),
+            row[0] = PaneParts.checkRow(ctx, name, Arrays.asList(opens, app),
+                    ServiceChoices.stores(ctx, region()).contains(s),
                     GROUP, "store-" + s.id, first == null, v -> {
-                        Set<ServiceId> next = ServicePicks.toggle(ServiceChoices.stores(ctx), s);
-                        ServiceChoices.setStores(ctx, next);
+                        Set<ServiceId> next = ServicePicks.toggle(ServiceChoices.stores(ctx, region()), s);
+                        ServiceChoices.setStores(ctx, region(), next);
                         router.data().catalog.setPriceStores(next);
                         PaneParts.setTicked(row[0], next.contains(s));
                         updateCount(ctx);
@@ -79,7 +83,8 @@ final class StoresSection implements SettingsSection {
             rows.addView(row[0], PaneParts.wide(rows.getChildCount() == 0 ? 0 : 8));
         }
         column.addView(rows, PaneParts.wide(26));
-        column.addView(PaneParts.note(ctx, ctx.getString(R.string.stores_note), false), PaneParts.wide(22));
+        int note = region() == Region.US ? R.string.stores_note_us : R.string.stores_note;
+        column.addView(PaneParts.note(ctx, ctx.getString(note), false), PaneParts.wide(22));
         return PaneParts.scroller(ctx, column);
     }
 
@@ -94,8 +99,13 @@ final class StoresSection implements SettingsSection {
         return table.isStore(s) ? table.name(s) : ctx.getString(R.string.stores_store_name, table.name(s));
     }
 
+    private Region region() {
+        return router.data().region;
+    }
+
     private void updateCount(Context ctx) {
+        List<ServiceId> stores = ServicePicks.stores(region());
         count.setText(ctx.getString(R.string.settings_ticked_of,
-                ServicePicks.count(ServiceChoices.stores(ctx), ServicePicks.STORES), ServicePicks.STORES.size()));
+                ServicePicks.count(ServiceChoices.stores(ctx, region()), stores), stores.size()));
     }
 }

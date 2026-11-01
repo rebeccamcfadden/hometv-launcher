@@ -42,7 +42,7 @@ Settled with the project lead on 2026-10-28.
 | Watch on … | Opens the service's app. Opening the title itself is in the backlog. |
 | Watchlists | My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. Household and Friends are mock placeholders; they will come from the project lead's TMDB lists (backlog). In V2, see Accounts, 2026-10-30. |
 | Services ("Included") | Worked out from the installed apps, with a `config.xml` override. A settings screen is in the backlog. |
-| Region | SE. Searching SE and US together, with each result labelled, is in the backlog. |
+| Region | SE by default; US with `region` in config.xml or config.json, or chosen on the TV (Family install step 2, BACKLOG.md › Two regions). Searching SE and US together, with each result labelled, is in the backlog. |
 | Weather | Real, from Open-Meteo (no key), at a latitude and longitude set at build time. |
 | Clock and units | Follow the TV's settings: 12 or 24 hour, °C or °F. |
 | `addons/household-search/` | Removed; it was an earlier attempt at search, replaced by this rework. |

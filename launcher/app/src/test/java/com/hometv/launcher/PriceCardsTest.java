@@ -524,7 +524,7 @@ public class PriceCardsTest {
     @Test
     public void aTickedStoresPriceShowsAndAnUntickedOnesDoesNot() {
         Set<ServiceId> none = EnumSet.noneOf(ServiceId.class);
-        Set<ServiceId> sfOnly = ServicePicks.counted(EnumSet.of(ServiceId.SFANYTIME));
+        Set<ServiceId> sfOnly = ServicePicks.counted(Region.SE, EnumSet.of(ServiceId.SFANYTIME));
         Title t = title(Kind.MOVIE, rent(ServiceId.APPLETV, HD, 29), rent(ServiceId.SFANYTIME, HD, 39));
         assertEquals("SF Anytime · Rent 39 kr", PriceCards.cardLine(t, none, null, sfOnly, table));
         Offer o = PriceCards.cardOffer(t, none, null, sfOnly);

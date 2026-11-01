@@ -180,7 +180,8 @@ A new key needs one there in the same pull request.
 | `ambient_glow` | bool | *Old launcher only; ignored now.* The glow behind the dock in the focused app's colour (`true` by default); `false` keeps only `background_color` or the wallpaper, e.g. for a calm photo background |
 | `app_glow` | bool | *Old launcher only; ignored now.* The focus highlight glows in the focused app's colour on every tile, as `cinematic_home` does for the dock (`false` by default) |
 | `fade_rows` | bool | *Old launcher only; ignored now.* The rows fade out as they scroll up under the clock instead of being cut off at a hard line; the wallpaper or sky shows through. The grid then draws into a hardware layer (about 6 MB of graphics memory at 1080p) (`false` by default) |
-| `subscribed_services` | list of service ids | The streaming services the household pays for, so their titles read "Included" in the new launcher: `netflix`, `prime`, `disney`, `max`, `appletvplus`, `hulu`, `youtube`, `appletv`, `googletv`. Empty by default: every subscription service whose TV app is installed, and YouTube. An unknown id is ignored, so `["none"]` means none |
+| `subscribed_services` | list of service ids | The streaming services the household pays for, so their titles read "Included" in the new launcher: `netflix`, `prime`, `disney`, `max`, `appletvplus`, `hulu`, `youtube`, `appletv`, `googletv`, and the rest config.xml lists (US: `peacock`, `paramountplus`, `tubi`, `rokuchannel`, `fandango`). Empty by default: every subscription service whose TV app is installed, and YouTube. An unknown id is ignored, so `["none"]` means none |
+| `region` | string | The country whose services, stores, prices and TMDB lists the new launcher shows: `SE` (the default) or `US`. A region chosen on the TV wins over it |
 
 ## Wallpapers
 

@@ -27,9 +27,11 @@ final class StreamingAvailabilityPrices implements PriceSource {
     private static final Pattern NUMBER = Pattern.compile("(\\d{1,3})");
 
     private final String key;
+    private final Region region;
 
-    StreamingAvailabilityPrices(String key) {
+    StreamingAvailabilityPrices(String key, Region region) {
         this.key = key == null ? "" : key.trim();
+        this.region = region;
     }
 
     @Override
@@ -47,8 +49,8 @@ final class StreamingAvailabilityPrices implements PriceSource {
         return 1;
     }
 
-    static String url(PriceTitle t) {
-        return BASE + t.tmdbPath() + "?country=" + WatchProviders.REGION.toLowerCase(Locale.ROOT)
+    static String url(PriceTitle t, Region region) {
+        return BASE + t.tmdbPath() + "?country=" + region.country
                 + (t.isMovie() ? "" : "&series_granularity=season");
     }
 
@@ -60,7 +62,7 @@ final class StreamingAvailabilityPrices implements PriceSource {
     public List<StorePrice> prices(PriceTitle t, HttpGet http) throws IOException {
         if (!configured()) return Collections.emptyList();
         try {
-            return parse(http.get(url(t), headers()), WatchProviders.REGION, WatchProviders.SE);
+            return parse(http.get(url(t, region), headers()), region.code, WatchProviders.TABLE);
         } catch (JSONException e) {
             throw new IOException("Streaming Availability: unexpected answer", e);
         }

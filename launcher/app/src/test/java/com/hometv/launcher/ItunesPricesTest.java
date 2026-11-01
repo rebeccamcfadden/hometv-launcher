@@ -29,14 +29,19 @@ public class ItunesPricesTest {
     @Test
     public void requests() {
         assertEquals("https://itunes.apple.com/lookup?id=1166395905,1174618339,1274926574,1476438441&country=se",
-                ItunesPrices.lookupUrl(ARRIVAL));
-        assertNull(ItunesPrices.lookupUrl(new PriceTitle(1, Kind.MOVIE, "X", 2000)));
+                ItunesPrices.lookupUrl(ARRIVAL, Region.SE));
+        assertNull(ItunesPrices.lookupUrl(new PriceTitle(1, Kind.MOVIE, "X", 2000), Region.SE));
         // Ids that aren't numbers never reach the URL.
-        assertNull(ItunesPrices.lookupUrl(new PriceTitle(1, Kind.MOVIE, "X", null, 2000, Arrays.asList("1&x=2", "0"))));
+        assertNull(ItunesPrices.lookupUrl(new PriceTitle(1, Kind.MOVIE, "X", null, 2000, Arrays.asList("1&x=2", "0")),
+                Region.SE));
         assertEquals("https://itunes.apple.com/search?term=Dune%3A+Part+Two&country=se&media=movie&entity=movie&limit=10",
-                ItunesPrices.searchUrl(new PriceTitle(693134, Kind.MOVIE, "Dune: Part Two", 2024)));
+                ItunesPrices.searchUrl(new PriceTitle(693134, Kind.MOVIE, "Dune: Part Two", 2024), Region.SE));
         assertEquals("https://itunes.apple.com/search?term=Succession&country=se&media=tvShow&entity=tvSeason&limit=25",
-                ItunesPrices.searchUrl(new PriceTitle(76331, Kind.SHOW, "Succession", 2018)));
+                ItunesPrices.searchUrl(new PriceTitle(76331, Kind.SHOW, "Succession", 2018), Region.SE));
+        assertEquals("https://itunes.apple.com/lookup?id=1166395905,1174618339,1274926574,1476438441&country=us",
+                ItunesPrices.lookupUrl(ARRIVAL, Region.US));
+        assertEquals("https://itunes.apple.com/search?term=Succession&country=us&media=tvShow&entity=tvSeason&limit=25",
+                ItunesPrices.searchUrl(new PriceTitle(76331, Kind.SHOW, "Succession", 2018), Region.US));
     }
 
     @Test
@@ -86,16 +91,16 @@ public class ItunesPricesTest {
     @Test
     public void looksUpFirstAndSearchesOnlyWhenTheLookupFindsNothing() throws Exception {
         Fixtures.FakeHttp http = new Fixtures.FakeHttp().answer("https://itunes.apple.com/lookup", "itunes_lookup_se.json");
-        assertEquals(4, new ItunesPrices().prices(ARRIVAL, http).size());
+        assertEquals(4, new ItunesPrices(Region.SE).prices(ARRIVAL, http).size());
         assertEquals(1, http.urls.size());
         assertEquals(Collections.emptyMap(), http.headers.get(0));
 
         Fixtures.FakeHttp empty = new Fixtures.FakeHttp()
                 .answer("https://itunes.apple.com/lookup", "itunes_search_empty.json")
                 .answer("https://itunes.apple.com/search", "itunes_search_empty.json");
-        assertTrue(new ItunesPrices().prices(ARRIVAL, empty).isEmpty());
+        assertTrue(new ItunesPrices(Region.SE).prices(ARRIVAL, empty).isEmpty());
         assertEquals(2, empty.urls.size());
         assertTrue(empty.urls.get(1).startsWith("https://itunes.apple.com/search?term=Arrival"));
-        assertEquals(2, new ItunesPrices().cost(ARRIVAL));
+        assertEquals(2, new ItunesPrices(Region.SE).cost(ARRIVAL));
     }
 }

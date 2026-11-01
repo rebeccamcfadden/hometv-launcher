@@ -88,6 +88,7 @@
     <string name="services_more">More services</string>
     <string name="services_fewer">Fewer services</string>
     <string name="services_more_cap">Hayu, MUBI, Plex…</string>
+    <string name="services_more_cap_us">Tubi, Pluto TV, Plex…</string>
     <string name="services_fewer_cap_ticked">Open while one is ticked</string>
     <string name="services_fewer_cap" tools:ignore="PluralsCandidate">Hide the %1$d below</string>
     <string name="services_untick_first">Untick the services below to hide them</string>
@@ -98,6 +99,7 @@
     <string name="stores_store_name">%1$s Store</string>
     <string name="stores_opens">Opens in the %1$s app</string>
     <string name="stores_note">Prices are in kronor and may differ in the store. Google Play isn’t sold in Sweden.</string>
+    <string name="stores_note_us">Prices are in dollars and may differ in the store.</string>
 
     <!-- Home row apps -->
     <string name="home_apps_eyebrow">Home</string>

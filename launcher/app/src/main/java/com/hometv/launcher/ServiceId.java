@@ -10,7 +10,9 @@ enum ServiceId {
     NETFLIX, PRIME, DISNEY, MAX, APPLETVPLUS, HULU, YOUTUBE, APPLETV, GOOGLETV,
     // V2 Phase 2: Sweden's other services and stores, as WatchProviders maps TMDB's providers onto them.
     AMAZONVIDEO, VIAPLAY, SKYSHOWTIME, SVTPLAY, TV4PLAY, SFANYTIME, RAKUTEN, TELE2PLAY, TELIAPLAY, HAYU, MUBI,
-    CRUNCHYROLL, BRITBOX, CURIOSITYSTREAM, PLUTOTV, PLEX, CINEASTERNA;
+    CRUNCHYROLL, BRITBOX, CURIOSITYSTREAM, PLUTOTV, PLEX, CINEASTERNA,
+    // Family install step 2: the US services and stores Sweden doesn't have.
+    PEACOCK, PARAMOUNTPLUS, TUBI, ROKUCHANNEL, FANDANGO;
 
     final String id = name().toLowerCase(Locale.ROOT);
 

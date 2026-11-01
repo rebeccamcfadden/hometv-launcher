@@ -55,6 +55,13 @@ final class PriceBook {
     /** When each title's prices were fetched, as opposed to looked up again from the disk (main thread). */
     private final Map<String, Long> savedAt = new HashMap<>();
     private final ChangeFeed.Marks marks;
+    /** The country prices are asked for: part of every price URL, so each region's answers are cached apart. */
+    private final Region region;
+    /**
+     * The change feed's last read and its stale marks, kept per region like its URL (Sweden keeps the old names); the
+     * quota ledgers stay shared, since a key's quota is the same whatever the region.
+     */
+    private final String marksKey, feedAtKey;
     /** Titles queued or being looked up (main thread). */
     private final Set<String> inFlight = new HashSet<>();
     private final Map<String, List<Runnable>> waiting = new HashMap<>();
@@ -65,9 +72,12 @@ final class PriceBook {
      * {@code onStale} runs on the main thread when the change feed marked titles stale, so the household's are asked
      * again.
      */
-    PriceBook(Context ctx, String watchmodeKey, String motnKey, Listener listener, Runnable onStale) {
+    PriceBook(Context ctx, String watchmodeKey, String motnKey, Region region, Listener listener, Runnable onStale) {
         this.listener = listener;
         this.onStale = onStale;
+        this.region = region;
+        marksKey = region.key(PREF_MARKS);
+        feedAtKey = region.key(PREF_FEED_AT);
         Context app = ctx.getApplicationContext();
         DiskCache disk = new DiskCache(new File(app.getCacheDir(), "prices"), DISK_MAX, System::currentTimeMillis);
         prefs = app.getSharedPreferences("prices", Context.MODE_PRIVATE);
@@ -82,7 +92,7 @@ final class PriceBook {
                 prefs.edit().putString("quota_" + sourceId, encoded).apply();
             }
         };
-        marks = ChangeFeed.Marks.decode(prefs.getString(PREF_MARKS, null));
+        marks = ChangeFeed.Marks.decode(prefs.getString(marksKey, null));
         marks.expire(System.currentTimeMillis());
         ZoneId zone = ZoneId.systemDefault();
         CachedHttp wikidataHttp = http(WikidataIds.ID, disk, PriceCachePolicy.DEEP_LINK_TTL, ledgers, zone);
@@ -90,11 +100,11 @@ final class PriceBook {
         CachedHttp watchmodeHttp = http(WatchmodePrices.ID, disk, PriceCachePolicy.PRICE_TTL, ledgers, zone);
         motnHttp = http(StreamingAvailabilityPrices.ID, disk, PriceCachePolicy.PRICE_TTL, ledgers, zone);
         https = new CachedHttp[]{wikidataHttp, itunesHttp, watchmodeHttp, motnHttp};
-        StreamingAvailabilityPrices motn = new StreamingAvailabilityPrices(motnKey);
+        StreamingAvailabilityPrices motn = new StreamingAvailabilityPrices(motnKey, region);
         motnHeaders = motn.headers();
         feedOn = motn.configured();
-        lookup = new PriceLookup(wikidataHttp, new WatchmodePrices(watchmodeKey), watchmodeHttp, motn, motnHttp,
-                new ItunesPrices(), itunesHttp);
+        lookup = new PriceLookup(wikidataHttp, new WatchmodePrices(watchmodeKey, region), watchmodeHttp, motn, motnHttp,
+                new ItunesPrices(region), itunesHttp);
     }
 
     private static CachedHttp http(String id, DiskCache disk, long ttl, CachedHttp.LedgerStore ledgers, ZoneId zone) {
@@ -119,7 +129,7 @@ final class PriceBook {
      */
     void setActive(boolean active) {
         this.active = active;
-        if (active && feedOn && ChangeFeed.due(prefs.getLong(PREF_FEED_AT, 0), System.currentTimeMillis())
+        if (active && feedOn && ChangeFeed.due(prefs.getLong(feedAtKey, 0), System.currentTimeMillis())
                 && !inFlight.contains(FEED)) {
             inFlight.add(FEED);
             queue.add(FEED, null, null, 0, false, PriceCachePolicy.Trigger.BACKGROUND);
@@ -225,7 +235,7 @@ final class PriceBook {
             if (job.needPrices && e.pricedAt == now) savedAt.put(id, fetched);
             if (e.pricedAt == now && marks.staleAt(id) > 0) {
                 marks.clear(id);
-                prefs.edit().putString(PREF_MARKS, marks.encode()).apply();
+                prefs.edit().putString(marksKey, marks.encode()).apply();
             }
             if (closed) return;
             listener.priced(id);
@@ -237,7 +247,7 @@ final class PriceBook {
     /** On the price thread: the change feed since it was last read, a few pages at most. */
     private void readFeed() {
         long now = System.currentTimeMillis();
-        long last = prefs.getLong(PREF_FEED_AT, 0);
+        long last = prefs.getLong(feedAtKey, 0);
         Set<String> changed = new LinkedHashSet<>();
         boolean read = false;
         if (active) {
@@ -245,7 +255,8 @@ final class PriceBook {
             String cursor = null;
             try {
                 for (int page = 0; page < ChangeFeed.MAX_PAGES; page++) {
-                    ChangeFeed.Page p = ChangeFeed.parse(motnHttp.get(ChangeFeed.url(last, now, cursor), motnHeaders));
+                    ChangeFeed.Page p = ChangeFeed.parse(motnHttp.get(ChangeFeed.url(last, now, cursor, region),
+                            motnHeaders));
                     changed.addAll(p.ids);
                     read = true;
                     cursor = p.nextCursor;
@@ -261,7 +272,7 @@ final class PriceBook {
             if (!wasRead) return;
             marks.mark(changed, now);
             marks.expire(now);
-            prefs.edit().putString(PREF_MARKS, marks.encode()).putLong(PREF_FEED_AT, now).apply();
+            prefs.edit().putString(marksKey, marks.encode()).putLong(feedAtKey, now).apply();
             if (!changed.isEmpty() && !closed) onStale.run();
         });
     }

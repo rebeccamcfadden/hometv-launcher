@@ -34,14 +34,18 @@ public class KeyedPriceSourcesTest {
 
     @Test
     public void watchmodeRequests() {
-        assertEquals("https://api.watchmode.com/v1/title/movie-329865/sources/?regions=SE", WatchmodePrices.url(ARRIVAL));
-        assertEquals("https://api.watchmode.com/v1/title/tv-76331/sources/?regions=SE", WatchmodePrices.url(SUCCESSION));
-        WatchmodePrices w = new WatchmodePrices(" key ");
+        assertEquals("https://api.watchmode.com/v1/title/movie-329865/sources/?regions=SE",
+                WatchmodePrices.url(ARRIVAL, Region.SE));
+        assertEquals("https://api.watchmode.com/v1/title/tv-76331/sources/?regions=SE",
+                WatchmodePrices.url(SUCCESSION, Region.SE));
+        assertEquals("https://api.watchmode.com/v1/title/movie-329865/sources/?regions=US",
+                WatchmodePrices.url(ARRIVAL, Region.US));
+        WatchmodePrices w = new WatchmodePrices(" key ", Region.SE);
         assertTrue(w.configured());
         assertEquals(Collections.singletonMap("X-API-Key", "key"), w.headers());
         assertEquals(2, w.cost(ARRIVAL));
-        assertFalse(new WatchmodePrices(null).configured());
-        assertFalse(new WatchmodePrices("  ").configured());
+        assertFalse(new WatchmodePrices(null, Region.SE).configured());
+        assertFalse(new WatchmodePrices("  ", Region.SE).configured());
     }
 
     @Test
@@ -55,6 +59,14 @@ public class KeyedPriceSourcesTest {
         assertEquals("watchmode", p.get(0).source);
         assertTrue(WatchmodePrices.parse(null, "SE", table).isEmpty());
         assertTrue(WatchmodePrices.parse("[]", "XX", table).isEmpty());
+    }
+
+    @Test
+    public void watchmodesUsRowsBecomeDollarPrices() throws JSONException {
+        // The same answer read for the US keeps only its US row, in dollars.
+        List<StorePrice> p = WatchmodePrices.parse(Fixtures.read("watchmode_movie_handmade.json"), "US", table);
+        assertEquals(Collections.singletonList("appletv RENT HD $3.99"), lines(p));
+        assertEquals("USD", p.get(0).price.currency);
     }
 
     @Test
@@ -78,10 +90,10 @@ public class KeyedPriceSourcesTest {
     @Test
     public void watchmodeWithoutAKeyAsksNothing() throws Exception {
         Fixtures.FakeHttp http = new Fixtures.FakeHttp();
-        assertTrue(new WatchmodePrices("").prices(ARRIVAL, http).isEmpty());
+        assertTrue(new WatchmodePrices("", Region.SE).prices(ARRIVAL, http).isEmpty());
         assertTrue(http.urls.isEmpty());
         Fixtures.FakeHttp ok = new Fixtures.FakeHttp().answer("https://api.watchmode.com/", "watchmode_movie_handmade.json");
-        assertEquals(9, new WatchmodePrices("k").prices(ARRIVAL, ok).size());
+        assertEquals(9, new WatchmodePrices("k", Region.SE).prices(ARRIVAL, ok).size());
         assertEquals("k", ok.headers.get(0).get("X-API-Key"));
     }
 
@@ -90,13 +102,15 @@ public class KeyedPriceSourcesTest {
     @Test
     public void streamingAvailabilityRequests() {
         assertEquals("https://api.movieofthenight.com/v4/shows/movie/329865?country=se",
-                StreamingAvailabilityPrices.url(ARRIVAL));
+                StreamingAvailabilityPrices.url(ARRIVAL, Region.SE));
         assertEquals("https://api.movieofthenight.com/v4/shows/tv/76331?country=se&series_granularity=season",
-                StreamingAvailabilityPrices.url(SUCCESSION));
-        StreamingAvailabilityPrices s = new StreamingAvailabilityPrices("k");
+                StreamingAvailabilityPrices.url(SUCCESSION, Region.SE));
+        assertEquals("https://api.movieofthenight.com/v4/shows/movie/329865?country=us",
+                StreamingAvailabilityPrices.url(ARRIVAL, Region.US));
+        StreamingAvailabilityPrices s = new StreamingAvailabilityPrices("k", Region.SE);
         assertEquals(Collections.singletonMap("X-API-Key", "k"), s.headers());
         assertEquals(1, s.cost(ARRIVAL));
-        assertFalse(new StreamingAvailabilityPrices(null).configured());
+        assertFalse(new StreamingAvailabilityPrices(null, Region.SE).configured());
     }
 
     @Test
@@ -118,7 +132,7 @@ public class KeyedPriceSourcesTest {
 
     @Test
     public void streamingAvailabilityNotFound() throws Exception {
-        assertTrue(new StreamingAvailabilityPrices("k").prices(ARRIVAL, new Fixtures.FakeHttp()).isEmpty());
+        assertTrue(new StreamingAvailabilityPrices("k", Region.SE).prices(ARRIVAL, new Fixtures.FakeHttp()).isEmpty());
         assertTrue(StreamingAvailabilityPrices.parse("{}", "SE", table).isEmpty());
     }
 }

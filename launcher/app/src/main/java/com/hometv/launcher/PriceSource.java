@@ -19,6 +19,6 @@ interface PriceSource {
     /** What one lookup of this title costs against the source's monthly quota (requests or credits). */
     int cost(PriceTitle t);
 
-    /** The title's store prices in {@link WatchProviders#REGION}; empty when the source has none. */
+    /** The title's store prices in the source's {@link Region}; empty when the source has none. */
     List<StorePrice> prices(PriceTitle t, HttpGet http) throws IOException;
 }
