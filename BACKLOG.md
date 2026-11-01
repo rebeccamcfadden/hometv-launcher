@@ -416,9 +416,10 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   `docs/stats.png` show TV models, brands and the launcher's size. Its "after", `docs/new-home.jpg`, is a screenshot
   of the new Home from the TV (2026-10-30). The stat strip still says 1.6 MB: redraw it once the APK size settles
   (V2 Phase 1 brought it to about 0.27 MB).
-- **Last opened:** `LastOpened` notes when Home or All Apps last opened each app (on the TV only, no permission).
-  Nothing reads it since the old Home's "Last opened" line went in M1. Wanted: a use for it, for example ordering
-  All Apps or the Home row by recent use, once that is designed.
+- **Last opened:** `LastOpened` could note when Home or All Apps last opened each app (on the TV only, no permission).
+  Recording is off since F15 (the project lead, 2026-11-01): nothing read it since the old Home's "Last opened" line
+  went in M1, and it wrote a file each time an app started. Wanted: a use for it, for example ordering All Apps or the
+  Home row by recent use, once that is designed; then call `LastOpened.record` where Home and All Apps open an app.
 - **Cold start and jank:** V1 measured 1.9–2.1 s (TotalTime) against M1's 2.8 s and the old launcher's 2.7 s, but 47 %
   of frames were janky while pressing keys on Home ([docs/rework.md](docs/rework.md#results-2026-10-30-main-at-0212b6a4)).
   Phase 0 looks for the cause; measure again on the TV with `tools/bench.py` ([perf-ab](docs/workflows/perf-ab.md)).

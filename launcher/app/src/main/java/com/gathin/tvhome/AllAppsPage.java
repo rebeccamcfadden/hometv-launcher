@@ -239,7 +239,6 @@ final class AllAppsPage {
             shell.toast(activity.getString(R.string.not_available));
             return;
         }
-        LastOpened.record(activity, pkg);
         activity.start(i);
     }
 }
