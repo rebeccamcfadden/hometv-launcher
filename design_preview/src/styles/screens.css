@@ -1652,11 +1652,6 @@
   max-width: 500px;
   font-size: var(--t-min);
 }
-.pane-divider {
-  height: 1px;
-  margin: 40px 0 32px;
-  background: var(--line);
-}
 .pane-actions {
   display: flex;
   gap: 16px;
@@ -2763,19 +2758,6 @@
 .notes-send-head b {
   color: var(--text);
   font-weight: 600;
-}
-.notes-miss {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-.notes-line {
-  padding: 4px 12px;
-  border-radius: var(--radius-s);
-  background: rgba(var(--star-rgb), 0.1);
-  color: var(--star);
-  font-size: var(--t-small);
 }
 .notes-setup {
   display: flex;

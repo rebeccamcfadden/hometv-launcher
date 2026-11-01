@@ -18,12 +18,6 @@ export function cheapest(o: Offer): number | undefined {
   return all.length ? Math.min(...all) : undefined;
 }
 
-/** The quality of the cheapest price (the best of equal ones). */
-export function cheapestQuality(o: Offer): Quality | undefined {
-  const min = cheapest(o);
-  return min === undefined ? undefined : [...QUALITIES].reverse().find((q) => o.prices?.[q] === min);
-}
-
 /** Several prices (qualities that cost different amounts, or one per season): the cheapest then reads "from". */
 export const isFrom = (o: Offer) => !!o.seasonal || new Set(amounts(o)).size > 1;
 
