@@ -88,8 +88,11 @@ def launcher_to_use(dev, listed, preferred=None):
                   and not FALLBACK_HOME_RE.search(c) and not FACTORY_HOME_RE.search(home_of(c))]
     if not candidates:
         return None
-    own = [c for c in candidates if home_of(c) == recovery.CUSTOM_LAUNCHER]
-    return own[0] if own else candidates[0]
+    for name in (recovery.CUSTOM_LAUNCHER, *recovery.OLD_CUSTOM_LAUNCHERS):
+        own = [c for c in candidates if home_of(c) == name]
+        if own:
+            return own[0]
+    return candidates[0]
 
 
 def expected_launcher(installed, preferred=None):
@@ -98,8 +101,13 @@ def expected_launcher(installed, preferred=None):
     None when neither is installed: debloat without a launcher, where the stock launcher on Home is
     the intended state and only a Home on a listed package (or no Home at all) is drift.
     """
-    wanted = preferred or recovery.CUSTOM_LAUNCHER
-    return wanted if wanted in installed else None
+    if preferred:
+        return preferred if preferred in installed else None
+    # This launcher, or the same one under its name before F8 on a TV not reinstalled since.
+    for name in (recovery.CUSTOM_LAUNCHER, *recovery.OLD_CUSTOM_LAUNCHERS):
+        if name in installed:
+            return name
+    return None
 
 
 def inspect(dev, listed, preferred=None):

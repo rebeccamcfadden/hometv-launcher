@@ -193,7 +193,7 @@ export const tvPane = (): Pane => ({
 export const aboutPane = (): Pane => ({
   render: () => [
     h('div.eyebrow', 'About'),
-    h('div.pane-title', 'Clean your TV launcher'),
+    h('div.pane-title', 'HomeTV Launcher'),
     h('div.kvs', h('div.kv', h('span', 'Version'), h('b', '2.0.0 (build 214)')), h('div.kv', h('span', 'Catalogue cached'), h('b', '1,240 titles · 86 MB'))),
     h(
       'div.tmdb',

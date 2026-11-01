@@ -54,7 +54,7 @@
     <!-- First run's checklist (Set up your Home screen: TMDB, streaming services, stores, weather city) by itself,
          once, on the first start after a fresh install; never after an update, so a TV that had the launcher
          before doesn't see it. false never shows it by itself; a pushed config.json can set
-         "first_run_checklist": false. The intent action com.gathin.tvhome.action.FIRST_RUN on MainActivity opens
+         "first_run_checklist": false. The intent action com.hometv.launcher.action.FIRST_RUN on MainActivity opens
          it at any time. -->
     <bool name="first_run_checklist">true</bool>
 

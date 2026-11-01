@@ -214,9 +214,9 @@ uses: start the new launcher, disable the stock one, then set the preference and
 ```powershell
 $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 & $adb install -r app\build\outputs\apk\release\app-release.apk
-& $adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.HOME -n com.gathin.tvhome/.MainActivity
+& $adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.HOME -n com.hometv.launcher/.MainActivity
 & $adb shell pm disable-user --user 0 com.google.android.tvlauncher
-& $adb shell cmd package set-home-activity --user 0 com.gathin.tvhome/.MainActivity
+& $adb shell cmd package set-home-activity --user 0 com.hometv.launcher/.MainActivity
 & $adb shell cmd package resolve-activity --brief -c android.intent.category.HOME -a android.intent.action.MAIN
 ```
 
@@ -228,13 +228,13 @@ Testing on the emulator, learned in M1:
 - Keys from `adb shell input keyevent` skip the accessibility key filter, so they never reach `HomeKeyService` or
   `InputKeyService` (AGENTS.md: an injected key is not proof). The emulator's console (`adb emu event send`)
   produced no key events either. To see a screen those helpers open, `adb root` (the image allows it) and then
-  `adb shell am start -n com.gathin.tvhome/.QuickSettingsActivity`; the helper's own key handling waits for the
+  `adb shell am start -n com.hometv.launcher/.QuickSettingsActivity`; the helper's own key handling waits for the
   real remote.
-- A test `config.json` pushed to `/sdcard/Android/data/com.gathin.tvhome/files/` switches config keys without a
-  rebuild, as `tools/theme.sh` does; `am force-stop com.gathin.tvhome` and start Home again to read it. For example
+- A test `config.json` pushed to `/sdcard/Android/data/com.hometv.launcher/files/` switches config keys without a
+  rebuild, as `tools/theme.sh` does; `am force-stop com.hometv.launcher` and start Home again to read it. For example
   `{"live_tv_package":"com.lego.android.tvleanback"}` gives the Inputs icon a Live TV row on an emulator with no
   inputs, and `{"settings_key_keycodes":[131],"settings_key_panel":true}` makes F1 the Settings key.
-- The Wi-Fi name needs `pm grant com.gathin.tvhome android.permission.ACCESS_FINE_LOCATION`, as the install script
+- The Wi-Fi name needs `pm grant com.hometv.launcher android.permission.ACCESS_FINE_LOCATION`, as the install script
   does.
 
 Baseline before any rework code: the current launcher builds in about 90 s with zero lint errors, the release

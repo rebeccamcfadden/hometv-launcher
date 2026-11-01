@@ -27,7 +27,7 @@ spec = importlib.util.spec_from_file_location("cyt_trace", ROOT / "tools" / "tra
 trace = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(trace)
 
-LAUNCHER = "com.gathin.tvhome/.MainActivity"
+LAUNCHER = "com.hometv.launcher/.MainActivity"
 OTHER = "com.android.tv.settings/.MainSettings"
 
 # Encoded by protoc 3.13.0 from the original text config, using the official
@@ -41,6 +41,8 @@ CONFIG_9000 = base64.b64decode(
     "aW5kZXJfZHJpdmVyGhFjb20uZ2F0aGluLnR2aG9tZVCAgAFY+gESHgocChNsaW51eC5wcm9jZXNzX3N0"
     "YXRzEAG6BgIQARIoCiYKJGFuZHJvaWQuc3VyZmFjZWZsaW5nZXIuZnJhbWV0aW1lbGluZRIZChcKFWFu"
     "ZHJvaWQucGFja2FnZXNfbGlzdBioRg==")
+# The package CONFIG_9000 was encoded with (the launcher's name before F8).
+FIXTURE_PACKAGE = "com.gathin.tvhome"
 LONG_PACKAGE = "com.example." + "launcher" * 20
 CONFIG_LONG = base64.b64decode(
     "CgYIgIAEIAEKBQiAICABEqMDCqADCgxsaW51eC5mdHJhY2UQAKIGjAMKEnNjaGVkL3NjaGVkX3N3aXRj"
@@ -80,13 +82,13 @@ class ScenarioTest(unittest.TestCase):
 
     def test_cold_stops_the_launcher_before_recording_and_starts_it_inside(self):
         setup, steps = trace.scenario("cold", LAUNCHER, OTHER)
-        self.assertIn("am force-stop com.gathin.tvhome", setup)
+        self.assertIn("am force-stop com.hometv.launcher", setup)
         self.assertEqual(steps[0], "am start -W -a android.intent.action.MAIN "
                          f"-c android.intent.category.HOME -n {LAUNCHER}")
 
     def test_coldsys_leaves_the_restart_to_android(self):
         setup, steps = trace.scenario("coldsys", LAUNCHER, None)
-        self.assertEqual(steps[0], "am force-stop com.gathin.tvhome")
+        self.assertEqual(steps[0], "am force-stop com.hometv.launcher")
         self.assertFalse(any("am start" in s for s in setup + steps))
 
     def test_nav_is_24_moves(self):
@@ -101,7 +103,7 @@ class ScenarioTest(unittest.TestCase):
                          (trace.START_MARGIN_S + 4 + trace.END_MARGIN_S) * 1000)
 
     def test_config_traces_the_launcher_for_that_long(self):
-        self.assertEqual(trace.perfetto_config("com.gathin.tvhome", 9000), CONFIG_9000)
+        self.assertEqual(trace.perfetto_config(FIXTURE_PACKAGE, 9000), CONFIG_9000)
 
     def test_config_supports_a_different_package_and_multibyte_lengths(self):
         self.assertEqual(trace.perfetto_config(LONG_PACKAGE, 16384), CONFIG_LONG)
@@ -124,14 +126,14 @@ class ArgumentTest(unittest.TestCase):
 
     def test_defaults(self):
         args = trace.parse(["nav"])
-        self.assertEqual((args.runs, args.out, args.package), (5, "traces", "com.gathin.tvhome"))
+        self.assertEqual((args.runs, args.out, args.package), (5, "traces", "com.hometv.launcher"))
 
 
 class RecordTest(unittest.TestCase):
     def record(self, device, setup, steps):
         with tempfile.TemporaryDirectory() as tmp, mock.patch.object(trace.time, "sleep") as sleep:
             path = os.path.join(tmp, "home-1.pftrace")
-            size = trace.record_one(device, setup, steps, "com.gathin.tvhome", path)
+            size = trace.record_one(device, setup, steps, FIXTURE_PACKAGE, path)
             return size, sleep
 
     def test_setup_then_perfetto_then_steps_then_pull_and_cleanup(self):
@@ -187,7 +189,7 @@ class RecordTest(unittest.TestCase):
         device.pull = lambda remote, local, **kw: Path(local).write_bytes(b"")
         with tempfile.TemporaryDirectory() as tmp, mock.patch.object(trace.time, "sleep"):
             with self.assertRaises(RuntimeError) as caught:
-                trace.record_one(device, [], ["sleep 1"], "com.gathin.tvhome", os.path.join(tmp, "x.pftrace"))
+                trace.record_one(device, [], ["sleep 1"], "com.hometv.launcher", os.path.join(tmp, "x.pftrace"))
             self.assertEqual(os.listdir(tmp), [], "no 0-byte trace is left behind")
         self.assertIn("empty trace", str(caught.exception))
 
@@ -205,12 +207,12 @@ class OtherAppTest(unittest.TestCase):
     def test_settings_first(self):
         shell = self.shell({"android.settings.SETTINGS": "priority=0\ncom.android.tv.settings/.MainSettings\n",
                             "LEANBACK_LAUNCHER": "org.videolan.vlc/.StartActivity\n"})
-        self.assertEqual(trace.other_app(shell, "com.gathin.tvhome"), "com.android.tv.settings/.MainSettings")
+        self.assertEqual(trace.other_app(shell, "com.hometv.launcher"), "com.android.tv.settings/.MainSettings")
 
     def test_never_the_chooser_or_the_launcher(self):
         shell = self.shell({"android.settings.SETTINGS": "android/com.android.internal.app.ResolverActivity\n",
-                            "LEANBACK_LAUNCHER": "com.gathin.tvhome/.MainActivity\norg.videolan.vlc/.StartActivity\n"})
-        self.assertEqual(trace.other_app(shell, "com.gathin.tvhome"), "org.videolan.vlc/.StartActivity")
+                            "LEANBACK_LAUNCHER": "com.hometv.launcher/.MainActivity\norg.videolan.vlc/.StartActivity\n"})
+        self.assertEqual(trace.other_app(shell, "com.hometv.launcher"), "org.videolan.vlc/.StartActivity")
 
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ export const PERIOD_LABELS: Record<Period, string> = {
 };
 
 /** Where the photos and drawings are downloaded from: launcher/backdrops/ in the repo, never in the APK. */
-export const BACKDROP_BASE = 'https://cdn.jsdelivr.net/gh/rebeccamcfadden/cleanyourtv@main/launcher/backdrops/';
+export const BACKDROP_BASE = 'https://cdn.jsdelivr.net/gh/rebeccamcfadden/hometv-launcher@main/launcher/backdrops/';
 
 /** A Google Fonts family and the weights to ask for (none for single-weight faces). */
 interface Face {

@@ -63,7 +63,7 @@ def streamingAvailabilityKey = priceKey('streaming_availability_api_key')
 // Where the themes' photos and drawings are downloaded from (launcher/backdrops/README.md): https only, and only the
 // characters a URL needs, so it can't break the generated Java.
 def themeAssetsUrl = tvProps.getProperty('theme_assets_url', '').trim()
-if (!themeAssetsUrl) themeAssetsUrl = 'https://cdn.jsdelivr.net/gh/rebeccamcfadden/cleanyourtv@main/launcher/backdrops/'
+if (!themeAssetsUrl) themeAssetsUrl = 'https://cdn.jsdelivr.net/gh/rebeccamcfadden/hometv-launcher@main/launcher/backdrops/'
 if (!(themeAssetsUrl ==~ /https:\/\/[A-Za-z0-9._~:\/@%+\-]+/)) {
     throw new GradleException("${tvPropsFile.name}: theme_assets_url must be an https:// address")
 }
@@ -77,12 +77,12 @@ if (noteShortcutUrl && !(noteShortcutUrl ==~ /https:\/\/www\.icloud\.com\/shortc
 }
 
 android {
-    namespace 'com.gathin.tvhome'
+    namespace 'com.hometv.launcher'
     compileSdk 34
 
     defaultConfig {
         // Opt-in identity for firmware with a package-name HOME allowlist; see docs/devices/xiaomi-mitv-aetp0-dofus.md.
-        applicationId providers.gradleProperty('launcherApplicationId').getOrElse('com.gathin.tvhome')
+        applicationId providers.gradleProperty('launcherApplicationId').getOrElse('com.hometv.launcher')
         minSdk 26
         targetSdk 34
         versionCode 8

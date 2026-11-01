@@ -581,8 +581,8 @@ questions on 2026-10-31.
   included, doesn't see it. Remembered as `shown` in the `first_run` preferences (kept apart from Launcher settings'
   choices, which a theme push clears); opening it through the intent counts too. config.xml's `first_run_checklist`
   is an opt-out: on by default, `false` (or `"first_run_checklist": false` in a pushed config.json) never shows it by
-  itself. The intent action `com.gathin.tvhome.action.FIRST_RUN` on `MainActivity` opens it at any time, for adb:
-  `adb shell am start -a com.gathin.tvhome.action.FIRST_RUN -n com.gathin.tvhome/.MainActivity`. There is no
+  itself. The intent action `com.hometv.launcher.action.FIRST_RUN` on `MainActivity` opens it at any time, for adb:
+  `adb shell am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity`. There is no
   quick-settings or Launcher settings row for it, and no "Set up again" row. The rule is `FirstRunRules.showOnStart`.
 - **When a row counts as done:** as in the prototype, once its pane was opened (OK on the row, or Next to it),
   whatever was chosen there (`FirstRunRules.done`). The done steps are kept as `done` in the `first_run` preferences,

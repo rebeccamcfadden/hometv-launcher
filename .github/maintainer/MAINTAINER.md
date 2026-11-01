@@ -1,7 +1,7 @@
 # How CleanYourTV PRs are reviewed
 
 CleanYourTV (Gathin23/cleanyourtv) is a prompt plus tools that debloat Android TV / Google TV / Fire TV over
-ADB and a native launcher (`launcher/`, plain Java, for 1 GB TVs). This fork (rebeccamcfadden/cleanyourtv) is reworking the launcher; see `docs/rework.md`. Contributors mostly add
+ADB and a native launcher (`launcher/`, plain Java, for 1 GB TVs). This fork (rebeccamcfadden/hometv-launcher) is reworking the launcher; see `docs/rework.md`. Contributors mostly add
 tested TV lists under `examples/<tv>/`, translations, docs, small launcher options, themes, add-ons and tools.
 
 ## The policy: a small core plus a well-indexed hub

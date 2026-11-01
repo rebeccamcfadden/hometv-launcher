@@ -76,7 +76,7 @@
     <string name="tv_open">Open TV settings</string>
 
     <!-- About. -->
-    <string name="about_title">Clean your TV launcher</string>
+    <string name="about_title">HomeTV Launcher</string>
     <string name="about_version">Version</string>
     <string name="about_version_value">%1$s (build %2$d)</string>
     <string name="about_open_meteo">Weather data by Open-Meteo.com (CC BY 4.0).</string>

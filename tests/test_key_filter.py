@@ -28,10 +28,10 @@ def read(relative):
 
 
 CONFIG_XML = read("launcher/app/src/main/res/values/config.xml")
-CONFIG_JAVA = read("launcher/app/src/main/java/com/gathin/tvhome/Config.java")
-REMOTE_KEYS = read("launcher/app/src/main/java/com/gathin/tvhome/RemoteKeys.java")
-HOME_KEY = read("launcher/app/src/main/java/com/gathin/tvhome/HomeKeyService.java")
-INPUT_KEY = read("launcher/app/src/main/java/com/gathin/tvhome/InputKeyService.java")
+CONFIG_JAVA = read("launcher/app/src/main/java/com/hometv/launcher/Config.java")
+REMOTE_KEYS = read("launcher/app/src/main/java/com/hometv/launcher/RemoteKeys.java")
+HOME_KEY = read("launcher/app/src/main/java/com/hometv/launcher/HomeKeyService.java")
+INPUT_KEY = read("launcher/app/src/main/java/com/hometv/launcher/InputKeyService.java")
 THEMES_README = read("themes/README.md")
 TROUBLE = read("docs/TROUBLESHOOTING.md")
 

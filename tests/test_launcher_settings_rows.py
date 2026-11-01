@@ -13,7 +13,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCES = ROOT / "launcher/app/src/main/java/com/gathin/tvhome"
+SOURCES = ROOT / "launcher/app/src/main/java/com/hometv/launcher"
 REGISTRY = SOURCES / "SettingsSections.java"
 VALUES = ROOT / "launcher/app/src/main/res/values"
 README = ROOT / "docs" / "launcher.md"
