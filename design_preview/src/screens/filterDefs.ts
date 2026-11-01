@@ -64,8 +64,8 @@ export function filterDefs(kind: Kind): FilterDef[] {
 
 export type FilterState = Record<string, number>;
 
-/** The V1 default from Figma: "Included only · Review 7.0+". */
-export const defaultFilters = (): FilterState => ({ availability: 1, score: 1 });
+/** No filter on (the project lead, 2026-11-01, F2); Figma's frame shows "Included only · Review 7.0+". */
+export const defaultFilters = (): FilterState => ({});
 
 export const applyFilters = (defs: FilterDef[], state: FilterState, titles: Title[]) =>
   titles.filter((t) => defs.every((d) => d.test(t, state[d.id] ?? 0)));

@@ -118,6 +118,12 @@ final class ImportedLists {
         return out;
     }
 
+    /** A shown TMDB list's ids in the order TMDB returned them; none for a list not shown or a mock one. */
+    List<String> ids(ShownList list) {
+        Set<String> s = byKey.get(list.key);
+        return s == null ? Collections.<String>emptyList() : new ArrayList<>(s);
+    }
+
     // ---- The copies kept for offline ---------------------------------------------------------------------------
 
     /**

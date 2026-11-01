@@ -1090,6 +1090,14 @@
   border-radius: 50%;
   background: var(--good);
 }
+/* The choice in force (the library's Sort menu). */
+.menu-check {
+  display: flex;
+  color: var(--accent);
+}
+.menu-row.is-focused .menu-check {
+  color: var(--on-active);
+}
 .menu-divider {
   height: 1px;
   margin: 8px 22px;

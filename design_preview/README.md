@@ -250,7 +250,7 @@ clunky.) Rows are 72 px; the panel is opaque (no blur).
 - Title, "Your collection · My list, Family picks & Friends’ tips" (the shown lists; past four, "My list, Family
   picks & 4 more"), and a **Pick for me** button.
 - Scope line ("3 imported watchlists · All 8 services", counting My list and every shown list, chip or not) and the
-  active filters with a **Filters · n** button.
+  active filters with a **Sort · A–Z** button and a **Filters · n** button.
 - List chips with counts: All lists, My list, then the first six shown TMDB lists by name (Household and Friends
   before any sign-in); All lists also holds the titles of shown lists past six. One row: when the chips don't fit it
   scrolls with focus, and back on All lists it returns to its start.
@@ -260,8 +260,16 @@ clunky.) Rows are 72 px; the panel is opaque (no blur).
   99 kr", or just "Rent" for a store with no known price), runtime or seasons · rating · score, and the first list
   in chip order that holds it, and its genre.
 - **Filters drawer** (from the right): Availability, Review score, Genre, Length (movies only), Watch state. ←/→
-  changes a value, and the grid behind updates live. Clear all and Done. The default is "Included only · Review
-  7.0+".
+  changes a value, and the grid behind updates live. Clear all and Done. The default is no filters (F2; Figma's
+  frame shows "Included only · Review 7.0+").
+- **Sort** (F4, no Figma frame): a small button left of Filters; OK opens a dropdown under it with Alphabetical
+  (A–Z, the default), Recently added to my lists, Newest release first, Oldest release first and Highest rated, the
+  one in force checked and focused. A–Z leaves out a leading "The", "A" or "An", accents and case; the other orders
+  fall back to A–Z between equals and put titles without a year, score or known place last. ← from Sort stays; →
+  goes to Filters.
+- **What a page keeps** (F2): filters, the chosen list and the sort start cleared when the TV is turned on (on the
+  TV, a boot or the screen back from standby; here, the preview loading). Each page keeps its own while it is left
+  and clears them after more than an hour away.
 - **Empty states:** a list with nothing on it ("add titles with + My list…"), and filters that hide everything
   (with Clear filters).
 - **Loading, offline and errors:** see [Loading, offline and errors](#loading-offline-and-errors).
@@ -617,7 +625,7 @@ width with 243 px art.
 - **Phone notes:** the address assumes the TV keeps its IP (a DHCP reservation in the router); what Apple Notes and
   Keep put in the shared text (checklist ticks, the note's title) is to be checked on the phones.
 - **Not designed yet:** hold-OK menus (the base uses them for tile Move / Remove / App info and a Settings
-  menu), the screensaver, removing recent searches, voice search, progress on started titles, sorting lists, a
+  menu), the screensaver, removing recent searches, voice search, progress on started titles, the Sort chip, a
   person page design, Search and Home's weather while loading, the Home row apps pane (built here without a design),
   and right-to-left layouts (the base supports Hebrew).
 

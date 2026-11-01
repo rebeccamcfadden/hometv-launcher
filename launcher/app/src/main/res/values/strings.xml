@@ -8,6 +8,8 @@
     <string name="not_connected">No device</string>
     <string name="live_tv">Live TV</string>
     <string name="no_inputs">No inputs found</string>
+    <!-- A dropdown row for the choice in force (the Sort menu), as TalkBack reads it. -->
+    <string name="menu_checked">%1$s, selected</string>
     <string name="ethernet">Ethernet</string>
     <string name="offline">Offline</string>
     <string name="not_available">Not available on this TV</string>

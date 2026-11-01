@@ -19,6 +19,8 @@ export interface MenuRow {
   good?: boolean;
   /** A line between groups, drawn above this row. */
   divider?: boolean;
+  /** The choice in force (the library's Sort menu): a check at the right, and the menu's first focus. */
+  checked?: boolean;
   onOk?: () => void;
 }
 
@@ -45,23 +47,25 @@ export function dropdown(
   const statusOf = (r: MenuRow) => {
     const text = typeof r.status === 'function' ? r.status() : r.status;
     const dots = r.dots?.();
-    if (!text && !r.chevron && !dots) return null;
+    if (!text && !r.chevron && !dots && !r.checked) return null;
     return h(
       `span.menu-status${r.good ? '.is-good' : ''}`,
       r.good ? h('span.menu-dot') : null,
       text ?? null,
       dots ? h('span.dots', Array.from({ length: dots[0] }, (_, k) => h(`i${k === dots[1] ? '.on' : ''}`))) : null,
       r.chevron ? h('span.chev', { html: icon('chevRight', 22) }) : null,
+      r.checked ? h('span.menu-check', { html: icon('check', 28) }) : null,
     );
   };
 
+  const first = Math.max(0, rows.findIndex((r) => r.checked));
   const rowEls = rows.map((r, i) => {
     const el: HTMLElement = focusable(
       h('div.menu-row', r.icon ? h('span.menu-icon', { html: icon(r.icon, 28) }) : null, h('span.menu-label', r.label), statusOf(r)),
       {
         group: 'menu',
         key: `m-${i}`,
-        isDefault: i === 0,
+        isDefault: i === first,
         onOk: () => {
           if (r.cycle) {
             r.cycle();
@@ -86,7 +90,7 @@ export function dropdown(
     label,
     el,
     layer: 'dialog',
-    defaultFocus: () => el.querySelector<HTMLElement>('.menu-row'),
+    defaultFocus: () => el.querySelector<HTMLElement>('.menu-row[data-default]') ?? el.querySelector<HTMLElement>('.menu-row'),
     onKey(key) {
       if (key !== 'up' && key !== 'down' && key !== 'left' && key !== 'right') return false;
       if (app.moveWithin(panel, key)) return true;

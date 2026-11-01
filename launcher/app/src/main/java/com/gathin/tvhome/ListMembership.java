@@ -58,4 +58,14 @@ interface ListMembership {
         for (ShownList l : shownLists()) if (isOn(t, l)) return l;
         return null;
     }
+
+    /**
+     * The list's title ids, the oldest added first, for Sort's "Recently added" ({@link LibrarySort}). This default
+     * knows no order: the pool's titles on the list, in the pool's order (the mock lists, and My list in a test).
+     */
+    default List<String> order(ShownList list, List<Title> pool) {
+        List<String> out = new ArrayList<>();
+        for (Title t : pool) if (isOn(t, list)) out.add(t.id);
+        return out;
+    }
 }

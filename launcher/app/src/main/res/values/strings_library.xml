@@ -27,6 +27,19 @@
     <string name="library_no_filters">No filters</string>
     <string name="library_filters">Filters</string>
     <string name="library_filters_n">Filters · %1$d</string>
+    <!-- F4: the Sort chip beside Filters ("Sort · A–Z") and its dropdown's rows. -->
+    <string name="library_sort">Sort</string>
+    <string name="library_sort_chip">Sort · %1$s</string>
+    <string name="library_sort_az">Alphabetical (A–Z)</string>
+    <string name="library_sort_az_short">A–Z</string>
+    <string name="library_sort_recent">Recently added to my lists</string>
+    <string name="library_sort_recent_short">Recently added</string>
+    <string name="library_sort_newest">Newest release first</string>
+    <string name="library_sort_newest_short">Newest</string>
+    <string name="library_sort_oldest">Oldest release first</string>
+    <string name="library_sort_oldest_short">Oldest</string>
+    <string name="library_sort_rated">Highest rated</string>
+    <string name="library_sort_rated_short">Highest rated</string>
     <string name="library_lists_label">Imported watchlists</string>
     <string name="library_all_lists">All lists</string>
     <string name="library_chip">%1$s · %2$d</string>

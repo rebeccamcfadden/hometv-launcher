@@ -71,6 +71,17 @@ final class Household implements ListMembership {
         return list.isMy() ? inMyList(t.id) : imported.isOn(t, list);
     }
 
+    /**
+     * My list in the order its titles were added (a sync keeps the TMDB watchlist's, oldest first), a TMDB list in the
+     * order TMDB returned it; the mock lists have none, so the pool's order.
+     */
+    @Override
+    public List<String> order(ShownList list, List<Title> pool) {
+        if (list.isMy()) return state.myListIds();
+        if (list.mock == null) return imported.ids(list);
+        return ListMembership.super.order(list, pool);
+    }
+
     boolean isSeen(String id) {
         return state.isSeen(id);
     }

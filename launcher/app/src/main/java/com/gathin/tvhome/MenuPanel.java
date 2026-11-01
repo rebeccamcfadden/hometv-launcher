@@ -28,6 +28,7 @@ final class MenuPanel {
         CharSequence status;
         boolean good;
         boolean divider;
+        boolean checked;
 
         Row(CharSequence label, int icon, Runnable action) {
             this.label = label;
@@ -45,6 +46,12 @@ final class MenuPanel {
         /** A line between groups, drawn above this row. */
         Row divider() {
             divider = true;
+            return this;
+        }
+
+        /** The choice in force (the Sort menu's order): a check at the right, and the menu's first focus. */
+        Row checked(boolean on) {
+            checked = on;
             return this;
         }
     }
@@ -78,6 +85,13 @@ final class MenuPanel {
         panel.setBackground(Ui.round(Ui.MENU_BG, 28, Ui.LINE_STRONG, Ui.LINE_W));
         panel.setElevation(Ui.px(30));
         if (header != null) panel.addView(header);
+        int first = 0;
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i).checked) {
+                first = i;
+                break;
+            }
+        }
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
             if (r.divider && panel.getChildCount() > 0) {
@@ -86,13 +100,13 @@ final class MenuPanel {
                 lp.setMargins(Ui.px(22), Ui.px(8), Ui.px(22), Ui.px(8));
                 panel.addView(hairline(ctx), lp);
             }
-            panel.addView(row(ctx, r, i, onRow), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+            panel.addView(row(ctx, r, i, i == first, onRow), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     Ui.px(72)));
         }
         return panel;
     }
 
-    private static View row(Context ctx, Row r, int index, OnRow onRow) {
+    private static View row(Context ctx, Row r, int index, boolean isDefault, OnRow onRow) {
         LinearLayout row = new LinearLayout(ctx);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -118,8 +132,18 @@ final class MenuPanel {
             lp.leftMargin = Ui.px(24);
             row.addView(status(ctx, r.status, r.good ? Ui.GOOD : 0, Ui.TEXT_3, Ui.ON_ACTIVE), lp);
         }
-        Focus.make(row, GROUP, "m-" + index, index == 0, v -> onRow.picked(r));
-        row.setContentDescription(r.status == null ? r.label : r.label + ", " + r.status);
+        if (r.checked) {
+            ImageView check = new ImageView(ctx);
+            check.setImageResource(R.drawable.ic_ui_check);
+            check.setImageTintList(Ui.colors(Ui.ACCENT, Ui.ACCENT, Ui.ON_ACTIVE));
+            check.setDuplicateParentStateEnabled(true);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(28), Ui.px(28));
+            lp.leftMargin = Ui.px(24);
+            row.addView(check, lp);
+        }
+        Focus.make(row, GROUP, "m-" + index, isDefault, v -> onRow.picked(r));
+        CharSequence said = r.status == null ? r.label : r.label + ", " + r.status;
+        row.setContentDescription(r.checked ? ctx.getString(R.string.menu_checked, said) : said);
         return row;
     }
 

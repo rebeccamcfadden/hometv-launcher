@@ -1,7 +1,11 @@
 package com.gathin.tvhome;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.SoundEffectConstants;
 import android.view.View;
@@ -25,6 +29,11 @@ import java.util.Map;
  * <p>The page is made once per tab and kept, so it keeps its list, filters, scroll and focus when you switch tabs.
  * It reads the household again each time it shows (a title added to My list in the title preview appears here), and
  * rebuilds only the parts whose content changed, so cards don't flash their placeholder when nothing moved.
+ *
+ * <p>F2 and F4 (the project lead, 2026-11-01): the page starts with no filters, All lists and the Sort chip's A–Z
+ * ({@link LibrarySort}) each time the TV is turned on; what is set on it is kept while it is left, and cleared again
+ * after an hour away ({@link LibraryRecall}). Each page keeps its own, for as long as the launcher's process runs, so
+ * a page made again within the hour (a theme or a setting changing) gets them back.
  */
 final class LibraryPage extends Screen {
 
@@ -32,7 +41,12 @@ final class LibraryPage extends Screen {
     private static final String GROUP_GRID = "grid";
     private static final String KEY_PICK = "pick";
     private static final String KEY_FILTERS = "filters";
+    private static final String KEY_SORT = "sort";
     private static final String KEY_CLEAR = "clear-filters";
+    /** What each page keeps while it is left (F2): the process's, so a TV turned on starts with none. */
+    private static final LibraryRecall RECALL = new LibraryRecall(SystemClock::elapsedRealtime);
+    /** Whether the screen-off receiver that clears {@link #RECALL} is registered (once a process, on the app). */
+    private static boolean watchingStandby;
 
     // Sizes from screens.css (.page-scroll, .lib-*), in design px.
     private static final int SCROLL_TOP = 150;
@@ -52,12 +66,17 @@ final class LibraryPage extends Screen {
     /** The chosen chip ({@link ShownList#key}), and its list as the last render found it. */
     private String listKey = ShownList.ALL.key;
     private ShownList list = ShownList.ALL;
+    /** The Sort chip's order (F4). */
+    private LibrarySort sort = LibrarySort.AZ;
+    /** {@link LibraryRecall#offs} when the page last showed: another count means the TV was off since (F2). */
+    private int offsSeen = RECALL.offs();
 
     private final ViewGroup box;
     private final View pick;
     private final TextView context;
     private final TextView scope;
     private final TextView filterSummary;
+    private final View sortButton;
     private final View filtersButton;
     private final LinearLayout chips;
     private final TextView listTitle;
@@ -106,6 +125,7 @@ final class LibraryPage extends Screen {
         Household household = data.household;
         filters = new LibraryFilters(kind, data.catalog.genres(kind), data.services.subscribed(),
                 data.services.installed(), household::isSeen);
+        restoreSaved();
 
         box = ScrollBox.vertical(ctx, SCROLL_PAD);
         LinearLayout col = Kit.unclip(new LinearLayout(ctx));
@@ -151,6 +171,12 @@ final class LibraryPage extends Screen {
         scopeRow.addView(scopeSlot, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         filterSummary = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
         scopeRow.addView(filterSummary, wrap());
+        // F4: the Sort chip, a small button like Filters beside it (no Figma frame yet).
+        sortButton = Kit.button(ctx, sortChipLabel(), R.drawable.ic_ui_sort, Kit.SMALL, false, null, KEY_SORT, false,
+                v -> openSort());
+        LinearLayout.LayoutParams slp = wrap();
+        slp.leftMargin = Ui.px(22);
+        scopeRow.addView(sortButton, slp);
         filtersButton = Kit.button(ctx, ctx.getString(R.string.library_filters), R.drawable.ic_ui_filter, Kit.SMALL,
                 false, null, KEY_FILTERS, false, v -> openFilters());
         LinearLayout.LayoutParams flp = wrap();
@@ -196,7 +222,40 @@ final class LibraryPage extends Screen {
         StateUi.watchInternet(root, host.navModel(), online -> {
             if (shell.top() == this) render();
         });
+        // F2: another app taking the screen leaves the page too, and coming back is a return. A page not showing is
+        // detached, which also reads as hidden; onLeave and onShow say the same. Standby is the TV turned off: the
+        // window stays visible through it on Android 9, so the page checks LibraryRecall's standby count when its
+        // window has focus again.
+        watchStandby(ctx);
+        root.addView(new View(ctx) {
+            @Override
+            protected void onWindowVisibilityChanged(int visibility) {
+                super.onWindowVisibilityChanged(visibility);
+                if (visibility != View.VISIBLE) markLeft();
+                else if (recall() && shell.top() == LibraryPage.this) startedAgain();
+            }
+
+            @Override
+            public void onWindowFocusChanged(boolean hasWindowFocus) {
+                super.onWindowFocusChanged(hasWindowFocus);
+                if (hasWindowFocus && getWindowVisibility() == View.VISIBLE && recall()
+                        && shell.top() == LibraryPage.this) {
+                    startedAgain();
+                }
+            }
+        }, new FrameLayout.LayoutParams(0, 0));
         render();
+    }
+
+    /**
+     * Cleared while on screen (standby, or back from an app after the hour): render, and put focus on the page's
+     * default, since the focused card may now be scrolled out of view and refocus() keeps a view that is still there.
+     * Focus on the nav stays where it is; a popup or dialog over the page is never on top here.
+     */
+    private void startedAgain() {
+        render();
+        View f = shell.focused();
+        if (f == null || Focus.isInside(box, f)) shell.focus(shell.restoreTarget(this));
     }
 
     @Override
@@ -243,6 +302,19 @@ final class LibraryPage extends Screen {
             box.playSoundEffect(sound(dir));
             return true;
         }
+        // F4: Sort sits left of Filters. Left from Sort stays (nothing is beside it); Up and Down go where they go
+        // from Filters.
+        if (focused == sortButton) {
+            if (dir == SpatialNav.Dir.LEFT) return true;
+            if (dir == SpatialNav.Dir.UP || dir == SpatialNav.Dir.DOWN) {
+                View next = fromFilters(dir);
+                if (next != null) {
+                    shell.focus(next);
+                    box.playSoundEffect(sound(dir));
+                }
+                return true;
+            }
+        }
         if (Focus.isInside(box, focused)) {
             if (dir != SpatialNav.Dir.UP || box.getScrollY() <= 0) return false;
             if (!shell.moveWithin(box, dir)) return false;
@@ -258,6 +330,15 @@ final class LibraryPage extends Screen {
     private boolean isLastChip(View focused) {
         List<View> all = Focus.all(chips);
         return !all.isEmpty() && all.get(all.size() - 1) == focused;
+    }
+
+    /** Where Up or Down from Filters goes (this onKey's rule for the box, then Shell's own move). */
+    private View fromFilters(SpatialNav.Dir dir) {
+        if (dir == SpatialNav.Dir.UP && box.getScrollY() > 0) {
+            View next = shell.nextFrom(box, filtersButton, dir);
+            if (next != null) return next;
+        }
+        return shell.nextFrom(view, filtersButton, dir);
     }
 
     /** Shell's move (nearest, then the entered row's memory or default) over the items not hidden by scrolling. */
@@ -302,7 +383,103 @@ final class LibraryPage extends Screen {
     /** Each time the page shows (a tab switch, the drawer or the title preview closing): My list may have changed. */
     @Override
     void onShow() {
+        recall();
         render();
+    }
+
+    @Override
+    void onLeave() {
+        markLeft();
+    }
+
+    // ---- F2: what the page keeps while it is left ---------------------------------------------------------------
+
+    /** At the page's making: what was set on it before, if it was left an hour ago or less since the TV started. */
+    private void restoreSaved() {
+        LibraryRecall.Saved s = RECALL.back(kind);
+        if (s == null) return;
+        filters.restore(s.filters);
+        listKey = s.list;
+        sort = s.sort;
+    }
+
+    /** The page is left (another tab, an app, standby): keep its choices, and when. */
+    private void markLeft() {
+        RECALL.left(kind, filters.save(), listKey, sort);
+    }
+
+    /**
+     * Standby clears what every page kept, even a page left for an app before the TV went off: a receiver on the
+     * application, registered once, for as long as the process runs.
+     */
+    private static void watchStandby(Context ctx) {
+        if (watchingStandby) return;
+        watchingStandby = true;
+        ctx.getApplicationContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context c, Intent intent) {
+                RECALL.turnedOff();
+            }
+        }, new IntentFilter(Intent.ACTION_SCREEN_OFF));
+    }
+
+    /**
+     * Back on the page: after more than an hour away, or the TV turned off since the page last showed, its filters,
+     * list chip and sort start again (no filters, All lists, A–Z), from the top. Returns whether they did.
+     */
+    private boolean recall() {
+        // Left: the saved choices, unless the hour or a standby since the leaving cleared them. Either way, a standby
+        // since the page last showed clears them too (one it never saw while on screen, before being left).
+        boolean wasLeft = RECALL.isLeft(kind);
+        boolean stale = (wasLeft && RECALL.back(kind) == null) || offsSeen != RECALL.offs();
+        offsSeen = RECALL.offs();
+        if (!stale) return false;
+        filters.clear();
+        listKey = ShownList.ALL.key;
+        sort = LibrarySort.AZ;
+        memory.clear();
+        lastFocus = null;
+        lastFocusKey = null;
+        box.scrollTo(0, 0);
+        return true;
+    }
+
+    // ---- F4: Sort -----------------------------------------------------------------------------------------------
+
+    /** "Sort · A–Z". */
+    private String sortChipLabel() {
+        return ctx.getString(R.string.library_sort_chip, ctx.getString(sortWords(sort)[1]));
+    }
+
+    /** The menu row's words and the chip's short ones. */
+    private static int[] sortWords(LibrarySort s) {
+        switch (s) {
+            case RECENT:
+                return new int[]{R.string.library_sort_recent, R.string.library_sort_recent_short};
+            case NEWEST:
+                return new int[]{R.string.library_sort_newest, R.string.library_sort_newest_short};
+            case OLDEST:
+                return new int[]{R.string.library_sort_oldest, R.string.library_sort_oldest_short};
+            case RATED:
+                return new int[]{R.string.library_sort_rated, R.string.library_sort_rated_short};
+            default:
+                return new int[]{R.string.library_sort_az, R.string.library_sort_az_short};
+        }
+    }
+
+    /** OK on Sort: the orders in a dropdown under it, the one in force checked and focused. */
+    private void openSort() {
+        String label = ctx.getString(R.string.library_sort);
+        if (shell.isOpen(label)) return;
+        List<MenuPanel.Row> rows = new ArrayList<>();
+        for (LibrarySort s : LibrarySort.values()) {
+            rows.add(new MenuPanel.Row(ctx.getString(sortWords(s)[0]), 0, () -> {
+                if (s == sort) return;
+                sort = s;
+                render();
+            }).checked(s == sort));
+        }
+        shell.push(Dropdown.create(shell, label, sortButton, null, rows));
     }
 
     private void openFilters() {
@@ -390,9 +567,11 @@ final class LibraryPage extends Screen {
         filterSummary.setText(summary.isEmpty() ? ctx.getString(R.string.library_no_filters) : summary);
         Kit.setLabel(filtersButton, n == 0 ? ctx.getString(R.string.library_filters)
                 : ctx.getString(R.string.library_filters_n, n));
+        Kit.setLabel(sortButton, sortChipLabel());
 
         List<Title> chosen = LibraryLists.under(pool, list, data.household);
-        List<Title> shown = filters.apply(chosen);
+        List<Title> shown = sort.sort(filters.apply(chosen), sort == LibrarySort.RECENT
+                ? LibraryLists.recentRanks(pool, list, data.household) : null);
         listTitle.setText(listName(list));
         Resources r = ctx.getResources();
         boolean movies = kind == Kind.MOVIE;

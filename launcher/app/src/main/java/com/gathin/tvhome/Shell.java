@@ -245,6 +245,16 @@ final class Shell {
     }
 
     /**
+     * Where a move inside root would land if it started from {@code from} rather than the focused item, without
+     * moving: for an item that moves as its neighbour does (the library's Sort chip, as Filters).
+     */
+    View nextFrom(View root, View from, SpatialNav.Dir dir) {
+        Screen s = top();
+        if (s == null || from == null) return null;
+        return intoNav(s.view, findNext(root, from, dir, s.memory));
+    }
+
+    /**
      * A move from the page into the nav lands on the page's own section (its tab, or Movies / TV Shows for Pick for
      * me), not on the section or device icon used last or nearest (app.ts intoNav): Up from Home after a look at
      * Search is Home. Moves along the nav itself are left alone.

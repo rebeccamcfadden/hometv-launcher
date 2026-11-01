@@ -3,6 +3,7 @@ package com.gathin.tvhome;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -46,6 +47,18 @@ final class LibraryLists {
         List<Title> out = new ArrayList<>();
         for (Title t : pool) if (inList(t, c, lists)) out.add(t);
         return out;
+    }
+
+    /**
+     * Sort's "Recently added" ranks for the titles under the chip ({@link LibrarySort#recentRanks}): the chip's own
+     * list, or for All lists every list in chip order, past the chip cap included.
+     */
+    static Map<String, Integer> recentRanks(List<Title> pool, ShownList c, ListMembership lists) {
+        List<List<String>> orders = new ArrayList<>();
+        for (ShownList l : c.isAll() ? lists.lists() : java.util.Collections.singletonList(c)) {
+            orders.add(lists.order(l, pool));
+        }
+        return LibrarySort.recentRanks(orders);
     }
 
     /** With the catalogue's mock lists after My list, as the prototype comparisons use. */

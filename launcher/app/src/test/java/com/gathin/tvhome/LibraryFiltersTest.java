@@ -112,16 +112,12 @@ public class LibraryFiltersTest {
     }
 
     @Test
-    public void theDefaultIsIncludedOnlyAndReview7() throws Exception {
+    public void theDefaultIsNoFilters() throws Exception {
         for (Kind k : Kind.values()) {
             LibraryFilters f = filters(k);
-            assertEquals(1, f.value(LibraryFilters.AVAILABILITY));
-            assertEquals(1, f.value(LibraryFilters.SCORE));
-            assertEquals(0, f.value(LibraryFilters.GENRE));
-            assertEquals(0, f.value(LibraryFilters.RUNTIME));
-            assertEquals(0, f.value(LibraryFilters.WATCH));
-            assertEquals("Included only · Review 7.0+", f.summary());
-            assertEquals(2, f.activeCount());
+            for (LibraryFilters.Def d : f.defs) assertEquals(d.id, 0, f.value(d));
+            assertEquals("", f.summary());
+            assertEquals(0, f.activeCount());
         }
         java.util.function.Predicate<String> my = household::inMyList;
         for (String[] f : fixture("default")) {
@@ -135,12 +131,37 @@ public class LibraryFiltersTest {
         }
     }
 
+    /** Figma's frame shows "Included only · Review 7.0+", the default before F2. */
+    private static void figma(LibraryFilters f) {
+        f.clear();
+        f.set(LibraryFilters.AVAILABILITY, 1);
+        f.set(LibraryFilters.SCORE, 1);
+    }
+
+    @Test
+    public void figmasFiltersMatchThePrototype() throws Exception {
+        java.util.function.Predicate<String> my = household::inMyList;
+        for (String[] f : fixture("figma")) {
+            Kind kind = kind(f[1]);
+            LibraryFilters filters = filters(kind);
+            figma(filters);
+            List<Title> pool = LibraryLists.pool(catalog.all(), kind, my);
+            List<Title> under = LibraryLists.under(pool, LibraryListsTest.choice(f[2]), my);
+            assertEquals(f[1] + " " + f[2], f[3], ids(filters.apply(under)));
+            assertEquals(f[4], filters.summary());
+            assertEquals(Integer.parseInt(f[5]), filters.activeCount());
+        }
+    }
+
     @Test
     public void movies14Of16AsInFigma() {
         java.util.function.Predicate<String> my = household::inMyList;
         List<Title> pool = LibraryLists.pool(catalog.all(), Kind.MOVIE, my);
         assertEquals(16, pool.size());
-        assertEquals(14, filters(Kind.MOVIE).apply(pool).size());
+        LibraryFilters f = filters(Kind.MOVIE);
+        assertEquals(16, f.apply(pool).size());
+        figma(f);
+        assertEquals(14, f.apply(pool).size());
     }
 
     @Test
@@ -156,14 +177,49 @@ public class LibraryFiltersTest {
         f.set(LibraryFilters.AVAILABILITY, 2);
         assertEquals("Included + rentals · Review 8.0+ · Drama · Under 2h · Unwatched", f.summary());
         assertEquals(5, f.activeCount());
-        f.reset();
-        assertEquals("Included only · Review 7.0+", f.summary());
+        f.clear();
+        assertEquals("", f.summary());
+    }
+
+    @Test
+    public void saveAndRestoreKeepEveryRowByItsLabel() {
+        LibraryFilters f = filters(Kind.MOVIE);
+        assertEquals("", f.save());
+        f.set(LibraryFilters.SCORE, 2);
+        f.set(LibraryFilters.GENRE, f.def(LibraryFilters.GENRE).options.indexOf("Drama"));
+        f.set(LibraryFilters.RUNTIME, 3);
+        String saved = f.save();
+        assertEquals("score=8.0 and above\ngenre=Drama\nruntime=Under 2\u00bd hours", saved);
+        LibraryFilters back = filters(Kind.MOVIE);
+        back.set(LibraryFilters.WATCH, 1);
+        back.restore(saved);
+        assertEquals(f.summary(), back.summary());
+        assertEquals(0, back.value(LibraryFilters.WATCH));
+        back.restore("");
+        assertEquals(0, back.activeCount());
+        back.restore(null);
+        assertEquals(0, back.activeCount());
+    }
+
+    @Test
+    public void restoreLeavesOutWhatThePageDoesNotHave() {
+        LibraryFilters shows = filters(Kind.SHOW);
+        // Length is movies only, Western a movie-only genre; the rest is unreadable.
+        shows.restore("runtime=Under 2 hours\ngenre=Western\nwatch=Seen only\nnonsense\n=1\nscore=9.0 and above");
+        assertEquals("Seen", shows.summary());
+        assertEquals(1, shows.activeCount());
+        // A genre keeps its place by name when the catalogue's genres change.
+        LibraryFilters fewer = new LibraryFilters(Kind.MOVIE, java.util.Arrays.asList("Comedy", "Drama"), subscribed,
+                household::isSeen);
+        fewer.restore("genre=Drama");
+        assertEquals("Drama", fewer.valueLabel(fewer.def(LibraryFilters.GENRE)));
     }
 
     @Test
     public void leftAndRightWrapRound() {
         LibraryFilters f = filters(Kind.MOVIE);
         LibraryFilters.Def a = f.def(LibraryFilters.AVAILABILITY);
+        f.set(a, 1);
         assertEquals(2, f.cycle(a, 1));
         assertEquals(0, f.cycle(a, 1));
         assertEquals(2, f.cycle(a, -1));

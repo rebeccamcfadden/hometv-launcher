@@ -48,8 +48,9 @@ final class Dropdown {
 
             @Override
             View defaultFocus() {
-                for (View v : Focus.all(panel)) return v;
-                return null;
+                List<View> all = Focus.all(panel);
+                for (View v : all) if (Focus.isDefault(v)) return v;
+                return all.isEmpty() ? null : all.get(0);
             }
 
             @Override

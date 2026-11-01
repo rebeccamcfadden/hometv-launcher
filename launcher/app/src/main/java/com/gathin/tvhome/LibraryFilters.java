@@ -11,8 +11,10 @@ import java.util.function.Predicate;
  * The Filters drawer's definitions and state for Movies or TV Shows, ported from
  * design_preview/src/screens/filterDefs.ts (README, Movies and TV Shows): Availability, Review score, Genre, Length
  * (movies only) and Watch state. Each definition has its options, the words it adds to the page's summary line, and
- * the test a title must pass for each option; option 0 is always "no filter". The state starts at the Figma default,
- * "Included only · Review 7.0+". Pure Java, English only (like {@link Offers}), unit-tested against the prototype.
+ * the test a title must pass for each option; option 0 is always "no filter". The state starts with no filter on (the
+ * project lead, 2026-11-01, F2, in place of Figma's "Included only · Review 7.0+"); {@link #save} and {@link #restore}
+ * keep it while the page is left ({@link LibraryRecall}). Pure Java, English only (like {@link Offers}), unit-tested
+ * against the prototype.
  */
 final class LibraryFilters {
 
@@ -69,7 +71,6 @@ final class LibraryFilters {
         this.kind = kind;
         this.defs = Collections.unmodifiableList(defs(kind, genres, subscribed, installed, seen));
         this.values = new int[defs.size()];
-        reset();
     }
 
     LibraryFilters(Kind kind, List<String> genres, Set<ServiceId> subscribed, Predicate<String> seen) {
@@ -153,16 +154,40 @@ final class LibraryFilters {
         return value(d);
     }
 
-    /** Clear all, and the empty state's Clear filters: every row back to option 0. */
+    /** Clear all, the empty state's Clear filters, and the page's start: every row back to option 0. */
     void clear() {
         Arrays.fill(values, 0);
     }
 
-    /** The V1 default from Figma: "Included only · Review 7.0+". */
-    void reset() {
+    /**
+     * The rows not at option 0, one "id=option label" a line ("genre=Drama"), for {@link #restore}: by label, so a
+     * genre keeps its place when the catalogue's genres change.
+     */
+    String save() {
+        StringBuilder s = new StringBuilder();
+        for (int i = 0; i < defs.size(); i++) {
+            if (values[i] == 0) continue;
+            if (s.length() > 0) s.append('\n');
+            s.append(defs.get(i).id).append('=').append(defs.get(i).options.get(values[i]));
+        }
+        return s.toString();
+    }
+
+    /**
+     * Back to what {@link #save} wrote, after clearing; a row this page doesn't have (Length on TV Shows), an option it
+     * no longer has (a genre gone from the catalogue) and anything unreadable are left at option 0.
+     */
+    void restore(String saved) {
         clear();
-        set(AVAILABILITY, 1);
-        set(SCORE, 1);
+        if (saved == null || saved.isEmpty()) return;
+        for (String pair : saved.split("\n")) {
+            int eq = pair.indexOf('=');
+            if (eq <= 0) continue;
+            Def d = def(pair.substring(0, eq));
+            if (d == null) continue;
+            int option = d.options.indexOf(pair.substring(eq + 1));
+            if (option > 0) values[defs.indexOf(d)] = option;
+        }
     }
 
     boolean passes(Title t) {

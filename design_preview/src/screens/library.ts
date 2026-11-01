@@ -9,8 +9,11 @@ import { icon } from '../ui/icons';
 import { button, chip, guide, libraryCard, libraryCardSkeleton, navBar } from '../ui/widgets';
 import { activeCount, applyFilters, defaultFilters, filterDefs, summary } from './filterDefs';
 import { filtersDrawer } from './filters';
+import { dropdown } from './dropdown';
+import { recentRanks, SORTS, sortTitles, type SortId } from './librarySort';
 import { pickSetup } from './pick';
 import { titlePreview } from './preview';
+import { store } from '../core/store';
 
 /** 'all', or a list id from {@link lists}. */
 type ListChoice = string;
@@ -18,13 +21,31 @@ type ListChoice = string;
 const inList = (t: Title, l: ListChoice) => (l === 'all' ? lists.saved(t) : (lists.byId(l)?.has(t) ?? false));
 const listName = (l: ListChoice) => (l === 'all' ? 'All lists' : (lists.byId(l)?.name ?? 'All lists'));
 
+/** F2: an hour away clears what was set on the page; longer, it starts again with no filters, All lists and A–Z. */
+const AWAY_MS = 60 * 60 * 1000;
+
+/**
+ * A list's titles, oldest added first, for Sort's "Recently added": My list in the order titles were added; the mock
+ * lists know no order, so the catalogue's.
+ */
+const orderOf = (id: string, pool: Title[]): string[] => {
+  if (id === 'my') return store.myListIds();
+  const l = lists.imported().find((x) => x.id === id);
+  return l ? pool.filter(l.has).map((t) => t.id) : [];
+};
+
 /** V1 Movies / TV Shows: imported watchlists only, no Explore rows. */
 export function libraryScreen(kind: Kind): Screen {
   const noun = kind === 'movie' ? 'movies' : 'shows';
   const heading = kind === 'movie' ? 'Movies' : 'TV Shows';
   const defs = filterDefs(kind);
+  // F2: the page starts with no filters each time the TV is turned on (here: each time the preview loads).
   const filters = defaultFilters();
   let list: ListChoice = 'all';
+  // F4: the Sort chip's order; A–Z by default.
+  let sort: SortId = 'az';
+  /** When the page was left, or null while it shows. */
+  let leftAt: number | null = null;
 
   const pool = () => TITLES.filter((t) => t.kind === kind && inList(t, 'all'));
 
@@ -34,6 +55,7 @@ export function libraryScreen(kind: Kind): Screen {
   /** Try again on the offline page is checking: its label says so for a moment. */
   let retrying = false;
   const filterSummary = h('span.lib-filter-summary');
+  const sortBtnSlot = h('span');
   const filterBtnSlot = h('span');
   const listTitle = h('div.lib-list-title');
   const contextEl = h('div.page-context');
@@ -68,6 +90,29 @@ export function libraryScreen(kind: Kind): Screen {
 
     const n = activeCount(defs, filters);
     replace(filterSummary, summary(defs, filters) || 'No filters');
+    // F4: Sort, a small button like Filters beside it (no Figma frame yet); OK opens its dropdown under it.
+    const sortBtn = button(`Sort · ${SORTS.find((s) => s.id === sort)!.short}`, {
+      icon: 'sort',
+      small: true,
+      key: 'sort',
+      onOk: () =>
+        app.push(
+          dropdown(
+            'Sort',
+            sortBtn,
+            SORTS.map((s) => ({
+              label: s.label,
+              checked: s.id === sort,
+              onOk: () => {
+                if (s.id === sort) return;
+                sort = s.id;
+                render();
+              },
+            })),
+          ),
+        ),
+    });
+    replace(sortBtnSlot, sortBtn);
     replace(
       filterBtnSlot,
       button(n ? `Filters · ${n}` : 'Filters', {
@@ -79,7 +124,8 @@ export function libraryScreen(kind: Kind): Screen {
     );
 
     const inChosen = all.filter((t) => inList(t, list));
-    const shown = applyFilters(defs, filters, inChosen);
+    const recent = sort === 'recent' ? recentRanks((list === 'all' ? ['my', ...lists.imported().map((l) => l.id)] : [list]).map((id) => orderOf(id, all))) : undefined;
+    const shown = sortTitles(applyFilters(defs, filters, inChosen), sort, recent);
     replace(listTitle, listName(list));
     const count = shown.length === inChosen.length ? `${shown.length} ${noun}` : `${shown.length} of ${inChosen.length} ${noun}`;
     replace(
@@ -186,7 +232,7 @@ export function libraryScreen(kind: Kind): Screen {
     h(
       'div.lib-scope',
       scopeEl,
-      h('span.lib-filters', filterSummary, filterBtnSlot),
+      h('span.lib-filters', filterSummary, sortBtnSlot, filterBtnSlot),
     ),
     chipsEl,
     h('div.lib-list-head', listTitle, listStatus),
@@ -208,14 +254,31 @@ export function libraryScreen(kind: Kind): Screen {
     app.refocus();
   });
 
-  return {
+  const screen: Screen = {
     label: heading,
     el,
     defaultFocus: () =>
       net.get() === 'loading'
         ? chipsEl.querySelector<HTMLElement>('.chip.is-selected')
         : (grid.querySelector<HTMLElement>('[data-default]') ?? grid.querySelector<HTMLElement>('[data-focus]') ?? pickBtn),
-    onShow: render,
+    onShow: () => {
+      // F2: back on the page after more than an hour away, what was set on it starts again, from the top, with focus
+      // on the page's default rather than a card that may now be out of view.
+      if (leftAt !== null && Date.now() - leftAt > AWAY_MS) {
+        for (const d of defs) filters[d.id] = 0;
+        list = 'all';
+        sort = 'az';
+        screen.memory?.clear();
+        screen.lastFocus = null;
+        screen.lastFocusKey = undefined;
+        page.scrollTop = 0;
+      }
+      leftAt = null;
+      render();
+    },
+    onLeave: () => {
+      leftAt ??= Date.now();
+    },
     // Back on the first chip, the row returns to its start so the label shows again.
     onFocus(el) {
       if (el.dataset.key === 'list-all') chipsEl.scrollLeft = 0;
@@ -229,6 +292,8 @@ export function libraryScreen(kind: Kind): Screen {
         app.moveWithin(actions, key);
         return true;
       }
+      // F4: nothing is left of Sort, so ← stays on it.
+      if (f.dataset.key === 'sort' && key === 'left') return true;
       if (!chipsEl.contains(f)) return false;
       const all = [...chipsEl.querySelectorAll<HTMLElement>('[data-focus]')];
       if (key === 'up' || (key === 'right' && all[all.length - 1] === f)) {
@@ -238,4 +303,10 @@ export function libraryScreen(kind: Kind): Screen {
       return false;
     },
   };
+  // F2: a full-screen page pushed over this one (Pick for me, a person from the title preview) leaves it too, though
+  // onLeave is only for tabs. The stage drops a covered page, as the TV detaches it, and its window reads as hidden.
+  app.onChange(() => {
+    if (!el.isConnected) leftAt ??= Date.now();
+  });
+  return screen;
 }

@@ -1,5 +1,5 @@
 # Generated from design_preview (screens/filterDefs.ts, the list rule of screens/library.ts) with the store's defaults.
-# defs kind ids | pred kind def option label short passing-ids | list kind choice count ids | default kind choice shown-ids summary active
+# defs kind ids | pred kind def option label short passing-ids | list kind choice count ids | default kind choice shown-ids summary active | figma kind choice shown-ids summary active (Figma's filters, the default before F2)
 defs	movie	availability:Availability,score:Review score,genre:Genre,runtime:Length,watch:Watch state
 pred	movie	availability	0	Everything		arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
 pred	movie	availability	1	Included only	Included only	arrival,dune,past-lives,mitchells,coda,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,marvel-one-shots,carnival-of-souls
@@ -34,13 +34,17 @@ pred	movie	watch	0	Seen or not		arrival,dune,past-lives,mitchells,coda,moon,kniv
 pred	movie	watch	1	Unwatched only	Unwatched	arrival,dune,past-lives,mitchells,coda,moon,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction,the-arrival-1996,blade-runner-2049,interstellar,marvel-one-shots,carnival-of-souls,harvey-girls
 pred	movie	watch	2	Seen only	Seen	knives-out,budapest
 list	movie	all	16	arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction
-default	movie	all	arrival,dune,past-lives,mitchells,coda,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,zone,anatomy,american-fiction	Included only · Review 7.0+	2
+default	movie	all	arrival,dune,past-lives,mitchells,coda,moon,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,maestro,zone,anatomy,american-fiction		0
+figma	movie	all	arrival,dune,past-lives,mitchells,coda,knives-out,budapest,eeaao,oppenheimer,killers,poor-things,zone,anatomy,american-fiction	Included only · Review 7.0+	2
 list	movie	my	6	arrival,dune,past-lives,oppenheimer,maestro,american-fiction
-default	movie	my	arrival,dune,past-lives,oppenheimer,american-fiction	Included only · Review 7.0+	2
+default	movie	my	arrival,dune,past-lives,oppenheimer,maestro,american-fiction		0
+figma	movie	my	arrival,dune,past-lives,oppenheimer,american-fiction	Included only · Review 7.0+	2
 list	movie	household	6	coda,moon,budapest,eeaao,killers,zone
-default	movie	household	coda,budapest,eeaao,killers,zone	Included only · Review 7.0+	2
+default	movie	household	coda,moon,budapest,eeaao,killers,zone		0
+figma	movie	household	coda,budapest,eeaao,killers,zone	Included only · Review 7.0+	2
 list	movie	friends	4	mitchells,knives-out,poor-things,anatomy
-default	movie	friends	mitchells,knives-out,poor-things,anatomy	Included only · Review 7.0+	2
+default	movie	friends	mitchells,knives-out,poor-things,anatomy		0
+figma	movie	friends	mitchells,knives-out,poor-things,anatomy	Included only · Review 7.0+	2
 defs	show	availability:Availability,score:Review score,genre:Genre,watch:Watch state
 pred	show	availability	0	Everything		severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
 pred	show	availability	1	Included only	Included only	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
@@ -67,10 +71,14 @@ pred	show	watch	0	Seen or not		severance,the-bear,dark,last-of-us,shogun,fallout
 pred	show	watch	1	Unwatched only	Unwatched	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet,carnival-row,larva-island,mrs-maisel,marvel-assembled,daredevil,carnival-eats,carnivale,911,911-lone-star
 pred	show	watch	2	Seen only	Seen	
 list	show	all	12	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet
-default	show	all	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet	Included only · Review 7.0+	2
+default	show	all	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet		0
+figma	show	all	severance,the-bear,dark,last-of-us,shogun,fallout,our-planet,microcosmos,peripheral,the-crown,wheel-of-time,blue-planet	Included only · Review 7.0+	2
 list	show	my	5	severance,the-bear,fallout,wheel-of-time,blue-planet
-default	show	my	severance,the-bear,fallout,wheel-of-time,blue-planet	Included only · Review 7.0+	2
+default	show	my	severance,the-bear,fallout,wheel-of-time,blue-planet		0
+figma	show	my	severance,the-bear,fallout,wheel-of-time,blue-planet	Included only · Review 7.0+	2
 list	show	household	4	last-of-us,shogun,our-planet,the-crown
-default	show	household	last-of-us,shogun,our-planet,the-crown	Included only · Review 7.0+	2
+default	show	household	last-of-us,shogun,our-planet,the-crown		0
+figma	show	household	last-of-us,shogun,our-planet,the-crown	Included only · Review 7.0+	2
 list	show	friends	3	dark,microcosmos,peripheral
-default	show	friends	dark,microcosmos,peripheral	Included only · Review 7.0+	2
+default	show	friends	dark,microcosmos,peripheral		0
+figma	show	friends	dark,microcosmos,peripheral	Included only · Review 7.0+	2
