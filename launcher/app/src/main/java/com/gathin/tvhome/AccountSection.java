@@ -61,6 +61,9 @@ final class AccountSection implements SettingsSection {
     private String drawn;
     private TextView countdown;
     private FrameLayout bar;
+    /** The import line and bar while the first read after a sign-in runs; null otherwise. */
+    private TextView importText;
+    private FrameLayout importBar;
 
     /** Choose lists, a sub-state of Signed in. */
     private boolean choosing;
@@ -222,9 +225,10 @@ final class AccountSection implements SettingsSection {
         if (phase == SignInFlow.Phase.SIGNED_IN && lists == null && !listsLoading && !listsFailed) loadLists();
         String key = phase + "|" + accounts.username() + "|" + flow.failure() + "|" + choosing + "|"
                 + flow.approveUrl() + "|" + (lists == null ? listsFailed : lists.size()) + "|" + accounts.lastSynced()
-                + "|" + shownValue();
+                + "|" + shownValue() + "|" + accounts.importing();
         if (key.equals(drawn)) {
             tick();
+            showImport();
             return;
         }
         drawn = key;
@@ -236,6 +240,8 @@ final class AccountSection implements SettingsSection {
         first = null;
         countdown = null;
         bar = null;
+        importText = null;
+        importBar = null;
         if (!accounts.available()) unavailable();
         else if (choosing) chooseLists();
         else {
@@ -379,8 +385,35 @@ final class AccountSection implements SettingsSection {
         hold.addView(in, centred());
         LinearLayout side = side(R.string.account_signing_in_title);
         side.addView(steps(2), PaneParts.wide(28));
+        if (accounts.importing()) side.addView(importRow(), importParams(28));
         side.addView(PaneParts.note(ctx, ctx.getString(R.string.account_importing), true), PaneParts.wide(40));
         qrRow(hold, side);
+    }
+
+    /** "Importing your lists… 3 of 5" over a green bar, while the first read after a sign-in runs (r2-account A). */
+    private View importRow() {
+        LinearLayout box = PaneParts.column(ctx);
+        importText = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_2, Ui.REGULAR);
+        box.addView(importText);
+        importBar = PaneParts.bar(ctx, Ui.GOOD);
+        box.addView(importBar, PaneParts.wide(10));
+        showImport();
+        return box;
+    }
+
+    private LinearLayout.LayoutParams importParams(int top) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(500), ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = Ui.px(top);
+        return lp;
+    }
+
+    /** The import line and bar, in place: a step doesn't rebuild the pane (focus and the QR stay as they are). */
+    private void showImport() {
+        if (importText == null || importBar == null) return;
+        int total = accounts.importTotal(), done = accounts.importDone();
+        importText.setText(total > 0 ? ctx.getString(R.string.account_import_progress, done, total)
+                : ctx.getString(R.string.account_import_starting));
+        PaneParts.setBar(importBar, total > 0 ? (float) done / total : 0f);
     }
 
     private void expired() {
@@ -438,6 +471,7 @@ final class AccountSection implements SettingsSection {
         who.addView(good, PaneParts.below(6));
         user.addView(who, PaneParts.after(24));
         column.addView(user, PaneParts.wide(20));
+        if (accounts.importing()) column.addView(importRow(), importParams(18));
 
         Map<SyncList, List<String>> mine = router.data().household.syncedLists();
         LinearLayout kvs = PaneParts.column(ctx);

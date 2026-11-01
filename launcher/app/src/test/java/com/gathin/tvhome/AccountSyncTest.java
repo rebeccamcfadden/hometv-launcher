@@ -63,6 +63,31 @@ public class AccountSyncTest {
     }
 
     @Test
+    public void aFullReadReportsEachListOnceAndAPushNothing() {
+        List<String> steps = new ArrayList<>();
+        new AccountSync(tmdb, SESSION, ledger, SETTINGS).withProgress((d, t) -> steps.add(d + "/" + t))
+                .run(local, 1000, true);
+        // My list, Favorites and Seen, then each shown list: one step each, after a 0 to start.
+        int total = SyncList.values().length + SETTINGS.shown.size();
+        List<String> expected = new ArrayList<>();
+        for (int i = 0; i <= total; i++) expected.add(i + "/" + total);
+        assertEquals(expected, steps);
+        steps.clear();
+        new AccountSync(tmdb, SESSION, ledger, SETTINGS).withProgress((d, t) -> steps.add(d + "/" + t))
+                .run(local, 2000, false);
+        assertTrue(steps.isEmpty());
+    }
+
+    @Test
+    public void aListThatCantBeFoundStillCountsAsAStep() {
+        List<String> steps = new ArrayList<>();
+        new AccountSync(tmdb, SESSION, ledger, showing("No such list")).withProgress((d, t) -> steps.add(d + "/" + t))
+                .run(local, 1000, true);
+        int total = SyncList.values().length + 1;
+        assertEquals(total + "/" + total, steps.get(steps.size() - 1));
+    }
+
+    @Test
     public void firstFullSyncReadsEveryList() {
         AccountSync.Result r = run(1000, true);
         assertFalse(r.signedOut);

@@ -89,6 +89,25 @@ final class AccountSync {
         this.settings = settings;
     }
 
+    /** Lists read so far of a full read, for the Account pane's import bar; called on the sync's thread. */
+    interface Progress {
+        void step(int done, int total);
+    }
+
+    private Progress progress;
+    private int done, total;
+
+    /** Reports each list read in a full read: My list, Favorites, Seen, then each shown list. */
+    AccountSync withProgress(Progress p) {
+        progress = p;
+        return this;
+    }
+
+    private void step() {
+        done++;
+        if (progress != null) progress.step(Math.min(done, total), total);
+    }
+
     /**
      * @param local the TV's writable lists now (My list, Favorites, Seen), each in its order
      * @param pull false to only send the queued changes, as after a change on the TV
@@ -104,8 +123,16 @@ final class AccountSync {
         try {
             if (pull || hasDue(SyncList.SEEN, now)) findLists(pull);
             if (pull) {
+                total = SyncList.values().length + settings.shown.size();
+                done = 0;
+                if (progress != null) progress.step(0, total);
                 for (SyncList list : SyncList.values()) {
-                    List<String> remote = read(list);
+                    List<String> remote;
+                    try {
+                        remote = read(list);
+                    } finally {
+                        step();
+                    }
                     if (remote == null) continue;
                     List<String> mineNow = local.get(list);
                     ListMerge.Result m = ListMerge.merge(mineNow == null ? Collections.<String>emptyList() : mineNow,
@@ -239,27 +266,36 @@ final class AccountSync {
         if (settings.shown.isEmpty()) return;
         List<TmdbAccountParse.ListInfo> own = mine();
         for (ListRef ref : settings.shown) {
-            long id = ref.resolve(own);
-            if (id == 0) {
-                if (own != null) problems.add("no list named " + ref);
-                continue;
-            }
-            List<String> ids = new ArrayList<>();
-            String name = "";
             try {
-                for (int page = 1; page <= TmdbAccountApi.MAX_PAGES; page++) {
-                    TmdbAccountParse.Page p = TmdbAccountParse.page(send(TmdbAccountApi.listPage(id, page)), null);
-                    if (page == 1) name = p.name;
-                    addAll(ids, p.ids);
-                    if (page >= p.totalPages) break;
-                }
-            } catch (TmdbAccountParse.Failure f) {
-                note(f, ref.toString());
-                continue;
+                readShown(out, own, ref);
+            } finally {
+                step();
             }
-            String ownName = nameOf(own, id);
-            out.put(ref.toString(), new ImportedLists.Entry(ref, id, ownName.isEmpty() ? name : ownName, ids));
         }
+    }
+
+    private void readShown(Map<String, ImportedLists.Entry> out, List<TmdbAccountParse.ListInfo> own, ListRef ref)
+            throws SignedOut {
+        long id = ref.resolve(own);
+        if (id == 0) {
+            if (own != null) problems.add("no list named " + ref);
+            return;
+        }
+        List<String> ids = new ArrayList<>();
+        String name = "";
+        try {
+            for (int page = 1; page <= TmdbAccountApi.MAX_PAGES; page++) {
+                TmdbAccountParse.Page p = TmdbAccountParse.page(send(TmdbAccountApi.listPage(id, page)), null);
+                if (page == 1) name = p.name;
+                addAll(ids, p.ids);
+                if (page >= p.totalPages) break;
+            }
+        } catch (TmdbAccountParse.Failure f) {
+            note(f, ref.toString());
+            return;
+        }
+        String ownName = nameOf(own, id);
+        out.put(ref.toString(), new ImportedLists.Entry(ref, id, ownName.isEmpty() ? name : ownName, ids));
     }
 
     private static String nameOf(List<TmdbAccountParse.ListInfo> lists, long id) {

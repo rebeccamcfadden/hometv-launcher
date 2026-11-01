@@ -142,6 +142,9 @@ milestones: [docs/rework.md](docs/rework.md).
   and adds nothing from the TV; the same account again carries on with its queue. Signing out keeps the lists on the
   TV. The tokens are in the private SharedPreferences file `tmdb_account`, never logged; account calls skip the disk
   cache (`TmdbClient.send`).
+- **Import bar (2026-10-31):** the first full read after a sign-in shows "Importing your lists… 3 of 5" with a green
+  bar in the Account pane (My list, Favorites, Seen, then each shown list; `AccountSync.withProgress`), as in
+  r2-account A. Unit-tested; not yet seen on screen, since it needs a real sign-in.
 - **Still to come:** the sign-in and first-run designs, and whether a first run asks to sign in.
 - **Not seen yet:** a real approval (the project lead approves one on the TV), and so the session, the account's
   name, making the Seen list and the sync against a real account. Checked on the emulator: the code and its QR

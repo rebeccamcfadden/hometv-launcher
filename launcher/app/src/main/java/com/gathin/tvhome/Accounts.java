@@ -191,6 +191,12 @@ final class Accounts implements Household.Recorder {
         TmdbSession s = session;
         if (run != SyncPlan.Run.PUBLIC && s == null) return;
         running = true;
+        // The first full read after a sign-in shows its progress in the Account pane ("Importing your lists… 3 of 5").
+        boolean showImport = importPending && run == SyncPlan.Run.FULL;
+        if (showImport) {
+            importDone = 0;
+            importTotal = 0;
+        }
         Map<SyncList, List<String>> local = localForSync();
         List<SyncLedger.Op> unsent = household.unsent();
         AccountSync.Settings settings = settings();
@@ -211,10 +217,18 @@ final class Accounts implements Household.Recorder {
                 // Changes saved on the TV but not queued yet (the process died first) are queued before the merge.
                 main.post(() -> household.queued(unsent));
             }
-            AccountSync.Result r = new AccountSync(http, s, l, settings).run(local, at,
-                    run == SyncPlan.Run.FULL || adopted);
+            AccountSync sync = new AccountSync(http, s, l, settings);
+            if (showImport) {
+                sync.withProgress((done, total) -> main.post(() -> {
+                    if (s != session) return;
+                    importDone = done;
+                    importTotal = total;
+                    changed();
+                }));
+            }
+            AccountSync.Result r = sync.run(local, at, run == SyncPlan.Run.FULL || adopted);
             saveLedger();
-            main.post(() -> finish(s, settings, r, readAt, at));
+            main.post(() -> finish(s, settings, r, readAt, at, showImport));
         });
     }
 
@@ -225,8 +239,14 @@ final class Accounts implements Household.Recorder {
         return local;
     }
 
-    private void finish(TmdbSession s, AccountSync.Settings used, AccountSync.Result r, int readAt, long at) {
+    private void finish(TmdbSession s, AccountSync.Settings used, AccountSync.Result r, int readAt, long at,
+            boolean imported) {
         running = false;
+        if (imported) {
+            importPending = false;
+            importTotal = -1;
+            changed();
+        }
         if (s != session) {
             next();
             return;
@@ -276,6 +296,24 @@ final class Accounts implements Household.Recorder {
     /** When the account's lists were last read in full since Home started (ms), or 0 for not yet. */
     long lastSynced() {
         return lastFull;
+    }
+
+    /** Main thread: the first full read after a sign-in wants its progress shown (and hasn't finished). */
+    private boolean importPending;
+    /** Lists read so far, of {@link #importTotal}; total -1 while no import runs, 0 before the first step. */
+    private int importDone, importTotal = -1;
+
+    /** Whether the first read after a sign-in is running, for the Account pane's import bar. */
+    boolean importing() {
+        return importTotal >= 0;
+    }
+
+    int importDone() {
+        return importDone;
+    }
+
+    int importTotal() {
+        return importTotal;
     }
 
     /** Worker: the shown lists set by number, read with the app's token. A list that fails keeps its copy. */
@@ -457,6 +495,7 @@ final class Accounts implements Household.Recorder {
             // The mock lists go now that the TV has an account; the lists chosen to show come back.
             loadImported();
             // A new account's lists replace the TV's (SeedPolicy); the same account carries on.
+            importPending = true;
             request(SyncPlan.Run.FULL);
         }
         signInTick();
@@ -483,6 +522,8 @@ final class Accounts implements Household.Recorder {
     private void dropSession() {
         if (flow.phase() == SignInFlow.Phase.SIGNED_IN) flow.signOut();
         session = null;
+        importPending = false;
+        importTotal = -1;
         store.clear();
         main.removeCallbacks(pushSoon);
         main.removeCallbacks(fullSoon);

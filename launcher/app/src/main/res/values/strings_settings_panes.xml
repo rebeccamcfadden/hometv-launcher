@@ -37,6 +37,8 @@
     <string name="account_approved">Approved on your phone</string>
     <string name="account_signing_in_title">Signing in…</string>
     <string name="account_importing">Then your lists come in: My list, Seen and Favorites first, then the lists shown as chips.</string>
+    <string name="account_import_starting">Importing your lists…</string>
+    <string name="account_import_progress">Importing your lists… %1$d of %2$d</string>
     <string name="account_expired_over">Code expired</string>
     <string name="account_expired_title">That code has expired</string>
     <string name="account_expired_sub">Codes last 15 minutes. Nothing changed on this TV; get a new code and scan again.</string>
