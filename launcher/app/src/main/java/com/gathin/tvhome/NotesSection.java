@@ -146,7 +146,7 @@ final class NotesSection implements SettingsSection {
         if (setup == null) {
             column.addView(kvs, PaneParts.wide(18));
         } else {
-            // The QR beside the address and code: scanned with the iPhone camera, it opens a page to copy both from.
+            // The QR beside the address and code: scanned with a phone's camera, it opens the setup page (notes_setup.html).
             LinearLayout row = PaneParts.across(ctx);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.addView(kvs, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));

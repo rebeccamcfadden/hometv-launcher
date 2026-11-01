@@ -59,7 +59,7 @@ export function notesPane(_host: PaneHost): Pane {
         h('div.pane-title', 'Send lists from your phones'),
         h(
           'div.pane-sub',
-          'Share a watch-list note to “Send to TV” on an iPhone. New lines are looked up and added to that person’s TMDB list; deleting a line on the phone takes nothing off.',
+          'Share a watch-list note to “Send to TV” on a phone. New lines are looked up and added to that person’s TMDB list; deleting a line on the phone takes nothing off.',
         ),
         h('div.pane-seg', onOff),
         on && !signedIn
@@ -74,11 +74,12 @@ export function notesPane(_host: PaneHost): Pane {
                   h('div.kv', h('span', 'Address'), h('b.notes-mono', INBOX_URL)),
                   h('div.kv', h('span', 'Pairing code'), h('b.notes-code', notes.code())),
                 ),
-                // Scanned with the iPhone camera: http://<tv>:8765/setup#<code>, a page to get the shared Shortcut and pair it.
+                // Scanned with a phone's camera: http://<tv>:8765/setup#<code>, a page to get the shared Shortcut and pair it, or
+                // (Android) the HTTP Shortcuts settings to copy.
                 h(
                   'div.notes-qr',
                   h('div.notes-qr-img', { html: qrSvg(200) }),
-                  h('div.notes-qr-cap', 'Scan with the iPhone camera to add the Shortcut or pair the phone again'),
+                  h('div.notes-qr-cap', 'Scan with a phone’s camera to set up Send to TV, or to pair again'),
                 ),
               ),
               h('div.pane-note.pane-note--tiny', 'Plain HTTP on your home network: the code only lets a phone add titles to your lists.'),

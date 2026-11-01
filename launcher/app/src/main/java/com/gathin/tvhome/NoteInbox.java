@@ -230,7 +230,7 @@ final class NoteInbox {
                 wrong = 0;
                 lockedUntil = now + LOCKOUT_MS;
             }
-            return Reply.error(401, "Wrong pairing code. Scan the QR in the TV's Launcher settings → Phone notes and tap Pair this phone.");
+            return Reply.error(401, "Wrong pairing code. Scan the QR in the TV's Launcher settings → Phone notes again.");
         }
         wrong = 0;
         String list = q.query("list");

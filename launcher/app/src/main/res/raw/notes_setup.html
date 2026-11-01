@@ -16,6 +16,7 @@
   li { margin: 6px 0; }
   code { font: 15px ui-monospace, Menlo, monospace; color: #e6e9ee; }
   .warn { color: #f2c46d; }
+  a:not(.btn) { color: #c4ddf7; }
   a.btn { display: block; text-align: center; font: 600 18px -apple-system, system-ui, sans-serif; padding: 14px 16px; border-radius: 12px; background: #c4ddf7; color: #101820; text-decoration: none; margin: 10px 0 6px; }
   h2 { font-size: 18px; margin: 26px 0 4px; }
   details { margin-top: 28px; }
@@ -24,13 +25,15 @@
 </head>
 <body data-shortcut="{{shortcut}}">
 <h1>Send to TV</h1>
-<p>Each iPhone gets the shortcut once, then pairs it with this TV. Pair again whenever the TV shows a new code.</p>
+<p>Share a watch-list note from your phone to this TV. On an Android phone, see <a href="#android">Android</a> below.</p>
 <p id="nocode" class="warn" hidden>No pairing code in this link: scan the QR in the TV's Launcher settings → Phone notes again.</p>
 
+<section id="ios">
+<p>Each iPhone gets the shortcut once, then pairs it with this TV. Pair again whenever the TV shows a new code.</p>
 <div id="get" hidden>
 <h2>1. Get the shortcut</h2>
 <a class="btn" id="getlink" href="#">Get the shortcut</a>
-<p>Opens iCloud: tap <b>Add Shortcut</b>, then come back to this page. Only once per phone.</p>
+<p>Delete any older shortcut called <b>Send to TV</b> first. Then this opens iCloud: tap <b>Add Shortcut</b>, and come back to this page. Only once per phone.</p>
 </div>
 <p id="noget" hidden>This TV has no shared shortcut link yet. Someone in the household makes it once (docs/phone-notes.md, "Making the shortcut, once") and puts its iCloud link in the TV's <code>note_shortcut_url</code>; or build a simple one by hand, below.</p>
 
@@ -67,6 +70,31 @@
   <li>Add <b>Get Dictionary Value</b>: Value for key <code>message</code>. Then add <b>Show Notification</b> with the <b>Dictionary Value</b>. Tap <b>Done</b>.</li>
 </ol>
 </details>
+</section>
+
+<details id="android">
+<summary>On an Android phone: the HTTP Shortcuts app</summary>
+<p>Install <b>HTTP Shortcuts</b> (free, from Google Play or F-Droid). Type whose list this phone's notes go to, then copy each value below into the app.</p>
+<label for="alist">Your list's name</label>
+<div class="row"><input id="alist" autocomplete="off" autocapitalize="words" placeholder="Rebecca"></div>
+<label for="aurl">URL</label>
+<div class="row"><input id="aurl" readonly><button data-copy="aurl">Copy</button></div>
+<label for="aauth">Authorization header value</label>
+<div class="row"><input id="aauth" readonly><button data-copy="aauth">Copy</button></div>
+<label for="ascript">Script for Run on Success and Run on Failure</label>
+<div class="row"><input id="ascript" readonly><button data-copy="ascript">Copy</button></div>
+<ol>
+  <li>In HTTP Shortcuts, open <b>&#8942;</b> &rarr; <b>Global Variables</b> &rarr; <b>+</b> &rarr; <b>Static Variable</b>. Name it <code>note</code>, tick <b>Allow Receiving Value from Share Dialog</b>, and save.</li>
+  <li>On the main screen, tap <b>+</b> &rarr; <b>Regular Shortcut</b> and name it <b>Send to TV</b>.</li>
+  <li><b>Basic Request Settings</b>: method <b>POST</b>; URL: paste the URL above.</li>
+  <li><b>Request Headers</b>: add <code>Authorization</code> with the value above.</li>
+  <li><b>Request Body / Parameters</b>: body type <b>Custom Text</b>, content type <code>text/plain</code>; for the body, tap <b>{ }</b> and pick <code>note</code>.</li>
+  <li><b>Response Handling</b>: set both On Success and On Failure to show nothing.</li>
+  <li><b>Scripting</b>: paste the script above into <b>Run on Success</b> and into <b>Run on Failure</b>; it shows the TV's answer.</li>
+  <li><b>Trigger &amp; Execution Settings</b> (Android 11 and later): tick the Direct Share option, so <b>Send to TV</b> shows in the share sheet. Save.</li>
+</ol>
+<p>Send: in Google Keep, open the note, then &#8942; &rarr; Send &rarr; Send via other apps &rarr; <b>Send to TV</b> (or HTTP Shortcuts). In Samsung Notes, Share &rarr; Text &rarr; <b>Send to TV</b>. After a new code on the TV, scan its QR again and paste the new Authorization value into the shortcut.</p>
+</details>
 <p>The code stays on this phone: it is in the link after the #, which is never sent to the TV.</p>
 <script>
   // The code is in the fragment (never sent over the network); the address is this page's own origin.
@@ -90,6 +118,22 @@
     document.getElementById('pair').href = 'shortcuts://run-shortcut?name=' + encodeURIComponent('Send to TV')
         + '&input=text&text=' + encodeURIComponent(pairing);
     document.getElementById('pairbox').hidden = false;
+  }
+  // Android: the HTTP Shortcuts settings, with the list in the URL so the note can go as plain text.
+  var alist = document.getElementById('alist'), aurl = document.getElementById('aurl');
+  var listUrl = function () {
+    var name = alist.value.trim();
+    aurl.value = name ? location.origin + '/notes?list=' + encodeURIComponent(name) : 'Type your list\'s name above';
+  };
+  alist.addEventListener('input', listUrl);
+  listUrl();
+  document.getElementById('aauth').value = code ? 'Bearer ' + code : '';
+  document.getElementById('ascript').value = "var m = ''; try { m = JSON.parse(response.body).message; } catch (e) {} "
+      + "showToast(m || 'Could not reach the TV: is this phone on the home Wi-Fi?');";
+  if (/Android/i.test(navigator.userAgent)) {
+    // The iPhone buttons don't work here: show Android's settings first, open.
+    document.getElementById('ios').hidden = true;
+    document.getElementById('android').open = true;
   }
   [].forEach.call(document.querySelectorAll('[data-copy]'), function (b) {
     b.addEventListener('click', function () {

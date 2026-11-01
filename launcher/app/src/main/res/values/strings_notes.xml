@@ -9,7 +9,7 @@
 
     <!-- The pane. -->
     <string name="notes_pane_title">Send lists from your phones</string>
-    <string name="notes_pane_sub">Share a watch-list note to “Send to TV” on an iPhone. New lines are looked up and added to that person’s TMDB list; deleting a line on the phone takes nothing off.</string>
+    <string name="notes_pane_sub">Share a watch-list note to “Send to TV” on a phone. New lines are looked up and added to that person’s TMDB list; deleting a line on the phone takes nothing off.</string>
     <string name="notes_on">On</string>
     <string name="notes_off">Off</string>
     <string name="notes_off_note">Off: the TV doesn’t listen for phones.</string>
@@ -24,7 +24,7 @@
     <string name="notes_new_code_body">Phones with the old code can’t send until they scan the new QR and pair again.</string>
     <string name="notes_cancel">Cancel</string>
     <string name="notes_help">How to set up a phone</string>
-    <string name="notes_qr_caption">Scan with the iPhone camera to add the Shortcut or pair the phone again</string>
+    <string name="notes_qr_caption">Scan with a phone’s camera to set up Send to TV, or to pair again</string>
     <string name="notes_qr_description">QR code that opens a setup page with this address and code</string>
     <string name="notes_help_toast">docs/phone-notes.md: the “Send to TV” Shortcut, step by step</string>
     <string name="notes_last_sends">Last sends</string>

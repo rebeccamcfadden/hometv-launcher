@@ -251,7 +251,7 @@
 
     <!-- Phone notes (docs/phone-notes.md; docs/rework.md, Phone notes, 2026-10-31): while on, the TV listens on the
          home network (port 8765, POST /notes with the pairing code from Launcher settings → Phone notes) for a
-         watch-list note an iPhone's "Send to TV" Shortcut shares, and adds its new lines to the signed-in TMDB
+         watch-list note a phone's "Send to TV" shortcut shares, and adds its new lines to the signed-in TMDB
          account's list of that name (a private one is made if there is none). This is only the default: the On / Off
          switch in Launcher settings saves the household's choice, which wins. Off by default; a pushed config.json
          can set "note_inbox": true. -->

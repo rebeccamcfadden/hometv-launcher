@@ -430,8 +430,9 @@ menu steps the states.
 #### Phone notes
 
 Not designed in Figma yet; drafted from the Account pane's parts (2026-10-31). Each person keeps a watch list in a
-note on their iPhone (Apple Notes or Google Keep) and shares it to a "Send to TV" Shortcut, which posts the note's
-text and their list's name to the TV over the home network. The TV looks each new line up on TMDB and adds it to that
+note on their phone (Apple Notes or Google Keep; on Android, Keep or Samsung Notes) and shares it to a "Send to TV"
+shortcut (the Shortcuts app on an iPhone, HTTP Shortcuts on Android), which posts the note's text and their list's name
+to the TV over the home network. The TV looks each new line up on TMDB and adds it to that
 person's TMDB list (making a private one with that name if the account has none), so it shows as a chip in Movies and
 TV Shows. Adding only: a line deleted on the phone takes nothing off, and a title taken off on the TV isn't put back.
 A ticked line goes to Seen. Off by default.
