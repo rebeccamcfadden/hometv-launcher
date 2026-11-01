@@ -258,11 +258,18 @@ milestones: [docs/rework.md](docs/rework.md).
   `P4983` shows, kept a month) for Netflix (`P1874`), Disney+ (`P13902`, `P7595`/`P7596`), Apple TV
   (`P9586`/`P9751`), HBO Max (`P8298`), Prime Video (`P14462`, `P14440`, `P8055`) and SVT Play (`P6817`), and
   `DeepLinks` builds the links (formats after cleanyourtv-ui's `DeepLinks.java`). The link goes as an ACTION_VIEW
-  intent limited to the service's package (Netflix with `source=30`); when no installed app takes it, the app opens
-  on its home screen as before.
-- **Mock or missing:** episodes still open the show. TV4 Play, Viaplay, SkyShowtime and the Swedish stores have no
-  Wikidata property, so they open on their home screen. The emulator has none of these apps: whether each TV app
-  takes its link is still to be checked on the TV.
+  intent limited to the service's package (Netflix with `source=30`), in a cleared task of its own
+  (`Services.LINK_FLAGS`: without it an app that is already running comes to the front and drops the link); when no
+  installed app takes it, or the app refuses it, the app opens on its home screen as before.
+- **On the TV (TCL, 2026-11-02):** Apple TV, Netflix and Prime Video (after its profile picker) open the title.
+  Disney+ was signed out on that TV. HBO Max's app answers Wikidata's old `series/urn:hbo` ids with "Content Not
+  Available", so only its current `show|movie|mini-series/<uuid>` ids are used (about 110 of 670 on Wikidata,
+  2026-11-02); with only an old id the app opens on its home screen. SVT Play's app takes no `svtplay.se` web link, so
+  it opens on its home screen; the recheck reads its declared link filters. Recheck pending for the warm case
+  (the app already running) and HBO Max's current ids.
+- **Mock or missing:** episodes still open the show: Wikidata has no service id for any episode (0 of 210 across five
+  big shows, 2026-11-01); Netflix's `/watch/<show id>` (which may resume the next episode) is in the recheck. TV4 Play, Viaplay, SkyShowtime and the
+  Swedish stores have no Wikidata property, so they open on their home screen.
 - **US (Family install step 2):** Netflix, Disney+, Apple TV, HBO Max and Prime Video open the title in the US too
   (the same Wikidata ids). Hulu has `P6466`/`P6467` (about 1,650 movies and 1,600 series on Wikidata, 2026-11-01),
   Peacock `P11815` (about 40), Paramount+ `P13147` (about 210), Tubi `P7760`/`P7761` (about 3,200 and 400) and

@@ -24,6 +24,7 @@ package com.hometv.launcher;
 
 import java.text.Normalizer;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -43,7 +44,12 @@ final class DeepLinks {
     private static final Pattern DISNEY = Pattern.compile("[0-9A-Za-z]{12}");
     private static final Pattern DISNEY_BROWSE = Pattern.compile("entity-[0-9a-f-]{36}");
     private static final Pattern APPLE = Pattern.compile("umc\\.cmc\\.[a-z0-9]{20,30}");
-    private static final Pattern MAX = Pattern.compile("[A-Za-z0-9][A-Za-z0-9:/._-]{0,120}");
+    /**
+     * HBO Max: only the current app's ids, {@code show/}, {@code movie/} or {@code mini-series/} and a UUID. Wikidata's
+     * P8298 also holds the old HBO Max app's {@code series/urn:hbo:...} ids, which today's app takes but answers with
+     * "Content Not Available" (checked on the TV, 2026-11-02): with only those, the app opens on its home screen.
+     */
+    private static final Pattern MAX = Pattern.compile("(show|movie|mini-series)/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Pattern GTI = Pattern.compile("amzn1\\.dv\\.gti\\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Pattern ASIN = Pattern.compile("B[0-9A-Z]{9}");
     private static final Pattern PRIME_ID = Pattern.compile("[0-9A-Za-z][0-9A-Za-z.-]{5,63}");
@@ -68,8 +74,8 @@ final class DeepLinks {
                 v = ok(ids.first(movie ? WikidataIds.APPLE_MOVIE : WikidataIds.APPLE_SHOW), APPLE);
                 return v == null ? null : "https://tv.apple.com/" + (movie ? "movie/" : "show/") + slug(name) + "/" + v;
             case "max":
-                v = ok(ids.first(WikidataIds.MAX), MAX);
-                return v == null || v.contains("..") ? null : "https://play.hbomax.com/" + v;
+                v = firstOk(ids.all(WikidataIds.MAX), MAX);
+                return v == null ? null : "https://play.hbomax.com/" + v;
             case "prime":
             case "amazonvideo":
                 v = ok(ids.first(WikidataIds.PRIME_GTI), GTI);
@@ -98,6 +104,12 @@ final class DeepLinks {
 
     private static String ok(String value, Pattern shape) {
         return value != null && shape.matcher(value).matches() ? value : null;
+    }
+
+    /** The first of a property's values that has the shape, or null (a title can carry an old and a new id). */
+    private static String firstOk(List<String> values, Pattern shape) {
+        for (String v : values) if (ok(v, shape) != null) return v;
+        return null;
     }
 
     /** "Le Fabuleux Destin d'Amélie Poulain" becomes "le-fabuleux-destin-d-amelie-poulain"; "x" for nothing left. */

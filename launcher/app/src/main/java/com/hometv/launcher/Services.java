@@ -96,6 +96,14 @@ final class Services {
     }
 
     /**
+     * The flags a title link is started with: a task of its own, cleared first. Without CLEAR_TASK an app that is
+     * already running just comes to the front and drops the link ("its current task has been brought to the front",
+     * Apple TV, HBO Max and Prime Video on the TV, 2026-11-02); with it Apple TV opened the title. Plain app opens
+     * keep the app where it was, so only links use these.
+     */
+    static final int LINK_FLAGS = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK;
+
+    /**
      * The intent that opens {@code url} (a title's page, {@link DeepLinks}) in the service's own app, limited to its
      * package so no browser picks it up; null when there is no link or no installed app of the service takes it.
      * Netflix's TV app wants to be told the link is a deep link (cleanyourtv-ui's DeepLinks.java).
@@ -104,7 +112,7 @@ final class Services {
         if (url == null) return null;
         PackageManager pm = ctx.getPackageManager();
         for (String pkg : table.packages(id)) {
-            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage(pkg);
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage(pkg).addFlags(LINK_FLAGS);
             if (id == ServiceId.NETFLIX) i.putExtra("source", "30");
             if (i.resolveActivity(pm) != null) return i;
         }

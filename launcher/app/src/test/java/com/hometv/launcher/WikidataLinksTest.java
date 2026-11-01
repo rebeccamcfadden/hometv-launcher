@@ -6,7 +6,9 @@ import org.junit.Test;
 import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -97,13 +99,13 @@ public class WikidataLinksTest {
     public void everyServicesFormat() {
         Map<String, String> v = new LinkedHashMap<>();
         v.put(WikidataIds.DISNEY_SERIES, "52m6nx7HoP5F");
-        v.put(WikidataIds.MAX, "series/urn:hbo:series:GWukCJAq-nIuHwwEAAAB4");
+        v.put(WikidataIds.MAX, "show/0b5e3d8b-6b3f-4f8e-9c1a-2d4e5f6a7b8c");
         v.put(WikidataIds.PRIME_ID, "amzn1.dv.gti.59c224c3-6b38-4e4a-a399-4271e52985d5");
         v.put(WikidataIds.SVT_PLAY, "bron");
         WikidataIds ids = ids(v);
         assertEquals("https://www.disneyplus.com/series/bron-broen/52m6nx7HoP5F",
                 DeepLinks.link("disney", Kind.SHOW, ids, "Bron/Broen"));
-        assertEquals("https://play.hbomax.com/series/urn:hbo:series:GWukCJAq-nIuHwwEAAAB4",
+        assertEquals("https://play.hbomax.com/show/0b5e3d8b-6b3f-4f8e-9c1a-2d4e5f6a7b8c",
                 DeepLinks.link("max", Kind.SHOW, ids, "Succession"));
         assertEquals("https://app.primevideo.com/detail?gti=amzn1.dv.gti.59c224c3-6b38-4e4a-a399-4271e52985d5",
                 DeepLinks.link("prime", Kind.SHOW, ids, "X"));
@@ -112,6 +114,29 @@ public class WikidataLinksTest {
         assertNull(DeepLinks.link("tv4play", Kind.SHOW, ids, "X"));
         assertNull(DeepLinks.link("viaplay", Kind.SHOW, ids, "X"));
         assertNull(DeepLinks.link("sfanytime", Kind.SHOW, ids, "X"));
+    }
+
+    @Test
+    public void maxTakesOnlyTheCurrentAppsIds() {
+        Map<String, List<String>> v = new HashMap<>();
+        // The old HBO Max app's id first, as Wikidata may list it: today's app says "Content Not Available" to it.
+        v.put(WikidataIds.MAX, Arrays.asList("series/urn:hbo:series:GVU2cggagzYNJjhsJATwo",
+                "show/0b5e3d8b-6b3f-4f8e-9c1a-2d4e5f6a7b8c"));
+        assertEquals("https://play.hbomax.com/show/0b5e3d8b-6b3f-4f8e-9c1a-2d4e5f6a7b8c",
+                DeepLinks.link("max", Kind.SHOW, new WikidataIds("Q1", v), "Game of Thrones"));
+        v.put(WikidataIds.MAX, Collections.singletonList("feature/urn:hbo:feature:GYFz0PgbuRQPCEgEAAAAF"));
+        assertNull("only an old id: the app opens on its home screen",
+                DeepLinks.link("max", Kind.MOVIE, new WikidataIds("Q1", v), "X"));
+        v.put(WikidataIds.MAX, Collections.singletonList("movie/d5e3be11-eb8b-449f-89cf-db887ddee777"));
+        assertEquals("https://play.hbomax.com/movie/d5e3be11-eb8b-449f-89cf-db887ddee777",
+                DeepLinks.link("max", Kind.MOVIE, new WikidataIds("Q1", v), "X"));
+    }
+
+    @Test
+    public void titleLinksStartInAClearedTaskOfTheirOwn() {
+        // An app already running otherwise just comes to the front and drops the link (TV check, 2026-11-02): the
+        // value Apple TV opened the title with, 0x10008000.
+        assertEquals(0x10008000, Services.LINK_FLAGS);
     }
 
     @Test
