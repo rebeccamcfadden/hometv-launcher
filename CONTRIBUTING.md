@@ -60,8 +60,8 @@ override it, and a pull request that names them comes back for a rework.
 
 ## 2. Improve the launcher
 
-The launcher lives in `launcher/` and is deliberately small: plain Java, AndroidX RecyclerView and
-DynamicAnimation, no Kotlin, no Compose. It targets TVs with 1 GB of RAM. In this fork it may use the network for
+The launcher lives in `launcher/` and is deliberately small: plain Java and Android Views, no libraries, no Kotlin,
+no Compose. It targets TVs with 1 GB of RAM. In this fork it may use the network for
 the features [AGENTS.md](AGENTS.md#this-fork) lists (weather, catalogue search, availability and prices, artwork,
 cast and recommendations), within limits: no analytics or telemetry, no heavy background polling, cache what it
 fetches, never block Home on the network, and keep local content working offline. A speed-up or slow-down
