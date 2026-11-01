@@ -107,15 +107,10 @@ class CardScriptOutputTest(unittest.TestCase):
                                     f"{name}'s usage line names {rel}, which the repo does not ship: "
                                     "a reader who follows it writes a new file that nothing links")
 
-    def test_the_card_script_writes_the_picture_the_front_page_shows(self):
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        shown = set(re.findall(r'<img src="(docs/[^"]*card[^"]*)"', readme))
-        self.assertTrue(shown, "README.md no longer displays a card image, so this check would prove nothing")
+    def test_the_card_script_names_a_picture_the_repo_ships(self):
         named = set(DOCS_PICTURE.findall(docstring_of(TOOLS / "readme_card.py")))
-        for rel in sorted(shown):
-            with self.subTest(picture=rel):
-                self.assertIn(rel, named,
-                              f"README.md displays {rel} but readme_card.py's usage line writes {sorted(named)}")
+        self.assertIn("docs/card.jpg", named)
+        self.assertTrue((ROOT / "docs" / "card.jpg").is_file())
 
     def test_the_docstring_reader_reads_a_script_and_not_its_comments(self):
         with tempfile.TemporaryDirectory() as tmp:

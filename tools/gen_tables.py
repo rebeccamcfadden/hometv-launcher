@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Writes the TV tables, the brand line and the counts from each examples/<folder>/tv.json.
 
-    gen_tables.py [--root DIR]                 rewrite README.md, examples/README.md, tools/readme_stats.py
+    gen_tables.py [--root DIR]                 rewrite docs/supported-tvs.md, examples/README.md, tools/readme_stats.py
     gen_tables.py --check                      write nothing; exit 1 when a file is out of date
     gen_tables.py --font Fredoka.ttf           also redraw docs/stats.png and docs/card.jpg if a count moved
     gen_tables.py --adopt PATCH                write tv.json for folders that have none, from the table rows
@@ -18,7 +18,7 @@ conflict. Now a list PR adds only its own folder, with a tv.json beside debloat.
     }
 
 and a maintainer runs this after merging. "tv" and "os" fill both tables, "notes" the examples/README.md
-one, "brand" the brand line under the README table (a brand whose every TV says "projector" goes on the
+one, "brand" the brand line under the TV table in docs/supported-tvs.md (a brand whose every TV says "projector" goes on the
 projector line). One optional key: "readme_os", the README's OS cell when it is not "os". Both tables list
 the folders in the same order, alphabetical by "tv" (case ignored), so a brand's models sit together.
 
@@ -178,7 +178,8 @@ def stats(text, entries):
     return text
 
 
-OWNED = ("README.md", "examples/README.md", "tools/readme_stats.py")
+TV_PAGE = "docs/supported-tvs.md"
+OWNED = (TV_PAGE, "examples/README.md", "tools/readme_stats.py")
 
 
 def render(root, texts=None):
@@ -187,12 +188,12 @@ def render(root, texts=None):
     texts, if given, stands in for what those files hold now (by the same paths)."""
     entries = load(root)
     now = {p: (texts or {}).get(p) or (root / p).read_text(encoding="utf-8") for p in OWNED}
-    readme = between(now["README.md"], "tv-brands", brand_lines(entries), "README.md")
-    readme = between(readme, "tv-table", readme_rows(entries), "README.md")
-    readme = counts(readme, entries)
+    page = between(now[TV_PAGE], "tv-brands", brand_lines(entries), TV_PAGE)
+    page = between(page, "tv-table", readme_rows(entries), TV_PAGE)
+    page = counts(page, entries)
     examples = between(now["examples/README.md"], "tv-table", examples_rows(entries), "examples/README.md")
     stats_py = stats(now["tools/readme_stats.py"], entries)
-    return {"README.md": readme, "examples/README.md": examples, "tools/readme_stats.py": stats_py}
+    return {TV_PAGE: page, "examples/README.md": examples, "tools/readme_stats.py": stats_py}
 
 
 def stale(root):

@@ -99,14 +99,6 @@ class PressCountsTest(unittest.TestCase):
         with self.subTest(part="sum"):
             self.assertEqual(country_rows + self.counts[LATAM] + self.counts[ONLINE], self.numbers["total"])
 
-    def test_readme_alt_text_matches_the_list(self):
-        alt = re.search(r'and (\d+) more: (\d+) articles from (\d+) countries', README.read_text(encoding="utf-8"))
-        self.assertIsNotNone(alt, "the README card alt text no longer states 'and N more: N articles from N countries'")
-        more, articles, countries = (int(g) for g in alt.groups())
-        self.assertEqual(articles, self.numbers["total"], "README alt text and docs/PRESS.md disagree on the article count")
-        self.assertEqual(countries, self.numbers["countries"], "README alt text and docs/PRESS.md disagree on the country count")
-        self.assertEqual(more, self.numbers["total"] - len(logos()), "README alt text and the logos in tools/readme_featured.py disagree on the '+N more'")
-
     def test_the_card_source_draws_the_same_numbers(self):
         more = re.search(r'^MORE = "(.*)"$', FEATURED.read_text(encoding="utf-8"), re.M)
         self.assertIsNotNone(more, "tools/readme_featured.py no longer has a MORE line")

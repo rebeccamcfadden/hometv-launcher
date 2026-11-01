@@ -16,9 +16,9 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCES = ROOT / "launcher/app/src/main/java/com/gathin/tvhome"
 REGISTRY = SOURCES / "SettingsSections.java"
 VALUES = ROOT / "launcher/app/src/main/res/values"
-README = ROOT / "README.md"
+README = ROOT / "docs" / "launcher.md"
 
-SUMMARY = "Launcher settings and the default home"
+SUMMARY = "Launcher settings"
 
 
 def english_strings(texts):
@@ -73,14 +73,14 @@ def missing_rows(section, rows):
     return [(row_id, label) for row_id, label in rows if label.lower() not in seen]
 
 
-def detail_section(readme_text, summary):
-    """The text inside one <details> block, or '' - so a row named three sections further down
-    does not count as the settings page being documented."""
-    start = readme_text.find("<summary><b>%s</b></summary>" % summary)
+def detail_section(page_text, heading):
+    """The text under one "## heading" up to the next "## " heading, or '' - so a row named three
+    sections further down does not count as the settings page being documented."""
+    start = page_text.find("\n## %s\n" % heading)
     if start < 0:
         return ""
-    end = readme_text.find("</details>", start)
-    return readme_text[start:end if end > 0 else len(readme_text)]
+    end = page_text.find("\n## ", start + 1)
+    return page_text[start:end if end > 0 else len(page_text)]
 
 
 def read_class(name):
@@ -132,9 +132,8 @@ class PageSections(unittest.TestCase):
         self.assertEqual(missing_rows("- **Weather**: the city.", rows), [("AboutSection", "About")])
 
     def test_a_section_named_in_another_block_does_not_count(self):
-        readme = ("<details>\n<summary><b>%s</b></summary>\n\nNothing here.\n\n</details>\n\n"
-                  "<details>\n<summary><b>Elsewhere</b></summary>\n\n- **Wallpaper** this is not the "
-                  "settings page.\n\n</details>\n" % SUMMARY)
+        readme = ("# Launcher\n\n## %s\n\nNothing here.\n\n## Elsewhere\n\n- **Wallpaper** this is not the "
+                  "settings page.\n" % SUMMARY)
         section = detail_section(readme, SUMMARY)
         self.assertIn("Nothing here", section)
         self.assertNotIn("Elsewhere", section)

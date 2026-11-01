@@ -68,11 +68,11 @@ class ExampleListsTest(unittest.TestCase):
         except gen_tables.Problem as e:
             self.fail(str(e))
 
-    def test_readme_table_has_one_row_per_list(self):
-        readme_rows = table_rows(ROOT / "README.md", "| TV | OS |")
+    def test_tv_table_has_one_row_per_list(self):
+        readme_rows = table_rows(ROOT / "docs" / "supported-tvs.md", "| TV | OS |")
         example_rows = table_rows(EXAMPLES / "README.md", "| Folder |")
         self.assertEqual(len(readme_rows), len(example_rows),
-                         "README.md TV table and examples/README.md have a different number of rows")
+                         "docs/supported-tvs.md TV table and examples/README.md have a different number of rows")
         readme_tvs = sorted(r.split("|")[1].strip() for r in readme_rows)
         example_tvs = sorted(r.split("|")[2].strip() for r in example_rows)
         self.assertEqual(readme_tvs, example_tvs, "the TV column differs between the two tables")

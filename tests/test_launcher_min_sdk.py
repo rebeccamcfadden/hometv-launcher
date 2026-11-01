@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STOCK_HOME = "com.google.android.tvlauncher/.MainActivity"
 NEW_HOME = "com.gathin.tvhome/.MainActivity"
 TROUBLE = ROOT / "docs" / "TROUBLESHOOTING.md"
-README = ROOT / "README.md"
+README = ROOT / "docs" / "launcher.md"
 EXAMPLES = ROOT / "examples" / "README.md"
 PROMPT = ROOT / "PROMPT.md"
 
@@ -214,12 +214,12 @@ class Android7DocsTest(unittest.TestCase):
                       "the firmware-verifier case is the other reason an install fails")
         self.assertIn("build-and-install.sh", bullet)
 
-    def test_readme_states_the_launcher_requirement_with_a_pointer(self):
-        start = self.readme.index("## The launcher")
+    def test_launcher_page_states_the_launcher_requirement_with_a_pointer(self):
+        start = self.readme.index("# The launcher")
         section = self.readme[start:start + 1600]
         self.assertIn("API 26", section)
         self.assertIn("launcher/app/build.gradle", section)
-        self.assertIn("docs/TROUBLESHOOTING.md", section)
+        self.assertIn("TROUBLESHOOTING.md", section)
 
     def test_prompt_tells_an_assistant_not_to_promise_it(self):
         self.assertIn("minSdk", self.prompt)

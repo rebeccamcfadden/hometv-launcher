@@ -332,10 +332,10 @@ class CatalogueTest(unittest.TestCase):
 
 
 class DocumentationTest(unittest.TestCase):
-    def test_readme_lists_the_tool_and_what_it_cannot_say(self):
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("[`tools/privacy.py`](tools/privacy.py)", readme)
-        self.assertIn("What the audit cannot do is prove intent", readme)
+    def test_docs_list_the_tool_and_what_it_cannot_say(self):
+        page = (ROOT / "docs" / "microphone.md").read_text(encoding="utf-8")
+        self.assertIn("[`tools/privacy.py`](../tools/privacy.py)", page)
+        self.assertIn("What the audit cannot do is prove intent", page)
 
 
 if __name__ == "__main__":

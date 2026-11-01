@@ -17,7 +17,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 DOC = (ROOT / "docs" / "TROUBLESHOOTING.md").read_text(encoding="utf-8")
-README = (ROOT / "README.md").read_text(encoding="utf-8")
+README = (ROOT / "docs" / "restore.md").read_text(encoding="utf-8")
 PROMPT = (ROOT / "PROMPT.md").read_text(encoding="utf-8")
 KIRKWOOD = "UTTK.260317.003"
 
@@ -104,7 +104,7 @@ class KirkwoodNoteTest(unittest.TestCase):
         clause = next(line for line in README.splitlines() if "costs phone casting" in line)
         self.assertIn("Google TV Streamer", clause)
         self.assertIn("Chromecast", clause)
-        self.assertIn("docs/TROUBLESHOOTING.md", clause)
+        self.assertIn("TROUBLESHOOTING.md", clause)
 
     def test_the_prompt_asks_for_the_focused_app_before_claiming_success(self):
         self.assertIn("mFocusedApp", PROMPT)

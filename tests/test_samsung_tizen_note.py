@@ -16,7 +16,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "docs" / "devices" / "samsung-tizen.md"
-README = ROOT / "README.md"
+README = ROOT / "docs" / "supported-tvs.md"
 
 
 def page():
@@ -71,9 +71,9 @@ class SamsungTizenPageTest(unittest.TestCase):
 class PageLinksTest(unittest.TestCase):
     def test_readme_links_resolve(self):
         text = README.read_text(encoding="utf-8")
-        for target in sorted(set(re.findall(r"\]\((docs/devices/[^)#]+)\)", text))):
+        for target in sorted(set(re.findall(r"\]\((devices/[^)#]+)\)", text))):
             with self.subTest(target=target):
-                self.assertTrue((ROOT / target).is_file(), f"README points at a missing file: {target}")
+                self.assertTrue((ROOT / "docs" / target).is_file(), f"README points at a missing file: {target}")
 
 
 if __name__ == "__main__":

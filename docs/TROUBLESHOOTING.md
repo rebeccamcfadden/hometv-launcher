@@ -1,7 +1,7 @@
 # Troubleshooting
 
 Things that bit us or contributors, so they don't bite you. Commands use `tools/tv.py`; see the
-[README](../README.md#doing-it-by-hand) for setting it up.
+[Doing it by hand](tools.md) for setting it up.
 
 ## Connecting
 
@@ -59,7 +59,7 @@ Things that bit us or contributors, so they don't bite you. Commands use `tools/
   `socket.connect_ex`; skip `nc` on macOS) and try each open port with `TV_HOST=<tv ip> TV_PORT=<port>
   tools/tv.py --probe`: the ADB one answers, the others time out. Every script here honours `TV_PORT`, and
   the closing check is `tools/adb-closed.py <tv ip> <port>`.
-- **Close port 5555 when you're done**: plaintext, and a shell for anyone on the LAN when `ro.adb.secure=0`. Steps in the README FAQ.
+- **Close port 5555 when you're done**: plaintext, and a shell for anyone on the LAN when `ro.adb.secure=0`. Steps in the [FAQ](faq.md#isnt-adb-access-a-security-hole).
 - **The TV sits on a separate VLAN or IoT network** and `tools/tv.py` times out although debugging
   is on: the router keeps the computer from reaching it. Add a temporary firewall rule from your
   computer to the TV on tcp/5555 only, and remove it again when you close ADB. Opening the whole
@@ -717,7 +717,7 @@ gone after every reboot and has to be started again from a debugging session you
 things fail silently when you do: the script must be detached from the `adb shell` session or it dies with
 it, and a supervisor must not start a second copy. Do not solve the reboot by leaving TCP ADB on so
 something local can restart it — port 5555 reachable from the LAN is a shell on the TV for anything on the
-network, which is why the closing step in [README](../README.md#questions-people-ask) turns it off.
+network, which is why the closing step in the [FAQ](faq.md#isnt-adb-access-a-security-hole) turns it off.
 
 ## A key helper is bound and a held remote button stopped repeating
 
@@ -775,7 +775,7 @@ tools/tv.py 'settings put global private_dns_mode opportunistic'
 
 The other failure mode reads differently: when the TV itself says "No internet", the resolver is down
 or unreachable, and the same command restores it. What the optional resolver does, and what it costs,
-is in the README's "Can it block ads inside apps too?".
+is in the FAQ's [Can it block ads inside apps too?](faq.md#can-it-block-ads-inside-apps-too)
 
 When you report how an app does on your TV, say how far it got, because each step can fail on its
 own: installed, opened, usable with the physical remote, signed in, and played a title with sound.
