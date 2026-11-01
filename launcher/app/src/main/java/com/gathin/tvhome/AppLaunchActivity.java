@@ -8,6 +8,7 @@ import android.os.Bundle;
 
 /** Handles market://launch?id=<package> (Android TV Remote "launch app" by package name), which the
  *  stock launcher normally serves: opens the app's TV launch intent, then the phone launch intent. */
+@android.annotation.SuppressLint("CustomSplashScreen") // a trampoline that opens another app, not a splash screen
 public class AppLaunchActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {

@@ -165,6 +165,7 @@ final class RemoteKeys {
      * The accessibility global action for an action word, or 0 when the target is something else. "sleep" is
      * GLOBAL_ACTION_LOCK_SCREEN, which puts a TV in standby (as the Sleep Timer add-on does); Android has it from 28.
      */
+    @android.annotation.SuppressLint("InlinedApi") // guarded: sdk >= 28 for "sleep"
     static int globalAction(String target, int sdk) {
         switch (target) {
             case "back": return AccessibilityService.GLOBAL_ACTION_BACK;

@@ -73,8 +73,10 @@
     <string name="account_sync_offline">Offline: syncs when the TV is back online</string>
     <string name="account_sign_out_title">Sign out of TMDB?</string>
     <string name="account_sign_out_body">My list, Favorites and Seen stay on this TV, and stop following the account. Your other TMDB lists are hidden until you sign in again.</string>
-    <string name="account_lists_sub">Your TMDB lists. Up to %1$d shown ones become chips in Movies and TV Shows, by these names and in this order; more are still in All lists. ←/→ moves along a row, OK picks.</string>
-    <string name="account_lists_chips">%1$d of %2$d chips</string>
+    <!-- PluralsCandidate: the number is always the chip cap (six), never one. -->
+    <string name="account_lists_sub" tools:ignore="PluralsCandidate">Your TMDB lists. Up to %1$d shown ones become chips in Movies and TV Shows, by these names and in this order; more are still in All lists. ←/→ moves along a row, OK picks.</string>
+    <!-- PluralsCandidate: the noun follows the cap ("1 of 6 chips"), which is never one. -->
+    <string name="account_lists_chips" tools:ignore="PluralsCandidate">%1$d of %2$d chips</string>
     <string name="account_list_past">No chip: in All lists</string>
     <string name="account_lists_pane_note">My list, Seen and Favorites always come from the account itself. Back returns.</string>
 

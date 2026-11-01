@@ -4,4 +4,6 @@
     <!-- A string missing from a values-* folder falls back to English by design: translations arrive
          one language at a time from contributors, and a partial one is better than none. -->
     <issue id="MissingTranslation" severity="informational" />
+    <!-- The launcher icon is a full-bleed picture by design; a TV shows the banner, not this icon. -->
+    <issue id="IconLauncherShape" severity="ignore" />
 </lint>

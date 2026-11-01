@@ -343,6 +343,9 @@ final class Config {
                 iconOnlyButtons, wifiLabelWidth, tileMenu, wallpaperEnabled, light);
     }
 
+    // commit, not apply: rare (the first start, and the start after a theme push) and read again at once by load;
+    // the synchronous write costs nothing a normal start ever pays.
+    @android.annotation.SuppressLint("ApplySharedPref")
     private static void syncThemeChoices(SharedPreferences choices, File dir, File config) {
         File revision = dir == null ? null : new File(dir, THEME_REVISION_NAME);
         String token = revisionToken(revision);

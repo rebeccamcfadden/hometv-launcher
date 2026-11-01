@@ -27,6 +27,8 @@ final class OpenOnStart {
     }
 
     /** A pick takes effect from the next boot: the Home that follows the pick stays Home. */
+    // commit, not apply: once per pick, and on disk before the TV may restart.
+    @android.annotation.SuppressLint("ApplySharedPref")
     static void skipThisBoot(Context ctx) {
         ctx.getSharedPreferences(BOOT_PREFS, Context.MODE_PRIVATE).edit().putInt(BOOT_KEY, boot(ctx)).commit();
     }
