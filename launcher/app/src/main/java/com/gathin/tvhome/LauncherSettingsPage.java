@@ -204,6 +204,8 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         TextView value = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
         value.setTextColor(Ui.colors(Ui.TEXT_3, Ui.TEXT_3, Ui.ON_ACCENT));
         value.setDuplicateParentStateEnabled(true);
+        // A long value (a TMDB username) ellipsizes rather than squeezing the section's name out of the row.
+        value.setMaxWidth(Ui.px(150));
         LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         vlp.leftMargin = Ui.px(12);
