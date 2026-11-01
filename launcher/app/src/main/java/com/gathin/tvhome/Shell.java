@@ -35,6 +35,7 @@ final class Shell {
     private final TextView toast;
     private final Runnable hideToast;
     private View focused;
+    private Runnable onShown;
 
     /** The page sliding out during a tab switch, kept on the stage under the new one until it has gone. */
     private Screen leaving;
@@ -68,6 +69,20 @@ final class Shell {
 
     Screen top() {
         return stack.isEmpty() ? null : stack.get(stack.size() - 1);
+    }
+
+    /** Told after every change to what shows (MainActivity moves the import pill). */
+    void setOnShown(Runnable r) {
+        onShown = r;
+    }
+
+    /** Whether the page showing, under any popups and dialogs over it, wants the import pill at the top. */
+    boolean pillAtTop() {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            Screen s = stack.get(i);
+            if (s.layer == Screen.Layer.PAGE) return s.pillAtTop();
+        }
+        return false;
     }
 
     /** Whether s is on the stack, showing or under another screen. */
@@ -453,6 +468,7 @@ final class Shell {
             ((ViewGroup) v).setDescendantFocusability(top != null && v == top.view
                     ? ViewGroup.FOCUS_AFTER_DESCENDANTS : ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         }
+        if (onShown != null) onShown.run();
     }
 
     /**

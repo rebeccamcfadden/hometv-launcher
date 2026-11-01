@@ -332,6 +332,12 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         showedOnce = true;
     }
 
+    /** The pane runs to the bottom edge: Phone notes' import pill shows beside the title instead. */
+    @Override
+    boolean pillAtTop() {
+        return true;
+    }
+
     @Override
     void onFocus(View v) {
         Object id = v.getTag(R.id.settings_section);

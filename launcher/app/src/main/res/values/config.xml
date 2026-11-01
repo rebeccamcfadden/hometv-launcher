@@ -249,6 +249,20 @@
     <string name="tmdb_seen_list" translatable="false">Seen</string>
     <bool name="create_seen_list">true</bool>
 
+    <!-- Phone notes (docs/phone-notes.md; docs/rework.md, Phone notes, 2026-10-31): while on, the TV listens on the
+         home network (port 8765, POST /notes with the pairing code from Launcher settings → Phone notes) for a
+         watch-list note an iPhone's "Send to TV" Shortcut shares, and adds its new lines to the signed-in TMDB
+         account's list of that name (a private one is made if there is none). This is only the default: the On / Off
+         switch in Launcher settings saves the household's choice, which wins. Off by default; a pushed config.json
+         can set "note_inbox": true. -->
+    <bool name="note_inbox">false</bool>
+    <!-- The household's shared "Send to TV" shortcut, as an iCloud link (https://www.icloud.com/shortcuts/…; anything
+         else is ignored). When set, the page the pane's QR opens has a "Get the shortcut" button beside "Pair this
+         phone"; empty, phones build the shortcut by hand (docs/phone-notes.md). Usually set per household in
+         launcher/tv.properties instead, which wins over this; a pushed config.json's "note_shortcut_url" wins over
+         both. -->
+    <string name="note_shortcut_url" translatable="false"></string>
+
     <!-- Kept for examples/*/config.json: keys those files set, so they keep their meaning. The current launcher
          doesn't read them; themes/README.md describes what the old Home did with them, for V2. -->
     <bool name="fill_dock">true</bool>

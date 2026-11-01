@@ -5,6 +5,9 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -29,6 +32,8 @@ final class Accounts implements Household.Recorder {
     /** The shown lists chosen on the TV; before them, the lists chosen for Household and Friends (read to migrate). */
     private static final String CHOICE_SHOWN = "shown_lists";
     private static final String CHOICE_HOUSEHOLD = "household_list", CHOICE_FRIENDS = "friends_list";
+    /** Phone notes: each note line's answer (NoteMatch.Memory), with the account it was found for. */
+    private static final String NOTE_MEMORY = "note_memory";
 
     private final Household household;
     private final AccountConfig config;
@@ -64,6 +69,12 @@ final class Accounts implements Household.Recorder {
     private SyncPlan.Run again = SyncPlan.Run.NONE;
     /** Worker thread only; shared like the worker, so an Accounts made after a rebuild sees the same queue. */
     private static SyncLedger ledger;
+    /** Phone notes, whose waiting notes this account imports ({@link #runNotes}). */
+    private final Notes notes;
+    /** Main thread: a note is being imported; shared like the worker, so a rebuild doesn't start a second one. */
+    private static boolean importing;
+    /** Main thread: lists whose note TMDB refused in this round of imports, so the others still get their turn. */
+    private static final java.util.Set<String> refused = new java.util.HashSet<>();
 
     private final Runnable pushSoon = () -> request(SyncPlan.Run.PUSH);
     private final Runnable fullSoon = () -> request(SyncPlan.Run.FULL);
@@ -86,6 +97,8 @@ final class Accounts implements Household.Recorder {
         flow = new SignInFlow(session);
         loadImported();
         household.setRecorder(this);
+        notes = Notes.get(app);
+        notes.attach(this);
     }
 
     /** Whether this build can sign in at all: it needs the TMDB token from tv.properties. */
@@ -272,6 +285,8 @@ final class Accounts implements Household.Recorder {
         // The TV's choice follows the account: its order, and a list deleted on TMDB leaves it.
         if (r.accountLists != null && choices.follow(listIds(r.accountLists))) saveChoices();
         applyImported(r.shown, used);
+        // Notes sent while signed out or offline go on once the account's lists have been read.
+        if (!r.lists.isEmpty()) runNotes(true);
         next();
     }
 
@@ -429,6 +444,131 @@ final class Accounts implements Household.Recorder {
         // The Account pane names the shown lists.
         changed();
     }
+    // ---- Phone notes ------------------------------------------------------------------------------------------------
+
+    /**
+     * Imports the notes waiting (Notes), one at a time on the worker so an import never races a sync, while signed in;
+     * signed out they wait for the first full sync after the next sign-in. A note done makes its list a chip and
+     * reads it again; one that fails waits for the next send or full sync. {@code quiet}: a retry, whose failing again
+     * isn't shown. Main thread.
+     */
+    void runNotes(boolean quiet) {
+        if (importing || !available()) return;
+        TmdbSession s = session;
+        if (s == null) return;
+        NoteBook.Pending p = notes.next(refused);
+        if (p == null) {
+            refused.clear();
+            return;
+        }
+        importing = true;
+        notes.importStarted(p);
+        NoteImport.Seen seen = ids -> main.post(() -> markSeen(ids));
+        worker.execute(() -> {
+            NoteMatch.Memory memory = readNoteMemory(s.accountObjectId);
+            NoteImport.Outcome o = new NoteImport(http, s, seen).run(p.list, p.text, memory,
+                    (done, total) -> main.post(() -> notes.importProgress(p, done, total)));
+            if (o.memory != null) saveNoteMemory(s.accountObjectId, o.memory);
+            main.post(() -> noteImported(s, p, o, quiet));
+        });
+    }
+
+    private void noteImported(TmdbSession s, NoteBook.Pending p, NoteImport.Outcome o, boolean quiet) {
+        importing = false;
+        notes.importEnded(p, o, quiet);
+        if (o.listId > 0 && o.memory != null && s == session) {
+            // The list shows as a chip; read it again so the chip fills, but only when this import got somewhere: a
+            // failing search would otherwise sync, retry and fail again every few seconds.
+            setShown(o.listId, true, o.accountLists);
+            if (o.status == NoteImport.Status.DONE || o.added > 0 || o.seen > 0) {
+                main.removeCallbacks(fullSoon);
+                main.postDelayed(fullSoon, SyncPlan.DEBOUNCE);
+            }
+        }
+        switch (o.status) {
+            case DONE:
+                runNotes(quiet);
+                break;
+            case FAILED:
+                refused.add(NoteLines.key(p.list));
+                runNotes(quiet);
+                break;
+            default:
+                // Offline or signed out: the others would fail too; the next send or full sync tries again.
+                refused.clear();
+                break;
+        }
+    }
+
+    /**
+     * The household answered a line asked about in Launcher settings (NotePicker): {@code id} onto the list, or to
+     * Seen for a ticked line, or null for "None of these". On the worker, after any import queued before it, so the
+     * lines' answers are never written by two at once. Main thread; {@code done} runs on it.
+     */
+    void runPick(String list, NoteMatch.Ask ask, String id, java.util.function.Consumer<NoteImport.Outcome> done) {
+        TmdbSession s = session;
+        if (s == null || !available()) {
+            done.accept(NoteImport.Outcome.stopped(NoteImport.Status.SIGNED_OUT, 0, null));
+            return;
+        }
+        NoteImport.Seen seen = ids -> main.post(() -> markSeen(ids));
+        worker.execute(() -> {
+            NoteMatch.Memory memory = readNoteMemory(s.accountObjectId);
+            NoteImport.Outcome o = new NoteImport(http, s, seen).pick(list, ask, id, memory);
+            if (o.memory != null) saveNoteMemory(s.accountObjectId, o.memory);
+            main.post(() -> {
+                if (o.listId > 0 && o.memory != null && s == session) {
+                    setShown(o.listId, true, o.accountLists);
+                    main.removeCallbacks(fullSoon);
+                    main.postDelayed(fullSoon, SyncPlan.DEBOUNCE);
+                }
+                done.accept(o);
+            });
+        });
+    }
+
+    /** TMDB's answers for an asked line with none saved (NoteImport.lookUp), on the worker; null offline. Main thread. */
+    void runLookUp(String query, java.util.function.Consumer<List<NoteMatch.Candidate>> done) {
+        TmdbSession s = session;
+        worker.execute(() -> {
+            List<NoteMatch.Candidate> top = new NoteImport(http, s, ids -> { }).lookUp(query);
+            main.post(() -> done.accept(top));
+        });
+    }
+
+    /** Titles ticked in a note go to Seen, each only if it isn't there yet (synced like a change on the TV). */
+    private void markSeen(List<String> ids) {
+        for (String id : ids) if (!household.isSeen(id)) household.toggleSeen(id);
+    }
+
+    /** The note lines' answers for the signed-in account, to count a send's new lines. Any thread. */
+    NoteMatch.Memory noteMemory() {
+        TmdbSession s = session;
+        return s == null ? new NoteMatch.Memory() : readNoteMemory(s.accountObjectId);
+    }
+
+    /** Saved per account: another account's lists are other lists. */
+    private NoteMatch.Memory readNoteMemory(String account) {
+        String saved = prefs.getString(NOTE_MEMORY, null);
+        if (saved == null) return new NoteMatch.Memory();
+        try {
+            JSONObject o = new JSONObject(saved);
+            if (!account.equals(o.optString("account", ""))) return new NoteMatch.Memory();
+            return NoteMatch.Memory.fromJson(o.optJSONObject("lines"));
+        } catch (JSONException e) {
+            return new NoteMatch.Memory();
+        }
+    }
+
+    private void saveNoteMemory(String account, NoteMatch.Memory memory) {
+        try {
+            prefs.edit().putString(NOTE_MEMORY, new JSONObject().put("account", account).put("lines", memory.toJson())
+                    .toString()).apply();
+        } catch (JSONException e) {
+            // Not saved: the lines are looked up again next time.
+        }
+    }
+
     // ---- Signing in and out --------------------------------------------------------------------------------------
 
     /** The sign-in page shows or hides: the code is polled only while it shows; an approved sign-in still finishes. */

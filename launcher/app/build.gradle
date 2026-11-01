@@ -68,6 +68,13 @@ if (!(themeAssetsUrl ==~ /https:\/\/[A-Za-z0-9._~:\/@%+\-]+/)) {
     throw new GradleException("${tvPropsFile.name}: theme_assets_url must be an https:// address")
 }
 if (!themeAssetsUrl.endsWith('/')) themeAssetsUrl += '/'
+// Optional: the household's shared "Send to TV" shortcut, an iCloud link (docs/phone-notes.md). It is per household,
+// so it lives here rather than in config.xml; only https://www.icloud.com/shortcuts/ links with the characters such a
+// link has, so it can't break the generated Java. The message never prints the value.
+def noteShortcutUrl = tvProps.getProperty('note_shortcut_url', '').trim()
+if (noteShortcutUrl && !(noteShortcutUrl ==~ /https:\/\/www\.icloud\.com\/shortcuts\/[A-Za-z0-9._:\/\-]{1,160}/)) {
+    throw new GradleException("${tvPropsFile.name}: note_shortcut_url must be an https://www.icloud.com/shortcuts/ link")
+}
 
 android {
     namespace 'com.gathin.tvhome'
@@ -90,6 +97,7 @@ android {
         buildConfigField 'String', 'MOVIE_OF_THE_NIGHT_KEY', "\"${movieOfTheNightKey}\""
         buildConfigField 'String', 'STREAMING_AVAILABILITY_KEY', "\"${streamingAvailabilityKey}\""
         buildConfigField 'String', 'THEME_ASSETS_URL', "\"${themeAssetsUrl}\""
+        buildConfigField 'String', 'NOTE_SHORTCUT_URL', "\"${noteShortcutUrl}\""
     }
 
     buildFeatures {

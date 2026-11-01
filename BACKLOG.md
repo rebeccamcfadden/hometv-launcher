@@ -177,6 +177,50 @@ milestones: [docs/rework.md](docs/rework.md).
   list); after a sign-out, the lists chosen on the TV are hidden until the next sign-in (`config.xml`'s stay). All
   lists means My list and the shown lists; the mock catalogue's own "My list" no longer counts.
 - **Still to come:** whether the Choose lists rows show each list's last update, as the prototype's do.
+### Phone notes
+- **V2 Phase 3** (docs/rework.md, Phone notes, 2026-10-31; how to set up a phone in
+  [docs/phone-notes.md](docs/phone-notes.md)): each person keeps a watch list in a note on their iPhone (Apple Notes
+  or Google Keep) and shares it to a "Send to TV" Shortcut, which posts the text and their list's name to
+  `http://<tv>:8765/notes` with the pairing code. Launcher settings' **Phone notes** section, after Account, has the On /
+  Off switch (`note_inbox` in `config.xml` or a pushed `config.json` is the default, off; the household's choice is
+  saved on the TV and wins), the TV's Wi-Fi address (Ethernet when there is no Wi-Fi; "Not on Wi-Fi" without either),
+  the pairing code (8 characters without 0/O or 1/I/L, made when it is first turned on), a QR beside them (the project
+  lead, 2026-10-31) that opens `http://<tv>:8765/setup#<code>` on the iPhone (the code stays in the link's fragment,
+  never sent to the TV): a fixed page with **Get the shortcut** (the household's shared iCloud link, `note_shortcut_url`
+  in `launcher/tv.properties`, a pushed `config.json` or `config.xml`; only `https://www.icloud.com/shortcuts/` links) and **Pair this phone**
+  (`shortcuts://run-shortcut?name=Send%20to%20TV` with the address and `Authorization` value, which the shortcut keeps
+  in iCloud Drive › Shortcuts › `Send to TV.json`, asking for the list name; after New code a phone just pairs again;
+  the project lead, 2026-11-01), and the address and value to copy into a simple hand-built one. New code (asks first),
+  How to set up a phone, and each list's last send with the lines not matched exactly, each a button that opens a picker
+  (`NotePicker`: TMDB's best three answers as posters with title and year, and None of these, which is remembered; no
+  Figma design yet; the project lead, 2026-11-01); the row reads Off, On or, in amber,
+  "3 not matched". While on, `NoteInbox` listens on port 8765 for `POST /notes` (and `GET /setup`, the QR's page)
+  from private addresses only, one
+  request at a time, with a five-minute lockout after five wrong codes; it is opened and closed off the main thread by
+  one owner for the process (`Notes`), so a rebuilt Home never opens it twice, and a port another app holds is said in
+  the pane. A note is answered at once ("Sent: 12 lines, 3 new", or signed out "The TV will add these once it's
+  signed in to TMDB."), kept as the latest one of its list until it is on the list (`NoteBook`, saved on the TV), and
+  imported on the account's worker so it never races a sync (`Accounts.runNotes`, `NoteImport`): the account's list
+  with that name (matched as `ListRef` matches names), else a new private one; each new line looked up once
+  (`NoteLines`, `NoteMatch`; its answer kept per list and account) and added; a ticked line goes to Seen through the
+  household (so it syncs like a change on the TV) and comes off the list. Adding only: a line deleted on the phone
+  takes nothing off, and a title taken off on the TV isn't put back. The list then shows as a chip and is read again.
+  Signed out, offline or refused by TMDB, the note waits and is tried after the next send or full sync. The import
+  pill (`ImportPill`) sits at the bottom centre of every launcher screen, and on Launcher settings at the top centre
+  beside the title (its pane runs to the bottom edge): "Importing Rebecca · 6 of 12" with a thin bar, counting every
+  line of the note from the start, then for four seconds "Partner · 8 added" or, in amber, "Rebecca · 9 added · 3 not matched", "… waiting for the
+  internet", "… couldn't reach TMDB" or "… waiting for TMDB sign-in"; never focusable, and still with Motion Reduced or
+  Off.
+- **Checked on the TV (2026-11-01):** a note sent from this PC and from two iPhones' Shortcuts (Apple Notes) made and
+  filled the lists on the project lead's account, a ticked line went to Seen and came off the list, and `NoteLines`
+  was fitted to the text Apple Notes and Google Keep really hand the share sheet. **Not verified yet:** the picker and
+  Pair this phone on the TV and an iPhone, and the TV's
+  address changing (the Shortcut keeps the one it was given: docs/phone-notes.md asks for a router reservation, and the
+  pane reads the address afresh each time it opens). Checked on the emulator: the pane, the inbox opening and closing
+  with the switch, New code, a wrong code refused, the signed-out answer, a note waiting across a restart, and the
+  pill's states (drawn with a temporary local hook that was not kept).
+- **Still to come:** a Figma design for the pane; whether a send whose list is hidden in Choose lists should show it
+  again (it does now).
 ### Household seed
 - **V1:** on the first run, My list, Seen, Favorites, recent searches and recently viewed started from the
   prototype's mock seed (`design_preview/src/core/store.ts`).

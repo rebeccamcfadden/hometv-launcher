@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phone notes (BACKLOG.md, Phone notes): Launcher settings' section and pane, the import pill, and the inbox's
+     answer to a phone. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="settings_notes">Phone notes</string>
+    <string name="notes_value_on">On</string>
+    <string name="notes_value_off">Off</string>
+    <string name="notes_value_unmatched" tools:ignore="PluralsCandidate">%1$d not matched</string>
+
+    <!-- The pane. -->
+    <string name="notes_pane_title">Send lists from your phones</string>
+    <string name="notes_pane_sub">Share a watch-list note to “Send to TV” on an iPhone. New lines are looked up and added to that person’s TMDB list; deleting a line on the phone takes nothing off.</string>
+    <string name="notes_on">On</string>
+    <string name="notes_off">Off</string>
+    <string name="notes_off_note">Off: the TV doesn’t listen for phones.</string>
+    <string name="notes_signed_out">Sign in to TMDB in Account first: the lists are on the account. Notes sent before then wait.</string>
+    <string name="notes_address">Address</string>
+    <string name="notes_no_wifi">Not on Wi-Fi</string>
+    <string name="notes_code">Pairing code</string>
+    <string name="notes_port_taken">Another app on this TV uses port %1$d, so phones can’t reach Phone notes. Turn it off and on again after a restart.</string>
+    <string name="notes_plain_http">Plain HTTP on your home network: the code only lets a phone add titles to your lists.</string>
+    <string name="notes_new_code">New code</string>
+    <string name="notes_new_code_title">Make a new pairing code?</string>
+    <string name="notes_new_code_body">Phones with the old code can’t send until they scan the new QR and pair again.</string>
+    <string name="notes_cancel">Cancel</string>
+    <string name="notes_help">How to set up a phone</string>
+    <string name="notes_qr_caption">Scan with the iPhone camera to add the Shortcut or pair the phone again</string>
+    <string name="notes_qr_description">QR code that opens a setup page with this address and code</string>
+    <string name="notes_help_toast">docs/phone-notes.md: the “Send to TV” Shortcut, step by step</string>
+    <string name="notes_last_sends">Last sends</string>
+    <string name="notes_nothing_sent">Nothing sent yet.</string>
+    <!-- A list's last send: "Today 19:40 · 14 lines · 12 added". -->
+    <string name="notes_send_line" tools:ignore="PluralsCandidate">%1$s · %2$s · %3$d added</string>
+    <plurals name="notes_lines">
+        <item quantity="one">%d line</item>
+        <item quantity="other">%d lines</item>
+    </plurals>
+    <!-- Notes that arrived but aren't on their lists yet: "Waiting to add: Rebecca, Partner". -->
+    <string name="notes_waiting">Waiting to add: %1$s</string>
+
+    <!-- The import pill, over every screen. -->
+    <string name="notes_pill_importing">Importing %1$s</string>
+    <string name="notes_pill_importing_count">Importing %1$s · %2$d of %3$d</string>
+    <string name="notes_pill_added" tools:ignore="PluralsCandidate">%1$s · %2$d added</string>
+    <string name="notes_pill_added_unmatched" tools:ignore="PluralsCandidate">%1$s · %2$d added · %3$d not matched</string>
+    <string name="notes_pill_offline">%1$s · waiting for the internet</string>
+    <string name="notes_pill_failed">%1$s · couldn’t reach TMDB</string>
+    <string name="notes_pill_signed_out">%1$s · waiting for TMDB sign-in</string>
+
+    <!-- The inbox's answer, shown on the phone by the Shortcut. -->
+    <plurals name="notes_reply_sent">
+        <item quantity="one">Sent: %1$d line, %2$d new</item>
+        <item quantity="other">Sent: %1$d lines, %2$d new</item>
+    </plurals>
+    <string name="notes_reply_signed_out">The TV will add these once it’s signed in to TMDB.</string>
+    <string name="notes_reply_no_titles">The TV found no titles in that note.</string>
+
+    <!-- Last sends: a line not matched exactly, as a button that opens the picker. -->
+    <string name="notes_ask_choose">%1$s · Choose</string>
+    <!-- The picker (NotePicker). -->
+    <string name="notes_pick_title">Which one did you mean?</string>
+    <string name="notes_pick_title_none">Nothing close on TMDB</string>
+    <string name="notes_pick_looking">Looking on TMDB…</string>
+    <string name="notes_pick_title_offline">Couldn’t reach TMDB</string>
+    <string name="notes_pick_offline">Try again when the TV is online.</string>
+    <string name="notes_pick_line">“%1$s” in the note for %2$s matched nothing exactly.</string>
+    <string name="notes_pick_to_list">The one you pick goes onto %1$s.</string>
+    <string name="notes_pick_to_seen">It’s ticked, so the one you pick goes to Seen.</string>
+    <string name="notes_pick_nothing">Fix the line in the note and send it again, or stop asking about it.</string>
+    <string name="notes_pick_none">None of these</string>
+    <string name="notes_pick_stop">Stop asking</string>
+    <string name="notes_pick_movie">Movie</string>
+    <string name="notes_pick_show">TV show</string>
+    <string name="notes_pick_meta">%1$d · %2$s</string>
+</resources>

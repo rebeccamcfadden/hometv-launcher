@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Send to TV · setup</title>
+<style>
+  body { font: 17px -apple-system, system-ui, sans-serif; margin: 0; padding: 24px 20px 40px; background: #0d1117; color: #e6e9ee; line-height: 1.45; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  p { color: #adb5c0; margin: 6px 0 16px; }
+  label { display: block; font-size: 14px; color: #adb5c0; margin: 18px 0 6px; }
+  .row { display: flex; gap: 8px; }
+  input { flex: 1; min-width: 0; font: 16px ui-monospace, Menlo, monospace; padding: 10px 12px; border-radius: 10px; border: 1px solid #2c3440; background: #161c24; color: #e6e9ee; }
+  button { font: 600 15px -apple-system, system-ui, sans-serif; padding: 10px 14px; border-radius: 10px; border: 0; background: #c4ddf7; color: #101820; }
+  ol { padding-left: 22px; color: #cfd5dd; }
+  li { margin: 6px 0; }
+  code { font: 15px ui-monospace, Menlo, monospace; color: #e6e9ee; }
+  .warn { color: #f2c46d; }
+  a.btn { display: block; text-align: center; font: 600 18px -apple-system, system-ui, sans-serif; padding: 14px 16px; border-radius: 12px; background: #c4ddf7; color: #101820; text-decoration: none; margin: 10px 0 6px; }
+  h2 { font-size: 18px; margin: 26px 0 4px; }
+  details { margin-top: 28px; }
+  summary { font-weight: 600; color: #cfd5dd; }
+</style>
+</head>
+<body data-shortcut="{{shortcut}}">
+<h1>Send to TV</h1>
+<p>Each iPhone gets the shortcut once, then pairs it with this TV. Pair again whenever the TV shows a new code.</p>
+<p id="nocode" class="warn" hidden>No pairing code in this link: scan the QR in the TV's Launcher settings → Phone notes again.</p>
+
+<div id="get" hidden>
+<h2>1. Get the shortcut</h2>
+<a class="btn" id="getlink" href="#">Get the shortcut</a>
+<p>Opens iCloud: tap <b>Add Shortcut</b>, then come back to this page. Only once per phone.</p>
+</div>
+<p id="noget" hidden>This TV has no shared shortcut link yet. Someone in the household makes it once (docs/phone-notes.md, "Making the shortcut, once") and puts its iCloud link in the TV's <code>note_shortcut_url</code>; or build a simple one by hand, below.</p>
+
+<div id="pairbox" hidden>
+<h2 id="pairhead">2. Pair this phone</h2>
+<a class="btn" id="pair" href="#">Pair this phone</a>
+<p>Opens Shortcuts, which asks whose list this phone's notes go to (the first time, or to change it) and keeps the TV's address and code on this phone. The shortcut must be named <b>Send to TV</b>.</p>
+</div>
+
+<h2>Then send a note</h2>
+<p>In Notes, open the note, tap Share, then <b>Send to TV</b>. In Keep, use &#8942;, then Send, Send via other apps, <b>Send to TV</b>. Allow local network access when asked.</p>
+
+<details>
+<summary>Build a simple shortcut by hand instead</summary>
+<p>This one keeps the address and code in the shortcut itself: after a new code, paste the new value again.</p>
+<label for="url">Address (Get Contents of URL)</label>
+<div class="row"><input id="url" readonly><button data-copy="url">Copy</button></div>
+
+<label for="auth">Authorization header value</label>
+<div class="row"><input id="auth" readonly><button data-copy="auth">Copy</button></div>
+<ol>
+  <li>In <b>Shortcuts</b>, tap <b>+</b>, then rename the new shortcut <b>Send to TV</b>.</li>
+  <li>Tap <b>&#9432;</b>, turn on <b>Show in Share Sheet</b>, then <b>Done</b>. In the <b>Receive Any input</b> block at the top, tap <b>Any</b>, then <b>Clear</b>, tick <b>Text</b> and <b>Rich Text</b>.</li>
+  <li>Search for and add <b>Get Text from Input</b>; leave it as it is.</li>
+  <li>Add <b>Get Contents of URL</b>. Shortcuts fills its URL with the yellow <b>Text</b> chip: tap it, choose <b>Clear Variable</b>, then tap <b>URL</b> and paste the address. Tap <b>&#8250;</b> to show its options:
+    <ul>
+      <li>Method: <b>POST</b></li>
+      <li>Headers, <b>Add new header</b>: key <code>Authorization</code>, value: paste the value above</li>
+      <li>Request Body: <b>JSON</b></li>
+      <li><b>Add new field &rarr; Text</b>: key <code>list</code>, value your list's name, typed, e.g. <code>Rebecca</code></li>
+      <li><b>Add new field &rarr; Text</b>: key <code>text</code>; tap the value, then tap the blue <b>Text</b> variable above the keyboard (don't type it)</li>
+    </ul>
+  </li>
+  <li>Add <b>Get Dictionary Value</b>: Value for key <code>message</code>. Then add <b>Show Notification</b> with the <b>Dictionary Value</b>. Tap <b>Done</b>.</li>
+</ol>
+</details>
+<p>The code stays on this phone: it is in the link after the #, which is never sent to the TV.</p>
+<script>
+  // The code is in the fragment (never sent over the network); the address is this page's own origin.
+  var raw = (location.hash || '').slice(1), code = '';
+  try { code = decodeURIComponent(raw); } catch (e) { code = raw; }
+  code = code.replace(/[^0-9A-Za-z-]/g, '').slice(0, 16);
+  document.getElementById('url').value = location.origin + '/notes';
+  document.getElementById('auth').value = code ? 'Bearer ' + code : '';
+  if (!code) document.getElementById('nocode').hidden = false;
+  var link = document.body.getAttribute('data-shortcut') || '';
+  if (link.indexOf('https://www.icloud.com/shortcuts/') === 0) {
+    document.getElementById('getlink').href = link;
+    document.getElementById('get').hidden = false;
+  } else {
+    document.getElementById('noget').hidden = false;
+    document.getElementById('pairhead').textContent = 'Pair this phone';
+  }
+  if (code) {
+    // Hands the shortcut what to keep: "cleanyourtv-pair" is how it tells a pairing from a shared note.
+    var pairing = JSON.stringify({ pair: 'cleanyourtv-pair', url: location.origin + '/notes', auth: 'Bearer ' + code });
+    document.getElementById('pair').href = 'shortcuts://run-shortcut?name=' + encodeURIComponent('Send to TV')
+        + '&input=text&text=' + encodeURIComponent(pairing);
+    document.getElementById('pairbox').hidden = false;
+  }
+  [].forEach.call(document.querySelectorAll('[data-copy]'), function (b) {
+    b.addEventListener('click', function () {
+      var input = document.getElementById(b.getAttribute('data-copy'));
+      input.focus();
+      input.setSelectionRange(0, input.value.length);
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      b.textContent = ok ? 'Copied' : 'Select and copy';
+    });
+  });
+</script>
+</body>
+</html>

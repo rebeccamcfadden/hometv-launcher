@@ -52,7 +52,7 @@ public class SettingsNavTest {
 
     @Test
     public void theSectionsAreInTheSpecsOrderWithThemeAfterHomeRowApps() {
-        assertEquals(Arrays.asList("account", "services", "stores", "weather", "apps", "theme", "motion", "start",
-                "home", "tv", "about"), SettingsNav.ORDER);
+        assertEquals(Arrays.asList("account", "notes", "services", "stores", "weather", "apps", "theme", "motion",
+                "start", "home", "tv", "about"), SettingsNav.ORDER);
     }
 }

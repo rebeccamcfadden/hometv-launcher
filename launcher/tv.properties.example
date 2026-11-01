@@ -33,3 +33,8 @@ temperature_unit=C
 # Optional: where the themes' photos and drawings (launcher/backdrops/) are downloaded from, once, the first time a
 # theme needs one. https only. The default is that folder on the fork's main branch, through jsDelivr.
 #theme_assets_url=https://cdn.jsdelivr.net/gh/rebeccamcfadden/cleanyourtv@main/launcher/backdrops/
+
+# Optional: the household's shared "Send to TV" shortcut for Phone notes, as its iCloud link (docs/phone-notes.md,
+# "Making the shortcut, once"). Set, the page the Phone notes QR opens has a Get the shortcut button. Only
+# https://www.icloud.com/shortcuts/ links. A pushed config.json's note_shortcut_url wins over this one.
+#note_shortcut_url=

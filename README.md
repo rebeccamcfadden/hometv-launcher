@@ -648,6 +648,11 @@ launcher's look and layout keys are not read any more; [themes/README.md](themes
   once; Home is rebuilt with them when the page closes. The sections, top to bottom:
   - **Account**, only in builds with a TMDB token: sign in to TMDB with a QR code on your phone, then see the lists,
     sync now, choose which TMDB lists show as chips, or sign out.
+  - **Phone notes**, also only with a TMDB token, off unless turned on here (or by `note_inbox`): the address,
+    pairing code and a QR for an iPhone's "Send to TV" Shortcut (scan it to get the household's shared shortcut,
+    `note_shortcut_url`, and pair the phone), which sends a watch-list note to the TV over the home Wi-Fi
+    and adds its new lines to that person's TMDB list; each list's last send with the lines that matched nothing.
+    See [docs/phone-notes.md](docs/phone-notes.md).
   - **Streaming services**: tick the services the household pays for; titles on them show as Included.
   - **Stores for rent and buy**: tick the stores whose rent and buy prices show.
   - **Home row apps**: pick an app up with OK to move it, take it off Home, or add another app.

@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Every section of Launcher settings, in {@link SettingsNav#ORDER}: the one registry the page reads. A section
- * whose feature this build or TV leaves out is not listed: Account without a TMDB token (as before), Open on start
+ * whose feature this build or TV leaves out is not listed: Account and Phone notes without a TMDB token, Open on start
  * unless open_on_start_choice is on.
  */
 final class SettingsSections {
@@ -21,6 +21,7 @@ final class SettingsSections {
         Config config = home != null ? home.config() : Config.load(ctx);
         List<SettingsSection> out = new ArrayList<>();
         if (home != null && home.data().accounts.available()) out.add(new AccountSection(home));
+        if (home != null && home.data().accounts.available()) out.add(new NotesSection(home));
         if (home != null) out.add(new ServicesSection(home));
         if (home != null) out.add(new StoresSection(home));
         out.add(new WeatherSection());

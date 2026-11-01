@@ -42,6 +42,12 @@ final class ListRef {
         return new ListRef(0, s);
     }
 
+    /** A list chosen by its name only, even one made of digits (a phone note's list, NoteImport). */
+    static ListRef named(String name) {
+        String s = name == null ? "" : name.trim();
+        return s.isEmpty() ? NONE : new ListRef(0, s);
+    }
+
     boolean isNone() {
         return id == 0 && name.isEmpty();
     }

@@ -63,6 +63,14 @@ class Screen {
     }
 
     /**
+     * Whether Phone notes' import pill moves to the top centre while this page shows, because its own content runs to
+     * the bottom edge where the pill otherwise sits (Launcher settings' pane).
+     */
+    boolean pillAtTop() {
+        return false;
+    }
+
+    /**
      * When a top-level page stops being the current tab: another tab, Back or Backspace to Home, or the remote's
      * Home. Not called for a popup or page pushed over it. Search forgets its query here (app.ts goTab).
      */

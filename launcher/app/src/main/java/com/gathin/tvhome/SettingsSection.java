@@ -9,7 +9,10 @@ import android.view.View;
  * enters it on {@link #firstFocus()}; ← from the pane's left edge returns to the row.
  */
 interface SettingsSection {
-    /** The settings.ts section id: account, services, stores, weather, apps, theme, motion, start, home, tv, about. */
+    /**
+     * The settings.ts section id: account, notes, services, stores, weather, apps, theme, motion, start, home, tv,
+     * about.
+     */
     String id();
 
     /** The row's label (a string resource). */
