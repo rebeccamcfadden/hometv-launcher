@@ -28,6 +28,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Map;
@@ -47,8 +48,11 @@ import java.util.function.Supplier;
  * and downloads run off the main thread, and a picture fades in when it is ready.
  *
  * <p>A theme with an hourly list (Landscapes) shows the next picture when the hour changes while Home is on screen,
- * checked once an hour. Once a theme is shown, the rest of its list and a Seasonal theme's next period are fetched in
- * the background, on a low-priority thread, so later changes need no download.
+ * checked once an hour. A Seasonal theme's picture follows the part of the day ({@link DayPhase}, the F22 daylight
+ * cycle): the key names it with {@link BackdropKeys#PHASE}, and the picture crossfades to the next one when the sun
+ * moves on, checked once at that moment. Once a theme is shown, the rest of its list, the next part of the day and a
+ * Seasonal theme's next period are fetched in the background, on a low-priority thread, so later changes need no
+ * download. Nothing is drawn between those changes: one still picture, as before.
  */
 final class Backdrops {
     private static final int CONNECT_MS = 10_000;
@@ -86,11 +90,15 @@ final class Backdrops {
     private final Runnable hourly = this::refresh;
 
     private BackdropKeys.Key key = BackdropKeys.Key.NONE;
+    /** The part of the day a phased key shows; DAY for any other key. */
+    private DayPhase phase = DayPhase.DAY;
     /** Bumped by every new load and by release(): a result from an older one is dropped. */
     private int generation;
     /** The URL path on screen or on its way; null for other kinds. */
     private String wanted;
     private boolean loading;
+    /** Bumped by every schedule(): a next-edge answer for an older one is dropped. */
+    private int scheduled;
     private boolean imageShown;
     private boolean visible;
     private ValueAnimator fade;
@@ -125,17 +133,46 @@ final class Backdrops {
                 load(() -> decodeRes(res));
                 break;
             case PIXEL:
-                view.setBackground(sky(t));
-                String scene = key.name;
-                load(() -> decodePixel(scene));
-                break;
             case URL:
                 view.setBackground(sky(t));
-                showUrl(BackdropKeys.pick(key, LocalDateTime.now().getHour()));
-                prefetch();
+                if (key.phased) {
+                    showPhased();
+                    break;
+                }
+                phase = DayPhase.DAY;
+                if (key.kind == BackdropKeys.Kind.PIXEL) {
+                    showPixel();
+                } else {
+                    showUrl(BackdropKeys.pick(key, LocalDateTime.now().getHour(), phase));
+                    prefetch();
+                }
                 break;
         }
         schedule();
+    }
+
+    /**
+     * A phased picture: the part of the day is worked out on the decode thread, next to the decode, so the sun maths
+     * and the preferences reads stay off the path to Home's first frame; the sky shows until the picture fades in.
+     */
+    private void showPhased() {
+        int gen = ++generation;
+        loading = true;
+        BackdropKeys.Key k = key;
+        int hour = LocalDateTime.now().getHour();
+        SHOW.execute(() -> {
+            DayPhase p = ThemeStore.phase(activity, ZonedDateTime.now());
+            String path = k.kind == BackdropKeys.Kind.URL ? BackdropKeys.pick(k, hour, p) : null;
+            Drawable d = path != null ? decodeUrl(path) : decodePixel(k.name, p);
+            main.post(() -> {
+                if (gen != generation || activity.isDestroyed()) return;
+                loading = false;
+                phase = p;
+                wanted = path;
+                if (d != null) reveal(d);
+                if (path != null) prefetch();
+            });
+        });
     }
 
     /**
@@ -143,6 +180,11 @@ final class Backdrops {
      */
     void release() {
         stop();
+    }
+
+    /** The clock or time zone was set while the theme stayed: the part of the day and its next edge are worked out again. */
+    void timeChanged() {
+        refresh();
     }
 
     /**
@@ -157,6 +199,7 @@ final class Backdrops {
 
     private void stop() {
         generation++;
+        scheduled++;
         loading = false;
         imageShown = false;
         wanted = null;
@@ -174,20 +217,70 @@ final class Backdrops {
     }
 
     private void refresh() {
-        if (key.kind == BackdropKeys.Kind.URL && !loading) {
-            String path = BackdropKeys.pick(key, LocalDateTime.now().getHour());
-            if (!imageShown || !path.equals(wanted)) showUrl(path);
+        if (!key.phased) {
+            refresh(DayPhase.DAY);
+            return;
+        }
+        // Worked out off the main thread too: refresh runs on every return to Home.
+        BackdropKeys.Key k = key;
+        SHOW.execute(() -> {
+            DayPhase now = ThemeStore.phase(activity, ZonedDateTime.now());
+            main.post(() -> {
+                if (key == k && !activity.isDestroyed()) refresh(now);
+            });
+        });
+    }
+
+    private void refresh(DayPhase now) {
+        boolean turned = now != phase;
+        phase = now;
+        if (key.kind == BackdropKeys.Kind.URL) {
+            String path = BackdropKeys.pick(key, LocalDateTime.now().getHour(), phase);
+            // A new picture supersedes one still loading; the same one, still loading, is left to finish.
+            if (!path.equals(wanted) || (!imageShown && !loading)) showUrl(path);
+            if (turned) prefetch();
+        } else if (key.kind == BackdropKeys.Kind.PIXEL && key.phased && turned) {
+            showPixel();
         }
         schedule();
     }
 
-    /** The next hourly check, only for an hourly list on screen: one post an hour. */
+    /**
+     * The next check while Home is on screen: on the hour for an hourly list, and when the part of the day changes for
+     * a phased key. One post, whichever comes first; nothing runs in between.
+     */
     private void schedule() {
         main.removeCallbacks(hourly);
-        if (!visible || key.kind != BackdropKeys.Kind.URL || key.paths.size() < 2) return;
-        LocalDateTime now = LocalDateTime.now();
-        long ms = Duration.between(now, now.truncatedTo(ChronoUnit.HOURS).plusHours(1)).toMillis();
-        main.postDelayed(hourly, ms + 1000);
+        int token = ++scheduled;
+        if (!visible) return;
+        long hourMs = Long.MAX_VALUE;
+        if (key.kind == BackdropKeys.Kind.URL && key.paths.size() >= 2) {
+            LocalDateTime now = LocalDateTime.now();
+            hourMs = Duration.between(now, now.truncatedTo(ChronoUnit.HOURS).plusHours(1)).toMillis();
+        }
+        if (!key.phased) {
+            if (hourMs != Long.MAX_VALUE) main.postDelayed(hourly, hourMs + 1000);
+            return;
+        }
+        // The next edge of the day is worked out on the decode thread, then posted back.
+        long hour = hourMs;
+        SHOW.execute(() -> {
+            ZonedDateTime now = ZonedDateTime.now();
+            ZonedDateTime next = ThemeStore.nextPhaseChange(activity, now);
+            long ms = next == null ? hour : Math.min(hour, Math.max(0, Duration.between(now, next).toMillis()));
+            if (ms == Long.MAX_VALUE) return;
+            main.post(() -> {
+                if (token != scheduled || !visible) return;
+                main.removeCallbacks(hourly);
+                main.postDelayed(hourly, ms + 1000);
+            });
+        });
+    }
+
+    private void showPixel() {
+        String scene = key.name;
+        DayPhase p = key.phased ? phase : DayPhase.DAY;
+        load(() -> decodePixel(scene, p));
     }
 
     private void showUrl(String path) {
@@ -247,18 +340,34 @@ final class Backdrops {
         a.start();
     }
 
+    /**
+     * Fetches the pictures worth having ahead (BackdropKeys.prefetch) onto disk only, on the low-priority thread; none
+     * is decoded until it is shown. Working out which ones (the next edge of the day, the next period) happens there
+     * too, off the main thread.
+     */
     private void prefetch() {
-        for (String path : BackdropKeys.prefetch(key, LocalDate.now())) {
-            if (path.equals(wanted) || file(path).isFile() || !QUEUED.add(path)) continue;
-            File f = file(path);
-            PREFETCH.execute(() -> {
+        BackdropKeys.Key k = key;
+        DayPhase now = phase;
+        String shown = wanted;
+        PREFETCH.execute(() -> {
+            DayPhase next = now, startsIn = DayPhase.DAY;
+            if (k.phased) {
+                ZonedDateTime t = ZonedDateTime.now();
+                ZonedDateTime change = ThemeStore.nextPhaseChange(activity, t);
+                if (change != null) next = ThemeStore.phase(activity, change);
+                startsIn = ThemeStore.phase(activity,
+                        BackdropKeys.nextPeriodStart(LocalDate.now()).atStartOfDay(t.getZone()));
+            }
+            for (String path : BackdropKeys.prefetch(k, LocalDate.now(), now, next, startsIn)) {
+                File f = file(path);
+                if (path.equals(shown) || f.isFile() || !QUEUED.add(path)) continue;
                 try {
-                    if (!f.isFile()) download(path, f);
+                    download(path, f);
                 } finally {
                     QUEUED.remove(path);
                 }
-            });
-        }
+            }
+        });
     }
 
     static Drawable sky(Theme t) {
@@ -278,8 +387,8 @@ final class Backdrops {
     }
 
     /** 160×90 pixels blown up to the screen, each one a sharp square: no filtering, no smoothing. */
-    private Drawable decodePixel(String slug) {
-        int id = pixelDrawable(BackdropKeys.period(slug));
+    private Drawable decodePixel(String slug, DayPhase phase) {
+        int id = pixelDrawable(BackdropKeys.period(slug), phase);
         if (id == 0) return null;
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inScaled = false;
@@ -292,32 +401,32 @@ final class Backdrops {
         return d;
     }
 
-    private static int pixelDrawable(SeasonCalendar.Period p) {
-        if (p == null) return 0;
-        switch (p) {
-            case SNOW:
-                return R.drawable.pixel_snow;
-            case THAW:
-                return R.drawable.pixel_thaw;
-            case SPRING_RAIN:
-                return R.drawable.pixel_spring_rain;
-            case BLOOM:
-                return R.drawable.pixel_bloom;
-            case PRIDE:
-                return R.drawable.pixel_pride;
-            case MIDSUMMER:
-                return R.drawable.pixel_midsummer;
-            case LATE_SUMMER:
-                return R.drawable.pixel_late_summer;
-            case AUTUMN:
-                return R.drawable.pixel_autumn;
-            case HALLOWEEN:
-                return R.drawable.pixel_halloween;
-            case CHRISTMAS:
-                return R.drawable.pixel_christmas;
-            default:
-                return 0;
-        }
+    /** The bundled scenes by period (SeasonCalendar.Period's order) and part of the day (DayPhase's order). */
+    private static final int[][] PIXEL = {
+            {R.drawable.pixel_snow_dawn, R.drawable.pixel_snow, R.drawable.pixel_snow_sunset,
+                    R.drawable.pixel_snow_night},
+            {R.drawable.pixel_thaw_dawn, R.drawable.pixel_thaw, R.drawable.pixel_thaw_sunset,
+                    R.drawable.pixel_thaw_night},
+            {R.drawable.pixel_spring_rain_dawn, R.drawable.pixel_spring_rain, R.drawable.pixel_spring_rain_sunset,
+                    R.drawable.pixel_spring_rain_night},
+            {R.drawable.pixel_bloom_dawn, R.drawable.pixel_bloom, R.drawable.pixel_bloom_sunset,
+                    R.drawable.pixel_bloom_night},
+            {R.drawable.pixel_pride_dawn, R.drawable.pixel_pride, R.drawable.pixel_pride_sunset,
+                    R.drawable.pixel_pride_night},
+            {R.drawable.pixel_midsummer_dawn, R.drawable.pixel_midsummer, R.drawable.pixel_midsummer_sunset,
+                    R.drawable.pixel_midsummer_night},
+            {R.drawable.pixel_late_summer_dawn, R.drawable.pixel_late_summer, R.drawable.pixel_late_summer_sunset,
+                    R.drawable.pixel_late_summer_night},
+            {R.drawable.pixel_autumn_dawn, R.drawable.pixel_autumn, R.drawable.pixel_autumn_sunset,
+                    R.drawable.pixel_autumn_night},
+            {R.drawable.pixel_halloween_dawn, R.drawable.pixel_halloween, R.drawable.pixel_halloween_sunset,
+                    R.drawable.pixel_halloween_night},
+            {R.drawable.pixel_christmas_dawn, R.drawable.pixel_christmas, R.drawable.pixel_christmas_sunset,
+                    R.drawable.pixel_christmas_night},
+    };
+
+    private static int pixelDrawable(SeasonCalendar.Period p, DayPhase phase) {
+        return p == null ? 0 : PIXEL[p.ordinal()][phase.ordinal()];
     }
 
     private Drawable decodeUrl(String path) {

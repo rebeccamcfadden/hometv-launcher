@@ -78,10 +78,30 @@ public class BackdropKeysTest {
         assertEquals(2, BackdropKeys.rotation(-1, 3));
 
         BackdropKeys.Key list = BackdropKeys.parse("url:a.webp,b.webp,c.webp");
-        assertEquals("a.webp", BackdropKeys.pick(list, 9));
-        assertEquals("b.webp", BackdropKeys.pick(list, 10));
-        assertEquals("c.webp", BackdropKeys.pick(list, 23));
-        assertNull(BackdropKeys.pick(BackdropKeys.parse("sky"), 9));
+        assertEquals("a.webp", BackdropKeys.pick(list, 9, DayPhase.NIGHT));
+        assertEquals("b.webp", BackdropKeys.pick(list, 10, DayPhase.DAY));
+        assertEquals("c.webp", BackdropKeys.pick(list, 23, DayPhase.DAY));
+        assertFalse(list.phased);
+        assertNull(BackdropKeys.pick(BackdropKeys.parse("sky"), 9, DayPhase.DAY));
+    }
+
+    @Test
+    public void phasedKeysFillInThePartOfTheDay() {
+        BackdropKeys.Key vector = BackdropKeys.parse("url:seasonal/vector-5/autumn-{phase}.webp");
+        assertEquals(BackdropKeys.Kind.URL, vector.kind);
+        assertTrue(vector.phased);
+        assertEquals("seasonal/vector-5/autumn-dawn.webp", BackdropKeys.pick(vector, 7, DayPhase.DAWN));
+        assertEquals("seasonal/vector-5/autumn-night.webp", BackdropKeys.pick(vector, 23, DayPhase.NIGHT));
+
+        BackdropKeys.Key pixel = BackdropKeys.parse("pixel:late-summer-{phase}");
+        assertEquals(BackdropKeys.Kind.PIXEL, pixel.kind);
+        assertEquals("late-summer", pixel.name);
+        assertTrue(pixel.phased);
+        assertFalse(BackdropKeys.parse("pixel:late-summer").phased);
+
+        // The placeholder never opens a way out of the folder.
+        assertSame(BackdropKeys.Key.SKY, BackdropKeys.parse("url:../{phase}.webp"));
+        assertSame(BackdropKeys.Key.SKY, BackdropKeys.parse("pixel:easter-{phase}"));
     }
 
     @Test
@@ -116,7 +136,9 @@ public class BackdropKeysTest {
 
     @Test
     public void swapsThePeriodInAPath() {
-        assertEquals("seasonal/nature/halloween.webp", BackdropKeys.forPeriod("seasonal/nature/autumn.webp",
+        assertEquals("seasonal/vector-5/halloween-{phase}.webp", BackdropKeys.forPeriod(
+                "seasonal/vector-5/autumn-{phase}.webp", SeasonCalendar.Period.AUTUMN, SeasonCalendar.Period.HALLOWEEN));
+        assertNull(BackdropKeys.forPeriod("seasonal/vector-5/autumn-night.webp",
                 SeasonCalendar.Period.AUTUMN, SeasonCalendar.Period.HALLOWEEN));
         assertEquals("seasonal/vector-2/thaw.webp", BackdropKeys.forPeriod("seasonal/vector-2/snow.webp",
                 SeasonCalendar.Period.SNOW, SeasonCalendar.Period.THAW));
@@ -128,17 +150,30 @@ public class BackdropKeysTest {
 
     @Test
     public void prefetchesTheRestOfAListAndTheNextPeriod() {
-        List<String> seasonal = BackdropKeys.prefetch(BackdropKeys.parse("url:seasonal/nature/autumn.webp"),
-                LocalDate.of(2026, 10, 1));
-        assertEquals(Arrays.asList("seasonal/nature/autumn.webp", "seasonal/nature/halloween.webp"), seasonal);
+        List<String> seasonal = BackdropKeys.prefetch(BackdropKeys.parse("url:seasonal/vector-2/autumn.webp"),
+                LocalDate.of(2026, 10, 1), DayPhase.DAY, DayPhase.DAY, DayPhase.DAY);
+        assertEquals(Arrays.asList("seasonal/vector-2/autumn.webp", "seasonal/vector-2/halloween.webp"), seasonal);
+
+        // A phased picture: now, the next part of the day, and the next period at night, when it starts.
+        List<String> phased = BackdropKeys.prefetch(BackdropKeys.parse("url:seasonal/vector-5/autumn-{phase}.webp"),
+                LocalDate.of(2026, 10, 1), DayPhase.DAY, DayPhase.SUNSET, DayPhase.NIGHT);
+        assertEquals(Arrays.asList("seasonal/vector-5/autumn-day.webp", "seasonal/vector-5/autumn-sunset.webp",
+                "seasonal/vector-5/halloween-night.webp"), phased);
+        // Always day: the next period starts on its day picture.
+        assertEquals(Arrays.asList("seasonal/vector-5/autumn-day.webp", "seasonal/vector-5/halloween-day.webp"),
+                BackdropKeys.prefetch(BackdropKeys.parse("url:seasonal/vector-5/autumn-{phase}.webp"),
+                        LocalDate.of(2026, 10, 1), DayPhase.DAY, DayPhase.DAY, DayPhase.DAY));
+        assertEquals(LocalDate.of(2026, 10, 15), BackdropKeys.nextPeriodStart(LocalDate.of(2026, 10, 1)));
 
         List<String> landscapes = BackdropKeys.prefetch(BackdropKeys.parse(
                 "url:classic/landscapes-1.webp,classic/landscapes-2.webp,classic/landscapes-3.webp,"
-                        + "classic/landscapes-4.webp"), LocalDate.of(2026, 10, 1));
+                        + "classic/landscapes-4.webp"), LocalDate.of(2026, 10, 1), DayPhase.DAY, DayPhase.DAY,
+                DayPhase.DAY);
         assertEquals(Arrays.asList("classic/landscapes-1.webp", "classic/landscapes-2.webp",
                 "classic/landscapes-3.webp", "classic/landscapes-4.webp"), landscapes);
 
-        assertTrue(BackdropKeys.prefetch(BackdropKeys.parse("pixel:snow"), LocalDate.of(2026, 1, 1)).isEmpty());
+        assertTrue(BackdropKeys.prefetch(BackdropKeys.parse("pixel:snow"), LocalDate.of(2026, 1, 1), DayPhase.DAY,
+                DayPhase.DAY, DayPhase.DAY).isEmpty());
     }
 
     @Test

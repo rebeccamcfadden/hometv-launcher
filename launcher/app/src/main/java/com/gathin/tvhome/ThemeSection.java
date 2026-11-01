@@ -15,13 +15,14 @@ import java.util.List;
 
 /**
  * Launcher settings' Theme section (Figma lwShqRaciMpDUDW5dYljNw, "Settings · Theme picker", frame 18:10): the
- * Classic and Seasonal swatches, then Typeface (Moving details moved to Performance as Animated details, the project
- * lead's decision of 2026-11-01). Every swatch is drawn from its own
+ * Classic and Seasonal swatches, then Typeface and Time of day side by side (Moving details moved to Performance as
+ * Animated details, the project lead's decision of 2026-11-01; Time of day is F22: a Seasonal picture follows the sun
+ * or always shows the day). Every swatch is drawn from its own
  * theme (a Seasonal one in today's period), and the pane's chrome from Ui's tokens, so it is themed too.
  *
  * <p>The swatches are one grid with the option row under them, moved through by the page's spatial D-pad. Moving only
- * highlights; OK selects (the project lead's rule for segmented choices, applied to the swatches too). A new theme or
- * typeface re-applies and rebuilds the launcher through {@link Host#themeChanged()}.
+ * highlights; OK selects (the project lead's rule for segmented choices, applied to the swatches too). A new theme,
+ * typeface or time of day re-applies and rebuilds the launcher through {@link Host#themeChanged()}.
  */
 final class ThemeSection implements SettingsSection {
     private static final String SWATCH_GROUP = "theme-swatch";
@@ -126,6 +127,20 @@ final class ThemeSection implements SettingsSection {
         options.addView(optionRow(ctx, R.string.theme_typeface, R.string.theme_typeface_sub, typeface),
                 new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
+        boolean followSun = ThemeStore.followSun(ctx);
+        LinearLayout timeOfDay = segmented(ctx, "theme-time",
+                new String[]{"theme-time-sun", "theme-time-day"},
+                new CharSequence[]{ctx.getString(R.string.theme_time_sun), ctx.getString(R.string.theme_time_day)},
+                followSun ? 0 : 1, (seg, i) -> {
+                    boolean sun = i == 0;
+                    if (sun == ThemeStore.followSun(ctx)) return;
+                    ThemeStore.setFollowSun(ctx, sun);
+                    select(seg, i);
+                    host.themeChanged();
+                });
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        tlp.leftMargin = Ui.px(16);
+        options.addView(optionRow(ctx, R.string.theme_time_of_day, R.string.theme_time_of_day_sub, timeOfDay), tlp);
 
         LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);

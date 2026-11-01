@@ -8,6 +8,7 @@ import { DATA_STATES, net, type DataState } from './core/net';
 import { settings } from './core/settings';
 import { settingsMenu } from './screens/quickSettings';
 import { store } from './core/store';
+import { PHASE_LABELS, PHASES, type Phase } from './core/daylight';
 import { isThemeId, parseDate, PERIOD_DATES, PERIOD_LABELS, periodAt, theme, THEMES } from './core/theme';
 import { getTitle } from './data/catalog';
 import { homeScreen } from './screens/home';
@@ -38,6 +39,9 @@ const startTheme = params.get('theme');
 if (isThemeId(startTheme)) settings.set({ theme: startTheme });
 const startDate = parseDate(params.get('date'));
 if (startDate) theme.setDate(startDate);
+// ?phase=night puts a Seasonal picture on a part of the day (the Time menu in the dev bar).
+const startPhase = params.get('phase') as Phase | null;
+if (startPhase && PHASES.includes(startPhase)) theme.setPhase(startPhase);
 theme.init();
 
 app.init(stage, {
@@ -80,6 +84,9 @@ if (startAccount && ACCOUNT_STATES.some(([id]) => id === startAccount)) account.
 const themeSelect = document.getElementById('theme') as HTMLSelectElement;
 for (const t of THEMES) themeSelect.append(new Option(`Theme: ${t.group === 'seasonal' ? `Seasonal · ${t.name}` : t.name}`, t.id));
 const dateSelect = document.getElementById('date') as HTMLSelectElement;
+const phaseSelect = document.getElementById('phase') as HTMLSelectElement;
+phaseSelect.append(new Option('Time: now (follows the sun)', ''));
+for (const p of PHASES) phaseSelect.append(new Option(`Time: ${PHASE_LABELS[p]}`, p));
 const year = new Date().getFullYear();
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 dateSelect.append(new Option(`Date: today (${PERIOD_LABELS[periodAt(new Date())]})`, ''));
@@ -89,6 +96,7 @@ if (startDate && ![...dateSelect.options].some((o) => o.value === iso(startDate)
 const showTheme = () => {
   themeSelect.value = theme.current().id;
   dateSelect.value = theme.isDateOverridden() ? iso(theme.date()) : '';
+  phaseSelect.value = theme.isPhaseOverridden() ? theme.phase() : '';
 };
 showTheme();
 theme.on(showTheme);
@@ -99,6 +107,10 @@ themeSelect.addEventListener('change', () => {
 dateSelect.addEventListener('change', () => {
   theme.setDate(parseDate(dateSelect.value));
   dateSelect.blur();
+});
+phaseSelect.addEventListener('change', () => {
+  theme.setPhase((phaseSelect.value || null) as Phase | null);
+  phaseSelect.blur();
 });
 
 const preview = (tab: 'movies' | 'tv', id: string) => () => {

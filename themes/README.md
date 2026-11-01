@@ -8,7 +8,8 @@ same in every theme. The themes are built into the launcher, drawn from the Figm
 **Classic** themes keep their look all year. **Seasonal** themes follow the date through ten periods: Snow (January
 and February), Thaw (March), Spring rain (April), Bloom (May), Pride (June), Midsummer (July), Late summer (August),
 Autumn (September to mid-October, and November), Halloween (mid-October to 2 November) and Christmas (December). A
-Seasonal theme's colours and picture are its period's; its shapes and type are its style's.
+Seasonal theme's colours and picture are its period's; its shapes and type are its style's. Its picture also follows
+the sun: dawn, day, sunset and night, from sunrise and sunset at the Weather place.
 
 | Built-in theme | Look | Home on a TV |
 |---|---|---|
@@ -18,7 +19,6 @@ Seasonal theme's colours and picture are its period's; its shapes and type are i
 | **High Contrast** | Black and white with a bold yellow focus ring and thicker lines, Atkinson Hyperlegible Next | <img src="../docs/themes/high-contrast.jpg" width="320" alt="High Contrast theme"> |
 | **Cinema** | A theatre curtain, sharp corners, a warm gold glow on focus and a soft vignette, DM Serif Display and DM Sans | <img src="../docs/themes/cinema.jpg" width="320" alt="Cinema theme"> |
 | **Landscapes** | A new landscape photo every hour (four in turn), Outfit | <img src="../docs/themes/landscapes.jpg" width="320" alt="Landscapes theme"> |
-| **Nature** (Seasonal) | A photo of the season, Outfit | <img src="../docs/themes/seasonal-nature.jpg" width="320" alt="Seasonal Nature theme"> |
 | **Vector art** (Seasonal) | A flat drawing of the season, rounder corners, Baloo 2 and Nunito | <img src="../docs/themes/seasonal-vector.jpg" width="320" alt="Seasonal Vector art theme"> |
 | **8-bit** (Seasonal) | A pixel-art scene of the season, square corners and hard offset shadows, Press Start 2P and Pixelify Sans | <img src="../docs/themes/seasonal-8bit.jpg" width="320" alt="Seasonal 8-bit theme"> |
 
@@ -26,6 +26,8 @@ The screenshots are Home on a TCL TV (Android 9) at the end of October, so the S
 
 - **Typeface:** each theme's fonts come from Google Fonts, downloaded once and kept on the TV (Roboto until they
   arrive); Launcher settings › Theme › Typeface can put every theme in the TV's own Roboto instead.
+- **Time of day:** Launcher settings › Theme › Time of day keeps a Seasonal picture on the day (Always day) instead of
+  following the sun.
 - **Pictures:** Midnight's and 8-bit's are in the launcher; the others are downloaded once from
   `theme_assets_url` in `launcher/tv.properties` (by default [`launcher/backdrops/`](../launcher/backdrops/README.md)
   on this repository's `main`) and kept, with the theme's sky gradient while they load or offline.

@@ -42,7 +42,7 @@ public class ThemesTest {
     public void thePickersChoicesInOrder() {
         assertEquals(Arrays.asList("midnight", "daylight", "oled", "high-contrast", "cinema", "landscapes"),
                 Themes.CLASSIC);
-        assertEquals(Arrays.asList("seasonal-nature", "seasonal-vector", "seasonal-8bit"), Themes.SEASONAL);
+        assertEquals(Arrays.asList("seasonal-vector", "seasonal-8bit"), Themes.SEASONAL);
         assertEquals("midnight", Themes.DEFAULT_ID);
     }
 
@@ -96,20 +96,21 @@ public class ThemesTest {
 
     @Test
     public void seasonalThemesFollowTheDate() {
-        Theme t = Themes.resolve("seasonal-nature", DAY);
-        assertEquals("seasonal-nature:halloween", t.id);
+        Theme t = Themes.resolve("seasonal-vector", DAY);
+        assertEquals("seasonal-vector:halloween", t.id);
         assertEquals("Halloween", t.name);
         assertEquals(Theme.Group.SEASONAL, t.group);
-        assertEquals("url:seasonal/nature/halloween.webp", t.backdrop);
+        assertEquals("url:seasonal/vector-5/halloween-{phase}.webp", t.backdrop);
 
         t = Themes.resolve("seasonal-vector", LocalDate.of(2026, 4, 10));
         assertEquals("seasonal-vector:spring-rain", t.id);
         assertEquals("Spring rain", t.name);
-        assertEquals("url:seasonal/vector-2/spring-rain.webp", t.backdrop);
+        assertEquals("url:seasonal/vector-5/spring-rain-{phase}.webp", t.backdrop);
 
         t = Themes.resolve("seasonal-8bit", LocalDate.of(2026, 8, 1));
         assertEquals("seasonal-8bit:late-summer", t.id);
-        assertEquals("pixel:late-summer", t.backdrop);
+        assertEquals("pixel:late-summer-{phase}", t.backdrop);
+        assertTrue(BackdropKeys.parse(t.backdrop).phased);
     }
 
     @Test
@@ -127,14 +128,15 @@ public class ThemesTest {
                 assertTrue(t.id, ids.add(t.id));
             }
         }
-        assertEquals(30, ids.size());
+        assertEquals(20, ids.size());
         assertEquals("spring-rain", Themes.slug(SeasonCalendar.Period.SPRING_RAIN));
         assertEquals("christmas", Themes.slug(SeasonCalendar.Period.CHRISTMAS));
     }
 
     @Test
     public void unknownIdsFallBackToMidnight() {
-        for (String id : new String[]{null, "", "nope", "retro", "seasonal-nature:snow", "Midnight"}) {
+        for (String id : new String[]{null, "", "nope", "retro", "seasonal-nature", "seasonal-nature:snow",
+                "Midnight"}) {
             assertFalse(String.valueOf(id), Themes.exists(id));
             assertSameValues(Theme.midnight(), Themes.resolve(id, DAY));
         }

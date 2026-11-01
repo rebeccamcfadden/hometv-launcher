@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 /**
  * The Theme pane's wording, chosen without Android so it is tested on the JVM: each theme's and each period's name,
- * and what the Theme section's row says ("Midnight", or "Nature · Halloween" for a Seasonal theme on 30 October).
+ * and what the Theme section's row says ("Midnight", or "Vector art · Halloween" for a Seasonal theme on 30 October).
  * Stands in for Themes.nameRes / Themes.periodRes until the theme registry carries its own names (M9 track B).
  */
 final class ThemeWords {
@@ -26,8 +26,6 @@ final class ThemeWords {
                 return R.string.theme_name_cinema;
             case "landscapes":
                 return R.string.theme_name_landscapes;
-            case "seasonal-nature":
-                return R.string.theme_name_nature;
             case "seasonal-vector":
                 return R.string.theme_name_vector;
             case "seasonal-8bit":

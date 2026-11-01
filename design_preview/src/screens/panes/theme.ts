@@ -1,6 +1,6 @@
 import { h } from '../../core/dom';
 import { focusable } from '../../core/focus';
-import { FONT_LABELS, settings } from '../../core/settings';
+import { FONT_LABELS, settings, TIME_OF_DAY_LABELS } from '../../core/settings';
 import { loadSwatchFonts, PERIOD_LABELS, theme, THEMES, type Period, type ThemeDef } from '../../core/theme';
 import type { Pane } from './pane';
 
@@ -20,8 +20,9 @@ export function swatch(t: ThemeDef, period: Period): HTMLElement {
 
 /**
  * Launcher settings › Theme (Figma page "Settings · Theme picker", frame 18:10): Classic and Seasonal swatches, then
- * Typeface (Moving details moved to Performance as Animated details). Moving only highlights a swatch; OK selects it,
- * and the whole preview wears it at once.
+ * Typeface and Time of day (F22: a Seasonal picture follows the sun, or always shows the day; Moving details moved to
+ * Performance as Animated details). Moving only highlights a swatch; OK selects it, and the whole preview wears it at
+ * once.
  */
 export const themePane = (): Pane => ({
   render: () => {
@@ -55,6 +56,9 @@ export const themePane = (): Pane => ({
         'div.theme-rows',
         row('theme-font', 'Typeface', 'System font uses Roboto', FONT_LABELS[s.themeFont], false, () =>
           settings.set({ themeFont: s.themeFont === 'theme' ? 'system' : 'theme' }),
+        ),
+        row('theme-time', 'Time of day', 'For Seasonal themes', TIME_OF_DAY_LABELS[s.timeOfDay], false, () =>
+          settings.set({ timeOfDay: s.timeOfDay === 'sun' ? 'day' : 'sun' }),
         ),
       ),
     ];

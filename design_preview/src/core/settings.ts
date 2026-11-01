@@ -10,6 +10,7 @@ export type Unit = 'c' | 'f' | 'tv';
 export type ThemeFont = 'theme' | 'system';
 export type CardShadows = 'on' | 'focus' | 'off';
 export type BackdropPicture = 'photo' | 'plain';
+export type TimeOfDay = 'sun' | 'day';
 
 interface Saved {
   motion: Motion;
@@ -27,6 +28,8 @@ interface Saved {
   /** Launcher settings › Theme: the chosen theme (a Seasonal one follows the date), and whether it uses its own fonts. */
   theme: ThemeId;
   themeFont: ThemeFont;
+  /** Theme › Time of day: a Seasonal picture follows the sun (dawn, day, sunset, night) or always shows the day. */
+  timeOfDay: TimeOfDay;
   /**
    * Launcher settings › Performance (with Motion): card shadows, the focus glow, the backdrop picture and the animated
    * details (petals, snow and leaves drifting over Seasonal backdrops; saved only, nothing moves yet, on the TV either).
@@ -55,6 +58,7 @@ const defaults = (): Saved => ({
   unit: 'tv',
   theme: 'midnight',
   themeFont: 'theme',
+  timeOfDay: 'sun',
   cardShadows: 'on',
   focusGlow: true,
   backdropPicture: 'photo',
@@ -64,7 +68,12 @@ const defaults = (): Saved => ({
 function load(): Saved {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...defaults(), ...(JSON.parse(raw) as Partial<Saved>) };
+    if (raw) {
+      const saved = { ...defaults(), ...(JSON.parse(raw) as Partial<Saved>) };
+      // Seasonal · Nature was removed (2026-11-01): a TV that had it shows Vector art, as the launcher's ThemeStore does.
+      if ((saved.theme as string) === 'seasonal-nature') saved.theme = 'seasonal-vector';
+      return saved;
+    }
   } catch {
     // Corrupt or blocked storage: start fresh.
   }
@@ -116,6 +125,7 @@ export const UNIT_LABELS: Record<Unit, string> = { c: '°C', f: '°F', tv: `TV d
 export const FONT_LABELS: Record<ThemeFont, string> = { theme: 'Theme font', system: 'System font' };
 export const SHADOW_LABELS: Record<CardShadows, string> = { on: 'On', focus: 'Focused card only', off: 'Off' };
 export const BACKDROP_LABELS: Record<BackdropPicture, string> = { photo: 'Photo', plain: 'Plain colour' };
+export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = { sun: 'Follow the sun', day: 'Always day' };
 
 /** A temperature kept in °C, shown in the chosen unit: "14°". */
 export function deg(c: number): string {

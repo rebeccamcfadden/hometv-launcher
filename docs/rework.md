@@ -178,7 +178,7 @@ emulator first, the real TV in a batch with the project lead.
 | M6 · Search | Bar with ghost text, 6×6 keyboard, recents and suggestions, results preview, full results, no matches, typing from a hardware keyboard | Fuzzy matching ported with its tests; focus and Back match the prototype |
 | M7 · Pick for me | Setup and results | Reroll, Adjust filters and both buttons on the results bar work |
 | M8 · Finish | Music (left the nav with F17), Launcher settings, All Apps and Weather stubs; docs; the real TV | A run on the TCL BeyondTV with the project lead |
-| M9 · Themes and Launcher settings | The split Launcher settings page with every pane (Account, Streaming services, Stores, Weather, Home row apps, Theme, Motion, Open on start, Default Home, TV settings, About); themes: Classic (Midnight, Daylight, OLED Black, High Contrast, Cinema, Landscapes) and Seasonal (Nature, Vector art, 8-bit) following the date; fonts from Google Fonts; backdrops downloaded from `launcher/backdrops/` | Every theme and period on the emulator, Midnight unchanged; then the TCL |
+| M9 · Themes and Launcher settings | The split Launcher settings page with every pane (Account, Streaming services, Stores, Weather, Home row apps, Theme, Motion, Open on start, Default Home, TV settings, About); themes: Classic (Midnight, Daylight, OLED Black, High Contrast, Cinema, Landscapes) and Seasonal (Vector art, 8-bit; Nature removed 2026-11-01) following the date and, since F22, the sun; fonts from Google Fonts; backdrops downloaded from `launcher/backdrops/` | Every theme and period on the emulator, Midnight unchanged; then the TCL |
 
 ## Toolchain and emulator
 

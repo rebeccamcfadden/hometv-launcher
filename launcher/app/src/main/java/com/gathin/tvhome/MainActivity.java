@@ -83,11 +83,14 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         handler.removeCallbacks(recreateForFonts);
         handler.postDelayed(recreateForFonts, 500);
     };
-    /** Midnight passed or the clock was set: the Seasonal theme may have moved to its next period. */
+    /**
+     * Midnight passed or the clock or time zone was set: the Seasonal theme may have moved to its next period, and its
+     * picture to another part of the day.
+     */
     private final BroadcastReceiver dateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            recreateIfThemeChanged();
+            if (!recreateIfThemeChanged() && backdrops != null) backdrops.timeChanged();
         }
     };
     /** An app was installed, updated, changed or removed: its banner may be new, so the cached one goes. */

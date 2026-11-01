@@ -85,7 +85,8 @@ final class Theme {
     /**
      * Where the picture behind the pages comes from, read by Backdrops: {@code res:<drawable>} bundled,
      * {@code url:<path>} downloaded once and cached, {@code pixel:<name>} a bundled 160×90 scene drawn without
-     * smoothing, {@code sky} the theme's own gradient, {@code none} plain bg.
+     * smoothing, {@code sky} the theme's own gradient, {@code none} plain bg. A {@code {phase}} in a path or after a
+     * scene's name ({@code pixel:autumn-{phase}}) follows the part of the day (BackdropKeys.PHASE).
      */
     final String backdrop;
 

@@ -33,11 +33,12 @@ else is changed. The page links use Pixabay's short form, which leads to the pho
 
 ## Seasonal · Vector art
 
-`seasonal/vector-2/*.webp` (all ten periods): drawn for CleanYourTV, in the project's Figma file "CleanTV · Theme
-explorations" (component set "Calendar · Vector art"), released with the repo under its MIT licence.
+`seasonal/vector-2/*.webp` (all ten periods) and `seasonal/vector-5/*.webp` (each period at dawn, day, sunset and
+night): drawn for CleanYourTV, in the project's Figma file "CleanTV · Theme explorations" (component sets "Calendar ·
+Vector art" and "Calendar · Vector art · Time of day"), released with the repo under its MIT licence.
 
 ## 8-bit
 
-`seasonal/8bit/*.png` (all ten periods): 160×90 scenes drawn for CleanYourTV, released with the repo under its MIT
+`seasonal/8bit/*.png` (all ten periods, each at dawn, day, sunset and night): 160×90 scenes drawn for CleanYourTV, released with the repo under its MIT
 licence. The launcher bundles the same files (`app/src/main/res/drawable-nodpi/pixel_*.png`); the copies here are
 for the web design preview.

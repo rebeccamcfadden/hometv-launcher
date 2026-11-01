@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Every theme the picker offers, by id. A Classic theme is one fixed look; a Seasonal theme is a style (Nature,
- * Vector art, 8-bit) whose colours, name and backdrop follow {@link SeasonCalendar}. Unknown ids fall back to
+ * Every theme the picker offers, by id. A Classic theme is one fixed look; a Seasonal theme is a style (Vector art,
+ * 8-bit) whose colours, name and backdrop follow {@link SeasonCalendar}, and whose picture follows the part of the
+ * day ({@link DayPhase}; the colours stay the period's, so the change needs no rebuild). Nature was removed for now
+ * (2026-11-01); ThemeStore shows Vector art on a TV that had it. Unknown ids fall back to
  * Midnight, so a TV never ends up without a look.
  *
  * <p>The data is the Figma file's variables (lwShqRaciMpDUDW5dYljNw): the Theme collection's modes for the Classic
@@ -45,7 +47,7 @@ final class Themes {
     static final List<String> CLASSIC = Collections.unmodifiableList(Arrays.asList(
             DEFAULT_ID, "daylight", "oled", "high-contrast", "cinema", "landscapes"));
     static final List<String> SEASONAL = Collections.unmodifiableList(Arrays.asList(
-            "seasonal-nature", "seasonal-vector", "seasonal-8bit"));
+            "seasonal-vector", "seasonal-8bit"));
 
     static boolean exists(String id) {
         return CLASSIC.contains(id) || SEASONAL.contains(id);
@@ -67,7 +69,6 @@ final class Themes {
                 return build(id, Theme.Group.CLASSIC, "Landscapes", LANDSCAPES, LANDSCAPES_STYLE,
                         "url:classic/landscapes-1.webp,classic/landscapes-2.webp,classic/landscapes-3.webp,"
                                 + "classic/landscapes-4.webp");
-            case "seasonal-nature":
             case "seasonal-vector":
             case "seasonal-8bit":
                 return seasonal(id, SeasonCalendar.at(day));
@@ -85,17 +86,13 @@ final class Themes {
         Style style;
         String backdrop;
         switch (id) {
-            case "seasonal-nature":
-                style = NATURE;
-                backdrop = "url:seasonal/nature/" + slug + ".webp";
-                break;
             case "seasonal-vector":
                 style = VECTOR;
-                backdrop = "url:seasonal/vector-2/" + slug + ".webp";
+                backdrop = "url:seasonal/vector-5/" + slug + "-" + BackdropKeys.PHASE + ".webp";
                 break;
             case "seasonal-8bit":
                 style = PIXEL;
-                backdrop = "pixel:" + slug;
+                backdrop = "pixel:" + slug + "-" + BackdropKeys.PHASE;
                 break;
             default:
                 throw new IllegalArgumentException("Not a Seasonal theme: " + id);
@@ -127,7 +124,6 @@ final class Themes {
             case "high-contrast": return "High Contrast";
             case "cinema": return "Cinema";
             case "landscapes": return "Landscapes";
-            case "seasonal-nature": return "Nature";
             case "seasonal-vector": return "Vector art";
             case "seasonal-8bit": return "8-bit";
             default: return "Midnight";
@@ -141,7 +137,6 @@ final class Themes {
             case "high-contrast": return R.string.theme_high_contrast;
             case "cinema": return R.string.theme_cinema;
             case "landscapes": return R.string.theme_landscapes;
-            case "seasonal-nature": return R.string.theme_seasonal_nature;
             case "seasonal-vector": return R.string.theme_seasonal_vector;
             case "seasonal-8bit": return R.string.theme_seasonal_8bit;
             default: return R.string.theme_midnight;
@@ -447,8 +442,6 @@ final class Themes {
     private static final Style LANDSCAPES_STYLE = new Style(20, 100, 1, 4, 28, 0, 0, 18, 6, 14, 2,
             display("Outfit", LIGHT), ui("Outfit", REGULAR, SEMIBOLD), false, false);
 
-    private static final Style NATURE = new Style(20, 100, 1, 4, 26, 0, 0, 18, 6, 14, 2,
-            display("Outfit", LIGHT), ui("Outfit", REGULAR, SEMIBOLD), false, false);
     private static final Style VECTOR = new Style(24, 100, 1, 5, 0, 0, 3, 0, 0, 0, 0,
             display("Baloo 2", MEDIUM), ui("Nunito", REGULAR, BOLD), false, false);
     private static final Style PIXEL = new Style(0, 0, 4, 4, 0, 6, 0, 0, 6, 0, 4,
@@ -491,7 +484,7 @@ final class Themes {
             0xFFFFC93C, 0xFF10180C, 0x73FFC93C,
             0xFF9BE7B4, 0xFFFFD479, 0x59000000, 0x66000000);
     private static final Palette LATE_SUMMER = new Palette(
-            0xFF1A140A, 0xFFD9824A, 0xFFF2B56B, 0xFFF6DFA0, 0x421A140A, 0xEB1A140A,
+            0xFF1A140A, 0xFF78A9D2, 0xFFD9D8B4, 0xFFF6E4B0, 0x421A140A, 0xEB1A140A,
             0x14FFFFFF, 0x21FFFFFF, 0xEBFFFFFF, 0x24FFFFFF,
             0xFFF7F9FB, 0xFFD2D9E1, 0xFF9AA6B4, 0xFF1A140A,
             0xFFF2A541, 0xFF1A140A, 0x73F2A541,

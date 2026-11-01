@@ -542,9 +542,9 @@
   --shade-rgb: 26, 20, 10;
   --deep-rgb: 33, 27, 17;
   --tint-rgb: 255, 255, 255;
-  --sky-top: #d9824a;
-  --sky-mid: #f2b56b;
-  --horizon: #f6dfa0;
+  --sky-top: #78a9d2;
+  --sky-mid: #d9d8b4;
+  --horizon: #f6e4b0;
   --surface: rgba(255, 255, 255, 0.08);
   --surface-2: rgba(255, 255, 255, 0.13);
   --surface-3: rgba(255, 255, 255, 0.14);
@@ -705,21 +705,6 @@
 }
 
 /* ---- Seasonal: each style's shape and type ---- */
-
-/* Nature */
-[data-theme='seasonal-nature'] {
-  --radius-s: 8px;
-  --radius-m: 12px;
-  --radius-l: 16px;
-  --radius-xl: 24px;
-  --radius-pill: 100px;
-  --line-w: 1px;
-  --focus-w: 4px;
-  --text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
-  --font-display: 'Outfit', Roboto, system-ui, sans-serif;
-  --font-ui: 'Outfit', Roboto, system-ui, sans-serif;
-  --display-weight: 300;
-}
 
 /* Vector art */
 [data-theme='seasonal-vector'] {

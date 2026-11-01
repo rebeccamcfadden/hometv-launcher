@@ -509,27 +509,32 @@ picks another theme.
   groups of 156 × 100 swatches: **Classic** and **Seasonal · follows the date · today: Halloween** (today's period).
   Each swatch is drawn from that theme's own tokens: its sky, the horizon and a shelf of three mini tiles, the first
   focused with the accent ring, and "Aa" in its display face. Under them, a half-width row: **Typeface** (Theme
-  font / System font; "System font uses Roboto"). Moving details moved to Performance as Animated details. Moving highlights a swatch with the accent fill; OK selects it, it gets the accent ring, and the whole
+  font / System font; "System font uses Roboto"), and **Time of day** (Follow the sun / Always day; "For Seasonal
+  themes", F22). Moving details moved to Performance as Animated details. Moving highlights a swatch with the accent fill; OK selects it, it gets the accent ring, and the whole
   preview wears it at once. OK on a row switches its value. The pane enters on the selected theme.
 - **Themes** (ids for `?theme=`): Classic, which keep their look all year: Midnight `midnight`, Daylight `daylight`,
   OLED Black `oled`, High Contrast `high-contrast`, Cinema `cinema`, Landscapes `landscapes`. Seasonal, which follow the
-  date: Nature `seasonal-nature`, Vector art `seasonal-vector`, 8-bit `seasonal-8bit`. Retro comes in a later PR.
-  A Seasonal theme's colours are its period's; its corners, line widths and type are its style's. Its section value
-  is the style and the period: "Nature · Halloween".
+  date: Vector art `seasonal-vector`, 8-bit `seasonal-8bit`. Retro comes in a later PR. Nature was removed
+  (2026-11-01): a saved `seasonal-nature` shows Vector art. A Seasonal theme's colours are its period's; its corners,
+  line widths and type are its style's. Its section value is the style and the period: "Vector art · Halloween".
+- **Time of day (F22):** a Seasonal picture follows the part of the day: dawn from 40 minutes before sunrise to 50
+  after, sunset from 50 minutes before sunset to 40 after, day and night in between, from the sun at the mock's place
+  (New York; on the TV, the Weather place). The picture changes when the sun moves on; the colours stay the period's.
+  Always day keeps the day picture. The dev bar's Time menu, or `?phase=dawn|day|sunset|night`, puts the preview on a
+  part of the day. `src/core/daylight.ts` is the launcher's `DayPhase`.
 - **Periods:** Snow 1 Jan – 28/29 Feb, Thaw March, Spring rain April, Bloom May, Pride June, Midsummer July, Late
   summer August, Autumn 1 Sep – 14 Oct and 3 – 30 Nov, Halloween 15 Oct – 2 Nov, Christmas December. The period is
   looked at again on the hour, so it turns over at midnight.
 - **Fonts:** each theme has a display face (the greeting, the clock and page titles) and a UI face, from Google
   Fonts: Midnight Inter, Daylight Figtree, OLED Black Manrope, High Contrast Atkinson Hyperlegible Next, Cinema DM
-  Serif Display and DM Sans, Landscapes and Nature Outfit, Vector art Baloo 2 and Nunito, 8-bit Press Start 2P and
+  Serif Display and DM Sans, Landscapes Outfit, Vector art Baloo 2 and Nunito, 8-bit Press Start 2P and
   Pixelify Sans. Only the active theme's are fetched (and the swatches' display faces while the picker shows); the
   system font stands in until they arrive. **System font** puts every theme in Roboto, the TV's own.
 - **Backdrops:** Midnight keeps the bundled evening landscape; OLED Black and High Contrast have none, only their
   background. The others are downloaded once from `launcher/backdrops/` in the repo (through jsDelivr; one constant,
   `BACKDROP_BASE` in `src/core/theme.ts`) and kept: `classic/daylight.webp`, `classic/cinema.webp`,
-  `classic/landscapes-1.webp` … `-4.webp` (a new one every hour), `seasonal/nature/<period>.webp`,
-  `seasonal/vector-2/<period>.webp` and 8-bit's `seasonal/8bit/<period>.png`, 160 × 90 pixels scaled up without
-  smoothing. While a picture loads, when it can't be fetched, and offline when it never arrived, the theme's sky shows
+  `classic/landscapes-1.webp` … `-4.webp` (a new one every hour), `seasonal/vector-5/<period>-<phase>.webp` and
+  8-bit's `seasonal/8bit/<period>[-<phase>].png` (no suffix for day), 160 × 90 pixels scaled up without smoothing. While a picture loads, when it can't be fetched, and offline when it never arrived, the theme's sky shows
   instead: a gradient from its sky to its horizon colour. Cinema adds a soft vignette.
 - **Not taken from Figma:** shadows under tiles and the focus glow (Midnight has none today), and the photo or
   drawing inside the Seasonal swatches (the swatches show the sky instead).

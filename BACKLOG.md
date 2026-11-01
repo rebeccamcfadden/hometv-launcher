@@ -332,8 +332,20 @@ From the old launcher; not in V1 by decision.
 
 M9 (2026-10-30): Launcher settings › Theme, from the Figma file "CleanTV · Theme explorations"
 (`lwShqRaciMpDUDW5dYljNw`). Classic: Midnight (the default, today's look), Daylight, OLED Black, High Contrast, Cinema
-and Landscapes. Seasonal, following the date: Nature, Vector art and 8-bit, each in ten periods (`SeasonCalendar`).
+and Landscapes. Seasonal, following the date: Vector art and 8-bit, each in ten periods (`SeasonCalendar`).
 A theme changes colours, type, corners, shading, overlays and the backdrop; layout and data stay the same.
+
+- **Daylight cycle (F22, 2026-11-01):** a Seasonal picture follows the part of the day: dawn, day, sunset and night,
+  from sunrise and sunset at the Weather place (`DayPhase`, offline). Each period has four drawn pictures
+  (`seasonal/vector-5/<period>-<phase>.webp`, 3.9 MB for all 40 in the repo, about 0.5 MB per period downloaded;
+  8-bit's 40 scenes are in the APK, 68 KB), with seasonal sunrise and sunset colours and the sun or moon in the same
+  place for each phase. The picture swaps once at each edge, crossfading by Motion; nothing is drawn in between, so it
+  costs no frames. The colours stay the period's, so Home doesn't rebuild. Theme › Time of day: Follow the sun (the
+  default for a Seasonal theme) or Always day. The 40 pictures are levelled to one brightness curve, so dawn, day
+  and sunset blend and the seasons step evenly (F24); 8-bit's generator applies the same curve to its scenes. Plan and decisions: Figma page "Calendar · Time of day". Open: a TV
+  bench of a phase change; stars or clouds that move belong to Animated details, later.
+- **Seasonal · Nature removed (2026-11-01):** the project lead's decision. A TV that had it shows Vector art; its photos
+  stay in `seasonal/nature/` for TVs on an older build.
 
 - **Retro themes** (Retro CRT, Synthwave '84, Groovy '70s, 8-bit Arcade): designed in Figma, with their tokens and the
   scanline overlay ready; not in the picker yet.
@@ -348,7 +360,8 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 - **Backdrops:** the photos and Vector art live in `launcher/backdrops/` and are downloaded once from
   `theme_assets_url` (jsDelivr on this repository's `main`). The 8-bit scenes are in the APK. On the TCL, Cinema's,
   Landscapes' and Vector art's downloaded from `main`. Vector art's sky showed gradient banding there (the launcher
-  decodes backdrops as RGB_565); since 2026-11-01 the pictures in `seasonal/vector-2/` are dithered to that grid.
+  decodes backdrops as RGB_565); since 2026-11-01 the pictures are dithered to that grid (`seasonal/vector-2/`, and
+  the daylight cycle's `seasonal/vector-5/`).
 - **Not shipped:** the Vector scenes alternative to Vector art, and the old Seasonal & festive themes (Figma pages kept).
 - **Card shadows:** every theme but Midnight draws a resting shadow under each artwork card. Measured on the TCL with
   `tools/bench.py` (main 24e8f119, 36 keys × 3, 2026-10-31):

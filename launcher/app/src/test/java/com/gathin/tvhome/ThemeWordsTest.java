@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class ThemeWordsTest {
     private static final String[] M9_IDS = {"midnight", "daylight", "oled", "high-contrast", "cinema", "landscapes",
-            "seasonal-nature", "seasonal-vector", "seasonal-8bit"};
+            "seasonal-vector", "seasonal-8bit"};
 
     @Test
     public void everyPickerThemeHasItsOwnName() {
@@ -23,7 +23,7 @@ public class ThemeWordsTest {
             seen.add(res);
         }
         assertEquals(M9_IDS.length, seen.size());
-        assertEquals(R.string.theme_name_nature, ThemeWords.nameRes("seasonal-nature"));
+        assertEquals(0, ThemeWords.nameRes("seasonal-nature"));
     }
 
     @Test
@@ -35,7 +35,7 @@ public class ThemeWordsTest {
     @Test
     public void unknownIdsHaveNoName() {
         assertEquals(0, ThemeWords.nameRes("retro-crt"));
-        assertEquals(0, ThemeWords.nameRes("seasonal-nature:halloween"));
+        assertEquals(0, ThemeWords.nameRes("seasonal-vector:halloween"));
         assertEquals(0, ThemeWords.nameRes(null));
     }
 

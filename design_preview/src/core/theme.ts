@@ -1,10 +1,14 @@
+import { msToNextPhase, phaseAt, type Phase } from './daylight';
 import { imgUrl } from './dom';
 import { net } from './net';
 import { settings } from './settings';
 
 // The themes (M9), as the launcher has them: Classic ones keep their look all year; Seasonal ones follow the date
-// through ten periods. Colours, radii and type are CSS variables in styles/themes.css, keyed by the data-theme and
-// data-period attributes set here on <html>; this module picks the theme, its period, its fonts and its backdrop.
+// through ten periods, and their picture follows the part of the day (F22: dawn, day, sunset, night, from the sun;
+// Launcher settings › Theme › Time of day can keep it on day). Colours, radii and type are CSS variables in
+// styles/themes.css, keyed by the data-theme and data-period attributes set here on <html>; this module picks the
+// theme, its period, its fonts and its backdrop. Seasonal · Nature was removed (2026-11-01): a saved Nature shows Vector
+// art.
 
 export type ThemeId =
   | 'midnight'
@@ -13,7 +17,6 @@ export type ThemeId =
   | 'high-contrast'
   | 'cinema'
   | 'landscapes'
-  | 'seasonal-nature'
   | 'seasonal-vector'
   | 'seasonal-8bit';
 
@@ -50,7 +53,7 @@ export interface ThemeDef {
   group: 'classic' | 'seasonal';
   display: Face;
   ui: Face;
-  backdrop(period: Period, hour: number): Backdrop;
+  backdrop(period: Period, hour: number, phase: Phase): Backdrop;
 }
 
 const UI = '400;500;600;700';
@@ -107,20 +110,12 @@ export const THEMES: ThemeDef[] = [
     backdrop: (_p, hour) => url(`classic/landscapes-${(hour % 4) + 1}.webp`),
   },
   {
-    id: 'seasonal-nature',
-    name: 'Nature',
-    group: 'seasonal',
-    display: { family: 'Outfit', weights: '300' },
-    ui: { family: 'Outfit', weights: UI },
-    backdrop: (p) => url(`seasonal/nature/${p}.webp`),
-  },
-  {
     id: 'seasonal-vector',
     name: 'Vector art',
     group: 'seasonal',
     display: { family: 'Baloo 2', weights: '500' },
     ui: { family: 'Nunito', weights: UI },
-    backdrop: (p) => url(`seasonal/vector-2/${p}.webp`),
+    backdrop: (p, _h, phase) => url(`seasonal/vector-5/${p}-${phase}.webp`),
   },
   {
     id: 'seasonal-8bit',
@@ -128,11 +123,12 @@ export const THEMES: ThemeDef[] = [
     group: 'seasonal',
     display: { family: 'Press Start 2P' },
     ui: { family: 'Pixelify Sans', weights: UI },
-    backdrop: (p) => ({ kind: 'pixel', src: `${BACKDROP_BASE}seasonal/8bit/${p}.png` }),
+    backdrop: (p, _h, phase) => ({ kind: 'pixel', src: `${BACKDROP_BASE}seasonal/8bit/${p}${phase === 'day' ? '' : `-${phase}`}.png` }),
   },
 ];
 
-export const themeById = (id: string): ThemeDef => THEMES.find((t) => t.id === id) ?? THEMES[0];
+export const themeById = (id: string): ThemeDef =>
+  THEMES.find((t) => t.id === (id === 'seasonal-nature' ? 'seasonal-vector' : id)) ?? THEMES[0];
 export const isThemeId = (id: string | null): id is ThemeId => THEMES.some((t) => t.id === id);
 
 const MONTHS: Period[] = ['snow', 'snow', 'thaw', 'spring-rain', 'bloom', 'pride', 'midsummer', 'late-summer', 'autumn', 'autumn', 'autumn', 'christmas'];
@@ -168,6 +164,7 @@ export function parseDate(iso: string | null): Date | null {
 }
 
 let dateOverride: Date | null = null;
+let phaseOverride: Phase | null = null;
 const listeners = new Set<() => void>();
 /** Pictures that have arrived once; the browser's cache stands in for the TV's disk cache. */
 const loaded = new Set<string>();
@@ -259,7 +256,9 @@ function apply() {
   // The date override picks the period; the hour stays real, so Landscapes keeps rotating while previewing a date.
   // Launcher settings › Performance › Backdrop picture: Plain colour shows the theme's sky gradient without the picture
   // (a theme with no backdrop keeps its plain background).
-  const b = t.backdrop(periodAt(now), new Date().getHours());
+  const phase = theme.phase();
+  root.dataset.phase = phase;
+  const b = t.backdrop(periodAt(now), new Date().getHours(), phase);
   if (s.backdropPicture === 'plain' && b.kind !== 'none') {
     root.dataset.backdrop = 'plain';
     wanted = '';
@@ -267,9 +266,12 @@ function apply() {
   } else {
     applyBackdrop(b);
   }
-  // Landscapes changes on the hour and the period at midnight: look again at the top of the next hour.
+  // Landscapes changes on the hour, the period at midnight and a Seasonal picture when the sun moves on: look again at
+  // whichever comes first.
   clearTimeout(timer);
-  timer = window.setTimeout(apply, 3_600_000 - (Date.now() % 3_600_000) + 1000);
+  let wait = 3_600_000 - (Date.now() % 3_600_000);
+  if (t.group === 'seasonal' && s.timeOfDay === 'sun' && !phaseOverride) wait = Math.min(wait, msToNextPhase(new Date()));
+  timer = window.setTimeout(apply, wait + 1000);
   listeners.forEach((fn) => fn());
 }
 
@@ -289,7 +291,14 @@ export const theme = {
     apply();
   },
   period: () => periodAt(theme.date()),
-  /** The name Launcher settings shows: "Midnight", or a Seasonal style with today's period, "Nature · Halloween". */
+  /** The part of the day a Seasonal picture shows: the dev bar's choice, Always day, or the sun now. */
+  phase: (): Phase => phaseOverride ?? (settings.get().timeOfDay === 'day' ? 'day' : phaseAt(new Date())),
+  isPhaseOverridden: () => phaseOverride !== null,
+  setPhase(p: Phase | null) {
+    phaseOverride = p;
+    apply();
+  },
+  /** The name Launcher settings shows: "Midnight", or a Seasonal style with today's period, "Vector art · Halloween". */
   label(): string {
     const t = theme.current();
     return t.group === 'seasonal' ? `${t.name} · ${PERIOD_LABELS[theme.period()]}` : t.name;
