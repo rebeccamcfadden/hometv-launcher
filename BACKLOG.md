@@ -289,10 +289,22 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   | Cinema | 23 ms | 236 ms | 84.8 % | 726 ms | 31 MB |
 
   All three have a photo backdrop. Daylight adds the resting shadows, and Cinema the shadows plus a vignette and a
-  glow, so the shadows look like most of the extra jank (about 24 points) and Cinema's extras the rest. Each row is one
-  run, in which one of the three series was lost the same way (72 of 108 keys measured); Daylight's PSS is from that
-  single run too. Every theme, Classic and Seasonal, renders on the TCL. What to do is open with the project lead; the
-  default stays as it is until then.
+  glow. Each row is one run, in which one of the three series was lost the same way (72 of 108 keys measured). Every
+  theme, Classic and Seasonal, renders on the TCL.
+
+  **Shadows alone** (the project lead's option (a), 2026-11-01): Daylight with the resting shadows on and off, the same
+  build otherwise (a bench-only switch, not in the launcher), same 36 keys × 3:
+
+  | Daylight | Runs | Jank | Movement p50 | Cold start p50 | PSS |
+  |---|---|---|---|---|---|
+  | Shadows on | 2 | 71.2 %, 70.6 % | 212, 213 ms | 701, 709 ms | 51, 45 MB |
+  | Shadows off | 2 | 53.1 %, 51.6 % | 196, 198 ms | 682, 732 ms | 29, 51 MB |
+
+  So the resting shadows cost about 19 points of jank and 15 ms of movement on the TCL; PSS and cold start move
+  between runs either way. A third shadows-on run measured 102 keys instead of 72 (48.7 %), a different set of frames,
+  and is left out. The TCL's Mali-470 has no `buffer_age`, so every frame redraws the whole screen, and each resting
+  shadow is fill on every frame. What to do about it is open with the project lead; the default stays as it is until
+  then.
 - **Focus glow:** checked on the TCL: a theme's glow shows in full on Home's Inputs and Shortcuts tiles, edges
   included.
 
