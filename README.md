@@ -4,7 +4,7 @@ A home screen for Android TV that you drive with the remote. Your apps and input
 movies and shows are one press away, with the services that have them, a title preview, search, Pick for me and the
 weather. No ads and no analytics, and Home works with the network off.
 
-**[Try it in your browser](https://rebeccamcfadden.github.io/cleanyourtv/)**: the keyboard stands in for the remote.
+**[Try it in your browser](https://rebeccamcfadden.github.io/hometv-launcher/)**: the keyboard stands in for the remote.
 
 | | |
 |---|---|

@@ -50,7 +50,7 @@ It prints what drifted and exits 1 when anything did, so a weekly job on a home 
 it:
 
 ```bash
-0 9 * * 1 cd ~/cleanyourtv && TV_HOST=192.168.1.50 tools/venv/bin/python -I tools/check.py examples/<your tv>/debloat.txt
+0 9 * * 1 cd ~/hometv-launcher && TV_HOST=192.168.1.50 tools/venv/bin/python -I tools/check.py examples/<your tv>/debloat.txt
 ```
 
 `--fix` reapplies the list to what drifted: it switches Home to the launcher the list does not disable (pass a package
