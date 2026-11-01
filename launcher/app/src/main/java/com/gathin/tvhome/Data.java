@@ -104,4 +104,14 @@ final class Data {
     boolean isIncluded(Offer o) {
         return Offers.isIncludedOffer(o, services.subscribed());
     }
+
+    /**
+     * MainActivity is gone (destroyed, or rebuilt with a new Data by recreate()): the catalogue's threads end and this
+     * Data stops listening, so nothing keeps it alive.
+     */
+    void close() {
+        household.removeListener(wantHousehold);
+        accounts.removeListener(accountChanged);
+        catalog.close();
+    }
 }

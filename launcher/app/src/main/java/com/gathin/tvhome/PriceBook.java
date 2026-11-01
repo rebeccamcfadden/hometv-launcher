@@ -158,10 +158,10 @@ final class PriceBook {
     }
 
     private void startWorker() {
-        if (worker != null) return;
+        if (worker != null || closed) return;
         worker = new Thread(() -> {
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            while (true) {
+            while (!closed) {
                 PriceQueue.Job job;
                 try {
                     job = queue.take();
@@ -174,6 +174,21 @@ final class PriceBook {
         }, "prices");
         worker.setDaemon(true);
         worker.start();
+    }
+
+    /** Set once by {@link #close}: the price thread ends and no new one starts. */
+    private volatile boolean closed;
+
+    /**
+     * Ends the price thread (MainActivity rebuilt or gone: a new Data makes a new book). It waits in queue.take()
+     * otherwise for the life of the process, and holds this book and its catalogue. A lookup already running finishes;
+     * the flag stops the loop even if that lookup's I/O swallowed the interrupt. What it posts back still saves the
+     * stale marks and the feed's time (so no quota is spent on it again), but tells no screen: they are gone.
+     */
+    void close() {
+        closed = true;
+        Thread t = worker;
+        if (t != null) t.interrupt();
     }
 
     /** On the price thread. */
@@ -212,6 +227,7 @@ final class PriceBook {
                 marks.clear(id);
                 prefs.edit().putString(PREF_MARKS, marks.encode()).apply();
             }
+            if (closed) return;
             listener.priced(id);
             List<Runnable> list = waiting.remove(id);
             if (list != null) for (Runnable done : list) done.run();
@@ -246,7 +262,7 @@ final class PriceBook {
             marks.mark(changed, now);
             marks.expire(now);
             prefs.edit().putString(PREF_MARKS, marks.encode()).putLong(PREF_FEED_AT, now).apply();
-            if (!changed.isEmpty()) onStale.run();
+            if (!changed.isEmpty() && !closed) onStale.run();
         });
     }
 }

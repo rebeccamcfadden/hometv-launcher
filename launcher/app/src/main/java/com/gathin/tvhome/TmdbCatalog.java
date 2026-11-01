@@ -79,6 +79,8 @@ final class TmdbCatalog implements Catalog {
     /** The titles on My list and the shown TMDB lists, kept priced in the background. */
     private final Set<String> listed = new HashSet<>();
     private boolean visible = true;
+    /** Set by close(): answers that land after it reach no screen (the Home that asked is gone). Main thread. */
+    private boolean closed;
     /** Off until a TMDB account is signed in: see {@link Catalog#setListPricing}. */
     private boolean listPricing;
     /** The stores whose rent and buy offers show (Launcher settings, Stores for rent and buy). */
@@ -244,7 +246,9 @@ final class TmdbCatalog implements Catalog {
             Title result = t;
             ProviderAvailability where = a;
             long saved = at;
-            main.post(() -> loaded(id, result, where, saved));
+            main.post(() -> {
+                if (!closed) loaded(id, result, where, saved);
+            });
         });
     }
 
@@ -285,7 +289,7 @@ final class TmdbCatalog implements Catalog {
             Season result = s;
             main.post(() -> {
                 Title cur = known.get(id);
-                if (result == null || cur == null || result.episodes.isEmpty()) return;
+                if (closed || result == null || cur == null || result.episodes.isEmpty()) return;
                 Title.Draft d = new Title.Draft(cur);
                 List<Season> seasons = new ArrayList<>(cur.seasons);
                 boolean replaced = false;
@@ -373,6 +377,20 @@ final class TmdbCatalog implements Catalog {
         book.setActive(visible);
         main.removeCallbacks(keepFresh);
         if (visible) keepFresh.run();
+    }
+
+    /**
+     * MainActivity rebuilt or gone: the price thread ends (it would wait forever and keep this catalogue, every title
+     * and its caches alive), queued TMDB loads are dropped and nothing posted here before now runs. A load already
+     * running finishes, but its answer is dropped: no screen of the destroyed Home hears from it.
+     */
+    @Override
+    public void close() {
+        closed = true;
+        visible = false;
+        book.close();
+        pool.shutdownNow();
+        main.removeCallbacksAndMessages(null);
     }
 
     /** t's offers: its availability with what the price book found merged in, without the stores left unticked. */
@@ -499,6 +517,7 @@ final class TmdbCatalog implements Catalog {
                 if (i < shows.size() && mixed.size() < GENRE_TITLES) mixed.add(shows.get(i));
             }
             main.post(() -> {
+                if (closed) return;
                 List<Title> stored = upsertAll(mixed);
                 genres.put(genre, stored);
                 done.accept(stored);
@@ -521,7 +540,9 @@ final class TmdbCatalog implements Catalog {
             } catch (IOException | RuntimeException e) {
                 return;
             }
-            main.post(() -> done.accept(result));
+            main.post(() -> {
+                if (!closed) done.accept(result);
+            });
         });
     }
 
@@ -572,7 +593,7 @@ final class TmdbCatalog implements Catalog {
 
     private void changed() {
         snapshot = null;
-        if (notifyPosted) return;
+        if (notifyPosted || closed) return;
         notifyPosted = true;
         main.postDelayed(this::notifyListeners, NOTIFY_MS);
     }
@@ -589,6 +610,8 @@ final class TmdbCatalog implements Catalog {
     }
 
     private void run(int priority, Runnable r) {
+        // Closed (see close): a late call from a page being torn down does nothing.
+        if (pool.isShutdown()) return;
         pool.execute(new Job(priority, order.incrementAndGet(), r));
     }
 

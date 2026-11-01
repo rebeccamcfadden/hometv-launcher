@@ -141,6 +141,9 @@ interface Catalog {
     /** Home is showing (true) or hidden: no price lookups start while it is hidden. */
     default void setVisible(boolean visible) {}
 
+    /** The activity that made this catalogue is gone (a rebuild makes a new one): end its threads and posts. */
+    default void close() {}
+
     /** The best-known titles of a genre, movies and shows. */
     default void genre(String genre, Consumer<List<Title>> done) {
         List<Title> out = new ArrayList<>();

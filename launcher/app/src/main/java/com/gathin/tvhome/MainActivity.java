@@ -724,6 +724,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.unregisterCallback(inputCallback);
         unregisterReceiver(packageReceiver);
+        // recreate() builds a new Data in the next onCreate; this one's price thread would otherwise live on.
+        if (data != null) data.close();
     }
 
     /** Launcher settings' change count (Config.SETTINGS_REVISION_KEY); onResume rebuilds Home when it moved. */
