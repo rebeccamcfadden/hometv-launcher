@@ -1,9 +1,17 @@
 name: CI
 
+# Runs after a merge to main only, to keep GitHub Actions usage low (the project lead, 2026-11-01: Actions was
+# disabled once for usage). Pull requests are checked on a maintainer's machine by `tools/ci-local.ps1`, whose
+# `local-ci/*` statuses the main ruleset requires. Docs-only merges skip it; run it by hand with workflow_dispatch.
 on:
   push:
     branches: [main]
-  pull_request:
+    paths-ignore: ["**.md", "docs/**", "shots/**", "work/**", ".github/maintainer/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-main
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -23,7 +31,7 @@ jobs:
           tools/venv/bin/pip install -q -r tools/requirements.txt
       - name: Example lists, README tables, shell helpers
         env:
-          CLEANYOURTV_STRICT: ${{ github.event_name == 'push' && '1' || '' }}
+          CLEANYOURTV_STRICT: "1"
         run: python3 -m unittest discover -s tests -v
 
   tables:
@@ -31,7 +39,6 @@ jobs:
     # A job of its own, so "the tables want regenerating" never reads as "the lists are broken": the merge
     # bot waits for main to be green between merges and regenerates the tables after the wave.
     name: README tables
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

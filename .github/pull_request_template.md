@@ -27,6 +27,8 @@ Fill in every section. Write "n/a" where a section doesn't apply, and say why.
 | Changed | <!-- and why --> |
 | Not needed | <!-- what has no test, and why --> |
 
+**Local CI:** <!-- `tools/ci-local.ps1 -Pr <n>` at the head you are asking to merge: python, tables, launcher. GitHub's CI runs only after the merge. -->
+
 **Commands run, with results:**
 <!-- Each exact command and whether it passed, e.g.
 `./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease` (in launcher/): passed, 0 lint errors

@@ -91,7 +91,7 @@ share their TV's list afterwards, follow [`docs/workflows/tv-list.md`](docs/work
 | `addons/` | Optional module-card apps, each its own Gradle project, never built into the launcher. |
 | `tools/` | The ADB client (`tv.py`) and the scripts, listed in the README's Tools table. Shell scripts have PowerShell twins. Each script's usage is in its first lines, and the larger ones have a guide beside them (`tools/*.md`): read it before running the script. |
 | `tests/` | Python `unittest` suite: list format, README tables, press counts, themes, add-ons, the Home guard and the tools against fake TVs. |
-| `.github/workflows/` | `ci.yml` (tests, launcher build, APK size report), `addons.yml`, `maintainer-bot.yml`. |
+| `.github/workflows/` | `ci.yml` (tests, launcher build, APK size; after a merge to main only: PRs run `tools/ci-local.ps1`), `addons.yml`, `maintainer-bot.yml`. |
 | `.github/maintainer/MAINTAINER.md` | The review policy the maintainer and the PR bot apply. |
 | `.github/pull_request_template.md` | The PR checklist. Fill it in. |
 
@@ -133,7 +133,7 @@ take them back from [upstream](https://github.com/Gathin23/cleanyourtv/tree/main
 
 | Check | Command or rule |
 |---|---|
-| Tests, as CI runs them | `python3 -m unittest discover -s tests -v` after `python3 -m venv tools/venv` and `tools/venv/bin/pip install -r tools/requirements.txt`. On `main`, CI sets `CLEANYOURTV_STRICT=1`, and its "README tables" job checks that the TV tables and counts are what `tools/gen_tables.py` writes. |
+| Tests, as CI runs them | `python3 -m unittest discover -s tests -v` after `python3 -m venv tools/venv` and `tools/venv/bin/pip install -r tools/requirements.txt`. PRs: `tools/ci-local.ps1 -Pr <n>` (`docs/rework.md`, Pull requests). CI sets `CLEANYOURTV_STRICT=1`, and its "README tables" job checks that the TV tables and counts are what `tools/gen_tables.py` writes. |
 | Launcher, if you touched `launcher/` | JDK 17, Android SDK platform 34, build-tools 34.0.0. In `launcher/`: `./gradlew --no-daemon testReleaseUnitTest lintRelease assembleRelease`. Lint must stay at zero errors. |
 | APK size | Report the size of `launcher/app/build/outputs/apk/release/app-release.apk` in the PR, for context; CI fails it above 1,048,576 bytes (1 MB). |
 | Design preview, if you touched `design_preview/` | Node 20+. In `design_preview/`: `npm install`, then `npm run build` (type-checks; no errors). |

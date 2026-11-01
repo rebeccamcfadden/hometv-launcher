@@ -1,10 +1,8 @@
 name: Add-ons
 
 # Builds only what changed under addons/. Separate from CI on purpose: an add-on can't block or
-# slow the launcher's build, and the launcher's size gate never sees add-on code.
+# slow the launcher's build, and the launcher's size gate never sees add-on code. After a merge to main only, like CI.
 on:
-  pull_request:
-    paths: ["addons/**"]
   push:
     branches: [main]
     paths: ["addons/**"]
@@ -29,7 +27,7 @@ jobs:
           packages: platforms;android-34 build-tools;34.0.0
       - name: Build each add-on that changed
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE: ${{ github.event.before }}
         run: |
           changed=$(git diff --name-only "$BASE" HEAD -- addons | awk -F/ 'NF>2 {print $2}' | sort -u)
           [ -z "$changed" ] && { echo "no add-on changed"; exit 0; }
