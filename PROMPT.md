@@ -1,10 +1,10 @@
 # The prompt
 
 Paste this into Claude Code (or another coding assistant with shell access) on a computer that is
-on the same Wi-Fi as the TV. Works on Android TV / Google TV sets (Xiaomi, TCL, Hisense, Sony,
-OnePlus, Realme, Nvidia Shield and most others). It will not work on Samsung Tizen, LG webOS or
-Fire TV. If you cloned this repo, mention that: the assistant can reuse `tools/` and `launcher/`
-instead of writing them from scratch, and only needs to edit `launcher/.../values/config.xml`.
+on the same Wi-Fi as the TV, with this repo cloned and opened in the assistant: it uses `tools/` for
+ADB and the debloat and `launcher/` for the home screen, and has no need to write either. Works on
+Android TV / Google TV sets (Xiaomi, TCL, Hisense, Sony, OnePlus, Realme, Nvidia Shield and most
+others). It will not work on Samsung Tizen, LG webOS or Fire TV.
 
 Before you start, on the TV: Settings → Device Preferences → About → press OK on "Build" 7 times,
 then go back → Developer options → turn on USB debugging (and Network/ADB debugging if your TV
@@ -14,9 +14,10 @@ adapter on that port can drop the same way, so plan to do the whole session in o
 
 ---
 
-I want to debloat my Android TV and replace its launcher with a clean home screen driven by the remote.
-My TV model is: <MODEL NAME HERE>. Work on the real device, step by step, and verify everything you
-do with screenshots pulled from the TV. Ask me before anything that depends on my preferences.
+I want to debloat my Android TV and replace its launcher with this repo's launcher (`launcher/`): a clean
+home screen driven by the remote. My TV model is: <MODEL NAME HERE>. Work on the real device, step by
+step, and verify everything you do with screenshots pulled from the TV. Ask me before anything that
+depends on my preferences.
 
 Connect
 - Find the TV on my network (hostname, ARP table, or ask me for the IP) and connect over ADB on port 5555.
@@ -123,9 +124,10 @@ Launcher
   stock one stays: `cmd package` does not exist before Android 7, so `tools/disable.sh` asks `dumpsys
   activity` for Home there and warns when neither answers - that warning means nothing was checked,
   and a set with no recovery has no way back (#795).
-- Don't install a third-party launcher that charges for basics like wallpapers. Build a small native
-  Android TV launcher instead (Java, AndroidX RecyclerView, minSdk matching the TV, debug build is fine),
-  install it over ADB, set it as the default home and disable the stock launcher. If several apps claim
+- Install the launcher in `launcher/` with `launcher/build-and-install.sh` (`build-and-install.ps1` on
+  Windows): it builds the APK, installs it over ADB, starts it, disables the stock launcher, sets it as the
+  default home, then checks that Home resolves to it and re-enables the stock launcher if it does not. It
+  needs JDK 17 and Android SDK platform 34 on this computer, and it keeps the Home guard below. If several apps claim
   the HOME intent, list them with `cmd package query-activities -a android.intent.action.MAIN -c
   android.intent.category.HOME` and set the default with `cmd package set-home-activity`. Those two
   commands can both name your launcher while Home still opens something else: on some Google TV builds
@@ -156,30 +158,22 @@ Launcher
   A button the TV logs as `KEY_UNKNOWN` or `KEY_PROGRAM` cannot be matched by keycode, since every
   unmapped button shares it: read the scancode with `getevent -lt` and use `settings_key_scancodes`,
   which only `config.xml` carries (a theme can set keycodes, not scancodes).
-- On Android 11 and newer the launcher must declare `<queries>` for `android.intent.category.LEANBACK_LAUNCHER`,
-  or package visibility silently hides every app and the grid comes up empty; target a recent SDK, some
-  Google TV 14 sets refuse older targets at install.
-- If you write the launcher yourself, make its theme explicitly opaque (`windowIsTranslucent`,
-  `windowIsFloating` and `windowSwipeToDismiss` false): on some firmware `Theme.DeviceDefault` comes out
-  translucent, the TV app keeps running under Home, and after an HDMI input the picture stays on screen.
-- If you cloned this repo, install its launcher (`launcher/`) rather than writing one; its design is
-  `design_preview/README.md`. Ask which apps go on the Home row and in what order (`dock_apps` in
-  `launcher/app/src/main/res/values/config.xml` or a theme's `config.json`), and the city for the weather
-  (`latitude`, `longitude` and `temperature_unit` in `launcher/tv.properties`, copied from
-  `tv.properties.example`), without adding a new layout.
-- Design: a dark evening landscape behind a nav bar at the top (Home, Movies, TV Shows, Music and a search
-  icon; Wi-Fi, Inputs and Settings icons on the right, the first two opening small dropdowns). Home shows a
-  greeting, the date, a large clock and today's and tomorrow's weather above one row of app tiles; moving
-  Down reveals Inputs (Live TV and the HDMI ports, switching through the TV input framework), Shortcuts
-  (All Apps, Launcher settings, TV Settings) and an hourly weather strip. Movies and TV Shows show the
-  household's watchlists as a grid with filters and Pick for me; OK on a title opens a preview with Watch,
-  My list and the services that have it; Search has an on-screen keyboard and matches typos. The catalogue,
-  prices and watchlists are still mock data (`BACKLOG.md`); the apps, inputs, weather and the household's
-  own lists are real.
-- Make D-pad navigation deterministic: every move goes to the nearest item in that direction, rows and grids
-  remember their last focused item, and Back closes a dropdown or popup, then returns to the page before,
-  then to Home.- Keep it light: the TV has about 1 GB of RAM. No blur, no video, no heavy network polling; the weather is
-  fetched now and then and cached, and Home works with the network off.
+- Don't write a different launcher: this one is built for TVs with about 1 GB of RAM and for a
+  D-pad, and its design is `design_preview/README.md`. Home shows a greeting, the date, a large clock,
+  the weather and one row of app tiles; moving Down reveals Inputs (Live TV and the HDMI ports) and
+  Shortcuts (All Apps, Launcher settings, TV Settings). Movies, TV Shows and Search show titles with where
+  to watch them, and the settings are on the TV, in Launcher settings.
+- Ask me which apps go on the Home row and in what order (`dock_apps` in
+  `launcher/app/src/main/res/values/config.xml` or a theme's `config.json`; I can also change them on the
+  TV in Launcher settings), and the city for the weather (Launcher settings › Weather, or `latitude`,
+  `longitude` and `temperature_unit` in `launcher/tv.properties`, copied from `tv.properties.example`
+  before the build). The movie and show data comes from TMDB: ask me whether I have a TMDB read access
+  token (`tmdb_api_key` in `tv.properties`, free, ends up inside the APK, so the APK stays mine); without
+  one the launcher builds with a mock catalogue and works offline. Rent and buy prices take two more free
+  keys, `watchmode_api_key` and `movie_of_the_night_api_key`, which are optional. Never commit
+  `tv.properties`.
+- Home must keep working with the network off: the weather and the catalogue are fetched now and then and
+  cached, and nothing in the launcher sends analytics.
 
 Verify
 - After each change, inject remote key presses over ADB, take a screenshot from the TV and look at it:
@@ -192,7 +186,7 @@ Verify
 - If screenshots keep showing an app you already left, byte for byte, `screencap` is returning its last
   frame: confirm `mCurrentFocus` in `dumpsys window`, force-stop that app and capture again.
 - If the screen looks enlarged and clipped after an install or a reboot, check the display overrides
-  before editing the launcher grid: `wm size` and `wm density` show a physical value next to an
+  before blaming the launcher: `wm size` and `wm density` show a physical value next to an
   override, and an override left over from an old resolution experiment, or a density that comes back
   wrong on some MediaTek Sony firmware, is not a launcher bug. An empty
   `settings get secure display_density_forced` is a normal default, not damage - read all three
@@ -200,10 +194,15 @@ Verify
 - If a remote button relies on an accessibility helper, check that the service is enabled and bound
   for the current user, then ask me to press the real button; an injected key is not proof (see
   `docs/TROUBLESHOOTING.md`).
-- When done, give me a restore script, a build-and-install script, and a README that explains how to
+- When done, give me three things. First, the exact restore command for this TV:
+  `tools/restore.sh <the debloat list you applied> <the TV's real stock launcher package, from the backup>`
+  (`restore.ps1` on Windows). It re-enables only the packages in that list, and its default stock launcher,
+  `com.google.android.tvlauncher`, is wrong on many TVs, so always name the real one. Second, an undo line
+  for every change that list does not cover: a package you disabled outside the list, `set-home-activity`,
+  and any setting you changed, each with the value it had before. Third, a short note that explains how to
   re-enable any app, how to change the apps on the Home row, and how to change the weather location.
 
 ---
 
-Expect to answer three or four checklist questions (which apps you use, the Home row's apps and order, your city for the weather,
-whether to keep the voice assistant, Chromecast and firmware updates). Everything is reversible.
+Expect to answer a few checklist questions (which apps you use, the Home row's apps and order, your city for the weather,
+whether you have a TMDB token, whether to keep the voice assistant, Chromecast and firmware updates). Everything is reversible.
