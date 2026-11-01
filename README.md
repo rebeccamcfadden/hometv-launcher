@@ -163,7 +163,7 @@ press away:
 | Part | What it does |
 |---|---|
 | **Home** | A greeting, the date, a large clock that follows the TV's 12 or 24-hour setting, today's and tomorrow's weather, and a row of your apps. Down slides the page up to Inputs (Live TV and each HDMI port, under the names the TV gives them), Shortcuts (All Apps, Launcher settings, TV Settings) and an hourly forecast. |
-| **The nav bar** | Home, Movies, TV Shows, Music and Search on the left; Wi-Fi, Inputs and Settings on the right. Wi-Fi and Inputs open dropdowns, which close again when the D-pad moves past their edge; on Android 9 the Wi-Fi dropdown also switches between saved networks. Music is a placeholder in V1. |
+| **The nav bar** | Home, Movies, TV Shows and Search on the left; Wi-Fi, Inputs and Settings on the right. Wi-Fi and Inputs open dropdowns, which close again when the D-pad moves past their edge; on Android 9 the Wi-Fi dropdown also switches between saved networks. |
 | **Movies and TV Shows** | The household's watchlists as a grid of title cards, with list chips and a Filters drawer (availability, review score, genre, length, watch state) that updates the grid as you change it. |
 | **Title preview** | Watch on the service that has it, My list, Seen, Favorite and Trailer, with tabs for the overview, episodes, where to watch, cast and crew, and more like this. |
 | **Search** | A 6×6 on-screen keyboard, or a real one, with typo-tolerant matching, suggestions and results as you type. |

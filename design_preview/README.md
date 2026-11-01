@@ -120,7 +120,7 @@ one option for each (2026-10-30). The prototype builds these:
   preferred.
 - **Search matching is fuzzy:** "arvl" finds Arrival, and small typos are forgiven. Matched letters are
   highlighted in suggestions and results, and the top suggestion is shown as grey ghost text in the bar.
-- **Nav switches on OK.** Moving along Home, Movies, TV Shows, Music and Search only highlights a section; OK
+- **Nav switches on OK.** Moving along Home, Movies, TV Shows and Search only highlights a section; OK
   switches to it. Switching on focus alone was tried and dropped.
 - **Top-bar buttons:** Inputs opens the base's Inputs dropdown; Wi-Fi gets a new dropdown (the base opens Wi-Fi
   settings directly); **Settings opens a quick-settings dropdown** (decided 2026-10-30, design final-quick-settings,
@@ -169,7 +169,7 @@ From [AGENTS.md](../AGENTS.md) and the design:
 
 | Layer | Used for | Behaviour |
 |---|---|---|
-| Page | Home, Movies, TV Shows, Music, Search, Pick for me, person, Launcher settings, First run | Full screen; the top-level pages have the nav at the top |
+| Page | Home, Movies, TV Shows, Search, Pick for me, person, Launcher settings, First run | Full screen; the top-level pages have the nav at the top |
 | Popup | Title preview | Over the page it came from; a 58% dark scrim covers the whole page, nav included |
 | Dialog | Filters drawer, rent/buy dialog, dropdown menus (quick settings included) | Over whatever is showing, which stays visible |
 
@@ -202,8 +202,9 @@ From [AGENTS.md](../AGENTS.md) and the design:
 
 ### Nav
 
-- Order: Home, Movies, TV Shows, Music, then a search icon; on the right, Wi-Fi, Inputs and Settings icons. Offline,
-  the Wi-Fi icon is crossed out on every page.
+- Order: Home, Movies, TV Shows, then a search icon; on the right, Wi-Fi, Inputs and Settings icons. Offline,
+  the Wi-Fi icon is crossed out on every page. There is no Music section (F17, the project lead 2026-11-01) and no
+  Apps section: Home's All Apps shortcut opens the installed apps.
 - ←/→ on the nav stay on it and move to the next item: ← from Wi-Fi is always Search, never something on the page
   below, and past either end nothing happens.
 - Landing on a section highlights it; OK switches to it (OK on the current page's section does nothing). Down
@@ -582,7 +583,7 @@ help pane for the focused row.
 
 ### Stubs
 
-Music, All Apps, Weather, Open-source licences and the person page are placeholders. The person page lists
+All Apps, Weather, Open-source licences and the person page are placeholders. The person page lists
 the titles the person appears in.
 
 ## Visual system

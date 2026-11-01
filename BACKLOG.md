@@ -686,7 +686,8 @@ it is built.
 - The Sort chip on Movies and TV Shows (F4): built as a small button like Filters, with a dropdown; no Figma frame.
 - The person page beyond its stub.
 - The Explore versions of Movies and TV Shows (parked in Figma).
-- The Music page (a stub in V1).
+
+The Music page, a stub in V1, left the nav with F17 (the project lead, 2026-11-01); it is not planned.
 
 ## Languages
 

@@ -1,7 +1,7 @@
 import { h } from './dom';
 import { type Dir, ensureVisible, findNext, handlerOf, nearest } from './focus';
 
-export type TabId = 'home' | 'movies' | 'tv' | 'music' | 'search';
+export type TabId = 'home' | 'movies' | 'tv' | 'search';
 
 /**
  * screen: a full page. popup: drawn over the nearest screen, which stays visible behind a scrim.
@@ -122,7 +122,7 @@ class App {
   private leaving: { el: HTMLElement; entering: HTMLElement; timer: number } | null = null;
 
   private startTabTransition(from: Screen, to: Screen) {
-    const order: TabId[] = ['home', 'movies', 'tv', 'music', 'search'];
+    const order: TabId[] = ['home', 'movies', 'tv', 'search'];
     const dir = Math.sign(order.indexOf(to.tab!) - order.indexOf(from.tab!)) || 1;
     for (const el of [from.el, to.el]) {
       el.classList.remove('is-entering', 'is-leaving');

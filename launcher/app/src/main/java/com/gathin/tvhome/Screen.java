@@ -14,7 +14,7 @@ class Screen {
     enum Layer { PAGE, POPUP, DIALOG }
 
     /** The nav's sections, in the order the page transition reads as left to right. */
-    enum Tab { HOME, MOVIES, TV, MUSIC, SEARCH }
+    enum Tab { HOME, MOVIES, TV, SEARCH }
 
     /** The remote's keys a screen sees. A keyboard's Backspace (KEYCODE_DEL) arrives as BACK, on every screen. */
     enum Key { UP, DOWN, LEFT, RIGHT, OK, BACK }

@@ -163,7 +163,7 @@ emulator first, the real TV in a batch with the project lead.
 | 3 · Accounts | TMDB sign-in by QR, My list, Seen and Favorites synced, Household and Friends from TMDB lists, start empty instead of the mock seed | The first-run and sign-in designs |
 | 4 · On-TV settings | Weather city and unit, the new Launcher settings page, switching between saved Wi-Fi networks | The Launcher settings and picker designs |
 | 5 · Family install | Package rename, settings pushed at run time, a US region, signed releases, a Windows installer for non-technical households, in-app updates, debloat from a report ([BACKLOG.md](../BACKLOG.md#family-install)) | Nothing; the rename goes first |
-| Later | Two regions (SE and US) searched together, Music, Explore pages, voice search, the screensaver, Retro themes and moving details, add-ons, Watch Next, more languages | A design or a decision |
+| Later | Two regions (SE and US) searched together, Explore pages, voice search, the screensaver, Retro themes and moving details, add-ons, Watch Next, more languages | A design or a decision |
 ## Milestones
 
 | | Scope | Done when |
@@ -177,7 +177,7 @@ emulator first, the real TV in a batch with the project lead.
 | M5 · Title preview | Popup over the page, actions, Overview, Episodes, Where to watch, Cast & crew, More like this; rent/buy dialog; person stub | Every tab and toggle works; Watch opens the service's app |
 | M6 · Search | Bar with ghost text, 6×6 keyboard, recents and suggestions, results preview, full results, no matches, typing from a hardware keyboard | Fuzzy matching ported with its tests; focus and Back match the prototype |
 | M7 · Pick for me | Setup and results | Reroll, Adjust filters and both buttons on the results bar work |
-| M8 · Finish | Music, Launcher settings, All Apps and Weather stubs; docs; the real TV | A run on the TCL BeyondTV with the project lead |
+| M8 · Finish | Music (left the nav with F17), Launcher settings, All Apps and Weather stubs; docs; the real TV | A run on the TCL BeyondTV with the project lead |
 | M9 · Themes and Launcher settings | The split Launcher settings page with every pane (Account, Streaming services, Stores, Weather, Home row apps, Theme, Motion, Open on start, Default Home, TV settings, About); themes: Classic (Midnight, Daylight, OLED Black, High Contrast, Cinema, Landscapes) and Seasonal (Nature, Vector art, 8-bit) following the date; fonts from Google Fonts; backdrops downloaded from `launcher/backdrops/` | Every theme and period on the emulator, Midnight unchanged; then the TCL |
 
 ## Toolchain and emulator

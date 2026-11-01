@@ -15,7 +15,6 @@ export function navBar(active: TabId | null): HTMLElement {
     ['home', 'Home'],
     ['movies', 'Movies'],
     ['tv', 'TV Shows'],
-    ['music', 'Music'],
   ];
   // OK (or a click) on a section switches to it; focusing it only highlights it. OK on the page you are
   // already on does nothing, so pressing it on a pushed page (e.g. Pick for me) never resets that page.

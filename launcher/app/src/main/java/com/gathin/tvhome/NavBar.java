@@ -11,8 +11,8 @@ import android.widget.TextView;
 
 /**
  * The nav at the top of every page (design_preview/src/ui/widgets.ts, navBar; Figma 01 · Home, Navigation): Home,
- * Movies, TV Shows and Music in one pill, the search icon, and Wi-Fi, Inputs and Settings on the right. Landing on a
- * section only highlights it; OK switches to it.
+ * Movies and TV Shows in one pill, the search icon, and Wi-Fi, Inputs and Settings on the right. Landing on a section
+ * only highlights it; OK switches to it. No Music section (F17, the project lead 2026-11-01).
  */
 final class NavBar {
     private NavBar() {}
@@ -47,8 +47,8 @@ final class NavBar {
         // The focused section scales up 5%; clipped to the padding, its outer side was cut flat.
         sections.setClipToPadding(false);
         sections.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, Ui.LINE_W));
-        int[] labels = {R.string.nav_home, R.string.nav_movies, R.string.nav_tv, R.string.nav_music};
-        Screen.Tab[] ids = {Screen.Tab.HOME, Screen.Tab.MOVIES, Screen.Tab.TV, Screen.Tab.MUSIC};
+        int[] labels = {R.string.nav_home, R.string.nav_movies, R.string.nav_tv};
+        Screen.Tab[] ids = {Screen.Tab.HOME, Screen.Tab.MOVIES, Screen.Tab.TV};
         for (int i = 0; i < ids.length; i++) {
             TextView t = section(ctx, host, ids[i], active, labels[i]);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, Ui.px(60));

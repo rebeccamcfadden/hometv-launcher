@@ -14,7 +14,6 @@ import { homeScreen } from './screens/home';
 import { quickSettings, topBarButton } from './screens/dropdown';
 import { libraryScreen } from './screens/library';
 import { pickSetup } from './screens/pick';
-import { placeholder } from './screens/placeholder';
 import { titlePreview } from './screens/preview';
 import { searchScreen } from './screens/search';
 import { launcherSettings } from './screens/settings';
@@ -45,7 +44,6 @@ app.init(stage, {
   home: homeScreen,
   movies: () => libraryScreen('movie'),
   tv: () => libraryScreen('show'),
-  music: () => placeholder('Music', 'Spotify, YouTube Music and your playlists. Not part of V1.', { tab: 'music' }),
   search: searchScreen,
 });
 app.overlay(importPill());

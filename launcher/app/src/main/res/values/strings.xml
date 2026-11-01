@@ -34,7 +34,6 @@
     <string name="nav_home">Home</string>
     <string name="nav_movies">Movies</string>
     <string name="nav_tv">TV Shows</string>
-    <string name="nav_music">Music</string>
     <string name="nav_search">Search</string>
     <string name="net_not_connected">Not connected</string>
     <string name="net_connected">Connected</string>
@@ -47,5 +46,4 @@
     <string name="wifi_settings">Wi-Fi settings</string>
     <string name="vpn_on">VPN on</string>
     <string name="page_not_designed">Not designed yet</string>
-    <string name="page_music_note">Spotify, YouTube Music and your playlists. Not part of V1.</string>
 </resources>
