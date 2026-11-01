@@ -81,8 +81,8 @@ milestones: [docs/rework.md](docs/rework.md).
     4K; Blockbuster, closed, dropped), Movie of the Night only when Watchmode had no price or its budget is spent
     (`movie_of_the_night_api_key`, or `streaming_availability_api_key`; Apple and Amazon only), Apple's keyless
     iTunes lookup (by the iTunes ids Wikidata keeps) when neither priced Apple. Without keys only iTunes is asked.
-  - **When:** prices are kept 7 days. Once a TMDB account is signed in, titles on My list and the Household and
-    Friends lists are kept fresh in the background (not before, so a fresh TV spends nothing on the mock lists); any
+  - **When:** prices are kept 7 days. Once a TMDB account is signed in, titles on My list and the TMDB lists shown
+    as chips are kept fresh in the background (not before, so a fresh TV spends nothing on the mock lists); any
     other title is priced only when its preview opens. Grids and search never ask. Movie of the
     Night's change feed (`ChangeFeed`: rent and buy changes at Apple and Amazon in Sweden), read at most once a day
     while Home shows and at most 3 pages, marks kept titles stale for an early refetch.
@@ -148,20 +148,32 @@ milestones: [docs/rework.md](docs/rework.md).
   (decoded), TMDB's "not approved yet" answer (422, code 41), polling stopping while the page is hidden, offline,
   expiry and New code.
 
-### Household and Friends lists
-- **V1:** mock placeholders in the list chips and the grid.
+### Shown TMDB lists
+- **V1:** mock Household and Friends placeholders in the list chips and the grid.
 - **V2 Phase 1:** still the mock lists, on the TMDB ids of their titles (`MockIds`, `MockOverlay`), with the mock's
   next episode for the "Up next" badge where the real show has that episode.
-- **V2 Phase 3:** chosen on the TV (docs/rework.md, Accounts, 2026-10-30): once signed in, the account page's
-  "Choose lists" lists the account's TMDB lists, each Household, Friends or Not used (OK moves it on; one list per
-  role), saved on the TV (`ListChoices`). `tmdb_household_list` and `tmdb_friends_list` in `config.xml` (or a pushed
-  `config.json`) override the choice: a list number or themoviedb.org/list link (a public list is read without
-  signing in), or a list name in the signed-in account (`ListRef`). The TV only reads them, and keeps the last copy
-  for offline. A TV that never signed in and sets neither keeps the mock lists; once it has an account, a role with
-  no list is empty. All lists means My list, Household and Friends; the mock catalogue's own "My list" no longer
-  counts.
-- **Still to come:** the proper pane for Choose lists, with the new Launcher settings design.
-
+- **V2 Phase 3, first:** Household and Friends chosen on the TV from the account's TMDB lists (one list per role).
+- **V2 Phase 3, by name** (docs/rework.md, Lists by name, 2026-10-31): the lists are the account's own. Once signed
+  in, the Account pane's Choose lists has one row per TMDB list with a Show / Hidden switch; any number can show,
+  saved on the TV (`ListChoices`), and the first six shown lists are chips in Movies, TV Shows and Pick for me after
+  All lists and My list, under their TMDB names and in the account's order (`ShownList`, `ImportedLists`,
+  `LibraryLists`; the cap of six is the project lead's, 2026-10-31, `ListMembership.CHIP_CAP`). A list shown past six
+  has no chip but stays in All lists, the scope line and prices; Choose lists says "n of 6 chips" and marks it "No
+  chip: in All lists", and the Account pane adds "+1 in All lists". The
+  chip row scrolls sideways with focus when it doesn't fit, and back on All lists returns to its start; a chosen
+  list that is hidden or gone falls back to All lists. The page's context line names the lists ("My list, Family
+  picks & Friends' tips"; past four, "My list, Family picks & 4 more"), the scope line counts them, and a card names
+  the first list in chip order that holds it. Pick for me offers My list and the chip lists, with My list and the
+  first shown list ticked. `tmdb_shown_lists` in `config.xml` (or a pushed `config.json`) overrides the choice: list
+  numbers, themoviedb.org/list links or names in the signed-in account, comma- or newline-separated, in its order (a
+  public list by number is read without signing in, and its chip takes the list's TMDB name once read). The older
+  `tmdb_household_list` and `tmdb_friends_list` still work: with `tmdb_shown_lists` empty, they are the shown lists,
+  in that order. A TV that chose Household and Friends starts with exactly those two shown. The TV only reads these
+  lists, and keeps the last copy of each (with its name) for offline. A TV that never had an account and sets no
+  list keeps the mock Household and Friends; once it has an account, only the shown lists (none: All lists and My
+  list); after a sign-out, the lists chosen on the TV are hidden until the next sign-in (`config.xml`'s stay). All
+  lists means My list and the shown lists; the mock catalogue's own "My list" no longer counts.
+- **Still to come:** whether the Choose lists rows show each list's last update, as the prototype's do.
 ### Household seed
 - **V1:** on the first run, My list, Seen, Favorites, recent searches and recently viewed started from the
   prototype's mock seed (`design_preview/src/core/store.ts`).
@@ -350,9 +362,9 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 
 ## From M4
 
-- **Scope line:** "3 imported watchlists" counts the three mock lists, and "All N services" the household's
-  subscribed services (`subscribed_services` or the installed apps). Wanted: the real number of imported lists once
-  they come from TMDB (see Household and Friends lists).
+- **Scope line:** "3 imported watchlists" counted the three mock lists, and "All N services" the household's
+  subscribed services (`subscribed_services` or the installed apps). Done in V2: it counts My list and the shown
+  TMDB lists (see Shown TMDB lists).
 - **Empty list note:** says to "import a watchlist in Settings", which doesn't exist yet (see First run and setup
   under Not designed yet).
 - **Filters and the chosen list** are kept per page while the launcher runs, and go back to the default

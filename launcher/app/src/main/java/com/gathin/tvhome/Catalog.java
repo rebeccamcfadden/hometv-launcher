@@ -106,12 +106,12 @@ interface Catalog {
      */
     default void prices(Title t, boolean preview, Consumer<Title> done) {}
 
-    /** The household's My list: its titles, with the Household and Friends lists', are kept priced in the background. */
-    default void keepPriced(Collection<String> myListIds) {}
+    /** The titles on My list and on the TMDB lists shown as chips: they are kept priced in the background. */
+    default void keepPriced(Collection<String> listedIds) {}
 
     /**
      * Whether the household's lists are priced in the background at all. Off until a TMDB account is signed in
-     * (project lead, 2026-10-30), so a fresh TV doesn't spend price credits on the mock Household and Friends lists;
+     * (project lead, 2026-10-30), so a fresh TV doesn't spend price credits on the mock lists;
      * a preview still prices the title it shows.
      */
     default void setListPricing(boolean on) {}

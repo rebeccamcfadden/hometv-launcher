@@ -2,8 +2,8 @@ package com.gathin.tvhome;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -45,22 +45,26 @@ final class PickRules {
             {"Documentary"}};
     private static final double[] SCORES = {0, 7, 8};
 
-    /** The lists the setup page offers, in its order. */
-    static final ListId[] LISTS = {ListId.MY, ListId.HOUSEHOLD, ListId.FRIENDS};
-
     /** The setup page's choices. Mutable: the page changes it as OK is pressed. */
     static final class State {
         Kind kind;
         Source source = Source.LISTS;
-        final Set<ListId> lists = EnumSet.noneOf(ListId.class);
+        /**
+         * The lists the setup page offers, in chip order: My list, then the shown lists, as the library's chips
+         * ({@link ListMembership#lists}) were when the page opened.
+         */
+        final List<ShownList> offered;
+        /** The keys of the ticked lists ({@link ShownList#key}). */
+        final Set<String> lists = new LinkedHashSet<>();
         final int[] values = new int[IDS.length];
 
-        State(Kind kind) {
+        State(Kind kind, List<ShownList> offered) {
             this.kind = kind;
+            this.offered = Collections.unmodifiableList(new ArrayList<>(offered));
         }
 
         State copy() {
-            State s = new State(kind);
+            State s = new State(kind, offered);
             s.source = source;
             s.lists.addAll(lists);
             System.arraycopy(values, 0, s.values, 0, values.length);
@@ -72,16 +76,22 @@ final class PickRules {
             values[field] = (values[field] + 1) % OPTIONS[field].length;
         }
 
-        void toggle(ListId list) {
-            if (!lists.remove(list)) lists.add(list);
+        void toggle(ShownList list) {
+            if (!lists.remove(list.key)) lists.add(list.key);
+        }
+
+        boolean ticked(ShownList list) {
+            return lists.contains(list.key);
         }
     }
 
-    /** The prototype's starting point: My list + Household, under 2 hours, Drama + Sci-fi, 7.0 and above, up to R. */
-    static State defaults(Kind kind) {
-        State s = new State(kind);
-        s.lists.add(ListId.MY);
-        s.lists.add(ListId.HOUSEHOLD);
+    /**
+     * The prototype's starting point: My list and the first shown list (Household before the TV has had an account),
+     * under 2 hours, Drama + Sci-fi, 7.0 and above, up to R.
+     */
+    static State defaults(Kind kind, ListMembership household) {
+        State s = new State(kind, household.chipLists());
+        for (int i = 0; i < Math.min(2, s.offered.size()); i++) s.lists.add(s.offered.get(i).key);
         int[] start = {1, 1, 1, 2, 0, 0};
         System.arraycopy(start, 0, s.values, 0, start.length);
         return s;
@@ -171,7 +181,7 @@ final class PickRules {
             // A title whose details haven't loaded yet can't be judged on them.
             if (!t.detailed) continue;
             if (s.source == Source.LISTS) {
-                if (!onAnyList(t, s.lists, h)) continue;
+                if (!onAnyList(t, s, h)) continue;
             } else if (!Offers.isIncluded(t, subscribed)) {
                 continue;
             }
@@ -182,9 +192,9 @@ final class PickRules {
         return out;
     }
 
-    private static boolean onAnyList(Title t, Set<ListId> lists, Household h) {
-        for (ListId l : lists) {
-            if (h.isOn(t, l)) return true;
+    private static boolean onAnyList(Title t, State s, Household h) {
+        for (ShownList l : s.offered) {
+            if (s.ticked(l) && h.isOn(t, l)) return true;
         }
         return false;
     }
@@ -220,7 +230,7 @@ final class PickRules {
     static String sourceText(State s, int subscribedCount) {
         if (s.source == Source.SERVICES) return "Everything included on your " + services(subscribedCount);
         List<String> names = new ArrayList<>();
-        for (ListId l : LISTS) if (s.lists.contains(l)) names.add(ListNames.of(l));
+        for (ShownList l : s.offered) if (s.ticked(l)) names.add(l.name);
         return names.isEmpty() ? "No lists" : String.join(" + ", names);
     }
 

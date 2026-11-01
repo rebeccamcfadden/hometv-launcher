@@ -174,6 +174,35 @@ final class Kit {
     // ---- Chips ----------------------------------------------------------------------------------------------------
 
     /**
+     * A row of chips that scrolls sideways with focus when they don't fit ({@code .chips} with data-scroll x): the
+     * row in a horizontal ScrollBox that keeps the focused chip {@code revealPad} design px inside its edges and,
+     * back on the first chip, returns to its start, so a label before it shows again. The chips are clipped
+     * {@link #RING_ROOM} outside the row, room for a focused chip's scale-up; add the strip with
+     * {@link #chipStripParams}, whose margins give that room back, so the chips sit where the bare row would.
+     */
+    static View chipStrip(Context ctx, LinearLayout chips, float revealPad) {
+        FrameLayout clip = new FrameLayout(ctx);
+        clip.setClipChildren(true);
+        ViewGroup box = ScrollBox.horizontalFromStart(ctx, Math.max(RING_ROOM, revealPad));
+        int room = Ui.px(RING_ROOM);
+        box.setPadding(room, room, room, room);
+        box.addView(chips, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        clip.addView(box, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        return clip;
+    }
+
+    /** Full width, {@code top} design px below the view before it, for a {@link #chipStrip} in a column. */
+    static LinearLayout.LayoutParams chipStripParams(float top) {
+        int room = Ui.px(RING_ROOM);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(-room, Ui.px(top) - room, -room, -room);
+        return lp;
+    }
+
+    /**
      * {@code .chip}: a 54 px pill with a 20 px label. Selected is the accent at 14% with an accent border and a
      * semibold accent label, with a check before it when {@code check}; focused is the accent fill, scale 1.05.
      */
@@ -268,7 +297,7 @@ final class Kit {
         card.addView(top, below(10));
 
         card.addView(textLine(ctx, TitleText.meta(t), Ui.TEXT_2), below(4));
-        card.addView(textLine(ctx, TitleText.provenance(t), Ui.TEXT_3), below(2));
+        card.addView(textLine(ctx, TitleText.provenance(t, data.household), Ui.TEXT_3), below(2));
         return focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name);
     }
 

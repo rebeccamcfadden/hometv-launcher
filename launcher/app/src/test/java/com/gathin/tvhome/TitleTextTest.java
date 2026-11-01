@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -11,13 +12,15 @@ import static org.junit.Assert.assertEquals;
 public class TitleTextTest {
 
     private final MockCatalog catalog = new MockCatalog();
+    /** The prototype's seed: My list holds the mock catalogue's "my" titles; Household and Friends are the mock lists. */
+    private final ListMembership seed = HouseholdState.seed(catalog)::inMyList;
 
     @Test
     public void everyTitleMatchesThePrototype() throws Exception {
         for (PrototypeTitles.Row row : PrototypeTitles.rows()) {
             Title t = catalog.get(row.id);
             assertEquals(row.id, row.meta, TitleText.meta(t));
-            assertEquals(row.id, row.provenance, TitleText.provenance(t));
+            assertEquals(row.id, row.provenance, TitleText.provenance(t, seed));
             assertEquals(row.id, row.kindYear, TitleText.kindYear(t));
         }
     }
@@ -33,12 +36,54 @@ public class TitleTextTest {
 
     @Test
     public void provenanceNamesTheFirstListOrTheCatalogue() {
-        assertEquals("My list · Sci-fi", TitleText.provenance(catalog.get("arrival")));
-        assertEquals("Friends · Animation", TitleText.provenance(catalog.get("mitchells")));
-        assertEquals("Catalogue · Drama", TitleText.provenance(catalog.get("carnivale")));
+        assertEquals("My list · Sci-fi", TitleText.provenance(catalog.get("arrival"), seed));
+        assertEquals("Friends · Animation", TitleText.provenance(catalog.get("mitchells"), seed));
+        assertEquals("Catalogue · Drama", TitleText.provenance(catalog.get("carnivale"), seed));
         Title noGenre = new Title("x", Kind.MOVIE, "X", 2020, Collections.emptyList(), 90, "PG", 7, "", "moon",
                 null, Arrays.asList(ListId.HOUSEHOLD, ListId.MY), null, null, null, 0, 0);
-        assertEquals("Household", TitleText.provenance(noGenre));
+        assertEquals("the mock My list flag doesn't count", "Household", TitleText.provenance(noGenre, seed));
+        ListMembership mine = id -> id.equals("x");
+        assertEquals("My list comes first in chip order", "My list", TitleText.provenance(noGenre, mine));
+    }
+
+    /** lists.ts provenance: the first list in chip order that holds the title, by its TMDB name, else the catalogue. */
+    @Test
+    public void provenanceFollowsTheShownListsOrder() {
+        Household3 h = new Household3();
+        Title moon = catalog.get("moon");
+        assertEquals("Weekend movies · Sci-fi", TitleText.provenance(moon, h));
+        h.mine = true;
+        assertEquals("My list · Sci-fi", TitleText.provenance(moon, h));
+        h.mine = false;
+        h.lists = Arrays.asList(h.tips, h.weekend);
+        assertEquals("Friends’ tips · Sci-fi", TitleText.provenance(moon, h));
+        h.lists = Collections.singletonList(h.club);
+        assertEquals("Catalogue · Sci-fi", TitleText.provenance(moon, h));
+    }
+
+    /** Three shown TMDB lists; moon is on Weekend movies and Friends' tips, and on My list when {@link #mine}. */
+    private static final class Household3 implements ListMembership {
+        final ShownList weekend = ShownList.tmdb(2, "", "Weekend movies");
+        final ShownList tips = ShownList.tmdb(3, "", "Friends’ tips");
+        final ShownList club = ShownList.tmdb(4, "", "Film club");
+        List<ShownList> lists = Arrays.asList(weekend, tips, club);
+        boolean mine;
+
+        @Override
+        public boolean inMyList(String id) {
+            return mine;
+        }
+
+        @Override
+        public List<ShownList> shownLists() {
+            return lists;
+        }
+
+        @Override
+        public boolean isOn(Title t, ShownList list) {
+            if (list.isMy()) return mine;
+            return list == weekend || list == tips;
+        }
     }
 
     @Test

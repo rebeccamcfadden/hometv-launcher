@@ -2,7 +2,17 @@
 <!-- M4 · Movies and TV Shows (docs/rework.md): the library pages and their Filters drawer. The filter options and the
      summary words are plain English in LibraryFilters (pure Java, unit-tested), like Offers and TitleText. -->
 <resources>
-    <string name="library_context">Your collection · My list, Household &amp; Friends</string>
+    <!-- The lists the page shows (My list, then the TMDB lists shown as chips): "Your collection · My list, Family picks
+         & Friends' tips". Past four lists, "My list, Family picks & 4 more". -->
+    <string name="library_context">Your collection · %1$s</string>
+    <!-- Joins two names; the last two take library_lists_and. -->
+    <string name="library_lists_comma">%1$s, %2$s</string>
+    <string name="library_lists_and">%1$s &amp; %2$s</string>
+    <!-- The first two names, then how many more (%3$d, which the plural follows). -->
+    <plurals name="library_lists_more">
+        <item quantity="one">%1$s, %2$s &amp; %3$d more</item>
+        <item quantity="other">%1$s, %2$s &amp; %3$d more</item>
+    </plurals>
     <string name="library_pick">Pick for me</string>
     <plurals name="library_watchlists">
         <item quantity="one">%1$d imported watchlist</item>

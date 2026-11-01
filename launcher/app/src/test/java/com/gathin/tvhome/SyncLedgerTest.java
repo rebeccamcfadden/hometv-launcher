@@ -30,12 +30,26 @@ public class SyncLedgerTest {
     }
 
     @Test
-    public void readOnlyListsAndMockIdsAreNotQueued() {
+    public void mockIdsAreNotQueued() {
         SyncLedger l = new SyncLedger();
-        l.record(SyncList.HOUSEHOLD, "movie:1", true, 1);
-        l.record(SyncList.FRIENDS, "movie:1", true, 1);
         l.record(SyncList.MY_LIST, "arrival", true, 1);
         assertTrue(l.pending().isEmpty());
+    }
+
+    /** A ledger saved while Household and Friends were read-only entries of SyncList is still read, without them. */
+    @Test
+    public void readsALedgerThatNamedHouseholdAndFriends() {
+        String old = "{\"account\":\"obj\",\"bases\":{\"MY_LIST\":{\"at\":5,\"ids\":[\"movie:1\"]},"
+                + "\"HOUSEHOLD\":{\"at\":5,\"ids\":[\"movie:10\"]}},"
+                + "\"lists\":{\"SEEN\":77,\"HOUSEHOLD\":50,\"FRIENDS\":9001},"
+                + "\"pending\":[{\"list\":\"FRIENDS\",\"id\":\"movie:2\",\"present\":true,\"at\":1},"
+                + "{\"list\":\"MY_LIST\",\"id\":\"movie:3\",\"present\":true,\"at\":2}]}";
+        SyncLedger l = SyncLedger.fromJson(old);
+        assertEquals("obj", l.account());
+        assertEquals(Collections.singletonList("movie:1"), l.base(SyncList.MY_LIST));
+        assertEquals(77, l.listId(SyncList.SEEN));
+        assertEquals(1, l.pending().size());
+        assertEquals("movie:3", l.pending().get(0).id);
     }
 
     @Test
@@ -119,7 +133,6 @@ public class SyncLedgerTest {
         assertEquals(Collections.emptyList(), r.base(SyncList.SEEN));
         assertNull(r.base(SyncList.FAVORITES));
         assertEquals(77, r.listId(SyncList.SEEN));
-        assertEquals(0, r.listId(SyncList.FRIENDS));
         List<SyncLedger.Op> ops = r.pending();
         assertEquals(2, ops.size());
         assertEquals(SyncList.FAVORITES, ops.get(0).list);

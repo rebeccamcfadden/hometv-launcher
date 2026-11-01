@@ -232,12 +232,18 @@
     <string-array name="subscribed_services" translatable="false">
     </string-array>
 
-    <!-- V2 Phase 3, the TMDB account (signing in is optional, from Launcher settings). Household and Friends are
-         chosen on the TV (the account page's Choose lists); tmdb_household_list and tmdb_friends_list override that
-         choice, each a list number ("8221116"), its themoviedb.org/list link, or its name among the signed-in
-         account's lists. A number reaches a public list without signing in. Seen follows the account's private TMDB
-         list of this name, which create_seen_list lets the launcher make when the account has none; an empty
-         tmdb_seen_list keeps Seen on the TV only. All four can be set in a pushed config.json too. -->
+    <!-- V2 Phase 3, the TMDB account (signing in is optional, from Launcher settings). The Movies and TV Shows chips
+         after My list are the account's TMDB lists shown in Launcher settings' Account → Choose lists, by their TMDB
+         names, in the account's order (docs/rework.md, Lists by name, 2026-10-31). tmdb_shown_lists overrides that
+         choice: list numbers ("8221116"), themoviedb.org/list links or names among the signed-in account's lists, one
+         per line or comma-separated, shown in this order. A number reaches a public list without signing in, and its
+         chip takes the list's TMDB name once read. When tmdb_shown_lists is empty, the older tmdb_household_list and
+         tmdb_friends_list (one list each), if either is set, are the shown lists, in that order. Before a TV has had
+         an account and with none of the three set, the chips are the mock Household and Friends. Seen follows the
+         account's private TMDB list of this name, which create_seen_list lets the launcher make when the account has
+         none; an empty tmdb_seen_list keeps Seen on the TV only. All can be set in a pushed config.json too, where
+         tmdb_shown_lists may also be an array. -->
+    <string name="tmdb_shown_lists" translatable="false"></string>
     <string name="tmdb_household_list" translatable="false"></string>
     <string name="tmdb_friends_list" translatable="false"></string>
     <string name="tmdb_seen_list" translatable="false">Seen</string>

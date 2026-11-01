@@ -22,6 +22,8 @@ public class PickRulesTest {
     private static final Set<ServiceId> SUBS = OffersTest.PROTOTYPE;
     private static final Set<ServiceId> NONE = Collections.emptySet();
 
+    private static final ShownList FRIENDS = ShownList.MOCK.get(1);
+
     private final MockCatalog catalog = new MockCatalog();
 
     /** The household's seed (store.ts defaults): My list from the MY titles, seen knives-out and budapest. */
@@ -105,7 +107,7 @@ public class PickRulesTest {
 
     /** Every field at its first option ("Any …", Unwatched only, Included + paid). */
     private static PickRules.State open(Kind kind) {
-        PickRules.State s = PickRules.defaults(kind);
+        PickRules.State s = PickRules.defaults(kind, EMPTY);
         Arrays.fill(s.values, 0);
         return s;
     }
@@ -114,9 +116,9 @@ public class PickRulesTest {
 
     @Test
     public void defaultsAreTheShotsSetup() {
-        PickRules.State s = PickRules.defaults(Kind.MOVIE);
+        PickRules.State s = PickRules.defaults(Kind.MOVIE, EMPTY);
         assertEquals(PickRules.Source.LISTS, s.source);
-        assertEquals(EnumSet.of(ListId.MY, ListId.HOUSEHOLD), s.lists);
+        assertEquals(Arrays.asList("my", "household"), new ArrayList<>(s.lists));
         assertEquals("Under 2 hours", PickRules.option(PickRules.LENGTH, s.values[PickRules.LENGTH]));
         assertEquals("Drama + Sci-fi", PickRules.option(PickRules.GENRE, s.values[PickRules.GENRE]));
         assertEquals("7.0 and above", PickRules.option(PickRules.SCORE, s.values[PickRules.SCORE]));
@@ -128,7 +130,7 @@ public class PickRulesTest {
     /** pick-01-setup.png: 4 picks, 6 titles match; pick-02-results.png draws its four from these six. */
     @Test
     public void defaultMoviesMatchTheShot() {
-        PickRules.State s = PickRules.defaults(Kind.MOVIE);
+        PickRules.State s = PickRules.defaults(Kind.MOVIE, EMPTY);
         List<Title> m = matches(s);
         assertEquals(Arrays.asList("arrival", "past-lives", "coda", "moon", "zone", "american-fiction"), ids(m));
         int n = PickRules.pickCount(m.size());
@@ -145,7 +147,7 @@ public class PickRulesTest {
 
     @Test
     public void defaultShows() {
-        PickRules.State s = PickRules.defaults(Kind.SHOW);
+        PickRules.State s = PickRules.defaults(Kind.SHOW, EMPTY);
         // Shows on My list or Household, Drama or Sci-fi, 7.0+, any TV rating but NR, unseen.
         assertEquals(Arrays.asList("severance", "the-bear", "last-of-us", "shogun", "fallout", "the-crown"), ids(matches(s)));
         assertEquals("TV Shows · Under 2 hours · Drama + Sci-fi · 7.0 and above · Up to R · Unwatched only · Included + paid",
@@ -256,7 +258,7 @@ public class PickRulesTest {
         assertTrue(PickRules.test(PickRules.WATCH, 0, t, EMPTY, SUBS));
         // The seed has seen Knives Out: it never comes up while "Unwatched only" is chosen.
         PickRules.State s = open(Kind.MOVIE);
-        s.lists.add(ListId.FRIENDS);
+        s.lists.add(FRIENDS.key);
         assertFalse(ids(matches(s)).contains("knives-out"));
         s.step(PickRules.WATCH);
         assertTrue(ids(matches(s)).contains("knives-out"));
@@ -286,20 +288,20 @@ public class PickRulesTest {
         assertTrue(PickRules.test(PickRules.AVAIL, 0, rentOnly, EMPTY, NONE));
         assertFalse(PickRules.test(PickRules.AVAIL, 0, movie("none", 100), EMPTY, SUBS));
         // CODA is only on Apple TV+: on a Netflix-only TV it is no pick, so no pick ends up "Unavailable".
-        PickRules.State any = PickRules.defaults(Kind.MOVIE);
+        PickRules.State any = PickRules.defaults(Kind.MOVIE, EMPTY);
         assertTrue(ids(PickRules.matches(any, catalog.all(), household, SUBS)).contains("coda"));
         List<Title> netflix = PickRules.matches(any, catalog.all(), household, netflixOnly);
         assertFalse(ids(netflix).contains("coda"));
         for (Title t : netflix) assertNotNull(t.id, Offers.bestOffer(t, netflixOnly));
         // Moon is rent or buy only: it leaves the default set with "Included only".
-        PickRules.State s = PickRules.defaults(Kind.MOVIE);
+        PickRules.State s = PickRules.defaults(Kind.MOVIE, EMPTY);
         s.step(PickRules.AVAIL);
         assertEquals(Arrays.asList("arrival", "past-lives", "coda", "zone", "american-fiction"), ids(matches(s)));
     }
 
     @Test
     public void stepWrapsRound() {
-        PickRules.State s = PickRules.defaults(Kind.MOVIE);
+        PickRules.State s = PickRules.defaults(Kind.MOVIE, EMPTY);
         for (int f = 0; f < PickRules.IDS.length; f++) {
             int start = s.values[f];
             for (int i = 0; i < PickRules.optionCount(f); i++) s.step(f);
@@ -323,18 +325,40 @@ public class PickRulesTest {
         assertEquals("No matches", PickRules.findLabel(0));
         assertEquals("Nothing matches. Loosen a filter.", PickRules.note(0));
 
-        s.toggle(ListId.FRIENDS);
+        s.toggle(FRIENDS);
         for (Title t : matches(s)) assertTrue(t.id, t.isOn(ListId.FRIENDS));
         assertEquals("Friends", PickRules.sourceText(s, 7));
 
-        s.toggle(ListId.FRIENDS);
-        s.toggle(ListId.MY);
+        s.toggle(FRIENDS);
+        s.toggle(ShownList.MY);
         PickRules.Household mine = household(new HashSet<>(Arrays.asList("interstellar", "moon")), Collections.emptySet());
         assertEquals(Arrays.asList("moon", "interstellar"), ids(PickRules.matches(s, catalog.all(), mine, SUBS)));
 
-        s.lists.addAll(EnumSet.allOf(ListId.class));
+        for (ShownList l : s.offered) s.lists.add(l.key);
         assertEquals("My list + Household + Friends", PickRules.sourceText(s, 7));
         for (Title t : matches(s)) assertFalse(t.id, t.lists.isEmpty() && !seed.inMyList(t.id));
+    }
+
+    /** Pick for me offers the chip lists only: My list and the first six shown lists. */
+    @Test
+    public void pickOffersTheChipListsOnly() {
+        ListMembership ten = new ListMembership() {
+            @Override
+            public boolean inMyList(String id) {
+                return false;
+            }
+
+            @Override
+            public List<ShownList> shownLists() {
+                List<ShownList> out = new java.util.ArrayList<>();
+                for (int i = 1; i <= 10; i++) out.add(ShownList.tmdb(i, "", "list " + i));
+                return out;
+            }
+        };
+        PickRules.State s = PickRules.defaults(Kind.MOVIE, ten);
+        assertEquals(7, s.offered.size());
+        assertEquals("my", s.offered.get(0).key);
+        assertEquals("tmdb-6", s.offered.get(6).key);
     }
 
     /** "My services": everything included on a subscribed service, catalogue-only titles too; the lists don't count. */
@@ -361,7 +385,7 @@ public class PickRulesTest {
             assertTrue(t.id, Offers.isIncluded(t, NONE));
         }
         // The default fields on the services: the shot's six less Moon (rent or buy only).
-        PickRules.State d = PickRules.defaults(Kind.MOVIE);
+        PickRules.State d = PickRules.defaults(Kind.MOVIE, EMPTY);
         d.source = PickRules.Source.SERVICES;
         assertEquals(Arrays.asList("arrival", "past-lives", "coda", "zone", "american-fiction"), ids(matches(d)));
     }
@@ -369,7 +393,7 @@ public class PickRulesTest {
     @Test
     public void onlyTheChosenKind() {
         PickRules.State s = open(Kind.SHOW);
-        s.lists.addAll(EnumSet.allOf(ListId.class));
+        for (ShownList l : s.offered) s.lists.add(l.key);
         for (Title t : matches(s)) assertEquals(t.id, Kind.SHOW, t.kind);
         s.kind = Kind.MOVIE;
         for (Title t : matches(s)) assertEquals(t.id, Kind.MOVIE, t.kind);
@@ -377,13 +401,13 @@ public class PickRulesTest {
 
     @Test
     public void copyIsIndependent() {
-        PickRules.State s = PickRules.defaults(Kind.MOVIE);
+        PickRules.State s = PickRules.defaults(Kind.MOVIE, EMPTY);
         PickRules.State c = s.copy();
         s.step(PickRules.SCORE);
-        s.toggle(ListId.FRIENDS);
+        s.toggle(FRIENDS);
         s.kind = Kind.SHOW;
         assertEquals(1, c.values[PickRules.SCORE]);
-        assertFalse(c.lists.contains(ListId.FRIENDS));
+        assertFalse(c.lists.contains(FRIENDS.key));
         assertEquals(Kind.MOVIE, c.kind);
     }
 
@@ -405,9 +429,9 @@ public class PickRulesTest {
     }
 
     private static PickRules.State friends() {
-        PickRules.State s = PickRules.defaults(Kind.MOVIE);
+        PickRules.State s = PickRules.defaults(Kind.MOVIE, EMPTY);
         s.lists.clear();
-        s.lists.add(ListId.FRIENDS);
+        s.lists.add(FRIENDS.key);
         return s;
     }
 
@@ -449,7 +473,7 @@ public class PickRulesTest {
 
     @Test
     public void rollIsDeterministicWithASeed() {
-        List<Title> m = matches(PickRules.defaults(Kind.MOVIE));
+        List<Title> m = matches(PickRules.defaults(Kind.MOVIE, EMPTY));
         List<Title> a = PickRules.roll(m, null, new Random(7));
         List<Title> b = PickRules.roll(m, null, new Random(7));
         assertEquals(4, a.size());
@@ -460,7 +484,7 @@ public class PickRulesTest {
 
     @Test
     public void fewerThanFourShowsWhatThereIs() {
-        List<Title> m = matches(PickRules.defaults(Kind.MOVIE)).subList(0, 3);
+        List<Title> m = matches(PickRules.defaults(Kind.MOVIE, EMPTY)).subList(0, 3);
         List<Title> a = PickRules.roll(m, null, new Random(1));
         assertEquals(new HashSet<>(m), new HashSet<>(a));
         assertEquals(new HashSet<>(m), new HashSet<>(PickRules.roll(m, a, new Random(2))));
@@ -470,7 +494,7 @@ public class PickRulesTest {
     /** With more than four matches, Reroll never shows the same four again, whatever the random draw. */
     @Test
     public void rerollNeverRepeatsTheSameFour() {
-        List<Title> m = matches(PickRules.defaults(Kind.MOVIE));
+        List<Title> m = matches(PickRules.defaults(Kind.MOVIE, EMPTY));
         assertEquals(6, m.size());
         for (long seed = 0; seed < 500; seed++) {
             Random rnd = new Random(seed);
@@ -486,8 +510,50 @@ public class PickRulesTest {
     /** With exactly four, Reroll can only reorder them. */
     @Test
     public void rerollWithExactlyFour() {
-        List<Title> m = matches(PickRules.defaults(Kind.MOVIE)).subList(0, 4);
+        List<Title> m = matches(PickRules.defaults(Kind.MOVIE, EMPTY)).subList(0, 4);
         List<Title> first = PickRules.roll(m, null, new Random(5));
         assertEquals(new HashSet<>(m), new HashSet<>(PickRules.roll(m, first, new Random(6))));
+    }
+
+    /** pick.ts: the list chips are My list and the shown lists; My list and the first shown list start ticked. */
+    @Test
+    public void listsAreMyListThenTheShownLists() {
+        ImportedLists imported = new ImportedLists();
+        imported.set(Arrays.asList(
+                new ImportedLists.Entry(ListRef.parse("7"), 7, "Family picks", Collections.singletonList("coda")),
+                new ImportedLists.Entry(ListRef.parse("9"), 9, "Friends’ tips", Collections.singletonList("moon"))));
+        PickRules.Household h = new PickRules.Household() {
+            @Override
+            public boolean inMyList(String id) {
+                return id.equals("arrival");
+            }
+
+            @Override
+            public boolean isSeen(String id) {
+                return false;
+            }
+
+            @Override
+            public List<ShownList> shownLists() {
+                return imported.shown();
+            }
+
+            @Override
+            public boolean isOn(Title t, ShownList list) {
+                return list.isMy() ? inMyList(t.id) : imported.isOn(t, list);
+            }
+        };
+        PickRules.State s = PickRules.defaults(Kind.MOVIE, h);
+        Arrays.fill(s.values, 0);
+        assertEquals(3, s.offered.size());
+        assertEquals(Arrays.asList("my", "tmdb-7"), new ArrayList<>(s.lists));
+        assertEquals("My list + Family picks", PickRules.sourceText(s, 7));
+        assertEquals(Arrays.asList("arrival", "coda"), ids(PickRules.matches(s, catalog.all(), h, SUBS)));
+        s.toggle(s.offered.get(2));
+        assertEquals("My list + Family picks + Friends’ tips", PickRules.sourceText(s.copy(), 7));
+        assertEquals(Arrays.asList("arrival", "coda", "moon"), ids(PickRules.matches(s, catalog.all(), h, SUBS)));
+        imported.set(Collections.<ImportedLists.Entry>emptyList());
+        assertEquals("none shown: My list alone", Collections.singletonList("my"),
+                new ArrayList<>(PickRules.defaults(Kind.MOVIE, h).lists));
     }
 }

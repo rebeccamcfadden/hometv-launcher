@@ -159,11 +159,9 @@ public class HouseholdStateTest {
         assertEquals(s.myListIds(), s.ids(SyncList.MY_LIST));
         assertEquals(Arrays.asList("knives-out", "budapest"), s.ids(SyncList.SEEN));
         assertEquals(Collections.singletonList("arrival"), s.ids(SyncList.FAVORITES));
-        assertTrue(s.ids(SyncList.HOUSEHOLD).isEmpty());
         assertTrue(s.setList(SyncList.MY_LIST, Arrays.asList("tv:2", "movie:1")));
         assertEquals(Arrays.asList("tv:2", "movie:1"), s.myListIds());
         assertFalse("the same again changes nothing", s.setList(SyncList.MY_LIST, Arrays.asList("tv:2", "movie:1")));
-        assertFalse(s.setList(SyncList.FRIENDS, Collections.singletonList("movie:1")));
         assertTrue(s.setList(SyncList.FAVORITES, Collections.<String>emptyList()));
         assertFalse(s.isFavorite("arrival"));
         assertEquals("the rest is untouched", 4, s.recent().size());

@@ -24,6 +24,8 @@ final class PickSetupPage extends Screen {
     /** The right column's width; the left one takes the rest (.pick-right). */
     private static final int RIGHT_W = 590;
     private static final int GAP = 56;
+    /** How far inside the row's edges a list chip stops when the row scrolls (screens.css .chips data-scroll-pad). */
+    private static final float CHIP_PAD = 48;
 
     private final Context ctx;
     private final NavBar.Host host;
@@ -34,7 +36,7 @@ final class PickSetupPage extends Screen {
     private final PickRules.State state;
 
     private final View[] sourceChips = new View[2];
-    private final View[] listChips = new View[PickRules.LISTS.length];
+    private final View[] listChips;
     private final LinearLayout listsRow;
     private final View[] moodChips = new View[2];
     private final TextView[] fieldLabels = new TextView[PickRules.IDS.length];
@@ -55,8 +57,9 @@ final class PickSetupPage extends Screen {
         this.router = router;
         this.data = router.data();
         this.random = random;
-        this.state = PickRules.defaults(kind);
         this.household = household(data);
+        this.state = PickRules.defaults(kind, household);
+        this.listChips = new View[state.offered.size()];
         FrameLayout page = (FrameLayout) view;
 
         LinearLayout body = Kit.unclip(new LinearLayout(ctx));
@@ -82,18 +85,18 @@ final class PickSetupPage extends Screen {
         }
         left.addView(sourceRow);
         left.addView(label(ctx, R.string.pick_lists_label), labelParams());
+        // My list and the shown lists, as on the library's chips; a row that runs past the column scrolls with focus.
         listsRow = chipRow(ctx);
-        for (int i = 0; i < PickRules.LISTS.length; i++) {
-            ListId list = PickRules.LISTS[i];
-            listChips[i] = Kit.chip(ctx, ListNames.of(list), false, true, "lists",
-                    "pl-" + list.name().toLowerCase(java.util.Locale.ROOT), v -> {
-                        state.toggle(list);
-                        refresh();
-                    });
+        for (int i = 0; i < listChips.length; i++) {
+            ShownList list = state.offered.get(i);
+            listChips[i] = Kit.chip(ctx, list.name, false, true, "lists", "pl-" + list.key, v -> {
+                state.toggle(list);
+                refresh();
+            });
             spoken(listChips[i], R.string.pick_lists_spoken);
             addChip(listsRow, listChips[i]);
         }
-        left.addView(listsRow);
+        left.addView(Kit.chipStrip(ctx, listsRow, CHIP_PAD), Kit.chipStripParams(0));
 
         LinearLayout fields = column(ctx);
         for (int row = 0; row < 2; row++) {
@@ -204,7 +207,7 @@ final class PickSetupPage extends Screen {
         for (int i = 0; i < 2; i++) Kit.setSelected(sourceChips[i], state.source == PickRules.Source.values()[i]);
         boolean lists = state.source == PickRules.Source.LISTS;
         for (int i = 0; i < listChips.length; i++) {
-            Kit.setSelected(listChips[i], state.lists.contains(PickRules.LISTS[i]));
+            Kit.setSelected(listChips[i], state.ticked(state.offered.get(i)));
             // .chips.is-disabled with data-inert: dimmed, and the D-pad passes them by.
             listChips[i].setEnabled(lists);
         }
@@ -287,7 +290,12 @@ final class PickSetupPage extends Screen {
             }
 
             @Override
-            public boolean isOn(Title t, ListId list) {
+            public java.util.List<ShownList> shownLists() {
+                return data.household.shownLists();
+            }
+
+            @Override
+            public boolean isOn(Title t, ShownList list) {
                 return data.household.isOn(t, list);
             }
         };

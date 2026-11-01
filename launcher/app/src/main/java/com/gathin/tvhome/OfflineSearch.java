@@ -16,10 +16,13 @@ import java.util.Set;
 final class OfflineSearch {
     private OfflineSearch() {}
 
-    /** The ids of the titles saved on the TV: the household's own, then those on an imported list. */
-    static Set<String> savedIds(Collection<String> household, List<Title> all) {
+    /**
+     * The ids of the titles saved on the TV: the household's own, then those on any of its lists (My list and the
+     * shown lists; the mock Household and Friends before the TV has had an account).
+     */
+    static Set<String> savedIds(Collection<String> household, List<Title> all, ListMembership lists) {
         Set<String> out = new LinkedHashSet<>(household);
-        for (Title t : all) if (!t.lists.isEmpty()) out.add(t.id);
+        for (Title t : all) if (lists.onAnyList(t)) out.add(t.id);
         return out;
     }
 

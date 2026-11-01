@@ -62,16 +62,18 @@ final class TmdbAccountParse {
         }
     }
 
-    /** One page of titles, as title ids in TMDB's order. */
+    /** One page of titles, as title ids in TMDB's order, and the list's name on a list's page ("" elsewhere). */
     static final class Page {
         final List<String> ids;
         final int page;
         final int totalPages;
+        final String name;
 
-        Page(List<String> ids, int page, int totalPages) {
+        Page(List<String> ids, int page, int totalPages, String name) {
             this.ids = ids;
             this.page = page;
             this.totalPages = totalPages;
+            this.name = name;
         }
     }
 
@@ -157,7 +159,7 @@ final class TmdbAccountParse {
             }
         }
         return new Page(Collections.unmodifiableList(new ArrayList<>(ids)), o.optInt("page", 1),
-                Math.max(1, o.optInt("total_pages", 1)));
+                Math.max(1, o.optInt("total_pages", 1)), text(o, "name"));
     }
 
     static ListPage lists(AccountHttp.Reply r) throws Failure {

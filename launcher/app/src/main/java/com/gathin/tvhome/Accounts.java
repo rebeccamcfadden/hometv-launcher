@@ -5,10 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -20,8 +16,8 @@ import java.util.concurrent.Executors;
 /**
  * The TMDB account on this TV (BACKLOG.md, TMDB sign-in and watchlist sync; docs/rework.md, Accounts, 2026-10-30):
  * signing in by QR code ({@link SignInFlow}), keeping My list, Favorites and Seen in step with the account
- * ({@link AccountSync}), and reading Household and Friends from the TMDB lists chosen on the TV ({@link ListChoices})
- * or set in config.xml ({@link AccountConfig}). Signing in is optional: signed out, everything stays on the TV.
+ * ({@link AccountSync}), and reading the TMDB lists shown as chips, by name: chosen on the TV ({@link ListChoices}) or
+ * set in config.xml ({@link AccountConfig}). Signing in is optional: signed out, everything stays on the TV.
  *
  * <p>Threads: everything here runs on the main thread except the network and the sync ledger, which live on one
  * low-priority worker thread, so Home never waits on TMDB. Network only while Home (or the sign-in page) is on
@@ -30,6 +26,8 @@ import java.util.concurrent.Executors;
 final class Accounts implements Household.Recorder {
     private static final String PREFS = "tmdb_sync";
     private static final String LEDGER = "ledger", LEDGER_ACCOUNT = "ledger_account", IMPORTED = "imported";
+    /** The shown lists chosen on the TV; before them, the lists chosen for Household and Friends (read to migrate). */
+    private static final String CHOICE_SHOWN = "shown_lists";
     private static final String CHOICE_HOUSEHOLD = "household_list", CHOICE_FRIENDS = "friends_list";
 
     private final Household household;
@@ -49,6 +47,8 @@ final class Accounts implements Household.Recorder {
     });
     private final List<Runnable> listeners = new ArrayList<>();
     private final AccountHttp http;
+    /** A shown list's name until TMDB gives it: "List 8221116". */
+    private final java.util.function.LongFunction<String> unnamed;
 
     /** Main thread. Read on the worker through {@link #userToken}. */
     private volatile TmdbSession session;
@@ -56,7 +56,7 @@ final class Accounts implements Household.Recorder {
     private boolean visible;
     /** Main thread: whether changes are queued for an account (see {@link #queues}). */
     private boolean hasAccount;
-    /** Household and Friends as chosen on the TV (Choose lists). */
+    /** The lists shown as chips, as chosen on the TV (Choose lists). */
     private final ListChoices choices;
     private boolean signInVisible;
     private long lastFull;
@@ -77,10 +77,12 @@ final class Accounts implements Household.Recorder {
         this.store = new TmdbSessionStore(app);
         this.prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         this.http = call -> TmdbClient.send(call, call.auth == AccountHttp.Auth.APP ? this.appToken : userToken());
+        this.unnamed = id -> app.getString(R.string.account_kv_list_number, id);
         session = available() ? store.load() : null;
         // A TV that was ever signed in keeps queueing for that account, so changes made signed out go up later.
         hasAccount = available() && (session != null || !prefs.getString(LEDGER_ACCOUNT, "").isEmpty());
-        choices = new ListChoices(prefs.getLong(CHOICE_HOUSEHOLD, 0), prefs.getLong(CHOICE_FRIENDS, 0));
+        choices = ListChoices.load(prefs.getString(CHOICE_SHOWN, null), prefs.getLong(CHOICE_HOUSEHOLD, 0),
+                prefs.getLong(CHOICE_FRIENDS, 0));
         flow = new SignInFlow(session);
         loadImported();
         household.setRecorder(this);
@@ -133,7 +135,8 @@ final class Accounts implements Household.Recorder {
     }
 
     private boolean publicLists() {
-        return ref(ListId.HOUSEHOLD).id > 0 || ref(ListId.FRIENDS).id > 0;
+        for (ListRef r : shownRefs()) if (r.id > 0) return true;
+        return false;
     }
 
     // ---- Changes on the TV ---------------------------------------------------------------------------------------
@@ -195,7 +198,7 @@ final class Accounts implements Household.Recorder {
         long at = now();
         worker.execute(() -> {
             if (run == SyncPlan.Run.PUBLIC) {
-                Map<ListId, List<String>> read = readPublic(settings);
+                Map<String, ImportedLists.Entry> read = readPublic(settings);
                 main.post(() -> finishPublic(read, settings, at));
                 return;
             }
@@ -246,14 +249,13 @@ final class Accounts implements Household.Recorder {
             main.removeCallbacks(fullSoon);
             main.postDelayed(fullSoon, SyncPlan.DEBOUNCE);
         }
-        Map<ListId, List<String>> imported = new EnumMap<>(ListId.class);
-        if (r.lists.containsKey(SyncList.HOUSEHOLD)) imported.put(ListId.HOUSEHOLD, r.lists.get(SyncList.HOUSEHOLD));
-        if (r.lists.containsKey(SyncList.FRIENDS)) imported.put(ListId.FRIENDS, r.lists.get(SyncList.FRIENDS));
-        applyImported(imported, used);
+        // The TV's choice follows the account: its order, and a list deleted on TMDB leaves it.
+        if (r.accountLists != null && choices.follow(listIds(r.accountLists))) saveChoices();
+        applyImported(r.shown, used);
         next();
     }
 
-    private void finishPublic(Map<ListId, List<String>> read, AccountSync.Settings used, long at) {
+    private void finishPublic(Map<String, ImportedLists.Entry> read, AccountSync.Settings used, long at) {
         running = false;
         if (!read.isEmpty()) lastFull = at;
         applyImported(read, used);
@@ -276,14 +278,13 @@ final class Accounts implements Household.Recorder {
         return lastFull;
     }
 
-    /** Worker: Household and Friends set by number, read with the app's token. A list that fails keeps its copy. */
-    private Map<ListId, List<String>> readPublic(AccountSync.Settings settings) {
-        Map<ListId, List<String>> out = new EnumMap<>(ListId.class);
-        for (ListId list : IMPORTED_LISTS) {
-            ListRef ref = imported(settings, list);
+    /** Worker: the shown lists set by number, read with the app's token. A list that fails keeps its copy. */
+    private Map<String, ImportedLists.Entry> readPublic(AccountSync.Settings settings) {
+        Map<String, ImportedLists.Entry> out = new java.util.LinkedHashMap<>();
+        for (ListRef ref : settings.shown) {
             if (ref.id <= 0) continue;
             try {
-                out.put(list, AccountSync.readPublicList(http, ref.id));
+                out.put(ref.toString(), AccountSync.readPublicList(http, ref));
             } catch (TmdbAccountParse.Failure e) {
                 // Private, gone or offline: the last copy stays.
             }
@@ -291,32 +292,44 @@ final class Accounts implements Household.Recorder {
         return out;
     }
 
-    // ---- Household and Friends -----------------------------------------------------------------------------------
+    // ---- The lists shown as chips --------------------------------------------------------------------------------
 
-    private static final ListId[] IMPORTED_LISTS = {ListId.HOUSEHOLD, ListId.FRIENDS};
-
-    /** The lists Household and Friends read now: config.xml's override, else the TV's choice (ListChoices). */
-    ListRef ref(ListId list) {
-        return choices.ref(list, config.imported(list));
+    /** The lists that show now, in chip order: config.xml's when it sets any, else the TV's choice while signed in. */
+    List<ListRef> shownRefs() {
+        return choices.refs(config.shown, signedIn());
     }
 
-    /** Whether config.xml sets the list, so a choice on the TV doesn't count for it. */
-    boolean overridden(ListId list) {
-        return !config.imported(list).isNone();
+    /** Whether config.xml sets the shown lists, so a choice on the TV doesn't change them. */
+    boolean overridden() {
+        return config.overridesShown();
     }
 
-    ListChoices.Role role(long listId) {
-        return choices.role(listId);
+    /** Whether the TV's choice shows the list (Choose lists' switch). */
+    boolean isShown(long listId) {
+        return choices.isShown(listId);
     }
 
-    /** A list chosen on the TV for Household or Friends, or Not used: saved, shown at once, read on the next sync. */
-    void choose(long listId, ListChoices.Role role) {
-        choices.choose(listId, role);
-        prefs.edit().putLong(CHOICE_HOUSEHOLD, choices.household()).putLong(CHOICE_FRIENDS, choices.friends()).apply();
-        loadImported();
-        // A few presses in a row pick a role; read the lists once they settle.
+    /**
+     * Shows or hides one of the account's lists (Choose lists): saved, shown at once in the account's order
+     * ({@code accountLists}), and read on the next sync.
+     */
+    void setShown(long listId, boolean show, List<TmdbAccountParse.ListInfo> accountLists) {
+        if (!choices.setShown(listId, show, listIds(accountLists))) return;
+        saveChoices();
+        // A few presses in a row pick the lists; read them once they settle.
         main.removeCallbacks(fullSoon);
         main.postDelayed(fullSoon, SyncPlan.DEBOUNCE);
+    }
+
+    private void saveChoices() {
+        prefs.edit().putString(CHOICE_SHOWN, choices.save()).apply();
+        loadImported();
+    }
+
+    private static List<Long> listIds(List<TmdbAccountParse.ListInfo> lists) {
+        List<Long> out = new ArrayList<>();
+        if (lists != null) for (TmdbAccountParse.ListInfo l : lists) out.add(l.id);
+        return out;
     }
 
     /** The account's own lists, for Choose lists; {@code failed} when TMDB can't be reached. Main thread. */
@@ -344,57 +357,39 @@ final class Accounts implements Household.Recorder {
     }
 
     private AccountSync.Settings settings() {
-        return new AccountSync.Settings(config.seen, ref(ListId.HOUSEHOLD), ref(ListId.FRIENDS), config.createSeen);
-    }
-
-    private static ListRef imported(AccountSync.Settings s, ListId list) {
-        return list == ListId.HOUSEHOLD ? s.household : s.friends;
+        return new AccountSync.Settings(config.seen, shownRefs(), config.createSeen);
     }
 
     /**
-     * Household and Friends as the TV shows them: a list that is set starts from the copy read last for that same
-     * list (or empty); one that isn't stays the mock list until this TV has an account, then it is empty.
+     * The lists after My list as the TV shows them: each shown list from the copy read last for that same setting (or
+     * empty, until it is read); the mock Household and Friends while this TV never had an account and shows no list.
      */
     private void loadImported() {
-        JSONObject saved = savedImported();
-        for (ListId list : IMPORTED_LISTS) {
-            ListRef ref = ref(list);
-            if (!available() || ref.isNone()) {
-                household.setImported(list, available() && hasAccount ? new ArrayList<String>() : null);
-                continue;
-            }
-            List<String> ids = new ArrayList<>();
-            JSONObject e = saved.optJSONObject(list.name());
-            JSONArray a = e != null && ref.toString().equals(e.optString("ref")) ? e.optJSONArray("ids") : null;
-            if (a != null) for (int i = 0; i < a.length(); i++) ids.add(a.optString(i));
-            household.setImported(list, ids);
-        }
-    }
-
-    /** What a sync read, unless the list was changed meanwhile ({@code used} is what the sync was asked to read). */
-    private void applyImported(Map<ListId, List<String>> read, AccountSync.Settings used) {
-        if (read.isEmpty()) return;
-        JSONObject saved = savedImported();
-        try {
-            for (Map.Entry<ListId, List<String>> e : read.entrySet()) {
-                ListRef ref = ref(e.getKey());
-                if (!ref.toString().equals(imported(used, e.getKey()).toString())) continue;
-                household.setImported(e.getKey(), e.getValue());
-                saved.put(e.getKey().name(), new JSONObject().put("ref", ref.toString())
-                        .put("ids", new JSONArray(e.getValue())));
-            }
-        } catch (JSONException e) {
+        List<ListRef> refs = shownRefs();
+        if (ListChoices.mock(available(), hasAccount, refs)) {
+            household.setShownLists(null);
             return;
         }
-        prefs.edit().putString(IMPORTED, saved.toString()).apply();
+        household.setShownLists(ImportedLists.restore(refs, prefs.getString(IMPORTED, null), unnamed));
     }
 
-    private JSONObject savedImported() {
-        try {
-            return new JSONObject(prefs.getString(IMPORTED, "{}"));
-        } catch (JSONException e) {
-            return new JSONObject();
+    /**
+     * What a sync read, for the lists it was asked to read that still show ({@code used} is what it was asked); the
+     * copies kept for offline are the shown lists' only.
+     */
+    private void applyImported(Map<String, ImportedLists.Entry> read, AccountSync.Settings used) {
+        if (read.isEmpty()) return;
+        List<String> asked = new ArrayList<>();
+        for (ListRef r : used.shown) asked.add(r.toString());
+        List<ImportedLists.Entry> out = new ArrayList<>();
+        for (ImportedLists.Entry e : ImportedLists.restore(shownRefs(), prefs.getString(IMPORTED, null), unnamed)) {
+            ImportedLists.Entry fresh = asked.contains(e.ref.toString()) ? read.get(e.ref.toString()) : null;
+            out.add(fresh != null ? fresh : e);
         }
+        prefs.edit().putString(IMPORTED, ImportedLists.save(out)).apply();
+        loadImported();
+        // The Account pane names the shown lists.
+        changed();
     }
     // ---- Signing in and out --------------------------------------------------------------------------------------
 
@@ -459,7 +454,7 @@ final class Accounts implements Household.Recorder {
             session = s;
             hasAccount = true;
             lastFull = 0;
-            // Household and Friends not chosen yet leave the mock lists now that the TV has an account.
+            // The mock lists go now that the TV has an account; the lists chosen to show come back.
             loadImported();
             // A new account's lists replace the TV's (SeedPolicy); the same account carries on.
             request(SyncPlan.Run.FULL);
@@ -491,6 +486,8 @@ final class Accounts implements Household.Recorder {
         store.clear();
         main.removeCallbacks(pushSoon);
         main.removeCallbacks(fullSoon);
+        // The lists chosen on the TV are the account's: hidden until it signs in again (config.xml's stay).
+        loadImported();
         changed();
     }
 

@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * What the TV knows about the account's lists between syncs (BACKLOG.md, TMDB sign-in and watchlist sync), kept as
  * JSON beside the household's state: whose account it is, each list as it was last read from TMDB (the base a merge
- * compares with) and when, the TMDB list numbers found for Seen, Household and Friends, and the queue of changes made
+ * compares with) and when, the TMDB list number found for Seen, and the queue of changes made
  * on the TV that TMDB has not taken yet. A change waits there while offline and is retried with a growing delay
  * ({@link #retryDelay}). Pure Java, unit-tested (SyncLedgerTest).
  */
@@ -175,7 +175,7 @@ final class SyncLedger {
         pulledAt.put(list, at);
     }
 
-    /** The TMDB list number found for Seen, Household or Friends; 0 when not found yet. */
+    /** The TMDB list number found for Seen; 0 when not found yet. */
     long listId(SyncList list) {
         Long id = listIds.get(list);
         return id == null ? 0 : id;
@@ -234,9 +234,9 @@ final class SyncLedger {
             if (p != null) {
                 for (int i = 0; i < p.length(); i++) {
                     JSONObject e = p.getJSONObject(i);
-                    SyncList list = SyncList.valueOf(e.getString("list"));
+                    SyncList list = listNamed(e.getString("list"));
                     String id = e.getString("id");
-                    if (!list.writable || TmdbAccountApi.mediaType(id) == null) continue;
+                    if (list == null || !list.writable || TmdbAccountApi.mediaType(id) == null) continue;
                     l.pending.add(new Op(list, id, e.getBoolean("present"), e.getLong("at"), e.optInt("attempts", 0),
                             e.optLong("notBefore", 0)));
                 }
@@ -245,6 +245,12 @@ final class SyncLedger {
         } catch (JSONException | IllegalArgumentException e) {
             return new SyncLedger();
         }
+    }
+
+    /** The list a saved name stands for; null for one no longer kept (the read-only Household and Friends). */
+    private static SyncList listNamed(String name) {
+        for (SyncList l : SyncList.values()) if (l.name().equals(name)) return l;
+        return null;
     }
 
     private static List<String> strings(JSONArray a) {

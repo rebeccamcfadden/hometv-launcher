@@ -16,9 +16,11 @@ import java.util.Map;
 
 /**
  * Movies and TV Shows, one class for both (design_preview/src/screens/library.ts and the library styles in
- * screens.css; README, Movies and TV Shows (V1)). V1 is lists-only: the household's imported watchlists and the TV's
- * own My list ({@link LibraryLists}), filtered by the Filters drawer ({@link FiltersDrawer}, {@link LibraryFilters})
- * and shown in a four-column grid of library cards that scrolls under the nav.
+ * screens.css; README, Movies and TV Shows (V1)). V1 is lists-only: the TV's own My list and the TMDB lists shown as
+ * chips, by their names (the mock Household and Friends before the TV has had an account; {@link LibraryLists}),
+ * filtered by the Filters drawer ({@link FiltersDrawer}, {@link LibraryFilters}) and shown in a four-column grid of
+ * library cards that scrolls under the nav. The chips are one row that scrolls sideways with focus when they don't
+ * fit; a chosen list that is hidden or gone since falls back to All lists.
  *
  * <p>The page is made once per tab and kept, so it keeps its list, filters, scroll and focus when you switch tabs.
  * It reads the household again each time it shows (a title added to My list in the title preview appears here), and
@@ -47,10 +49,13 @@ final class LibraryPage extends Screen {
     private final Shell shell;
     private final Kind kind;
     final LibraryFilters filters;
-    private LibraryLists.Choice list = LibraryLists.Choice.ALL;
+    /** The chosen chip ({@link ShownList#key}), and its list as the last render found it. */
+    private String listKey = ShownList.ALL.key;
+    private ShownList list = ShownList.ALL;
 
     private final ViewGroup box;
     private final View pick;
+    private final TextView context;
     private final TextView scope;
     private final TextView filterSummary;
     private final View filtersButton;
@@ -84,6 +89,8 @@ final class LibraryPage extends Screen {
     /** The amber pill that takes the scope line's place offline. */
     private final View offlinePill;
     private final TextView guideRight;
+    /** How far inside the chip row's edges a focused chip stops when the row scrolls (library.ts data-scroll-pad). */
+    private static final float CHIP_PAD = 48;
 
     static LibraryPage create(Context ctx, NavBar.Host host, Tab tab) {
         return new LibraryPage(ctx, host, tab, Pages.page(ctx, host, tab));
@@ -119,8 +126,7 @@ final class LibraryPage extends Screen {
         TextView title = Ui.line(ctx, Ui.T_H1, Ui.TEXT_1, Ui.display(Ui.REGULAR));
         title.setText(label);
         heading.addView(title);
-        TextView context = Ui.line(ctx, 22, Ui.TEXT_2, Ui.REGULAR);
-        context.setText(R.string.library_context);
+        context = Ui.line(ctx, 22, Ui.TEXT_2, Ui.REGULAR);
         heading.addView(context, below(8));
         intro.addView(heading, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         pick = Kit.button(ctx, ctx.getString(R.string.library_pick), R.drawable.ic_ui_shuffle, Kit.PRIMARY, false,
@@ -133,7 +139,6 @@ final class LibraryPage extends Screen {
         scopeRow.setOrientation(LinearLayout.HORIZONTAL);
         scopeRow.setGravity(Gravity.CENTER_VERTICAL);
         scope = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
-        scope.setText(scopeText());
         // Offline, the amber pill takes the scope line's place (06-states A).
         FrameLayout scopeSlot = new FrameLayout(ctx);
         scopeSlot.addView(scope, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -152,11 +157,11 @@ final class LibraryPage extends Screen {
         scopeRow.addView(filtersButton, flp);
         col.addView(scopeRow, below(18));
 
-        // .chips: the list chips with their counts.
+        // .chips: the list chips with their counts, one row that scrolls sideways with focus when they don't fit.
         chips = Kit.unclip(new LinearLayout(ctx));
         chips.setOrientation(LinearLayout.HORIZONTAL);
         chips.setGravity(Gravity.CENTER_VERTICAL);
-        col.addView(chips, below(16));
+        col.addView(Kit.chipStrip(ctx, chips, CHIP_PAD), Kit.chipStripParams(16));
 
         // .lib-list-head: the chosen list's name and how many of its titles show.
         LinearLayout head = new LinearLayout(ctx);
@@ -303,10 +308,9 @@ final class LibraryPage extends Screen {
         shell.push(new FiltersDrawer(ctx, shell, filters, label, this::render));
     }
 
-    /** "3 imported watchlists · All 7 services": the lists are the mock's three, the services this TV's. */
-    private String scopeText() {
+    /** "3 imported watchlists · All 7 services": My list and the shown lists, and this TV's services. */
+    private String scopeText(int lists) {
         Resources r = ctx.getResources();
-        int lists = ListId.values().length;
         int services = data.services.subscribed().size();
         String s = services == 0 ? r.getString(R.string.library_no_services)
                 : r.getQuantityString(R.plurals.library_services, services, services);
@@ -352,17 +356,23 @@ final class LibraryPage extends Screen {
         boolean empty = st == CatalogState.Lists.OFFLINE_EMPTY;
         boolean offline = empty || st == CatalogState.Lists.OFFLINE_SAVED;
 
-        LibraryLists.Choice[] choices = LibraryLists.Choice.values();
-        int[] counts = new int[choices.length];
-        StringBuilder chipKey = new StringBuilder(list.name()).append(empty ? ",none" : "");
-        for (int i = 0; i < choices.length; i++) {
-            counts[i] = LibraryLists.under(pool, choices[i], data.household).size();
-            chipKey.append(',').append(counts[i]);
+        // A list hidden or gone since it was chosen (Choose lists, a sign-out) falls back to All lists.
+        List<ShownList> choices = LibraryLists.choices(data.household);
+        list = LibraryLists.choice(listKey, choices);
+        listKey = list.key;
+        int[] counts = new int[choices.size()];
+        StringBuilder chipKey = new StringBuilder(listKey).append(empty ? ",none" : "");
+        for (int i = 0; i < choices.size(); i++) {
+            counts[i] = LibraryLists.under(pool, choices.get(i), data.household).size();
+            chipKey.append(',').append(choices.get(i).key).append('=').append(choices.get(i).name).append(':')
+                    .append(counts[i]);
         }
         if (!chipKey.toString().equals(chipsBuilt)) {
             chipsBuilt = chipKey.toString();
             buildChips(choices, empty ? null : counts);
         }
+        context.setText(ctx.getString(R.string.library_context, listNames(data.household.lists())));
+        scope.setText(scopeText(data.household.lists().size()));
 
         // Offline, the scope line becomes the amber pill: with the time of the saved copy, or just "Offline".
         scope.setVisibility(offline ? View.GONE : View.VISIBLE);
@@ -407,7 +417,7 @@ final class LibraryPage extends Screen {
         String gridKey;
         if (st == CatalogState.Lists.LOADING) gridKey = "loading";
         else if (empty) gridKey = "offline-empty";
-        else if (chosen.isEmpty()) gridKey = "empty-list:" + list;
+        else if (chosen.isEmpty()) gridKey = "empty-list:" + list.key + ":" + list.name;
         else if (shown.isEmpty()) gridKey = "empty-filters:" + chosen.size() + ":" + summary;
         else gridKey = "titles";
         boolean titles = gridKey.equals("titles");
@@ -429,22 +439,24 @@ final class LibraryPage extends Screen {
         if (shell.top() == this) render();
     }
 
-    private static String chipKey(LibraryLists.Choice c) {
-        return "list-" + c.name().toLowerCase(java.util.Locale.ROOT);
+    /** "list-all", "list-my", "list-tmdb-8221116", the mock "list-household": stable per list across rebuilds. */
+    private static String chipKey(ShownList c) {
+        return "list-" + c.key;
     }
 
     /** buildChips' counts are null offline with nothing saved: the chips then show their names alone. */
-    private void buildChips(LibraryLists.Choice[] choices, int[] counts) {
+    private void buildChips(List<ShownList> choices, int[] counts) {
         chips.removeAllViews();
         TextView lead = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
         lead.setText(R.string.library_lists_label);
         LinearLayout.LayoutParams llp = wrap();
         llp.rightMargin = Ui.px(6);
         chips.addView(lead, llp);
-        for (int i = 0; i < choices.length; i++) {
-            LibraryLists.Choice c = choices[i];
+        for (int i = 0; i < choices.size(); i++) {
+            ShownList c = choices.get(i);
             String label = counts == null ? listName(c) : ctx.getString(R.string.library_chip, listName(c), counts[i]);
-            View chip = Kit.chip(ctx, label, c == list, false, GROUP_LISTS, chipKey(c), c == list, v -> choose(c));
+            boolean chosen = c.key.equals(listKey);
+            View chip = Kit.chip(ctx, label, chosen, false, GROUP_LISTS, chipKey(c), chosen, v -> choose(c));
             LinearLayout.LayoutParams lp = wrap();
             lp.leftMargin = Ui.px(12);
             chips.addView(chip, lp);
@@ -452,14 +464,24 @@ final class LibraryPage extends Screen {
         rememberRebuilt();
     }
 
-    private void choose(LibraryLists.Choice c) {
-        if (c == list) return;
-        list = c;
+    private void choose(ShownList c) {
+        if (c.key.equals(listKey)) return;
+        listKey = c.key;
         render();
     }
 
-    private String listName(LibraryLists.Choice c) {
-        return c.list == null ? ctx.getString(R.string.library_all_lists) : ListNames.of(c.list);
+    private String listName(ShownList c) {
+        return c.isAll() ? ctx.getString(R.string.library_all_lists) : c.name;
+    }
+
+    /** "My list, Family picks & Friends' tips", or past four "My list, Family picks & 4 more" (lists.ts, names). */
+    private String listNames(List<ShownList> choices) {
+        List<String> names = new ArrayList<>();
+        for (ShownList c : choices) if (!c.isAll()) names.add(c.name);
+        Resources r = ctx.getResources();
+        int more = Math.max(1, names.size() - 2);
+        return LibraryLists.names(names, r.getString(R.string.library_lists_comma),
+                r.getString(R.string.library_lists_and), r.getQuantityString(R.plurals.library_lists_more, more));
     }
 
     /** .lib-grid: four columns of 417 px, 20 apart, rows 50 apart. */
@@ -525,7 +547,7 @@ final class LibraryPage extends Screen {
 
     /** .empty: a list with nothing on it. */
     private void emptyList() {
-        LinearLayout box = emptyBox(list == LibraryLists.Choice.ALL ? ctx.getString(R.string.library_empty_lists)
+        LinearLayout box = emptyBox(list.isAll() ? ctx.getString(R.string.library_empty_lists)
                 : ctx.getString(R.string.library_empty_list, listName(list)));
         TextView note = Ui.text(ctx, 22, Ui.TEXT_2, Ui.REGULAR);
         note.setText(R.string.library_empty_note);

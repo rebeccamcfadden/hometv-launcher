@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * What stays mock on the real catalogue's titles (BACKLOG.md, Household and Friends lists): the mock catalogue's
+ * What stays mock on the real catalogue's titles (BACKLOG.md, Shown TMDB lists): the mock catalogue's
  * imported watchlists and next episode, carried over by TMDB id onto the titles {@link MockIds} maps. Any other title
  * is on no imported list. Offers are real since V2 Phase 2: TMDB's availability, with prices ({@link TmdbParse}).
  * Pure Java, unit-tested (MockOverlayTest).

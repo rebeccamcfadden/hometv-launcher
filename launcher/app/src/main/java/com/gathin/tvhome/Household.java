@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,8 +16,9 @@ import java.util.Set;
  * tells the listeners. A fresh install starts with empty lists (BACKLOG.md, Household seed).
  *
  * <p>V2 Phase 3: a change to My list, Favorites or Seen is also told to the {@link Recorder} ({@link Accounts}, which
- * queues it for the TMDB account), and {@link #applySynced} takes what a sync merged. Household and Friends come from
- * TMDB lists when config.xml names them ({@link ImportedLists}), else from the catalogue's mock lists.
+ * queues it for the TMDB account), and {@link #applySynced} takes what a sync merged. The lists after My list are the
+ * TMDB lists shown as chips ({@link ImportedLists}), or the catalogue's mock Household and Friends before the TV has
+ * had an account.
  */
 final class Household implements ListMembership {
     static final String PREFS = "household";
@@ -62,8 +62,13 @@ final class Household implements ListMembership {
     }
 
     @Override
-    public boolean isOn(Title t, ListId list) {
-        return list == ListId.MY ? inMyList(t.id) : imported.isOn(t, list);
+    public List<ShownList> shownLists() {
+        return imported.shown();
+    }
+
+    @Override
+    public boolean isOn(Title t, ShownList list) {
+        return list.isMy() ? inMyList(t.id) : imported.isOn(t, list);
     }
 
     boolean isSeen(String id) {
@@ -122,7 +127,14 @@ final class Household implements ListMembership {
         return state.viewed();
     }
 
-    /** Every title id the household keeps, the imported lists' too, for the catalogue to load. */
+    /** Every title on My list or on a shown TMDB list: what is kept priced in the background. */
+    List<String> listedIds() {
+        Set<String> all = new LinkedHashSet<>(state.myListIds());
+        all.addAll(imported.allIds());
+        return new ArrayList<>(all);
+    }
+
+    /** Every title id the household keeps, the shown lists' too, for the catalogue to load. */
     List<String> titleIds() {
         Set<String> all = new LinkedHashSet<>(state.titleIds());
         all.addAll(imported.allIds());
@@ -158,16 +170,9 @@ final class Household implements ListMembership {
         return true;
     }
 
-    /** Household or Friends from a TMDB list: the ids last read, or null to go back to the mock list. */
-    void setImported(ListId list, Collection<String> ids) {
-        if (ids == null) {
-            if (!imported.fromTmdb(list)) return;
-            imported.clear(list);
-        } else {
-            if (imported.fromTmdb(list) && imported.ids(list).equals(new ArrayList<>(new LinkedHashSet<>(ids)))) return;
-            imported.set(list, ids);
-        }
-        notifyListeners();
+    /** The lists after My list: the TMDB lists shown, in chip order, each as last read; or null for the mock lists. */
+    void setShownLists(List<ImportedLists.Entry> lists) {
+        if (lists == null ? imported.setMock() : imported.set(lists)) notifyListeners();
     }
 
     /** Back to a fresh household: empty lists. */

@@ -4,51 +4,47 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * One sync of the household's lists with the TMDB account (BACKLOG.md, TMDB sign-in and watchlist sync). Blocking:
- * run it off the main thread, never while Home waits on it. In order: find the TMDB lists behind Seen, Household and
- * Friends (and make a private Seen list if the account has none and that is allowed); read every list and merge the
- * writable ones with the TV's copy ({@link ListMerge}); then send the queued changes that are due. A list that can't be
- * read keeps the TV's copy; a change that can't be sent stays queued with a longer delay ({@link SyncLedger}); a
- * session TMDB no longer accepts stops the sync and asks for a new sign-in. Pure Java over {@link AccountHttp},
- * unit-tested against a fake TMDB (AccountSyncTest).
+ * run it off the main thread, never while Home waits on it. In order: find the TMDB list behind Seen (and make a
+ * private Seen list if the account has none and that is allowed); read every list and merge the writable ones with the
+ * TV's copy ({@link ListMerge}); read the lists shown as chips, each with its TMDB name; then send the queued changes
+ * that are due. A list that can't be read keeps the TV's copy; a change that can't be sent stays queued with a longer
+ * delay ({@link SyncLedger}); a session TMDB no longer accepts stops the sync and asks for a new sign-in. Pure Java
+ * over {@link AccountHttp}, unit-tested against a fake TMDB (AccountSyncTest).
  */
 final class AccountSync {
-    /** Which TMDB lists are Seen, Household and Friends (config settings, see {@link ListRef}). */
+    /** Which TMDB lists are Seen and the lists shown as chips (config.xml and Choose lists; see {@link ListRef}). */
     static final class Settings {
         final ListRef seen;
-        final ListRef household;
-        final ListRef friends;
+        /** The lists shown as chips, in chip order; the TV only reads them. */
+        final List<ListRef> shown;
         /** Whether to make a private list named as {@link #seen} says when the account has none. */
         final boolean createSeen;
 
-        Settings(ListRef seen, ListRef household, ListRef friends, boolean createSeen) {
+        Settings(ListRef seen, List<ListRef> shown, boolean createSeen) {
             this.seen = seen;
-            this.household = household;
-            this.friends = friends;
+            this.shown = shown == null ? Collections.<ListRef>emptyList()
+                    : Collections.unmodifiableList(new ArrayList<>(shown));
             this.createSeen = createSeen;
         }
 
         ListRef ref(SyncList list) {
-            switch (list) {
-                case SEEN:
-                    return seen;
-                case HOUSEHOLD:
-                    return household;
-                case FRIENDS:
-                    return friends;
-                default:
-                    return ListRef.NONE;
-            }
+            return list == SyncList.SEEN ? seen : ListRef.NONE;
         }
     }
 
     static final class Result {
         /** The lists read from TMDB this time, merged with the TV's for the writable ones. Missing: not read. */
         final Map<SyncList, List<String>> lists;
+        /** The shown lists read this time, by their setting ({@link ListRef#toString}); missing: not read. */
+        final Map<String, ImportedLists.Entry> shown;
+        /** The account's own lists in TMDB's order when they were read this time, else null. */
+        final List<TmdbAccountParse.ListInfo> accountLists;
         /** TMDB no longer accepts the session: sign in again. Queued changes are kept for the same account. */
         final boolean signedOut;
         /** Changes TMDB took, and changes still queued. */
@@ -57,8 +53,12 @@ final class AccountSync {
         /** Short notes on what failed, for a log line: never a token or session id. */
         final List<String> problems;
 
-        Result(Map<SyncList, List<String>> lists, boolean signedOut, int sent, int queued, List<String> problems) {
+        Result(Map<SyncList, List<String>> lists, Map<String, ImportedLists.Entry> shown,
+               List<TmdbAccountParse.ListInfo> accountLists, boolean signedOut, int sent, int queued,
+               List<String> problems) {
             this.lists = lists;
+            this.shown = shown;
+            this.accountLists = accountLists;
             this.signedOut = signedOut;
             this.sent = sent;
             this.queued = queued;
@@ -95,7 +95,10 @@ final class AccountSync {
      */
     Result run(Map<SyncList, List<String>> local, long now, boolean pull) {
         problems.clear();
+        mine = null;
+        mineRead = false;
         Map<SyncList, List<String>> lists = new EnumMap<>(SyncList.class);
+        Map<String, ImportedLists.Entry> shown = new LinkedHashMap<>();
         int sent = 0;
         boolean signedOut = false;
         try {
@@ -104,24 +107,22 @@ final class AccountSync {
                 for (SyncList list : SyncList.values()) {
                     List<String> remote = read(list);
                     if (remote == null) continue;
-                    if (list.writable) {
-                        List<String> mine = local.get(list);
-                        ListMerge.Result m = ListMerge.merge(mine == null ? Collections.<String>emptyList() : mine,
-                                ledger.base(list), ledger.pulledAt(list), remote, ledger.pending(list));
-                        ledger.keepOnly(list, m.keep);
-                        ledger.setBase(list, remote, now);
-                        lists.put(list, m.local);
-                    } else {
-                        lists.put(list, remote);
-                    }
+                    List<String> mineNow = local.get(list);
+                    ListMerge.Result m = ListMerge.merge(mineNow == null ? Collections.<String>emptyList() : mineNow,
+                            ledger.base(list), ledger.pulledAt(list), remote, ledger.pending(list));
+                    ledger.keepOnly(list, m.keep);
+                    ledger.setBase(list, remote, now);
+                    lists.put(list, m.local);
                 }
+                readShown(shown);
             }
             sent = push(now);
         } catch (SignedOut e) {
             signedOut = true;
             problems.add("TMDB no longer accepts the session");
         }
-        return new Result(Collections.unmodifiableMap(lists), signedOut, sent, ledger.pending().size(),
+        return new Result(Collections.unmodifiableMap(lists), Collections.unmodifiableMap(shown),
+                mine == null ? null : Collections.unmodifiableList(mine), signedOut, sent, ledger.pending().size(),
                 Collections.unmodifiableList(new ArrayList<>(problems)));
     }
 
@@ -132,8 +133,19 @@ final class AccountSync {
 
     // ---- Finding the TMDB lists ----------------------------------------------------------------------------------
 
+    /** The account's lists, read at most once a run; null until read, or when they couldn't be. */
+    private List<TmdbAccountParse.ListInfo> mine;
+    private boolean mineRead;
+
+    private List<TmdbAccountParse.ListInfo> mine() throws SignedOut {
+        if (!mineRead) {
+            mineRead = true;
+            mine = accountLists();
+        }
+        return mine;
+    }
+
     private void findLists(boolean pull) throws SignedOut {
-        List<TmdbAccountParse.ListInfo> mine = null;
         for (SyncList list : SyncList.values()) {
             if (!list.isCustomList()) continue;
             ListRef ref = settings.ref(list);
@@ -147,8 +159,7 @@ final class AccountSync {
             }
             // A name: looked up again on every full sync, so a renamed or replaced list is followed.
             if (ledger.listId(list) > 0 && !pull) continue;
-            if (mine == null) mine = accountLists();
-            if (mine == null) return;
+            if (mine() == null) return;
             long id = ref.resolve(mine);
             if (id == 0 && list == SyncList.SEEN && settings.createSeen) id = createList(ref.name);
             if (id == 0 && ledger.listId(list) > 0) problems.add("no list named " + ref + " any more");
@@ -219,23 +230,63 @@ final class AccountSync {
     }
 
     /**
-     * A whole TMDB list without an account, with the app's token: Household or Friends set by number while the TV is
+     * Each list shown as a chip, whole, with its name: the account's own name for it when it is one of the account's
+     * lists, else the name the list's page gives (a friend's public list). A list set by name is found among the
+     * account's lists on every full sync, so a renamed or replaced one is followed. A list that can't be read now is
+     * left out, and keeps the TV's copy.
+     */
+    private void readShown(Map<String, ImportedLists.Entry> out) throws SignedOut {
+        if (settings.shown.isEmpty()) return;
+        List<TmdbAccountParse.ListInfo> own = mine();
+        for (ListRef ref : settings.shown) {
+            long id = ref.resolve(own);
+            if (id == 0) {
+                if (own != null) problems.add("no list named " + ref);
+                continue;
+            }
+            List<String> ids = new ArrayList<>();
+            String name = "";
+            try {
+                for (int page = 1; page <= TmdbAccountApi.MAX_PAGES; page++) {
+                    TmdbAccountParse.Page p = TmdbAccountParse.page(send(TmdbAccountApi.listPage(id, page)), null);
+                    if (page == 1) name = p.name;
+                    addAll(ids, p.ids);
+                    if (page >= p.totalPages) break;
+                }
+            } catch (TmdbAccountParse.Failure f) {
+                note(f, ref.toString());
+                continue;
+            }
+            String ownName = nameOf(own, id);
+            out.put(ref.toString(), new ImportedLists.Entry(ref, id, ownName.isEmpty() ? name : ownName, ids));
+        }
+    }
+
+    private static String nameOf(List<TmdbAccountParse.ListInfo> lists, long id) {
+        if (lists != null) for (TmdbAccountParse.ListInfo l : lists) if (l.id == id) return l.name;
+        return "";
+    }
+
+    /**
+     * A whole TMDB list without an account, with the app's token, and its name: a list shown by number while the TV is
      * not signed in. Only a public list answers. Blocking.
      */
-    static List<String> readPublicList(AccountHttp http, long listId) throws TmdbAccountParse.Failure {
+    static ImportedLists.Entry readPublicList(AccountHttp http, ListRef ref) throws TmdbAccountParse.Failure {
         List<String> out = new ArrayList<>();
+        String name = "";
         for (int page = 1; page <= TmdbAccountApi.MAX_PAGES; page++) {
             AccountHttp.Reply r;
             try {
-                r = http.send(TmdbAccountApi.listPage(listId, page, AccountHttp.Auth.APP));
+                r = http.send(TmdbAccountApi.listPage(ref.id, page, AccountHttp.Auth.APP));
             } catch (IOException e) {
                 throw TmdbAccountParse.Failure.network(e.getClass().getSimpleName());
             }
             TmdbAccountParse.Page p = TmdbAccountParse.page(r, null);
+            if (page == 1) name = p.name;
             addAll(out, p.ids);
             if (page >= p.totalPages) break;
         }
-        return out;
+        return new ImportedLists.Entry(ref, ref.id, name, out);
     }
 
     // ---- Sending -------------------------------------------------------------------------------------------------

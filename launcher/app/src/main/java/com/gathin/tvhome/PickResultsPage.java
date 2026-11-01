@@ -234,7 +234,7 @@ final class PickResultsPage extends Screen {
         tile.addView(row, PickSetupPage.below(10));
 
         tile.addView(small(TitleText.meta(t), Ui.TEXT_2), PickSetupPage.below(4));
-        tile.addView(small(TitleText.provenance(t), Ui.TEXT_3), PickSetupPage.below(2));
+        tile.addView(small(TitleText.provenance(t, household), Ui.TEXT_3), PickSetupPage.below(2));
         View rule = new View(ctx);
         rule.setBackgroundColor(Ui.LINE);
         LinearLayout.LayoutParams rulelp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,

@@ -23,7 +23,7 @@ import java.util.Map;
 public class AccountSyncTest {
     private static final TmdbSession SESSION = new TmdbSession("at", "obj", "sid", 548, "lead");
     private static final AccountSync.Settings SETTINGS = new AccountSync.Settings(ListRef.parse("Seen"),
-            ListRef.parse("Household"), ListRef.parse("9001"), true);
+            Arrays.asList(ListRef.parse("Household"), ListRef.parse("9001")), true);
 
     private FakeTmdb tmdb;
     private SyncLedger ledger;
@@ -45,6 +45,17 @@ public class AccountSyncTest {
         return new AccountSync(tmdb, SESSION, ledger, SETTINGS).run(local, now, pull);
     }
 
+    /** The shown list a sync read for that setting, or null. */
+    private static ImportedLists.Entry shown(AccountSync.Result r, String setting) {
+        return r.shown.get(ListRef.parse(setting).toString());
+    }
+
+    private static AccountSync.Settings showing(String... settings) {
+        List<ListRef> refs = new ArrayList<>();
+        for (String s : settings) refs.add(ListRef.parse(s));
+        return new AccountSync.Settings(ListRef.parse("Seen"), refs, true);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void ledgerMustBeTheAccounts() {
         ledger.reset("someone else");
@@ -57,15 +68,17 @@ public class AccountSyncTest {
         assertFalse(r.signedOut);
         assertEquals(Arrays.asList("movie:1", "tv:2"), r.lists.get(SyncList.MY_LIST));
         assertEquals(Collections.singletonList("movie:3"), r.lists.get(SyncList.FAVORITES));
-        assertEquals(Arrays.asList("movie:10", "tv:11"), r.lists.get(SyncList.HOUSEHOLD));
-        assertEquals(Collections.singletonList("tv:12"), r.lists.get(SyncList.FRIENDS));
+        assertEquals(Arrays.asList("movie:10", "tv:11"), shown(r, "Household").ids);
+        assertEquals(50, shown(r, "Household").id);
+        assertEquals("Household", shown(r, "Household").name);
+        assertEquals(Collections.singletonList("tv:12"), shown(r, "9001").ids);
+        assertEquals("by its TMDB name", "Friends of ours", shown(r, "9001").name);
+        assertEquals(2, r.accountLists.size());
         assertEquals("Seen was made, private", Collections.<String>emptyList(), r.lists.get(SyncList.SEEN));
         long seen = ledger.listId(SyncList.SEEN);
         assertTrue(seen > 0);
         assertFalse(tmdb.lists.get(seen).isPublic);
         assertEquals("Seen", tmdb.lists.get(seen).name);
-        assertEquals(50, ledger.listId(SyncList.HOUSEHOLD));
-        assertEquals(9001, ledger.listId(SyncList.FRIENDS));
         assertEquals(Arrays.asList("movie:1", "tv:2"), ledger.base(SyncList.MY_LIST));
         assertEquals(1000, ledger.pulledAt(SyncList.MY_LIST));
         assertTrue(r.problems.isEmpty());
@@ -177,8 +190,9 @@ public class AccountSyncTest {
         tmdb.lists.get(50L).name = "Old household";
         tmdb.lists.put(60L, new FakeList("household", new ArrayList<>(Collections.singletonList("movie:61")), false));
         AccountSync.Result r = run(2000, true);
-        assertEquals(60, ledger.listId(SyncList.HOUSEHOLD));
-        assertEquals(Collections.singletonList("movie:61"), r.lists.get(SyncList.HOUSEHOLD));
+        assertEquals(60, shown(r, "Household").id);
+        assertEquals(Collections.singletonList("movie:61"), shown(r, "Household").ids);
+        assertEquals("household", shown(r, "Household").name);
     }
 
     @Test
@@ -186,17 +200,17 @@ public class AccountSyncTest {
         run(1000, true);
         tmdb.lists.remove(9001L);
         AccountSync.Result r = run(2000, true);
-        assertNull(r.lists.get(SyncList.FRIENDS));
+        assertNull(shown(r, "9001"));
         assertFalse(r.problems.isEmpty());
-        assertEquals(0, ledger.listId(SyncList.FRIENDS));
+        assertFalse("the account no longer has it", r.accountLists.stream().anyMatch(l -> l.id == 9001));
     }
 
     @Test
     public void seenIsNotMadeWhenNotAllowed() {
-        AccountSync.Settings s = new AccountSync.Settings(ListRef.parse("Seen"), ListRef.NONE, ListRef.NONE, false);
+        AccountSync.Settings s = new AccountSync.Settings(ListRef.parse("Seen"), null, false);
         AccountSync.Result r = new AccountSync(tmdb, SESSION, ledger, s).run(local, 1000, true);
         assertNull(r.lists.get(SyncList.SEEN));
-        assertNull(r.lists.get(SyncList.HOUSEHOLD));
+        assertTrue(r.shown.isEmpty());
         assertEquals(0, ledger.listId(SyncList.SEEN));
         ledger.record(SyncList.SEEN, "movie:1", true, 1500);
         r = new AccountSync(tmdb, SESSION, ledger, s).run(local, 2000, false);
@@ -223,17 +237,20 @@ public class AccountSyncTest {
 
     @Test
     public void publicListWithoutAnAccount() throws Exception {
-        assertEquals(Collections.singletonList("tv:12"), AccountSync.readPublicList(tmdb, 9001));
+        ImportedLists.Entry e = AccountSync.readPublicList(tmdb, ListRef.parse("9001"));
+        assertEquals(Collections.singletonList("tv:12"), e.ids);
+        assertEquals("the chip takes the list's TMDB name", "Friends of ours", e.name);
+        assertEquals(9001, e.id);
         assertTrue(tmdb.log.get(tmdb.log.size() - 1).endsWith("APP"));
         try {
-            AccountSync.readPublicList(tmdb, 50);
+            AccountSync.readPublicList(tmdb, ListRef.parse("50"));
             org.junit.Assert.fail("a private list needs the account");
         } catch (TmdbAccountParse.Failure f) {
             assertEquals(TmdbAccountParse.Problem.REJECTED, f.problem);
         }
         tmdb.offline = true;
         try {
-            AccountSync.readPublicList(tmdb, 9001);
+            AccountSync.readPublicList(tmdb, ListRef.parse("9001"));
             org.junit.Assert.fail();
         } catch (TmdbAccountParse.Failure f) {
             assertEquals(TmdbAccountParse.Problem.RETRY, f.problem);
@@ -242,12 +259,59 @@ public class AccountSyncTest {
 
     @Test
     public void seenStaysLocalWhenNotSet() {
-        AccountSync.Settings s = new AccountSync.Settings(ListRef.NONE, ListRef.NONE, ListRef.NONE, false);
+        AccountSync.Settings s = new AccountSync.Settings(ListRef.NONE, Collections.<ListRef>emptyList(), false);
         AccountSync.Result r = new AccountSync(tmdb, SESSION, ledger, s).run(local, 1000, true);
         assertFalse(r.lists.containsKey(SyncList.SEEN));
-        assertFalse(r.lists.containsKey(SyncList.HOUSEHOLD));
+        assertTrue(r.shown.isEmpty());
+        assertNull("the account's lists weren't needed", r.accountLists);
         assertEquals(Arrays.asList("movie:1", "tv:2"), r.lists.get(SyncList.MY_LIST));
         for (String call : tmdb.log) assertFalse(call, call.contains("/4/list") || call.contains("/lists"));
+    }
+
+    /** Any number of shown lists, each read whole and named, in the order they were asked for. */
+    @Test
+    public void readsEveryShownListByName() {
+        tmdb.lists.put(31L, new FakeList("Weekend movies", new ArrayList<>(Arrays.asList("movie:31", "movie:32")), false));
+        tmdb.lists.put(32L, new FakeList("Film club", new ArrayList<>(Collections.singletonList("tv:33")), true));
+        tmdb.lists.put(33L, new FakeList("Watch together", new ArrayList<String>(), false));
+        tmdb.lists.put(500L, new FakeList("A friend's picks", new ArrayList<>(Collections.singletonList("movie:500")),
+                true));
+        tmdb.others.add(500L);
+        tmdb.pageSize = 1;
+        AccountSync.Settings s = showing("Film club", "31", "500", "Household", "33",
+                "https://www.themoviedb.org/list/9001");
+        AccountSync.Result r = new AccountSync(tmdb, SESSION, ledger, s).run(local, 1000, true);
+        List<String> names = new ArrayList<>();
+        for (ImportedLists.Entry e : r.shown.values()) names.add(e.name);
+        assertEquals(Arrays.asList("Film club", "Weekend movies", "A friend's picks", "Household", "Watch together",
+                "Friends of ours"), names);
+        assertEquals("every page", Arrays.asList("movie:31", "movie:32"), shown(r, "31").ids);
+        assertEquals(32, shown(r, "Film club").id);
+        assertEquals("a list of another account is named by its page", Collections.singletonList("movie:500"),
+                shown(r, "500").ids);
+        assertTrue(shown(r, "33").ids.isEmpty());
+        assertTrue(r.problems.isEmpty());
+        int accountListReads = 0;
+        for (String call : tmdb.log) if (call.contains("/4/account/obj/lists")) accountListReads++;
+        assertEquals("the account's lists are read once a sync", 1, accountListReads);
+    }
+
+    @Test
+    public void aNameTheAccountDoesNotHaveIsNoted() {
+        AccountSync.Result r = new AccountSync(tmdb, SESSION, ledger, showing("Nowhere", "9001")).run(local, 1000, true);
+        assertNull(shown(r, "Nowhere"));
+        assertEquals("Friends of ours", shown(r, "9001").name);
+        assertFalse(r.problems.isEmpty());
+    }
+
+    @Test
+    public void sendingOnlyReadsNoList() {
+        run(1000, true);
+        int calls = tmdb.log.size();
+        AccountSync.Result r = run(2000, false);
+        assertTrue(r.shown.isEmpty());
+        assertNull(r.accountLists);
+        assertEquals(calls, tmdb.log.size());
     }
 
     // ---- A small TMDB --------------------------------------------------------------------------------------------
@@ -268,6 +332,8 @@ public class AccountSyncTest {
         final List<String> watchlist = new ArrayList<>();
         final List<String> favorites = new ArrayList<>();
         final Map<Long, FakeList> lists = new LinkedHashMap<>();
+        /** Lists of other accounts: readable by number, but not among this account's lists. */
+        final java.util.Set<Long> others = new java.util.HashSet<>();
         final List<String> log = new ArrayList<>();
         int pageSize = 20;
         long nextList = 70;
@@ -290,7 +356,7 @@ public class AccountSyncTest {
                     List<String> src = p[5].equals("watchlist") ? watchlist : favorites;
                     List<String> kind = new ArrayList<>();
                     for (String id : src) if (id.startsWith(p[4] + ":")) kind.add(id);
-                    return page(kind, Integer.parseInt(q.get("page")), false);
+                    return page(kind, Integer.parseInt(q.get("page")), false, null);
                 }
                 if (p[1].equals("4") && p[2].equals("list")) {
                     if (p.length == 3) {
@@ -305,7 +371,9 @@ public class AccountSyncTest {
                     if (call.auth == Auth.APP && !l.isPublic) {
                         return new Reply(401, "{\"success\":false,\"status_code\":39}");
                     }
-                    if (call.method == Method.GET) return page(l.items, Integer.parseInt(q.get("page")), true);
+                    if (call.method == Method.GET) {
+                        return page(l.items, Integer.parseInt(q.get("page")), true, l.name);
+                    }
                     if (refuseWrites) return new Reply(400, "{\"success\":false,\"status_code\":5}");
                     JSONArray items = new JSONObject(call.body).getJSONArray("items");
                     for (int i = 0; i < items.length(); i++) {
@@ -334,7 +402,7 @@ public class AccountSyncTest {
             }
         }
 
-        private Reply page(List<String> ids, int page, boolean withType) throws org.json.JSONException {
+        private Reply page(List<String> ids, int page, boolean withType, String name) throws org.json.JSONException {
             JSONArray results = new JSONArray();
             int from = (page - 1) * pageSize;
             for (int i = from; i < Math.min(ids.size(), from + pageSize); i++) {
@@ -344,13 +412,16 @@ public class AccountSyncTest {
                 results.put(o);
             }
             int total = Math.max(1, (ids.size() + pageSize - 1) / pageSize);
-            return new Reply(200, new JSONObject().put("page", page).put("results", results)
-                    .put("total_pages", total).put("total_results", ids.size()).toString());
+            JSONObject o = new JSONObject().put("page", page).put("results", results).put("total_pages", total)
+                    .put("total_results", ids.size());
+            if (name != null) o.put("name", name);
+            return new Reply(200, o.toString());
         }
 
         private Reply listsPage(int page) throws org.json.JSONException {
             JSONArray results = new JSONArray();
             for (Map.Entry<Long, FakeList> e : lists.entrySet()) {
+                if (others.contains(e.getKey())) continue;
                 results.put(new JSONObject().put("id", e.getKey()).put("name", e.getValue().name)
                         .put("public", e.getValue().isPublic ? 1 : 0).put("number_of_items", e.getValue().items.size()));
             }

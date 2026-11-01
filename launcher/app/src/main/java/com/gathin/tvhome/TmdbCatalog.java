@@ -76,8 +76,8 @@ final class TmdbCatalog implements Catalog {
     private final Map<String, ProviderAvailability> availability = new HashMap<>();
     private final Map<String, Set<String>> priceSources = new HashMap<>();
     private final PriceBook book;
-    /** My list, whose titles (with the Household and Friends lists') are kept priced in the background. */
-    private final Set<String> myList = new HashSet<>();
+    /** The titles on My list and the shown TMDB lists, kept priced in the background. */
+    private final Set<String> listed = new HashSet<>();
     private boolean visible = true;
     /** Off until a TMDB account is signed in: see {@link Catalog#setListPricing}. */
     private boolean listPricing;
@@ -314,16 +314,16 @@ final class TmdbCatalog implements Catalog {
     }
 
     @Override
-    public void keepPriced(Collection<String> myListIds) {
-        myList.clear();
-        myList.addAll(myListIds);
+    public void keepPriced(Collection<String> listedIds) {
+        listed.clear();
+        listed.addAll(listedIds);
         refreshKept();
     }
 
-    /** On My list, or on the Household or Friends list, while list pricing is on. Seen and the rest are not kept. */
+    /** On My list or a shown TMDB list, while list pricing is on. Seen and the rest are not kept. */
     private boolean isKept(Title t) {
         if (!listPricing) return false;
-        return myList.contains(t.id) || t.isOn(ListId.HOUSEHOLD) || t.isOn(ListId.FRIENDS);
+        return listed.contains(t.id);
     }
 
     @Override

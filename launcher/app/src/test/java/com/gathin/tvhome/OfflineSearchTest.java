@@ -16,6 +16,8 @@ import java.util.Set;
 public class OfflineSearchTest {
     private static final MockCatalog CATALOG = new MockCatalog();
     private static final SearchIndex INDEX = new SearchIndex(CATALOG);
+    /** Nothing on My list; the mock Household and Friends, as before the TV has had an account. */
+    private static final ListMembership MOCK_LISTS = id -> false;
 
     /** A title on no list, which only the household's own ids (My list, viewed…) can make saved. */
     private static Title unlisted() {
@@ -25,16 +27,44 @@ public class OfflineSearchTest {
 
     @Test
     public void savedIdsAreTheHouseholdsThenTheListed() {
-        Set<String> saved = OfflineSearch.savedIds(Collections.singletonList("viewed-one"), CATALOG.all());
+        Set<String> saved = OfflineSearch.savedIds(Collections.singletonList("viewed-one"), CATALOG.all(), MOCK_LISTS);
         assertEquals("viewed-one", saved.iterator().next());
-        for (Title t : CATALOG.all()) assertEquals(t.id, !t.lists.isEmpty(), saved.contains(t.id));
+        for (Title t : CATALOG.all()) {
+            assertEquals(t.id, t.isOn(ListId.HOUSEHOLD) || t.isOn(ListId.FRIENDS), saved.contains(t.id));
+        }
+    }
+
+    /** Signed in: the titles on My list or on any shown TMDB list; a hidden list's titles are not saved. */
+    @Test
+    public void savedIdsFollowTheShownLists() {
+        ImportedLists imported = new ImportedLists();
+        imported.set(Collections.singletonList(new ImportedLists.Entry(ListRef.parse("7"), 7, "Family picks",
+                Collections.singletonList("moon"))));
+        ListMembership account = new ListMembership() {
+            @Override
+            public boolean inMyList(String id) {
+                return id.equals("arrival");
+            }
+
+            @Override
+            public List<ShownList> shownLists() {
+                return imported.shown();
+            }
+
+            @Override
+            public boolean isOn(Title t, ShownList list) {
+                return list.isMy() ? inMyList(t.id) : imported.isOn(t, list);
+            }
+        };
+        Set<String> saved = OfflineSearch.savedIds(Collections.<String>emptyList(), CATALOG.all(), account);
+        assertEquals(new HashSet<>(java.util.Arrays.asList("arrival", "moon")), saved);
     }
 
     @Test
     public void resultsKeepOnlySavedTitlesAndNoPeopleOrGenres() {
         SearchIndex.Results online = INDEX.search("moon");
         assertTrue(online.hasMatches());
-        Set<String> saved = OfflineSearch.savedIds(Collections.emptyList(), CATALOG.all());
+        Set<String> saved = OfflineSearch.savedIds(Collections.emptyList(), CATALOG.all(), MOCK_LISTS);
         SearchIndex.Results r = OfflineSearch.filter(online, saved);
         assertFalse(r.titles.isEmpty());
         for (SearchIndex.Hit h : r.titles) assertTrue(h.title.name, saved.contains(h.title.id));
@@ -70,9 +100,9 @@ public class OfflineSearchTest {
     public void aTitleOnNoListIsFoundOnlyWhenTheHouseholdKeepsIt() {
         Title t = unlisted();
         SearchIndex.Results online = INDEX.search(t.name);
-        Set<String> listed = OfflineSearch.savedIds(Collections.emptyList(), CATALOG.all());
+        Set<String> listed = OfflineSearch.savedIds(Collections.emptyList(), CATALOG.all(), MOCK_LISTS);
         assertFalse(contains(OfflineSearch.filter(online, listed).titles, t));
-        Set<String> viewed = OfflineSearch.savedIds(Collections.singletonList(t.id), CATALOG.all());
+        Set<String> viewed = OfflineSearch.savedIds(Collections.singletonList(t.id), CATALOG.all(), MOCK_LISTS);
         assertTrue(contains(OfflineSearch.filter(online, viewed).titles, t));
     }
 

@@ -12,13 +12,12 @@
     <string name="account_choose_lists">Choose lists</string>
     <string name="account_lists_loading">Getting your lists…</string>
     <string name="account_lists_none">This account has no lists yet. Make them on themoviedb.org, then come back here.</string>
-    <string name="account_lists_override">%1$s is set in config.xml, so a choice here doesn\'t change it.</string>
-    <string name="account_lists_override_both">Household and Friends are set in config.xml, so a choice here doesn\'t change them.</string>
+    <string name="account_lists_override">The lists shown are set in config.xml, so a choice here doesn\'t change them.</string>
     <plurals name="account_list_items">
         <item quantity="one">%d title</item>
         <item quantity="other">%d titles</item>
     </plurals>
-    <string name="account_role_household">Household</string>
-    <string name="account_role_friends">Friends</string>
-    <string name="account_role_not_used">Not used</string>
+    <!-- Choose lists: each TMDB list's switch. -->
+    <string name="account_list_show">Show</string>
+    <string name="account_list_hidden">Hidden</string>
 </resources>

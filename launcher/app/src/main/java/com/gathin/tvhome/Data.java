@@ -27,7 +27,7 @@ final class Data {
         this.accounts = accounts;
         wantHousehold = () -> {
             catalog.want(household.titleIds());
-            catalog.keepPriced(household.myListIds());
+            catalog.keepPriced(household.listedIds());
         };
         household.addListener(wantHousehold);
         wantHousehold.onHouseholdChanged();

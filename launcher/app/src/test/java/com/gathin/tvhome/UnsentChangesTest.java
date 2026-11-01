@@ -24,7 +24,6 @@ public class UnsentChangesTest {
         s.queue(SyncList.MY_LIST, "movie:1", true, 10);
         s.queue(SyncList.FAVORITES, "tv:2", false, 11);
         s.queue(SyncList.MY_LIST, "movie:1", false, 12);
-        s.queue(SyncList.HOUSEHOLD, "movie:3", true, 13);
         s.queue(SyncList.MY_LIST, "arrival", true, 14);
         List<SyncLedger.Op> ops = HouseholdState.fromJson(s.toJson(), catalog).unsent();
         assertEquals(2, ops.size());
@@ -38,7 +37,8 @@ public class UnsentChangesTest {
     public void noUnsentChangesKeepsTheJsonAsBefore() {
         HouseholdState s = HouseholdState.defaults(catalog);
         assertFalse(s.toJson().contains("unsent"));
-        assertTrue(HouseholdState.fromJson("{\"unsent\":[\"NOPE|movie:1|1|5\",\"MY_LIST|movie:1|x\",3]}", catalog)
+        assertTrue(HouseholdState.fromJson("{\"unsent\":[\"NOPE|movie:1|1|5\",\"HOUSEHOLD|movie:3|1|13\","
+                + "\"MY_LIST|movie:1|x\",3]}", catalog)
                 .unsent().isEmpty());
     }
 

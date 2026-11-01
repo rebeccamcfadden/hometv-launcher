@@ -1,57 +1,115 @@
 package com.gathin.tvhome;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
- * Which of the account's TMDB lists are Household and Friends, as chosen on the TV (docs/rework.md, Accounts,
- * 2026-10-30): each list is Household, Friends or Not used, and each role holds one list, so choosing a list for a role
- * takes the role from the list that had it. config.xml's tmdb_household_list and tmdb_friends_list, when set, override
- * the choice ({@link #ref}). Pure Java, unit-tested (ListChoicesTest); {@link Accounts} keeps the two numbers.
+ * Which of the account's TMDB lists show as chips, as chosen on the TV (docs/rework.md, Lists by name, 2026-10-31):
+ * Choose lists has a Show / Hidden switch per list, any number can show, and they show in the account's order (the
+ * order TMDB lists them in). config.xml's tmdb_shown_lists (or the older tmdb_household_list and tmdb_friends_list),
+ * when set, overrides the choice ({@link #refs}). A TV that chose Household and Friends before starts with those two
+ * shown, in that order ({@link #load}). Pure Java, unit-tested (ListChoicesTest); {@link Accounts} keeps the numbers.
  */
 final class ListChoices {
-    enum Role {
-        HOUSEHOLD, FRIENDS, NOT_USED;
+    private final List<Long> shown = new ArrayList<>();
 
-        /** What OK on a list's row turns it into: Household, Friends, Not used, and round again. */
-        Role next() {
-            return values()[(ordinal() + 1) % values().length];
+    ListChoices(List<Long> shown) {
+        for (Long id : shown) if (id != null && id > 0 && !this.shown.contains(id)) this.shown.add(id);
+    }
+
+    /**
+     * The choice as saved ("8221116,9001", see {@link #save}); before anything was saved (null), the lists a TV chose
+     * for Household and Friends, so nobody loses a chip on the update.
+     */
+    static ListChoices load(String saved, long household, long friends) {
+        List<Long> ids = new ArrayList<>();
+        if (saved == null) {
+            ids.add(household);
+            ids.add(friends);
+        } else {
+            for (String s : saved.split(",")) {
+                try {
+                    ids.add(Long.parseLong(s.trim()));
+                } catch (NumberFormatException e) {
+                    // Not a list number: skipped.
+                }
+            }
         }
+        return new ListChoices(ids);
     }
 
-    private long household;
-    private long friends;
-
-    ListChoices(long household, long friends) {
-        this.household = Math.max(0, household);
-        this.friends = Math.max(0, friends);
-        if (this.friends == this.household) this.friends = 0;
+    String save() {
+        StringBuilder b = new StringBuilder();
+        for (Long id : shown) b.append(b.length() == 0 ? "" : ",").append(id);
+        return b.toString();
     }
 
-    long household() {
-        return household;
+    boolean isShown(long listId) {
+        return listId > 0 && shown.contains(listId);
     }
 
-    long friends() {
-        return friends;
+    /** The shown lists' numbers, in chip order. */
+    List<Long> ids() {
+        return Collections.unmodifiableList(new ArrayList<>(shown));
     }
 
-    Role role(long listId) {
-        if (listId > 0 && listId == household) return Role.HOUSEHOLD;
-        if (listId > 0 && listId == friends) return Role.FRIENDS;
-        return Role.NOT_USED;
+    /**
+     * Shows or hides a list; a list shown joins the others in the account's order ({@code accountOrder}, the account's
+     * list numbers as TMDB gives them). Returns whether anything changed.
+     */
+    boolean setShown(long listId, boolean show, List<Long> accountOrder) {
+        if (listId <= 0 || isShown(listId) == show) return false;
+        if (show) {
+            shown.add(listId);
+            sortBy(accountOrder);
+        } else {
+            shown.remove(listId);
+        }
+        return true;
     }
 
-    /** Gives the list its role, taking the role from the list that had it; NOT_USED just takes the list's away. */
-    void choose(long listId, Role role) {
-        if (listId <= 0) return;
-        if (household == listId) household = 0;
-        if (friends == listId) friends = 0;
-        if (role == Role.HOUSEHOLD) household = listId;
-        else if (role == Role.FRIENDS) friends = listId;
+    /**
+     * The account's lists as just read: the shown ones follow its order, and a list no longer in the account is
+     * dropped. Returns whether anything changed.
+     */
+    boolean follow(List<Long> accountOrder) {
+        List<Long> before = new ArrayList<>(shown);
+        shown.retainAll(accountOrder);
+        sortBy(accountOrder);
+        return !before.equals(shown);
     }
 
-    /** Household or Friends: the config.xml override when set, else the list chosen on the TV, else none. */
-    ListRef ref(ListId list, ListRef override) {
-        if (override != null && !override.isNone()) return override;
-        long id = list == ListId.HOUSEHOLD ? household : list == ListId.FRIENDS ? friends : 0;
-        return id > 0 ? ListRef.parse(Long.toString(id)) : ListRef.NONE;
+    /** In the account's order; lists it doesn't have keep their place after those it does. Linear, by an index map. */
+    private void sortBy(List<Long> order) {
+        if (order == null) return;
+        java.util.Map<Long, Integer> at = new java.util.HashMap<>();
+        for (int i = 0; i < order.size(); i++) at.putIfAbsent(order.get(i), i);
+        List<Long> known = new ArrayList<>(), rest = new ArrayList<>();
+        for (Long id : shown) (at.containsKey(id) ? known : rest).add(id);
+        known.sort((a, b) -> Integer.compare(at.get(a), at.get(b)));
+        shown.clear();
+        shown.addAll(known);
+        shown.addAll(rest);
+    }
+
+    /**
+     * The lists that show: config.xml's when it sets any, else the TV's choice while signed in. Signed out, the TV's
+     * choice (the account's own lists, maybe private) waits for the next sign-in.
+     */
+    List<ListRef> refs(List<ListRef> override, boolean signedIn) {
+        if (override != null && !override.isEmpty()) return override;
+        if (!signedIn) return Collections.emptyList();
+        List<ListRef> out = new ArrayList<>();
+        for (Long id : shown) out.add(ListRef.parse(Long.toString(id)));
+        return out;
+    }
+
+    /**
+     * Whether the mock Household and Friends show: in a build that can't sign in, or on a TV that never had an
+     * account and has no list to show; once the TV has an account, only the lists that show (maybe none).
+     */
+    static boolean mock(boolean available, boolean hasAccount, List<ListRef> shown) {
+        return !available || (!hasAccount && shown.isEmpty());
     }
 }

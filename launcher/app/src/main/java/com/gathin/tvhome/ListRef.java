@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Which TMDB list a household list is (BACKLOG.md, Household and Friends lists): a setting that is either a list's
+ * Which TMDB list a household list is (BACKLOG.md, Shown TMDB lists): a setting that is either a list's
  * number, as in themoviedb.org/list/8221116, or its name, matched without regard to case or spaces at the ends among
  * the signed-in account's lists. A number also reaches a public list of another account, such as a friend's. Blank
  * means none. Pure Java, unit-tested (ListRefTest).

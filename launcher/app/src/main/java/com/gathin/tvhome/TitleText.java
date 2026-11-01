@@ -35,9 +35,13 @@ final class TitleText {
         return String.format(Locale.US, "%.1f", score);
     }
 
-    /** The first watchlist the title is on, or "Catalogue", and its first genre: "My list · Sci-fi". */
-    static String provenance(Title t) {
-        String list = t.lists.isEmpty() ? "Catalogue" : ListNames.of(t.lists.get(0));
+    /**
+     * The first of the household's lists in chip order that holds the title (My list first), or "Catalogue", and its
+     * first genre: "My list · Sci-fi", "Family picks · Drama" (lists.ts, provenance).
+     */
+    static String provenance(Title t, ListMembership lists) {
+        ShownList on = lists.firstListOf(t);
+        String list = on == null ? "Catalogue" : on.name;
         return t.genres.isEmpty() ? list : list + " · " + t.genres.get(0);
     }
 

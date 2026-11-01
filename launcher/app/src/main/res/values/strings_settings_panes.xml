@@ -20,8 +20,8 @@
     <string name="account_pane_sub">TMDB is a free film and TV database. Signing in brings the household’s lists to this TV.</string>
     <string name="account_ben_sync">My list, Seen and Favorites, in step</string>
     <string name="account_ben_sync_sub">Add a title on your phone and it shows here too</string>
-    <string name="account_ben_lists">Household and Friends lists</string>
-    <string name="account_ben_lists_sub">Pick which of your TMDB lists they come from</string>
+    <string name="account_ben_lists">All your TMDB lists</string>
+    <string name="account_ben_lists_sub">Pick which ones show in Movies and TV Shows, by name</string>
     <string name="account_ben_password">Your password stays with TMDB</string>
     <string name="account_ben_password_sub">This TV only gets a sign-in key; sign out any time</string>
     <string name="account_sign_in_phone">Sign in with your phone</string>
@@ -36,7 +36,7 @@
     <string name="account_waiting_note">The link is too long to type; use the camera. ← goes to the sections and keeps this code waiting.</string>
     <string name="account_approved">Approved on your phone</string>
     <string name="account_signing_in_title">Signing in…</string>
-    <string name="account_importing">Then your lists come in: My list, Seen and Favorites first, Household and Friends next.</string>
+    <string name="account_importing">Then your lists come in: My list, Seen and Favorites first, then the lists shown as chips.</string>
     <string name="account_expired_over">Code expired</string>
     <string name="account_expired_title">That code has expired</string>
     <string name="account_expired_sub">Codes last 15 minutes. Nothing changed on this TV; get a new code and scan again.</string>
@@ -47,8 +47,14 @@
     <string name="account_signed_in_good">Signed in to TMDB</string>
     <string name="account_kv_lists">My list · Seen · Favorites</string>
     <string name="account_kv_lists_value">%1$d · %2$d · %3$d</string>
-    <string name="account_kv_list_value">%1$s · %2$s</string>
     <string name="account_kv_list_number">List %1$d</string>
+    <string name="account_kv_shown">Shown as chips</string>
+    <string name="account_kv_shown_none">None</string>
+    <plurals name="account_kv_shown_count">
+        <item quantity="one">%1$d list</item>
+        <item quantity="other">%1$d lists</item>
+    </plurals>
+    <string name="account_kv_shown_past">%1$s · +%2$d in All lists</string>
     <string name="account_kv_last_synced">Last synced</string>
     <string name="account_synced_not_yet">Not yet</string>
     <string name="account_synced_now">Just now</string>
@@ -64,8 +70,10 @@
     <string name="account_syncing">Syncing with TMDB…</string>
     <string name="account_sync_offline">Offline: syncs when the TV is back online</string>
     <string name="account_sign_out_title">Sign out of TMDB?</string>
-    <string name="account_sign_out_body">My list, Favorites and Seen stay on this TV, and stop following the account until you sign in again.</string>
-    <string name="account_lists_sub">All your TMDB lists. Mark one as Household and one as Friends; ←/→ moves along a row, OK picks.</string>
+    <string name="account_sign_out_body">My list, Favorites and Seen stay on this TV, and stop following the account. Your other TMDB lists are hidden until you sign in again.</string>
+    <string name="account_lists_sub">Your TMDB lists. Up to %1$d shown ones become chips in Movies and TV Shows, by these names and in this order; more are still in All lists. ←/→ moves along a row, OK picks.</string>
+    <string name="account_lists_chips">%1$d of %2$d chips</string>
+    <string name="account_list_past">No chip: in All lists</string>
     <string name="account_lists_pane_note">My list, Seen and Favorites always come from the account itself. Back returns.</string>
 
     <!-- Streaming services -->

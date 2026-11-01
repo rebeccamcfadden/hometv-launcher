@@ -435,7 +435,7 @@ final class SearchPage extends Screen {
         if (!offline) {
             savedIds = null;
         } else if (savedIds == null) {
-            savedIds = OfflineSearch.savedIds(data.household.titleIds(), data.catalog.all());
+            savedIds = OfflineSearch.savedIds(data.household.titleIds(), data.catalog.all(), data.household);
         }
         java.util.Set<String> saved = savedIds;
         boolean nothingSaved = offline && nothingSaved(saved);
