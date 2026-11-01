@@ -111,8 +111,9 @@ It reached 7.4M views, people started doing the same to their own TVs, and their
 the lists here: 170+ TV models from 200+ contributors in four days. The repo was called tv-vibehack
 until the 19th; old links work.
 
-**Themes, switches and add-ons** for upstream's launcher: [cleanyour.tv/addons](https://cleanyour.tv/addons). The
-reworked launcher in this fork doesn't read themes or module cards yet; they wait for V2.
+**Themes:** the reworked launcher in this fork has nine built in, picked on the TV in Launcher settings › Theme:
+six Classic and three Seasonal that follow the date ([themes/README.md](themes/README.md), with screenshots).
+Upstream's switches and add-ons are at [cleanyour.tv/addons](https://cleanyour.tv/addons); module cards wait for V2.
 
 **Official links:** the website is [cleanyour.tv](https://cleanyour.tv) and the code, launcher and
 tools live only in this repo. Other domains using the name, such as cleanyourtv.com, are not run by
@@ -605,7 +606,7 @@ The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor
 | **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`, Sweden's services included (Viaplay, SkyShowtime, SVT Play, TV4 Play and others). Watch opens the title itself in that service's app where Wikidata has its id (Netflix, Disney+, Apple TV, HBO Max, Prime Video, SVT Play), else the app. |
 | **Settings** | The nav's Settings icon opens the TV's settings; Home's Shortcuts row opens the launcher's own (below). |
 | **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone (below). |
-| **Themes** | Launcher settings › Theme: six Classic themes and three Seasonal ones that follow the date. Layout and data stay the same in every theme. |
+| **Themes** | Launcher settings › Theme. Classic: Midnight (the default), Daylight, OLED Black, High Contrast, Cinema and Landscapes. Seasonal, following the date from Snow to Christmas: Nature (photos), Vector art and 8-bit. A theme changes colours, type, corners, shading and the picture behind Home; layout and data stay the same. Screenshots of each in [themes/README.md](themes/README.md). |
 | **Left for V2** | Wallpapers pushed as `config.json`, the clock screensaver, module cards and add-ons, Watch Next, festivals and the sky: see [BACKLOG.md](BACKLOG.md#left-for-v2). |
 
 <details>

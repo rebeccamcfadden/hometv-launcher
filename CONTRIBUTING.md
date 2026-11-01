@@ -118,8 +118,8 @@ Ideas that fit the direction: an idle screensaver with clock and ambient colour,
 for apps without banners, a settings screen to edit the dock from the TV, localisation.
 Ideas that don't: recommendation rows, content feeds, ads, telemetry.
 
-A new theme goes in `themes/<name>/` with its `config.json` and a required `screenshot.jpg` of Home on a
-real TV with that theme; see [Adding a theme](themes/README.md#adding-a-theme).
+A new theme starts in the Figma file and is built into the launcher, with a screenshot of Home on a real TV; see
+[Adding a theme](themes/README.md#adding-a-theme).
 
 ## 3. Improve the prompt and tools
 

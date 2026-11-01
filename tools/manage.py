@@ -47,7 +47,8 @@ def table_rows(text, header_start):
 
 
 def img_src(cell):
-    m = re.search(r'<img src="([^"]+)"', cell or "")
+    """The picture a cell shows: an <img src>, or a Markdown link to a .jpg or .png (the old themes' screenshots)."""
+    m = re.search(r'<img src="([^"]+)"', cell or "") or re.search(r'\]\(([^)]+\.(?:jpe?g|png))\)', cell or "")
     return m.group(1) if m else None
 
 
