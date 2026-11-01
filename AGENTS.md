@@ -85,7 +85,7 @@ share their TV's list afterwards, follow [`docs/workflows/tv-list.md`](docs/work
 | `CODE_OF_CONDUCT.md` | Includes the rule against publishing device identifiers, Wi-Fi names and IPs. |
 | `examples/` | One folder per tested TV model: `debloat.txt`, `tv.json` (its row in the TV tables), sometimes a `README.md` and a `config.json`. Indexed in `examples/README.md`, whose table is generated too. |
 | `docs/` | `docs/TROUBLESHOOTING.md`, the module-card spec (`docs/specs/card.md`), `docs/devices/` for models with notes but no tested list, and the [workflows](#workflows). |
-| `launcher/` | The reference launcher, package `com.gathin.tvhome`: plain Java, AndroidX RecyclerView and DynamicAnimation, `minSdk` 26. In this fork it may use the network and new dependencies (see [This fork](#this-fork)). |
+| `launcher/` | The reference launcher, package `com.gathin.tvhome`: plain Java, no libraries (Android views built in code), `minSdk` 26. In this fork it may use the network and new dependencies (see [This fork](#this-fork)). |
 | `design_preview/` | Web prototype of the reworked launcher UI (Vite, TypeScript, mock data); the keyboard stands in for the remote. Designs in Figma; see [its README](design_preview/README.md). |
 | `themes/` | One folder per theme: `config.json`, a required `screenshot.jpg`, optional wallpapers. Keys are documented in `themes/README.md`. |
 | `addons/` | Optional module-card apps, each its own Gradle project, never built into the launcher. |
