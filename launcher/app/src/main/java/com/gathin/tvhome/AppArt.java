@@ -63,17 +63,40 @@ final class AppArt {
             return;
         }
         Context app = context.getApplicationContext();
+        int asked = version, askedTrim = trims;
         WORKER.execute(() -> {
             Art art = draw(app, pkg, width, height, iconSize);
             if (art == null) return;
-            CACHE.put(key, art);
-            MAIN.post(() -> cb.art(art.banner, art.icon));
+            MAIN.post(() -> {
+                // Drawn from an app that has changed since (forget), or asked for before a memory trim (clear):
+                // shown this once, but not kept.
+                if (asked == version && askedTrim == trims) CACHE.put(key, art);
+                cb.art(art.banner, art.icon);
+            });
         });
     }
 
-    /** Forgets everything, e.g. when an app was updated with new art. */
+    /** Bumped whenever an app's cached art is let go as stale; the tiles built before then may show old art. */
+    private static int version;
+    /** Bumped by each memory trim, so loads asked for before it don't fill the cache again. Main thread. */
+    private static int trims;
+
+    /** Changes each time an app's art went stale: Home's row and All Apps rebuild their tiles when it differs. */
+    static int version() {
+        return version;
+    }
+
+    /** Forgets everything (memory pressure): nothing goes stale, the tiles on screen keep their art. */
     static void clear() {
+        trims++;
         CACHE.evictAll();
+    }
+
+    /** Forgets one app's art: it was installed, updated, changed or removed, and may have a new banner. */
+    static void forget(String pkg) {
+        version++;
+        String prefix = pkg + '@';
+        for (String key : CACHE.snapshot().keySet()) if (key.startsWith(prefix)) CACHE.remove(key);
     }
 
     private static Art draw(Context ctx, String pkg, int width, int height, int iconSize) {

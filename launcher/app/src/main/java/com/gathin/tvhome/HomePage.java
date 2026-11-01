@@ -88,6 +88,8 @@ final class HomePage extends Screen {
 
     private List<String> full = new ArrayList<>();
     private List<String> shownApps = new ArrayList<>();
+    /** AppArt's version the row's tiles were built with: an app updated since has new art to show. */
+    private int artBuilt;
     private List<String> shownInputs = new ArrayList<>();
     private List<MenuPanel.Row> inputRows = new ArrayList<>();
     private AppTile moving;
@@ -446,12 +448,13 @@ final class HomePage extends Screen {
 
     // ---- The app row -------------------------------------------------------------------------------------------
 
-    /** Rebuilds the row when the apps on it changed (installed, removed, added from All Apps). */
+    /** Rebuilds the row when the apps on it changed (installed, removed, added from All Apps) or one's art did. */
     private void refreshApps(boolean force) {
         full = apps.full();
         List<String> next = AppRow.visible(full, apps::shown);
-        if (!force && next.equals(shownApps)) return;
+        if (!force && next.equals(shownApps) && artBuilt == AppArt.version()) return;
         shownApps = next;
+        artBuilt = AppArt.version();
         View focused = shell.focused();
         boolean hadFocus = focused != null && focused.getParent() == appRow;
         appRow.removeAllViews();

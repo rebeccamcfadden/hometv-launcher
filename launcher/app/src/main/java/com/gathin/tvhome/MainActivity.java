@@ -90,6 +90,14 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             recreateIfThemeChanged();
         }
     };
+    /** An app was installed, updated, changed or removed: its banner may be new, so the cached one goes. */
+    private final BroadcastReceiver packageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String pkg = intent.getData() == null ? null : intent.getData().getSchemeSpecificPart();
+            if (pkg != null) AppArt.forget(pkg);
+        }
+    };
 
     private int[] settingsKeycodes;
     private boolean settingsKeyPanel;
@@ -219,6 +227,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (cm != null) cm.registerDefaultNetworkCallback(networkCallback);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.registerCallback(inputCallback, handler);
+        IntentFilter packages = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
+        packages.addAction(Intent.ACTION_PACKAGE_REPLACED);
+        packages.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        packages.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        packages.addDataScheme("package");
+        registerReceiver(packageReceiver, packages);
 
         // Not after recreate(): the launch intent survives it and would open them again.
         if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())
@@ -687,10 +701,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        // M3: the artwork cache is only a cache (the views on screen keep their images), so it goes on any real
+        // M3: the artwork caches are only caches (the views on screen keep their images), so they go on any real
         // pressure, but not on UI_HIDDEN, the ordinary trip to an app.
         if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW && level != ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) {
             Art.trim();
+            AppArt.clear();
         }
         if (!MemoryTrimPolicy.shouldRelease(level, started)) return;
         backdrops.release();
@@ -708,6 +723,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (cm != null) cm.unregisterNetworkCallback(networkCallback);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.unregisterCallback(inputCallback);
+        unregisterReceiver(packageReceiver);
     }
 
     /** Launcher settings' change count (Config.SETTINGS_REVISION_KEY); onResume rebuilds Home when it moved. */

@@ -40,6 +40,8 @@ final class AllAppsPage {
     private final LinearLayout grid;
     private final Screen screen;
     private List<HomeApps.App> all = new ArrayList<>();
+    /** AppArt's version the grid's tiles were built with: an app updated since has new art to show. */
+    private int artBuilt;
 
     static Screen create(MainActivity activity, Shell shell, HomeApps apps) {
         return new AllAppsPage(activity, shell, apps).screen;
@@ -135,6 +137,7 @@ final class AllAppsPage {
     /** Lays the grid out for these apps, and the count beside the title. */
     private void fill(List<HomeApps.App> list) {
         all = list;
+        artBuilt = AppArt.version();
         count.setText(activity.getResources().getQuantityString(R.plurals.all_apps_count, list.size(), list.size()));
         grid.removeAllViews();
         LinearLayout row = null;
@@ -164,7 +167,7 @@ final class AllAppsPage {
      */
     private void refresh() {
         List<HomeApps.App> next = apps.all();
-        if (same(next, all)) return;
+        if (same(next, all) && artBuilt == AppArt.version()) return;
         View focused = shell.focused();
         String pkg = focused instanceof AppTile && Focus.isInside(grid, focused) ? ((AppTile) focused).pkg : null;
         int at = -1;
