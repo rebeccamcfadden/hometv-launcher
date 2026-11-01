@@ -48,7 +48,7 @@ jobs:
       - name: README TV tables match examples/*/tv.json
         run: |
           python3 tools/gen_tables.py --check || {
-            echo "::error::README.md and examples/README.md are generated from examples/*/tv.json. A maintainer runs python3 tools/gen_tables.py on main and commits the result; contributors never need to."
+            echo "::error::docs/supported-tvs.md and examples/README.md are generated from examples/*/tv.json. A maintainer runs python3 tools/gen_tables.py on main and commits the result; contributors never need to."
             exit 1
           }
 

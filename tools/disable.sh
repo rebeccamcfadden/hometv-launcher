@@ -286,5 +286,5 @@ fi
 if [ "$ADB_SECURE" = "0" ]; then
   echo "Warning: this TV reports ro.adb.secure=0, so network ADB on port 5555 accepts any device on" >&2
   echo "your network without the \"Allow\" prompt. When you are done, turn USB debugging and" >&2
-  echo "Network/ADB debugging off on the TV and reboot it (README: \"Isn't ADB access a security hole?\")." >&2
+  echo "Network/ADB debugging off on the TV and reboot it (docs/faq.md: \"Isn't ADB access a security hole?\")." >&2
 fi

@@ -207,5 +207,5 @@ $cmds = @($pkgs | ForEach-Object { "pm disable-user --user 0 $_" }) + 'pm list p
 $cmds | & $py -I (Join-Path $repo 'tools\tv.py') --batch
 
 if ($adbSecure -eq '0') {
-    Write-Warning "This TV reports ro.adb.secure=0, so network ADB on port 5555 accepts any device on your network without the `"Allow`" prompt. When you are done, turn USB debugging and Network/ADB debugging off on the TV and reboot it (README: `"Isn't ADB access a security hole?`")."
+    Write-Warning "This TV reports ro.adb.secure=0, so network ADB on port 5555 accepts any device on your network without the `"Allow`" prompt. When you are done, turn USB debugging and Network/ADB debugging off on the TV and reboot it (docs/faq.md: `"Isn't ADB access a security hole?`")."
 }

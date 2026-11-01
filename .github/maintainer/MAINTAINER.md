@@ -61,7 +61,7 @@ it, and every one of them gets a home. Pick the smallest home that fits (CONTRIB
   can be its own folder (#653, #768). It is a judgement call: set confidence accordingly.
 - Edits to a list already on main (second units, notes, corrections) are judgement calls; decide only when the
   change is clearly right.
-- A new list needs `examples/<folder>/tv.json` (missing → merge-with-fix: add it). The TV tables in README and
+- A new list needs `examples/<folder>/tv.json` (missing → merge-with-fix: add it). The TV tables in docs/supported-tvs.md and
   examples/README, the brand line and the counts are generated from those files: a list PR never needs README rows,
   and rows an older PR added are dropped on merge (`tools/gen_tables.py --adopt` turns them into its `tv.json`).
 - After merging lists, the maintainer runs `python3 tools/gen_tables.py` on main and commits what it rewrites
