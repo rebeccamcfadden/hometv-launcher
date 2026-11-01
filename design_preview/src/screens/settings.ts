@@ -9,6 +9,8 @@ import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
 import { button } from '../ui/widgets';
 import { accountPane } from './panes/account';
+import { notesPane } from './panes/notes';
+import { notes } from '../core/notes';
 import { appsPane } from './panes/apps';
 import { aboutPane, homePane, motionPane, tvPane } from './panes/misc';
 import type { Pane, PaneHost } from './panes/pane';
@@ -16,7 +18,7 @@ import { servicesPane, storesPane } from './panes/services';
 import { themePane } from './panes/theme';
 import { weatherPane } from './panes/weather';
 
-export type SectionId = 'account' | 'services' | 'stores' | 'weather' | 'apps' | 'theme' | 'motion' | 'start' | 'home' | 'tv' | 'about';
+export type SectionId = 'account' | 'notes' | 'services' | 'stores' | 'weather' | 'apps' | 'theme' | 'motion' | 'start' | 'home' | 'tv' | 'about';
 
 interface Section {
   id: SectionId;
@@ -30,6 +32,7 @@ interface Section {
 
 const SECTIONS: Section[] = [
   { id: 'account', label: 'Account', setupLabel: 'Sign in to TMDB', icon: 'user', value: () => account.value() },
+  { id: 'notes', label: 'Phone notes', icon: 'phone', value: () => notes.value() },
   { id: 'services', label: 'Streaming services', icon: 'tv', value: () => ({ text: `${settings.get().services.length} ticked` }) },
   { id: 'stores', label: 'Stores for rent and buy', icon: 'cart', value: () => ({ text: `${settings.get().stores.length} ticked` }) },
   { id: 'weather', label: 'Weather', setupLabel: 'Weather city', icon: 'cloud', value: () => ({ text: placeById(settings.get().place).name }) },
@@ -64,7 +67,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
   let shown: SectionId | null = null;
   let inPane = false;
 
-  const list = h('div.sec-list');
+  const list = h('div.sec-list', { 'data-scroll': 'y', 'data-scroll-pad': 0 });
   const scroll = h('div.pane-scroll', { 'data-scroll': 'y', 'data-scroll-pad': 40 });
   const foot = h('div.pane-foot');
   const pane = h('div.set-pane', scroll, setup ? foot : null);
@@ -82,6 +85,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
   };
   const panes: Record<SectionId, Pane> = {
     account: accountPane(host),
+    notes: notesPane(host),
     services: servicesPane(host),
     stores: storesPane(),
     weather: weatherPane(host),
@@ -178,6 +182,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
 
   const screen: Screen = {
     label: setup ? 'First run · Settings' : 'Launcher settings',
+    pillAtTop: true,
     el,
     defaultFocus: () => (inPane ? entryOf() : null) ?? rowOf(current),
     onShow: () => rerender(),
@@ -226,6 +231,8 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     net.on(() => rerender()),
     // A new period (the dev bar's date, or midnight) changes Seasonal's label and swatches.
     theme.on(() => rerender()),
+    // Phone notes' sends and imports change the pane and its section value.
+    notes.listen(() => rerender()),
     account.onTick(() => {
       const c = scroll.querySelector('[data-countdown]');
       if (c) c.textContent = account.countdown();

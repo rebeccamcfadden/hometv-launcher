@@ -74,7 +74,9 @@ left and parked work on the right.
 The prototype goes further than Figma in places. These exist only here: the filters drawer, the rent/buy dialog,
 the Episodes, Cast & crew and More like this tabs, the Inputs, Wi-Fi and quick-settings dropdowns, the person
 page stub, the empty and no-match states of Movies and TV Shows, the focusable search bar on the full results,
-and the Seen icon (an eye, so it no longer matches My list's tick).
+the Seen icon (an eye, so it no longer matches My list's tick), and Phone notes' picker for a line TMDB didn't match
+exactly (TMDB's best three as posters with title and year, and None of these; drawn as the confirm dialog, with no
+design yet; the project lead, 2026-11-01).
 
 ### V2 designs
 
@@ -394,9 +396,10 @@ save at once", the section list on the left (470 px, each row with its icon and 
 on the right.
 
 - **Sections and values:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing in…", "Code
-  expired", or the username), Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"), Weather (the
-  city), Home row apps (7), Theme (Midnight, or "Nature · Halloween"), Motion (Full), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values
-  update live.
+  expired", or the username), Phone notes (Off, On, or amber "3 not matched"), Streaming services ("8 ticked"), Stores
+  for rent and buy ("5 ticked"), Weather (the city), Home row apps (7), Theme (Midnight, or "Nature · Halloween"),
+  Motion (Full), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values update live. The list
+  stays inside title-safe and scrolls with focus when its sections don't fit.
 - **Moving:** landing on a section shows its pane at once, as a preview. → or OK enters the pane, on its first control
   (the selected option in a segmented control), and the pane's border brightens. ← from the pane's left edge
   returns to the section. Back leaves a sub-state first (Choose lists, Change city, an app being moved), then the pane,
@@ -423,6 +426,32 @@ r2-account A, with r2-account B's Choose lists. The whole TMDB sign-in happens i
 
 The QR is a look-alike (finder and alignment patterns over seeded noise); it doesn't scan. The dev bar's Account
 menu steps the states.
+
+#### Phone notes
+
+Not designed in Figma yet; drafted from the Account pane's parts (2026-10-31). Each person keeps a watch list in a
+note on their iPhone (Apple Notes or Google Keep) and shares it to a "Send to TV" Shortcut, which posts the note's
+text and their list's name to the TV over the home network. The TV looks each new line up on TMDB and adds it to that
+person's TMDB list (making a private one with that name if the account has none), so it shows as a chip in Movies and
+TV Shows. Adding only: a line deleted on the phone takes nothing off, and a title taken off on the TV isn't put back.
+A ticked line goes to Seen. Off by default.
+
+| State | Pane | First focus |
+|---|---|---|
+| Off | "Send lists from your phones", what it does, an **On / Off** switch, "Off: the TV doesn’t listen for phones." | The switch |
+| On | The switch; amber "Sign in to TMDB in Account first…" while signed out; Address (`http://<tv>:8765/notes`) and Pairing code ("K7QM-4PXT", 8 characters without 0/O or 1/I/L) beside a QR that opens `http://<tv>:8765/setup#<code>` on the iPhone, a page with **Get the shortcut** (the household's shared iCloud link) and **Pair this phone**, which hands the Shortcut both to keep, so a new code means pairing again (the code stays in the link's fragment; the project lead, 2026-10-31 and 2026-11-01); a tiny note that it is plain HTTP on the home network and the code only lets a phone add titles; **New code** (asks first: phones pair again) and **How to set up a phone**; Last sends, one row per list (when, lines, added, and an amber "3 not matched" with each line not matched exactly as a button, "Inglorious basterds · Choose", that opens the picker: OK on a poster puts it on the list, or on Seen for a ticked line; None of these stops asking; the lines being focusable, the pane scrolls down to them) | The switch |
+
+The dev bar's Jump to → "Phone notes · a phone sends a note" plays a send; `?notes=on` starts with it on.
+
+#### Import pill
+
+While a note is looked up, a small pill sits at the bottom centre of whatever screen shows, between the guide line's
+ends, and on Launcher settings at the top centre on the title's line, as its pane runs to the bottom edge (the project
+lead, 2026-11-01): an accent dot, "Importing Rebecca · 6 of 12" and a thin bar (every line of the note counts, so it
+reads "0 of 12" from the start). At the end it reads
+"Partner · 8 added" with a tick for four seconds, or in amber "Rebecca · 9 added · 3 not matched", or "Rebecca ·
+waiting for the internet" when the TV went offline (the lines are tried again). Never focusable; the shape is the
+offline pill's (06-states A), amber only for a problem. Motion Off drops its slide.
 
 #### Streaming services and stores
 
@@ -568,6 +597,8 @@ width with 243 px art.
   redirect is open. The code is polled only while Launcher settings is open.
 - **Wi-Fi switching:** joining a saved network from the dropdown may need system permissions a launcher lacks;
   fall back to opening Wi-Fi settings.
+- **Phone notes:** the address assumes the TV keeps its IP (a DHCP reservation in the router); what Apple Notes and
+  Keep put in the shared text (checklist ticks, the note's title) is to be checked on the phones.
 - **Not designed yet:** hold-OK menus (the base uses them for tile Move / Remove / App info and a Settings
   menu), the screensaver, removing recent searches, voice search, progress on started titles, sorting lists, a
   person page design, Search and Home's weather while loading, the Home row apps pane (built here without a design),
@@ -584,6 +615,7 @@ width with 243 px art.
 | `src/core/theme.ts` | The themes, the Seasonal periods by date, and what applies one to the page: `data-theme` and `data-period` on `<html>`, its fonts and its backdrop |
 | `src/core/account.ts` | The mocked TMDB sign-in and lists, behind the Account pane and the dev bar's Account menu |
 | `src/core/lists.ts` | The lists Movies, TV Shows and Pick for me show: My list, then the account's shown TMDB lists (or the mock Household and Friends before a sign-in) |
+| `src/core/notes.ts` | Phone notes: on/off, the pairing code, each list's last send, and the simulated import behind the import pill |
 | `src/core/net.ts` | The simulated network and data state behind the dev bar's State menu |
 | `src/data/` | Mock catalogue, services (and the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |
 | `src/screens/` | One module per screen; `dropdown.ts` holds the top-bar menus, `quickSettings.ts` the Settings icon's, `rent.ts` the rent/buy dialog, `settings.ts` Launcher settings, `setup.ts` First run |

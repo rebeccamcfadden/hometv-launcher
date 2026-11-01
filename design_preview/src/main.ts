@@ -19,6 +19,8 @@ import { titlePreview } from './screens/preview';
 import { searchScreen } from './screens/search';
 import { launcherSettings } from './screens/settings';
 import { setupScreen } from './screens/setup';
+import { notes } from './core/notes';
+import { importPill } from './ui/importPill';
 
 // Launcher settings' Motion: the stage drops slides and scale-ups (Reduced) or every animation (Off).
 const stage = document.getElementById('stage')!;
@@ -46,6 +48,9 @@ app.init(stage, {
   music: () => placeholder('Music', 'Spotify, YouTube Music and your playlists. Not part of V1.', { tab: 'music' }),
   search: searchScreen,
 });
+app.overlay(importPill());
+// ?notes=on starts with Launcher settings › Phone notes switched on.
+if (params.get('notes') === 'on') notes.setOn(true);
 
 // ---- Dev bar under the stage: the screen stack, the data state, quick jumps and a state reset ----
 const trail = document.getElementById('trail')!;
@@ -130,16 +135,43 @@ const jumps: [string, string, () => void][] = [
       app.push(launcherSettings());
     },
   ],
-  ...(['account', 'services', 'stores', 'weather', 'apps', 'theme'] as const).map(
+  ...(['account', 'notes', 'services', 'stores', 'weather', 'apps', 'theme'] as const).map(
     (id): [string, string, () => void] => [
       `settings-${id}`,
-      `Launcher settings · ${{ account: 'Account', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps', theme: 'Theme' }[id]}`,
+      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps', theme: 'Theme' }[id]}`,
       () => {
         app.goTab('home');
         app.push(launcherSettings(id, { enter: true }));
       },
     ],
   ),
+  [
+    'notes-send',
+    'Phone notes · a phone sends a note (3 not matched)',
+    () => {
+      notes.setOn(true);
+      notes.simulate('Rebecca', 12, [
+        {
+          line: 'Inglorious basterds',
+          top: [
+            { title: 'Inglourious Basterds', year: 2009, kind: 'Movie' },
+            { title: 'Basterds Reunion', year: 2020, kind: 'Movie' },
+            { title: 'The Basterds', year: 2015, kind: 'TV show' },
+          ],
+        },
+        { line: 'Dead poet society', ticked: true, top: [{ title: 'Dead Poets Society', year: 1989, kind: 'Movie' }] },
+        { line: 'that one with the dog', top: [] },
+      ]);
+    },
+  ],
+  [
+    'notes-send-ok',
+    'Phone notes · a phone sends a note (all matched)',
+    () => {
+      notes.setOn(true);
+      notes.simulate('Partner', 8, []);
+    },
+  ],
   [
     'quick',
     'Settings icon (quick settings)',
