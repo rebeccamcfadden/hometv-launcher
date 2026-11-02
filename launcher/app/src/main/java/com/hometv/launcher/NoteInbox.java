@@ -26,7 +26,8 @@ import java.util.Locale;
  * code only lets a caller add titles to the household's lists.
  *
  * <p>One request at a time on a single low-priority thread: {@code POST /notes} (and {@code GET /setup}, the static page
- * the Phone notes QR opens, which holds nothing secret) only, from a private, loopback or
+ * the Phone notes QR opens, and {@code GET /android-shortcut.json}, the HTTP Shortcuts template that page imports; both
+ * hold nothing secret) only, from a private, loopback or
  * link-local address only, at most {@link #MAX_BODY} bytes, all of it within {@link #REQUEST_DEADLINE_MS} (JSON at most
  * {@link #MAX_DEPTH} deep). The body is JSON,
  * {@code {"list": "Rebecca", "text": "…"}}, or the note's text itself with the list in {@code ?list=}. After
@@ -36,6 +37,8 @@ import java.util.Locale;
  */
 final class NoteInbox {
     static final int DEFAULT_PORT = 8765;
+    /** Where the setup page's Set up shortcut button points HTTP Shortcuts' import (notes_android_shortcut.json). */
+    static final String ANDROID_SHORTCUT_PATH = "/android-shortcut.json";
     static final int MAX_BODY = 64 * 1024, MAX_HEADERS = 8 * 1024, READ_TIMEOUT_MS = 5000;
     static final int MAX_WRONG = 5;
     static final long LOCKOUT_MS = 5 * 60_000L;
@@ -53,17 +56,20 @@ final class NoteInbox {
         final int lines, fresh;
         /** A page to send instead of the JSON answer (GET /setup), or null. */
         final String html;
+        /** A file to send as it is instead of the JSON answer (GET /android-shortcut.json), or null. */
+        final String file;
 
         Reply(int status, String message, int lines, int fresh) {
-            this(status, message, lines, fresh, null);
+            this(status, message, lines, fresh, null, null);
         }
 
-        private Reply(int status, String message, int lines, int fresh, String html) {
+        private Reply(int status, String message, int lines, int fresh, String html, String file) {
             this.status = status;
             this.message = message;
             this.lines = lines;
             this.fresh = fresh;
             this.html = html;
+            this.file = file;
         }
 
         static Reply error(int status, String message) {
@@ -71,7 +77,11 @@ final class NoteInbox {
         }
 
         static Reply page(String html) {
-            return new Reply(200, "", 0, 0, html);
+            return new Reply(200, "", 0, 0, html, null);
+        }
+
+        static Reply file(String json) {
+            return new Reply(200, "", 0, 0, null, json);
         }
 
         String json() {
@@ -94,24 +104,29 @@ final class NoteInbox {
     private final Clock clock;
     /** The setup page the Phone notes QR opens (GET /setup), or null for none. */
     private final String setupPage;
+    /** The HTTP Shortcuts template the setup page imports on Android (GET /android-shortcut.json), or null for none. */
+    private final String androidShortcut;
     private int wrong;
     private long lockedUntil;
     private volatile ServerSocket socket;
     private Thread thread;
 
     NoteInbox(String code, Handler handler, Clock clock) {
-        this(code, handler, clock, null);
+        this(code, handler, clock, null, null);
     }
 
     /**
      * @param setupPage what GET /setup answers: a static page that reads the code from the address's #fragment, which
      *     the phone never sends, so the page holds nothing secret and needs no code to fetch
+     * @param androidShortcut what GET /android-shortcut.json answers: HTTP Shortcuts' import file for Android phones,
+     *     with no address and no code in it (the page's Pair button hands those to the app on the phone)
      */
-    NoteInbox(String code, Handler handler, Clock clock, String setupPage) {
+    NoteInbox(String code, Handler handler, Clock clock, String setupPage, String androidShortcut) {
         this.code = code;
         this.handler = handler;
         this.clock = clock;
         this.setupPage = setupPage;
+        this.androidShortcut = androidShortcut;
     }
 
     // ---- The pairing code ----------------------------------------------------------------------------------------
@@ -222,6 +237,9 @@ final class NoteInbox {
         long now = clock.now();
         if (now < lockedUntil) return Reply.error(429, "Too many wrong codes. Try again in a few minutes.");
         if (setupPage != null && "GET".equals(q.method) && "/setup".equals(q.path)) return Reply.page(setupPage);
+        if (androidShortcut != null && "GET".equals(q.method) && ANDROID_SHORTCUT_PATH.equals(q.path)) {
+            return Reply.file(androidShortcut);
+        }
         if (!"POST".equals(q.method) || !"/notes".equals(q.path)) {
             return Reply.error(404, "Send notes to /notes with POST.");
         }
@@ -305,7 +323,7 @@ final class NoteInbox {
     }
 
     private static void write(OutputStream out, Reply r) throws IOException {
-        byte[] body = (r.html != null ? r.html : r.json()).getBytes(StandardCharsets.UTF_8);
+        byte[] body = (r.html != null ? r.html : r.file != null ? r.file : r.json()).getBytes(StandardCharsets.UTF_8);
         String head = "HTTP/1.1 " + r.status + " " + reason(r.status) + "\r\n"
                 + "Content-Type: " + (r.html != null ? "text/html" : "application/json") + "; charset=utf-8\r\n"
                 + "Content-Length: " + body.length + "\r\n"

@@ -26,12 +26,11 @@ it under Last sends, and OK on it shows TMDB's three best answers to pick from.
    `config.json`); this switch is the Phone notes feature's own, and while it is off the section says so. "Not on Wi-Fi" in place of the address means the
    TV has no address on the home network yet; if another app on the TV holds port 8765, the pane says so.
    Beside them is a **QR code**: scan it with a phone's camera and a setup page opens on the phone: on an iPhone with
-   **Get the shortcut** and **Pair this phone**, on an Android phone with the settings to copy into HTTP Shortcuts
-   (below).
+   **Get the shortcut** and **Pair this phone**, on an Android phone with **Install HTTP Shortcuts**, **Set up the
+   shortcut** and **Pair this phone** (below).
 3. In your router, give the TV a fixed address (a "DHCP reservation"), so the address in the Shortcut keeps working.
 
-**New code** makes a new pairing code. Each iPhone then scans the QR again and taps **Pair this phone**, and each
-Android phone pastes the new `Authorization` value into its shortcut (below); nothing else in
+**New code** makes a new pairing code. Each phone then scans the QR again and taps **Pair this phone**; nothing else in
 the shortcut changes.
 
 ## On each iPhone, once
@@ -175,32 +174,28 @@ A second phone uses the same shortcut with its own list name in `list`.
 
 ## On an Android phone
 
-Android has no Shortcuts app, so a phone uses **HTTP Shortcuts** (free and open source, on Google Play and F-Droid). It
-sends the note as plain text with the list's name in the address, which the TV accepts as it is. Not tried on a real
-Android phone yet.
+Android has no Shortcuts app, so a phone uses **HTTP Shortcuts** (free and open source, on Google Play and F-Droid).
+Scan the QR in the TV's Phone notes pane with the phone's camera and open the link: on Android the page shows three
+buttons (**On an iPhone?** switches to the iPhone's).
 
-Scan the QR in the TV's Phone notes pane with the phone's camera and open the link: on Android the page shows these
-settings first. Type whose list this phone's notes go to; the page fills in the **URL** (`http://192.168.1.50:8765/
-notes?list=Rebecca`), the **Authorization** value (`Bearer` and the TV's code) and a one-line **script** that shows
-the TV's answer, each with a **Copy** button. Then, in HTTP Shortcuts:
+1. **Install HTTP Shortcuts** opens Google Play. Install it and open it once.
+2. **Set up the shortcut** opens HTTP Shortcuts, which asks to import **Send to TV** from the TV
+   (`http://<tv>:8765/android-shortcut.json`): tap **Import**. The file holds no address and no code, only the
+   shortcut, a hidden **Pair with TV** shortcut and four variables (`hometv_url`, `hometv_auth`, `hometv_list` and
+   `hometv_note`, which takes what you share). Once per phone.
+3. Type whose list this phone's notes go to, then **Pair this phone**: HTTP Shortcuts runs **Pair with TV**, which keeps
+   the TV's address, its code and the list on the phone. Again after **New code**, or to change the list.
 
-1. **⋮ → Global Variables → + → Static Variable**: name it `note`, tick **Allow Receiving Value from Share Dialog**,
-   save.
-2. On the main screen, **+ → Regular Shortcut**, named `Send to TV`.
-3. **Basic Request Settings**: method **POST**, URL: paste it.
-4. **Request Headers**: `Authorization` = paste the value.
-5. **Request Body / Parameters**: body type **Custom Text**, content type `text/plain`; for the body, tap **{ }** and
-   pick `note`.
-6. **Response Handling**: On Success and On Failure show nothing (the script shows the answer instead).
-7. **Scripting**: paste the script into **Run on Success** and **Run on Failure**:
-   `var m = ''; try { m = JSON.parse(response.body).message; } catch (e) {} showToast(m || 'Could not reach the TV: is this phone on the home Wi-Fi?');`
-8. **Trigger & Execution Settings** (Android 11 and later): tick the Direct Share option, so **Send to TV** shows in the
-   share sheet. Save.
+To send, share the note: in **Google Keep**, **⋮ → Send → Send via other apps → Send to TV**; in **Samsung Notes**,
+**Share → Text → Send to TV**. The phone shows the TV's answer for a moment, e.g. "Sent: 12 lines, 3 new". Sending
+before pairing says so.
 
-To send, share the note: in **Google Keep**, **⋮ → Send → Send via other apps → Send to TV** (or HTTP Shortcuts); in
-**Samsung Notes**, **Share → Text → Send to TV**. The phone shows the TV's answer, e.g. "Sent: 12 lines, 3 new".
-After **New code** on the TV, scan the QR again and paste the new `Authorization` value into the shortcut's header.
-
+**By hand instead** (the page's "Set it up by hand instead"): the page fills in a `curl` command for HTTP Shortcuts'
+**+ → Import from cURL**, or the **URL** (`http://192.168.1.50:8765/notes?list=Rebecca`), the **Authorization** value
+(`Bearer` and the TV's code) and a one-line **script**, each with a **Copy** button, with the steps: a `note` static
+variable that receives the share, a POST shortcut named `Send to TV` with that header and `note` as its plain-text
+body, the script in **Run on Success** and **Run on Failure**, and Direct Share on (Android 11 and later). A shortcut
+made this way keeps the address and code in itself: after **New code**, paste the new `Authorization` value again.
 ## Sending a note
 
 - **Apple Notes:** open the note, tap **Share** (or **⋯ → Send a Copy**) and pick **Send to TV**.
@@ -253,7 +248,9 @@ the TV signed in to TMDB; signed out, the pill says so and the line stays.
 - The TV listens only while Phone notes is **On**, only for phones on the home network (private addresses), and only
   for `POST /notes` with the pairing code. After five wrong codes it stops listening for five minutes.
 - The QR opens `GET /setup`, a fixed page with no code in it: the code rides in the QR's link after the `#`, which a
-  phone keeps to itself and never sends to the TV.
+  phone keeps to itself and never sends to the TV. **Pair this phone** hands it from the page to Shortcuts or HTTP
+  Shortcuts on the same phone. The Android import file (`GET /android-shortcut.json`) is fixed too, with no address or
+  code in it.
 - It is plain HTTP on your home network: someone on your Wi-Fi who sees the code could add titles to your lists, and
   nothing more. The code never leaves the TV, the paired phones and their Shortcuts; don't share screenshots of it.
 - The shared shortcut holds no address or code: each phone keeps those in its own `Send to TV.txt` (iCloud Drive ›
@@ -267,9 +264,11 @@ the TV signed in to TMDB; signed out, the pill says so and the line stays.
 | The phone says | Do this |
 |---|---|
 | "Could not connect to the server" | The phone isn't on the home Wi-Fi, the TV is off or asleep, Phone notes is off, or the TV's address changed (check the pane, then the router reservation). Right after the launcher is updated, the TV doesn't listen until Home has been opened once: press Home on the remote. Also check the URL starts with `http://` and ends in `:8765/notes`, and that **Settings → Privacy & Security → Local Network → Shortcuts** is on. |
-| "Wrong pairing code" | Scan the QR in the TV's Phone notes pane and tap **Pair this phone**. With a simple shortcut, or on Android, paste the setup page's `Authorization` value into its header again. |
+| "Wrong pairing code" | Scan the QR in the TV's Phone notes pane and tap **Pair this phone**. With a shortcut made by hand, paste the setup page's `Authorization` value into its header again. |
 | "Scan the QR in the TV's Launcher settings…" | This phone hasn't paired yet, or iCloud Drive is off (the shortcut keeps its settings there): turn it on, then pair. |
 | Shortcuts says it can't find "Send to TV" | **Pair this phone** runs the shortcut by name: rename it back to exactly `Send to TV`. |
+| "Pair this phone first" (Android) | Scan the QR and tap **Pair this phone**. |
+| HTTP Shortcuts says it can't find the shortcut, or **Pair this phone** does nothing | Tap **Set up the shortcut** first (once per phone), then **Pair this phone**. If **Pair with TV** was deleted, import again. |
 | "Too many wrong codes" | Wait five minutes. |
 | "Say which list the note is for" | The Shortcut's `list` field is empty, or its key isn't spelled `list`. |
 | "The note was empty" | The `text` field is the typed word, not the blue **Text** variable from Get Text from Input; or the share sheet sent nothing. |

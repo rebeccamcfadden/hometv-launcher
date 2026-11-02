@@ -69,7 +69,7 @@ closes. The sections, top to bottom:
 - **Phone notes**, only once the launcher runs with a TMDB key, off unless turned on here or in First run (its On/Off is
   the Phone notes feature's; `feature_notes` in `config.xml` sets the default): the address, pairing
   code and a QR for a phone's "Send to TV" shortcut (on an iPhone, scan it to get the household's shared shortcut,
-  `note_shortcut_url`, and pair the phone; on Android, to copy the settings into HTTP Shortcuts), and each list's last
+  `note_shortcut_url`, and pair the phone; on Android, to install HTTP Shortcuts, import its shortcut and pair the phone), and each list's last
   send with the lines that matched nothing. See [phone-notes.md](phone-notes.md).
 - **Streaming services**: tick the services the household pays for; titles on them show as Included.
 - **Stores for rent and buy**: tick the stores whose rent and buy prices show.

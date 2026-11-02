@@ -64,7 +64,7 @@ export function notesPane(_host: PaneHost): Pane {
                   h('div.kv', h('span', 'Pairing code'), h('b.notes-code', notes.code())),
                 ),
                 // Scanned with a phone's camera: http://<tv>:8765/setup#<code>, a page to get the shared Shortcut and pair it, or
-                // (Android) the HTTP Shortcuts settings to copy.
+                // (Android) to install HTTP Shortcuts, import its shortcut and pair it.
                 h(
                   'div.notes-qr',
                   h('div.notes-qr-img', { html: qrSvg(200) }),
