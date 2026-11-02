@@ -8,12 +8,25 @@ weather. No ads and no analytics, and Home works with the network off.
 
 | | |
 |---|---|
-| ![Home: greeting, clock, weather and your apps](docs/rework/proto-home.jpg) | ![Movies: the household's lists, sort, filters and Pick for me](docs/rework/proto-movies.jpg) |
-| *Home: greeting, clock, weather and your apps* | *Movies: your lists, Sort, Filters and Pick for me* |
-| ![Title preview: Watch, Seen, Favorite and Trailer, with tabs](docs/rework/proto-preview.jpg) | ![Search: on-screen keyboard, recent searches and suggestions](docs/rework/proto-search.jpg) |
-| *Title preview: Watch, Seen, Favorite, Trailer and tabs* | *Search: typo-tolerant, results as you type* |
+| ![Home: greeting, clock, weather and your apps](docs/themes/midnight.jpg) | ![Search: on-screen keyboard, suggestions and results as you type](docs/screens/search.jpg) |
+| *Home: greeting, clock, weather and your apps* | *Search: typo-tolerant, results as you type* |
+| ![Title preview: Watch on your service, My list, Seen, Favorite and Trailer, with tabs](docs/screens/preview.jpg) | ![Title preview, Cast & crew tab](docs/screens/cast.jpg) |
+| *Title preview: Watch on your service, My list, Seen, Favorite, Trailer* | *Its tabs: where to watch, cast and crew, more like this* |
 
-*Screenshots of the web demo.*
+*Screenshots from a TCL TV (Android 9).*
+
+## Themes
+
+Eight built-in themes, chosen on the TV in Launcher settings › Theme. The Seasonal ones follow the date through ten
+periods and their pictures follow the sun; these show the Halloween period at night. [All eight, and how they
+work](themes/README.md).
+
+| | | |
+|---|---|---|
+| ![Midnight theme](docs/themes/midnight.jpg) | ![Daylight theme](docs/themes/daylight.jpg) | ![Cinema theme](docs/themes/cinema.jpg) |
+| *Midnight, the default* | *Daylight* | *Cinema* |
+| ![Landscapes theme](docs/themes/landscapes.jpg) | ![Seasonal Vector art theme](docs/themes/seasonal-vector.jpg) | ![Seasonal 8-bit theme](docs/themes/seasonal-8bit.jpg) |
+| *Landscapes* | *Vector art (Seasonal)* | *8-bit (Seasonal)* |
 
 ## Install
 
@@ -40,7 +53,7 @@ LG webOS are different systems: [supported TVs](docs/supported-tvs.md).
 | [Restoring and updates](docs/restore.md) | One line puts the TV back; what to do after a firmware update or when something goes wrong |
 | [Questions people ask](docs/faq.md) | Is it safe, firmware updates, closing ADB, blocking ads, going online |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Everything that bit us, by symptom |
-| [Phone notes](docs/phone-notes.md), [Themes](themes/README.md), [Another home](docs/REMOTE.md), [The microphone](docs/microphone.md) | Send a watch-list note from a phone, the nine themes, helping someone remotely, what can be said about listening |
+| [Phone notes](docs/phone-notes.md), [Themes](themes/README.md), [Another home](docs/REMOTE.md), [The microphone](docs/microphone.md) | Send a watch-list note from a phone, the eight themes, helping someone remotely, what can be said about listening |
 
 ## Build and contribute
 

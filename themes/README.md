@@ -22,7 +22,8 @@ the sun: dawn, day, sunset and night, from sunrise and sunset at the Weather pla
 | **Vector art** (Seasonal) | A flat drawing of the season, rounder corners, Baloo 2 and Nunito | <img src="../docs/themes/seasonal-vector.jpg" width="320" alt="Seasonal Vector art theme"> |
 | **8-bit** (Seasonal) | A pixel-art scene of the season, square corners and hard offset shadows, Press Start 2P and Pixelify Sans | <img src="../docs/themes/seasonal-8bit.jpg" width="320" alt="Seasonal 8-bit theme"> |
 
-The screenshots are Home on a TCL TV (Android 9) at the end of October, so the Seasonal ones show Halloween.
+The screenshots are Home on a TCL TV (Android 9) on the evening of 2 November, so the Seasonal ones show Halloween at
+night.
 
 - **Typeface:** each theme's fonts come from Google Fonts, downloaded once and kept on the TV (Roboto until they
   arrive); Launcher settings › Theme › Typeface can put every theme in the TV's own Roboto instead.
