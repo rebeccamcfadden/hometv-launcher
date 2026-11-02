@@ -3,9 +3,9 @@
 Your [Home Assistant](https://www.home-assistant.io) on the TV: scenes, lights and switches, climate, temperature
 and humidity sensors, doors and windows, and locks, in sections you work with the remote. OK runs a scene or
 switches a light; ◀ ▶ dims a light by 10 % or moves a thermostat by half a degree. A community add-on, not made by
-or affiliated with the Home Assistant project. For the [Clean Your TV](../../README.md) launcher it declares a
-[module card](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md): once you answer **Show card** its tile reads "Smart Home" with a blue glow.
-On any other Android TV home it is an ordinary app.
+or affiliated with the Home Assistant project. With HomeTV Launcher it is an ordinary app: open it from its tile in
+All Apps, or add it to Home's row. It also declares a [module card](../../docs/specs/card.md), under this launcher's names (upstream's launcher reads its own, so it won't show this build's card);
+this launcher doesn't show module cards yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
 
 ![Smart Home on a TV, with demo data](screenshot.jpg)
 
@@ -71,6 +71,9 @@ To build only: `cd addons/smart-home && ./gradlew assembleRelease`; the JVM test
 ## Tested on
 
 MOKA R8G (Android 14), on a home app that implements the module-card spec, against a stand-in server on the home network answering with Home Assistant's documented response shapes: the config pushed through `ConfigProvider`, reading the states, running a scene and dimming a light (the requests arrived as the REST API documents them). **Not yet tried against a real Home Assistant:** the author's server was down; a report from someone with one is welcome. The screenshot shows that demo data, with the address blurred. The JVM tests cover parsing, the service calls, the request headers against a local stand-in, and errors.
+
+With HomeTV Launcher, on the Android TV 9 emulator (API 28), 2026-11-02: builds with its tests, installs, opens from
+its launcher entry to its Connection rows (address and token not set); no server was tried.
 
 ## Maintainer
 

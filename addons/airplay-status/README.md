@@ -5,9 +5,9 @@ only, and the other AirPlay receivers on the network. It looks the way an iPhone
 announcements (`_airplay._tcp` for video and mirroring, `_raop._tcp` for audio) for six seconds while the screen
 is open. It is for TVs that run an AirPlay receiver such as
 [AirPlay Server](https://github.com/jqssun/android-airplay-server) (open source); it is not made by or affiliated
-with Apple or that project. For the [Clean Your TV](../../README.md) launcher it declares a
-[module card](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md): once you answer **Show card** its tile reads "AirPlay Status" with a light
-blue glow. On any other Android TV home it is an ordinary app.
+with Apple or that project. With HomeTV Launcher it is an ordinary app: open it from its tile in All Apps, or add it
+to Home's row. It also declares a [module card](../../docs/specs/card.md), under this launcher's names (upstream's launcher reads its own, so it won't show this build's card);
+this launcher doesn't show module cards yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
 
 ![AirPlay Status on a TV](screenshot.jpg)
 
@@ -54,6 +54,9 @@ To build only: `cd addons/airplay-status && ./gradlew assembleRelease`; the JVM 
 ## Tested on
 
 MOKA R8G (Android 14) with AirPlay Server 0.0.36, on a home app that implements the module-card spec: the card prompt and the card, the TV found under its AirPlay name with mirroring offered, and one other receiver on the network found by name. Testing found that Android requires `INTERNET` for `NsdManager` (it threw a SecurityException without it). Names in the screenshot are blurred. The JVM tests cover matching this TV's announcements, the `MAC@Name` form and the name clash.
+
+With HomeTV Launcher, on the Android TV 9 emulator (API 28), 2026-11-02: builds with its tests, installs, opens from
+its launcher entry and lists its rows; with no AirPlay Server installed it says so.
 
 ## Maintainer
 

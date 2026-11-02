@@ -5,8 +5,10 @@ so they are easy to find, build and review. The launcher in [`launcher/`](../lau
 depends on them: it is built, tested and size-checked without this folder, so an add-on can't make
 the core bigger or change how it behaves. You install an add-on only if you want it.
 
-The reworked launcher in this fork doesn't show module cards yet: they wait for V2
-([docs/rework.md](../docs/rework.md)). An add-on still installs and runs as its own app.
+The reworked launcher in this fork doesn't show module cards yet ([BACKLOG.md](../BACKLOG.md#add-on-cards-on-home)).
+Every add-on installs and runs as its own app, opened from its tile in All Apps; all 19 build and pass their tests
+with this repo (2026-11-02), and capacity stats, headphones, AirPlay status and smart home were opened on the Android
+TV 9 emulator with this launcher.
 
 ## Add-ons
 
