@@ -24,7 +24,7 @@ const app = (id: string, name: string, pkg: string, system: boolean): TvApp => (
 
 /**
  * Every app the mock TV shows in All Apps: the streaming apps, a few the household installed, and what a TCL TV comes
- * with. Rakuten TV came with it too and isn't one the launcher knows, so it starts in TV Utilities: hold OK moves it out.
+ * with. Eros Now came with it too and isn't one the launcher knows, so it starts in TV Utilities: hold OK moves it out.
  */
 export const TV_APPS: TvApp[] = [
   ...[...HOME_APPS, ...OTHER_APPS].map((a) => ({ ...a, pkg: KNOWN[a.id][0], system: KNOWN[a.id][1] })),
@@ -33,7 +33,7 @@ export const TV_APPS: TvApp[] = [
   app('steamlink', 'Steam Link', 'com.valvesoftware.steamlink', false),
   app('twitch', 'Twitch', 'tv.twitch.android.app', false),
   app('playstore', 'Google Play Store', 'com.android.vending', true),
-  app('rakuten', 'Rakuten TV', 'tv.wuaki.apptv', true),
+  app('erosnow', 'Eros Now', 'com.eros.now', true),
   app('settings', 'Settings', 'com.android.tv.settings', true),
   app('livechannels', 'Live Channels', 'com.google.android.tv', true),
   app('tcl-tv', 'Live TV', 'com.tcl.tv', true),

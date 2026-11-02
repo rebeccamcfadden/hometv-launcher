@@ -740,7 +740,7 @@ settings."; on the right a help pane for the focused row.
 - Hold OK on an app: Add to Home or Remove from Home, Move to TV Utilities or Move out of TV Utilities, and App info.
   A move is kept on the TV (`utilityMoves`); one that matches the rule is forgotten, so the rule takes over again. An
   app that leaves the page (moved, or put on Home from the folder) hands focus to the one that took its place; one
-  moved in focuses the folder tile. Rakuten TV starts in the folder (it came with the TV and the launcher doesn't know
+  moved in focuses the folder tile. Eros Now starts in the folder (it came with the TV and the launcher doesn't know
   it) to show the move out.
 - Dev bar: Jump to → All Apps, or All Apps › TV Utilities.
 

@@ -3,23 +3,47 @@
 // unless it is on Home's row; an app the household installed goes in only when a TV maker made it. Hold OK moves an app
 // in or out by hand, and that choice wins. On the TV: TvUtilities (unit-tested).
 
-/** Apps people watch or shop in, which stay in All Apps even when the TV came with them. */
+/**
+ * Apps people watch or shop in, which stay in All Apps even when the TV came with them: every package in the launcher's
+ * WatchProviders (the streaming services and stores of both regions), then Google's own that aren't providers.
+ */
 export const WATCH_APPS = new Set([
   'com.netflix.ninja',
-  'com.netflix.mediaclient',
-  'com.google.android.youtube.tv',
-  'com.google.android.youtube.tvkids',
-  'com.google.android.youtube.tvmusic',
   'com.amazon.amazonvideo.livingroom',
   'com.disney.disneyplus',
   'com.wbd.stream',
   'com.hbo.hbonow',
   'com.apple.atve.androidtv.appletv',
-  'com.spotify.tv.android',
-  'com.plexapp.android',
-  'se.svt.android.svtplay',
-  'com.android.vending',
+  'com.hulu.livingroomplus',
   'com.google.android.videos',
+  'com.google.android.youtube.tv',
+  'com.viaplay.android',
+  'com.skyshowtime.skyshowtime.google',
+  'se.svt.android.svtplay',
+  'se.tv4.tv4playtab',
+  'com.sfanytime.tv',
+  'tv.wuaki.apptv',
+  'com.tivo.android.comhem',
+  'com.teliasonera.telia.playplus',
+  'com.upst.hayu',
+  'com.mubi',
+  'com.crunchyroll.crunchyroid',
+  'com.britbox.tv',
+  'com.curiosity.curiositystream.androidtv',
+  'tv.pluto.android',
+  'com.plexapp.android',
+  'com.cineasterna.tv',
+  'com.peacocktv.peacockandroid',
+  'com.cbs.ott',
+  'com.tubitv',
+  'com.roku.web.trc',
+  'air.com.vudu.air.DownloaderTablet',
+  // Not providers: Home row's seed (AppRow.STREAMING) and Google's watch and shop apps.
+  'com.spotify.tv.android',
+  'com.netflix.mediaclient',
+  'com.google.android.youtube.tvkids',
+  'com.google.android.youtube.tvmusic',
+  'com.android.vending',
   'com.google.android.play.games',
 ]);
 
