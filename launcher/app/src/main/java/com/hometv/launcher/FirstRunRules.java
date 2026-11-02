@@ -201,11 +201,13 @@ final class FirstRunRules {
 
     /**
      * Whether First run's end switches off what isn't set up (F34, Rebecca 2026-11-02): Start always does; Back, Home or
-     * a cold start mid-way only once a step was opened. Left before any was (an install script's Home check, a glance),
-     * nothing is switched off and it shows itself again at the launcher's next start.
+     * a cold start mid-way only once a step was opened, or when it switched features back on as it opened
+     * (FeaturePrefs.restoreFirstRunOff: those were off because an earlier First run ended without their setup). Left
+     * before any of that (an install script's Home check, a glance), nothing is switched off and it shows itself again
+     * at the launcher's next start.
      */
-    static boolean endSwitchesOff(boolean start, Collection<String> opened) {
-        return start || !opened.isEmpty();
+    static boolean endSwitchesOff(boolean start, Collection<String> opened, boolean restoredOnOpen) {
+        return start || restoredOnOpen || !opened.isEmpty();
     }
 
     /**

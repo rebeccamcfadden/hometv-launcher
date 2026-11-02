@@ -578,6 +578,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         }
         // Opened afresh, not rebuilt: what an earlier First run switched off as it ended starts on again (F34).
         boolean restored = done == null && FeaturePrefs.restoreFirstRunOff(this);
+        if (restored) FirstRunPage.markRestored(this);
         firstRun = FirstRunPage.create(this, done, keyTab);
         FirstRunPage.markShown(this);
         shell.push(firstRun);

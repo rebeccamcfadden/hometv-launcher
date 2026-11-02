@@ -59,6 +59,8 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
     static final String KEY_DONE = "done";
     /** Shown and not yet ended (markShown, switchOffUnfinished). */
     static final String KEY_IN_PROGRESS = "in_progress";
+    /** It switched features back on as it opened, until it ends (markRestored; F34). */
+    private static final String KEY_RESTORED = "restored";
     private static final String GROUP_STEPS = "steps";
     private static final String GROUP_FOOT = "first-run-foot";
     private static final String KEY_START = "start";
@@ -170,11 +172,19 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
     }
 
     /**
-     * Whether ending First run now switches off what isn't set up (FirstRunRules.endSwitchesOff): by Start, or once a
-     * step was opened (now or in an earlier First run; the steps opened are kept).
+     * Whether ending First run now switches off what isn't set up (FirstRunRules.endSwitchesOff): by Start, once a step
+     * was opened (now or in an earlier First run; the steps opened are kept), or when it switched features back on as it
+     * opened (markRestored).
      */
     static boolean endSwitchesOff(Context ctx, boolean start) {
-        return FirstRunRules.endSwitchesOff(start, FirstRunRules.decode(prefs(ctx).getString(KEY_DONE, null)));
+        SharedPreferences p = prefs(ctx);
+        return FirstRunRules.endSwitchesOff(start, FirstRunRules.decode(p.getString(KEY_DONE, null)),
+                p.getBoolean(KEY_RESTORED, false));
+    }
+
+    /** This First run switched back on, as it opened, what an earlier one had switched off (F34). */
+    static void markRestored(Context ctx) {
+        prefs(ctx).edit().putBoolean(KEY_RESTORED, true).apply();
     }
 
     /**
@@ -182,7 +192,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
      * itself again at the launcher's next start.
      */
     static void leftUntouched(Context ctx) {
-        prefs(ctx).edit().remove(KEY_IN_PROGRESS).remove(KEY_SHOWN).apply();
+        prefs(ctx).edit().remove(KEY_IN_PROGRESS).remove(KEY_SHOWN).remove(KEY_RESTORED).apply();
     }
 
     private FirstRunPage(MainActivity activity, FrameLayout root, Collection<String> done, boolean tmdbKeyTab) {
@@ -846,7 +856,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         List<String> names = new ArrayList<>();
         Features on = FeaturePrefs.live(a);
         // Judged by what runs: Phone notes, off only because TMDB account is, keeps its own switch (FeaturesTest).
-        prefs(a).edit().remove(KEY_IN_PROGRESS).apply();
+        prefs(a).edit().remove(KEY_IN_PROGRESS).remove(KEY_RESTORED).apply();
         for (Features.Feature f : Features.Feature.values()) {
             if (!on.on(f) || setUp(a, f)) continue;
             FeaturePrefs.switchOffUnfinished(a, f);
