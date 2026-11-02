@@ -1,15 +1,19 @@
 package com.hometv.launcher;
 
+import java.util.Collection;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Launcher settings › Features (F14, the project lead 2026-11-01; design_preview's Features pane): one build, with four
  * features switched on or off at run time. A feature that is off never starts: no page, no network call, no server.
  * Each switch is the household's choice saved on the TV, else this TV's config (config.xml {@code feature_<id>}, or a
  * pushed config.json's {@code "features": {"<id>": false}}), else on: every feature starts on, and First run switches
- * off, when it ends, any whose setup isn't finished (the project lead, 2026-11-02; FirstRunRules.setUp). A feature that
+ * off, when it ends, any whose setup isn't finished (the project lead, 2026-11-02; FirstRunRules.setUp), and on again
+ * when it opens again (F34; FeaturePrefs.restoreFirstRunOff). A feature that
  * needs another (Phone notes needs TMDB account) is off while that one is. Pure Java, unit-tested (FeaturesTest); FeaturePrefs reads and saves the switches,
  * and {@link #current} is what the launcher was built with.
  */
@@ -50,6 +54,28 @@ final class Features {
     }
 
     static final String KEY_PREFIX = "feature_";
+
+    /** A set of features as saved, "tmdb,notes", in the features' order. */
+    static String encode(Collection<Feature> fs) {
+        StringBuilder b = new StringBuilder();
+        for (Feature f : Feature.values()) {
+            if (!fs.contains(f)) continue;
+            if (b.length() > 0) b.append(',');
+            b.append(f.id);
+        }
+        return b.toString();
+    }
+
+    /** The features in a saved set; unknown ids are dropped. */
+    static Set<Feature> decode(String saved) {
+        Set<Feature> out = EnumSet.noneOf(Feature.class);
+        if (saved == null) return out;
+        for (String part : saved.split(",")) {
+            Feature f = Feature.parse(part);
+            if (f != null) out.add(f);
+        }
+        return out;
+    }
 
     /** Every feature on. */
     static final Features ALL_ON = every(true);

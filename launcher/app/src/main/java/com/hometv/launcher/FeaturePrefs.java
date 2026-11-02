@@ -8,11 +8,14 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /** Launcher settings › Features' switches as saved on the TV, over this TV's config (Features decides what they mean). */
 final class FeaturePrefs {
     private FeaturePrefs() {}
 
+    /** The features First run switched off as it ended, "tmdb,notes": they start on again when it opens (F34). */
+    private static final String KEY_FIRST_RUN_OFF = "features_first_run_off";
 
     /**
      * This TV's config as last read (config.xml with a pushed config.json): read once as the launcher is built, since
@@ -69,9 +72,42 @@ final class FeaturePrefs {
     /** Saves the household's switch, and moves Launcher settings' change count so the launcher is rebuilt with it. */
     static void save(Context ctx, Features.Feature f, boolean on) {
         SharedPreferences p = prefs(ctx);
-        p.edit().putBoolean(f.key(), on)
+        Set<Features.Feature> firstRunOff = Features.decode(p.getString(KEY_FIRST_RUN_OFF, null));
+        SharedPreferences.Editor e = p.edit().putBoolean(f.key(), on)
+                .putLong(Config.SETTINGS_REVISION_KEY, p.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1);
+        // The household chose: First run no longer switches it back on.
+        if (firstRunOff.remove(f)) e.putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff));
+        e.apply();
+    }
+
+    /**
+     * First run ended without the feature's setup and switches it off (FirstRunPage.switchOffUnfinished): saved off, and
+     * remembered as First run's doing, not the household's (F34).
+     */
+    static void switchOffUnfinished(Context ctx, Features.Feature f) {
+        SharedPreferences p = prefs(ctx);
+        Set<Features.Feature> firstRunOff = Features.decode(p.getString(KEY_FIRST_RUN_OFF, null));
+        firstRunOff.add(f);
+        p.edit().putBoolean(f.key(), false)
+                .putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff))
                 .putLong(Config.SETTINGS_REVISION_KEY, p.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1)
                 .apply();
+    }
+
+    /**
+     * First run opens again (F34): every feature it switched off itself, as it ended, starts on again, so its Features
+     * step shows them on and leads into their setups; one the household switched off stays off. Saved at once
+     * (commit), since the page reads the switches as it is built. Returns whether any came back on.
+     */
+    static boolean restoreFirstRunOff(Context ctx) {
+        SharedPreferences p = prefs(ctx);
+        Set<Features.Feature> firstRunOff = Features.decode(p.getString(KEY_FIRST_RUN_OFF, null));
+        if (firstRunOff.isEmpty()) return false;
+        SharedPreferences.Editor e = p.edit().remove(KEY_FIRST_RUN_OFF)
+                .putLong(Config.SETTINGS_REVISION_KEY, p.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1);
+        for (Features.Feature f : firstRunOff) e.putBoolean(f.key(), true);
+        e.commit();
+        return true;
     }
 
     /**

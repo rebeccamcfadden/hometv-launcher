@@ -3,6 +3,7 @@ package com.hometv.launcher;
 import org.junit.After;
 import org.junit.Test;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,6 +98,19 @@ public class FeaturesTest {
         assertFalse(a.same(Features.ALL_ON));
         assertEquals(0, Features.ALL_OFF.onCount());
         assertEquals(4, Features.ALL_ON.onCount());
+    }
+
+    @Test
+    public void aSetOfFeaturesSavesInOrderAndDropsUnknownIds() {
+        assertEquals("tmdb,notes", Features.encode(EnumSet.of(Features.Feature.NOTES, Features.Feature.TMDB)));
+        assertEquals("", Features.encode(EnumSet.noneOf(Features.Feature.class)));
+        assertEquals(EnumSet.of(Features.Feature.TMDB, Features.Feature.WEATHER),
+                Features.decode(" weather,music,,TMDB "));
+        assertTrue(Features.decode(null).isEmpty());
+        assertTrue(Features.decode("").isEmpty());
+        for (Features.Feature f : Features.Feature.values()) {
+            assertEquals(EnumSet.of(f), Features.decode(Features.encode(EnumSet.of(f))));
+        }
     }
 
     @Test
