@@ -18,11 +18,11 @@ final class FirstRunRules {
 
     /**
      * The checklist's rows, in order, as SettingsSection ids. Since F14 (the project lead, 2026-11-01) Features comes
-     * first and there is no other on/off: turning a feature on there opens its setup (Sign in to TMDB, Weather city,
-     * Phone notes, Theme), which are no longer rows of their own.
+     * first and there is no other on/off: its setups (Sign in to TMDB, Phone notes, Weather city) are tabs under it, not
+     * rows of their own. Region (F12) comes before Streaming services and Stores, since it decides which of them show.
      */
     static final List<String> STEPS = Collections.unmodifiableList(Arrays.asList(
-            "features", "services", "stores"));
+            "features", "region", "services", "stores"));
 
     /** The steps this build shows: STEPS among the sections present. */
     static List<String> steps(Collection<String> present) {

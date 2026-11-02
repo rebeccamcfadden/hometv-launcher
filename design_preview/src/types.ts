@@ -12,7 +12,9 @@ export type ServiceId =
   | 'viaplaystore'
   | 'sfanytime'
   | 'amazonvideo'
-  | 'rakuten';
+  | 'rakuten'
+  | 'fandango'
+  | 'googletv';
 
 /** sub = included with a subscription the household has. */
 export type OfferType = 'sub' | 'free' | 'rent' | 'buy';

@@ -4,9 +4,9 @@ import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { net } from '../core/net';
 import { notes } from '../core/notes';
-import { FEATURES, featureOn, setFeature, settings, type FeatureId } from '../core/settings';
+import { FEATURES, featureOn, REGION_LABELS, setFeature, settings, type FeatureId, pickServices } from '../core/settings';
 import { theme } from '../core/theme';
-import { PICK_SERVICES, SERVICES } from '../data/services';
+import { SERVICES } from '../data/services';
 import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
 import { button } from '../ui/widgets';
@@ -14,6 +14,7 @@ import { accountPane } from './panes/account';
 import { featureOffPane, featureSetUp, featuresPane, turnOn } from './panes/features';
 import { notesPane } from './panes/notes';
 import type { Pane, PaneHost } from './panes/pane';
+import { regionPane } from './panes/region';
 import { servicesPane, storesPane } from './panes/services';
 import { weatherPane } from './panes/weather';
 import type { SectionId } from './settings';
@@ -32,7 +33,7 @@ interface Step {
 
 /** "Netflix, Prime Video +6". */
 const names = (all: string[], max = 2) => (all.length <= max ? all.join(', ') : `${all.slice(0, max).join(', ')} +${all.length - max}`);
-const tickedServices = () => PICK_SERVICES.filter((s) => settings.get().services.includes(s.id)).map((s) => s.name);
+const tickedServices = () => pickServices().filter((s) => settings.get().services.includes(s.id)).map((s) => s.name);
 const tickedStores = () => settings.get().stores.map((id) => SERVICES[id].name);
 
 const ALL_STEPS: Step[] = [
@@ -54,6 +55,21 @@ const ALL_STEPS: Step[] = [
     },
   },
   {
+    // F12: the region comes before Streaming services and Stores, since it decides which of them show.
+    id: 'region',
+    title: 'Region',
+    sub: () => 'Services, stores and prices',
+    value: () => REGION_LABELS[settings.get().region],
+    pill: () => 'Suggested',
+    pillKind: 'accent',
+    help: {
+      eyebrow: 'Region',
+      title: 'Where is this TV?',
+      body: () => 'The streaming services and stores you tick next, and the currency of prices, are this country\u2019s: Sweden or the United States.',
+      note: '\u2192 opens the same pane as Launcher settings \u203a Region.',
+    },
+  },
+  {
     id: 'services',
     title: 'Streaming services',
     sub: () => `${tickedServices().length} ticked`,
@@ -63,7 +79,7 @@ const ALL_STEPS: Step[] = [
     help: {
       eyebrow: 'Streaming services',
       title: 'What does the household pay for?',
-      body: () => `Titles on these services show as Included in Movies and TV Shows. We ticked the ${PICK_SERVICES.filter((s) => s.installed && !s.more).length} with an app on this TV.`,
+      body: () => `Titles on these services show as Included in Movies and TV Shows. We ticked the ${pickServices().filter((s) => s.installed && !s.more).length} with an app on this TV.`,
       note: '→ opens the same pane as Launcher settings › Streaming services.',
     },
   },
@@ -78,7 +94,7 @@ const ALL_STEPS: Step[] = [
     help: {
       eyebrow: 'Stores for rent and buy',
       title: 'Where may we show prices from?',
-      body: () => 'Rent and buy prices in kronor come from these stores, the cheapest first.',
+      body: () => `Rent and buy prices in ${settings.get().region === 'us' ? 'dollars' : 'kronor'} come from these stores, the cheapest first.`,
       note: '→ opens the same pane as Launcher settings › Stores for rent and buy.',
     },
   },
@@ -158,6 +174,7 @@ export function setupScreen(): Screen {
   };
   const panes: Record<Exclude<PanelId, 'keys'>, Pane> = {
     features: featuresPane(host),
+    region: regionPane(),
     services: servicesPane(host),
     stores: storesPane(),
     account: accountPane(host),

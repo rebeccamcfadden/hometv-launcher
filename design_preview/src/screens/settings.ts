@@ -4,7 +4,7 @@ import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { net } from '../core/net';
 import { theme } from '../core/theme';
-import { featureOn, settings, START_LABELS, type FeatureId } from '../core/settings';
+import { featureOn, settings, START_LABELS, type FeatureId, REGION_LABELS } from '../core/settings';
 import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
 import { accountPane } from './panes/account';
@@ -14,6 +14,7 @@ import { appsPane } from './panes/apps';
 import { aboutPane, homePane, performancePane, startPane, tvPane } from './panes/misc';
 import { featureOffPane, featuresPane, featuresValue, SETUP_SECTION, turnOn } from './panes/features';
 import type { Pane, PaneHost } from './panes/pane';
+import { regionPane } from './panes/region';
 import { servicesPane, storesPane } from './panes/services';
 import { themePane } from './panes/theme';
 import { weatherPane } from './panes/weather';
@@ -38,6 +39,7 @@ export type SectionId =
   | 'performance'
   | 'features'
   | 'start'
+  | 'region'
   | 'home'
   | 'tv'
   | 'about';
@@ -70,6 +72,7 @@ const SECTIONS: Section[] = [
   { id: 'performance', label: 'Performance', icon: 'gauge', value: () => ({ text: performanceValue() }) },
   { id: 'features', label: 'Features', icon: 'list', value: () => ({ text: featuresValue() }) },
   { id: 'start', label: 'Open on start', icon: 'power', value: () => ({ text: START_LABELS[settings.get().openOnStart] }) },
+  { id: 'region', label: 'Region', icon: 'pin', value: () => ({ text: REGION_LABELS[settings.get().region] }) },
   { id: 'home', label: 'Default Home', icon: 'home', value: () => ({ text: 'On' }) },
   { id: 'tv', label: 'TV settings', icon: 'settings', value: () => ({ text: '' }) },
   { id: 'about', label: 'About', icon: 'info', value: () => ({ text: '2.0.0' }) },
@@ -78,14 +81,14 @@ const SECTIONS: Section[] = [
 /**
  * F23 (the project lead chose grouping A, 2026-11-01): the sections in four groups, under small headings, in this
  * order. Headings only: every section keeps its place in the path (Launcher settings › Phone notes), so nothing that
- * names one changes. Features (F14) is under What you watch; still to come: API keys (F16) there too, Region (F12)
- * under This TV before TV settings. First run (setup.ts) shows its own steps as tabs.
+ * names one changes. Features (F14) is under What you watch, Region (F12) under This TV before TV settings; still to
+ * come: API keys (F16) under What you watch. First run (setup.ts) shows its own steps as tabs.
  */
 const GROUPS: { title: string; items: SectionId[] }[] = [
   { title: 'Accounts', items: ['account', 'notes'] },
   { title: 'What you watch', items: ['services', 'stores', 'features'] },
   { title: 'Home & look', items: ['theme', 'performance', 'apps', 'weather'] },
-  { title: 'This TV', items: ['start', 'home', 'tv', 'about'] },
+  { title: 'This TV', items: ['start', 'home', 'region', 'tv', 'about'] },
 ];
 
 /**
@@ -137,6 +140,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     performance: performancePane(host),
     features: featuresPane(host),
     start: startPane(),
+    region: regionPane(),
     home: homePane(),
     tv: tvPane(),
     about: aboutPane(),

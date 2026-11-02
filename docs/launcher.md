@@ -89,6 +89,10 @@ closes. The sections, top to bottom:
   comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
 - **Default Home** says whether this launcher is Home and opens Android's home picker; **TV settings** opens the TV's
   own settings, Picture, Network and Apps.
+- **Region**: Sweden or the United States (`region` in config.xml or a pushed config.json; Sweden unless set). It
+  decides which streaming services and stores the two sections above list, the currency of prices, and the country
+  TMDB's availability is read for. Each region keeps its own store ticks; the streaming services stay ticked. Changing it rebuilds Home and comes back to it.
+  First run asks it before Streaming services and Stores.
 - **About**: the version, and the TMDB, availability, price and weather notices.
 
 To stop using this launcher as Home, choose the original one in Default Home. The original launcher must be enabled:

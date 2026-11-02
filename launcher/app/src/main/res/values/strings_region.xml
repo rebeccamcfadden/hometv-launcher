@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher settings › Region and First run's Region step (F12, design_preview/src/screens/panes/region.ts). -->
+<resources>
+    <string name="settings_region">Region</string>
+    <string name="region_se">Sweden</string>
+    <string name="region_us">United States</string>
+    <string name="region_title">Where is this TV?</string>
+    <string name="region_sub">The streaming services, stores and prices this TV shows are this country\u2019s.</string>
+    <string name="region_note_se">Swedish streaming services and stores (Viaplay, SVT Play, SF Anytime\u2026), prices in kronor, and what TMDB says is on in Sweden.</string>
+    <string name="region_note_us">US streaming services and stores (Hulu, Peacock, Fandango at Home, Google TV\u2026), prices in dollars, and what TMDB says is on in the US.</string>
+    <string name="region_note_ticks">Each region keeps its own store ticks; your streaming services stay ticked. Changing it rebuilds Home, and you come back here.</string>
+
+    <!-- First run's Region row (F12): before Streaming services and Stores, since it decides them. -->
+    <string name="first_run_region_line">Services, stores and prices</string>
+    <string name="first_run_region_help_title">Where is this TV?</string>
+    <string name="first_run_region_help_body">The streaming services and stores you tick next, and the currency of prices, are this country\u2019s: Sweden or the United States.</string>
+    <string name="first_run_region_help_note">\u2192 opens the same pane as Launcher settings \u203a Region.</string>
+</resources>

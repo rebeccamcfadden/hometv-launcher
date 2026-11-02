@@ -35,6 +35,7 @@ final class SettingsSections {
         out.add(new FeaturesSection());
         if (config.openOnStartChoice) out.add(new OpenOnStartSection());
         out.add(new DefaultHomeSection());
+        out.add(new RegionSection());
         out.add(new TvSettingsSection());
         out.add(new AboutSection());
         out.sort(Comparator.comparingInt(s -> SettingsNav.ORDER.indexOf(s.id())));

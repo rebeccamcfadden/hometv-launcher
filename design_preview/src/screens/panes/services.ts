@@ -1,13 +1,14 @@
 import { app } from '../../core/app';
 import { h } from '../../core/dom';
 import { focusable } from '../../core/focus';
-import { settings } from '../../core/settings';
-import { appName, PICK_SERVICES, PICK_STORES, SERVICES, type PickService } from '../../data/services';
+import { settings, pickServices, pickStores } from '../../core/settings';
+import { appName, SERVICES, type PickService } from '../../data/services';
 import { icon } from '../../ui/icons';
 import { paneHeadCount, type Pane, type PaneHost } from './pane';
 
-const MORE = PICK_SERVICES.filter((s) => s.more);
-const MAIN = PICK_SERVICES.filter((s) => !s.more);
+// The region's (F12): read each time, since the region can change while the page is open.
+const MORE_ = () => pickServices().filter((s) => s.more);
+const MAIN_ = () => pickServices().filter((s) => !s.more);
 
 /** "Free Installed", "No app". */
 const caption = (s: { installed: boolean; free?: string }) =>
@@ -22,7 +23,7 @@ const caption = (s: { installed: boolean; free?: string }) =>
 export function servicesPane(host: PaneHost): Pane {
   let open = false;
   const ticked = () => settings.get().services;
-  const moreTicked = () => MORE.some((s) => ticked().includes(s.id));
+  const moreTicked = () => MORE_().some((s) => ticked().includes(s.id));
 
   const tile = (s: PickService, isEntry: boolean) => {
     const on = ticked().includes(s.id);
@@ -53,8 +54,8 @@ export function servicesPane(host: PaneHost): Pane {
     return focusable(
       h(
         'div.svc-tile',
-        h('div.stile.is-more', h('span.more-big', shown ? '−' : `+${MORE.length}`), h('span', shown ? 'Fewer services' : 'More services')),
-        h('div.stile-cap', h('span', shown ? (moreTicked() ? 'Open while one is ticked' : `Hide the ${MORE.length} below`) : 'Hayu, MUBI, Plex…')),
+        h('div.stile.is-more', h('span.more-big', shown ? '−' : `+${MORE_().length}`), h('span', shown ? 'Fewer services' : 'More services')),
+        h('div.stile-cap', h('span', shown ? (moreTicked() ? 'Open while one is ticked' : `Hide the ${MORE_().length} below`) : `${MORE_().slice(0, 3).map((s) => s.name).join(', ')}…`)),
       ),
       {
         group: 'svc',
@@ -71,7 +72,7 @@ export function servicesPane(host: PaneHost): Pane {
   return {
     render() {
       const shown = open || moreTicked();
-      const all = shown ? PICK_SERVICES : MAIN;
+      const all = shown ? pickServices() : MAIN_();
       const n = all.filter((s) => ticked().includes(s.id)).length;
       return [
         ...paneHeadCount(
@@ -80,8 +81,8 @@ export function servicesPane(host: PaneHost): Pane {
           `${n} of ${all.length} ticked`,
           'Titles on ticked services show as Included. Installed apps were ticked to start with.',
         ),
-        h('div.tgrid', MAIN.map((s, i) => tile(s, i === 0)), moreTile()),
-        shown ? [h('div.grp-h', 'More services'), h('div.tgrid', MORE.map((s) => tile(s, false)))] : null,
+        h('div.tgrid', MAIN_().map((s, i) => tile(s, i === 0)), moreTile()),
+        shown ? [h('div.grp-h', 'More services'), h('div.tgrid', MORE_().map((s) => tile(s, false)))] : null,
       ];
     },
   };
@@ -99,12 +100,12 @@ export function storesPane(): Pane {
         ...paneHeadCount(
           'Stores for rent and buy',
           'Where may we show prices from?',
-          `${ticked.length} of ${PICK_STORES.length} ticked`,
+          `${ticked.length} of ${pickStores().length} ticked`,
           'Prices in Where to watch and on cards come from ticked stores. Renting or buying opens the store’s app.',
         ),
         h(
           'div.store-rows',
-          PICK_STORES.map((s, i) => {
+          pickStores().map((s, i) => {
             const on = ticked.includes(s.id);
             const el = focusable(
               h(
@@ -125,7 +126,12 @@ export function storesPane(): Pane {
             return el;
           }),
         ),
-        h('div.pane-note', 'Prices are in kronor and may differ in the store. Google Play isn’t sold in Sweden.'),
+        h(
+          'div.pane-note',
+          settings.get().region === 'us'
+            ? 'Prices are in dollars and may differ in the store.'
+            : 'Prices are in kronor and may differ in the store. Google Play isn’t sold in Sweden.',
+        ),
       ];
     },
   };

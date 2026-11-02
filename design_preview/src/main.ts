@@ -169,10 +169,10 @@ const jumps: [string, string, () => void][] = [
       app.push(launcherSettings());
     },
   ],
-  ...(['account', 'notes', 'services', 'stores', 'weather', 'apps', 'theme', 'performance', 'features'] as const).map(
+  ...(['account', 'notes', 'services', 'stores', 'weather', 'apps', 'theme', 'performance', 'features', 'region'] as const).map(
     (id): [string, string, () => void] => [
       `settings-${id}`,
-      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features' }[id]}`,
+      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features', region: 'Region' }[id]}`,
       () => {
         app.goTab('home');
         app.push(launcherSettings(id, { enter: true }));

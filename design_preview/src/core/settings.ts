@@ -1,4 +1,4 @@
-import { HOME_APPS, PICK_SERVICES, PICK_STORES } from '../data/services';
+import { HOME_APPS, SE_PICK_SERVICES, SE_PICK_STORES, US_PICK_SERVICES, US_PICK_STORES } from '../data/services';
 import type { ServiceId } from '../types';
 import type { ThemeId } from './theme';
 
@@ -11,6 +11,8 @@ export type ThemeFont = 'theme' | 'system';
 export type CardShadows = 'on' | 'focus' | 'off';
 export type BackdropPicture = 'photo' | 'plain';
 export type TimeOfDay = 'sun' | 'day' | 'night';
+/** The TV's region (F12; the launcher's Region): whose services, stores and prices show. */
+export type Region = 'se' | 'us';
 /** Launcher settings › Features (F14): what the launcher runs at all. */
 export type FeatureId = 'tmdb' | 'notes' | 'prices' | 'weather';
 
@@ -19,10 +21,14 @@ interface Saved {
   openOnStart: OpenOnStart;
   /** App ids on Home's row, in order. */
   homeApps: string[];
-  /** Ticked streaming services (PICK_SERVICES ids): their titles count as Included. */
+  /** The region (F12): Sweden unless set, so no TV's default changes. */
+  region: Region;
+  /** Ticked streaming services (pickServices() ids) in this region: their titles count as Included. */
   services: string[];
-  /** Ticked stores: prices come only from these. */
+  /** Ticked stores in this region: prices come only from these. */
   stores: ServiceId[];
+  /** The other region's store ticks, kept while it isn't the TV's, as the launcher keeps them (ServiceChoices). */
+  otherRegion: Partial<Record<Region, { stores: ServiceId[] }>>;
   /** The weather place (data/places.ts id) and the places picked before it, newest first. */
   place: string;
   recentPlaces: string[];
@@ -50,13 +56,27 @@ const KEY = 'cleanyourtv-preview-settings-v2';
 /** The default weather place: the build's city. */
 export const DEFAULT_PLACE = 'new-york';
 
+/** The region's lists for the Streaming services and Stores panes. */
+const PICKS = {
+  se: { services: SE_PICK_SERVICES, stores: SE_PICK_STORES },
+  us: { services: US_PICK_SERVICES, stores: US_PICK_STORES },
+};
+
+/** A region's first ticks: the services whose app is on the TV, and every store, so prices show from the start. */
+function ticksFor(r: Region): { services: string[]; stores: ServiceId[] } {
+  return {
+    services: PICKS[r].services.filter((s) => s.installed && !s.more).map((s) => s.id),
+    stores: PICKS[r].stores.map((s) => s.id),
+  };
+}
+
 const defaults = (): Saved => ({
   motion: 'full',
   openOnStart: 'home',
   homeApps: HOME_APPS.map((a) => a.id),
-  // The services whose app is on the TV start ticked, and every store, so prices show from the first start.
-  services: PICK_SERVICES.filter((s) => s.installed && !s.more).map((s) => s.id),
-  stores: PICK_STORES.map((s) => s.id),
+  region: 'se',
+  ...ticksFor('se'),
+  otherRegion: {},
   place: DEFAULT_PLACE,
   recentPlaces: ['malmo'],
   unit: 'tv',
@@ -85,6 +105,7 @@ function load(): Saved {
       if ((saved.theme as string) === 'seasonal-nature') saved.theme = 'seasonal-vector';
       // Time of day (F29): anything but Day or Night, an older or odd value, follows the sun, as ThemeStore reads it.
       if (saved.timeOfDay !== 'day' && saved.timeOfDay !== 'night') saved.timeOfDay = 'sun';
+      if (saved.region !== 'us') saved.region = 'se';
       return saved;
     }
   } catch {
@@ -129,6 +150,36 @@ export const settings = {
     listeners.forEach((fn) => fn());
   },
 };
+
+/**
+ * The TV's region's streaming services, in the Streaming services pane's order, then any ticked service the region
+ * doesn't list, behind More services, as the launcher lists them (ServicePicks.listed): ticks are the household's in
+ * any region.
+ */
+export const pickServices = () => {
+  const own = PICKS[data.region].services;
+  const others = (Object.keys(PICKS) as Region[]).filter((r) => r !== data.region).flatMap((r) => PICKS[r].services);
+  const extra = others.filter((s, i) => data.services.includes(s.id) && !own.some((o) => o.id === s.id) && others.findIndex((x) => x.id === s.id) === i);
+  return [...own, ...extra.map((s) => ({ ...s, more: true }))];
+};
+/** The TV's region's stores for rent and buy. */
+export const pickStores = () => PICKS[data.region].stores;
+
+/**
+ * Sets the region (F12): its stores take the place of the other region's, whose ticks are kept for when the TV goes
+ * back, as the launcher keeps them per region (ServiceChoices, Region.key); a region not chosen before starts with every
+ * store ticked. The streaming services are the household's in any region, as in the launcher: a service the new
+ * region doesn't list stays ticked, behind More services (pickServices).
+ */
+export function setRegion(r: Region) {
+  if (r === data.region) return;
+  const other = { ...data.otherRegion, [data.region]: { stores: data.stores } };
+  const stores = other[r]?.stores ?? ticksFor(r).stores;
+  delete other[r];
+  settings.set({ region: r, stores, otherRegion: other });
+}
+
+export const REGION_LABELS: Record<Region, string> = { se: 'Sweden', us: 'United States' };
 
 export const MOTION_LABELS: Record<Motion, string> = { full: 'Full', reduced: 'Reduced', off: 'Off' };
 export const START_LABELS: Record<OpenOnStart, string> = { home: 'Home', last: 'Last app', live: 'Live TV' };

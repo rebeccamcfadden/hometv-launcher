@@ -440,9 +440,8 @@ on the right.
   in…", "Code expired", or the username), Phone notes (Off, On, or amber "3 not matched"). **What you watch:**
   Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"), Features ("4 of 4 on"). **Home & look:**
   Theme (Midnight, or "Nature · Halloween"), Performance (Default, All on, or Custom), Home row apps (7), Weather (the
-  city). **This TV:** Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values update live.
-  Headings aren't focusable; ↑/↓ step over them. API keys joins What you watch, and Region joins This TV before TV
-  settings, as they are built. A section's name doesn't change with its group, so a path such as Launcher settings ›
+  city). **This TV:** Open on start (Home), Default Home (On), Region (Sweden), TV settings, About (2.0.0). Values
+  update live. Headings aren't focusable; ↑/↓ step over them. API keys joins What you watch as it is built. A section's name doesn't change with its group, so a path such as Launcher settings ›
   Phone notes stays as it is. The list stays inside title-safe and scrolls with focus when its sections don't fit,
   keeping a group's heading in view above its first section. A section whose feature is off in Features stays and
   reads Off (Account, Phone notes, Weather, Stores for rent and buy while Price lookup is off): its pane says the
@@ -624,6 +623,12 @@ picks another theme.
   The section's value is "n of 4 on". ↓ goes to the next row's selected option and → stays within its control, as in
   Performance.
 - **Open on start:** Home / Last app / Live TV, only saved.
+- **Region** (F12; Family install step 2, the launcher's `Region`): "Where is this TV?", Sweden / United States as a
+  segmented control, and a line on what that means: the country's streaming services and stores ("Hulu, Peacock,
+  Fandango at Home, Google TV…" for the US), prices in its currency, and what TMDB says is on there. Sweden unless set,
+  so no TV's default changes. Streaming services and Stores list the region's own (`pickServices`, `pickStores`). As in
+  the launcher, each region keeps its own store ticks (a region not chosen before starts with every store ticked), and
+  the streaming services are the household's in any region. The mock titles keep their Swedish offers and prices.
 - **Default Home:** "This launcher is Home", "The remote’s Home button opens it", and **Choose Home app** (Android's
   Home app setting).
 - **TV settings:** a note and **Open TV settings**, Picture, Network, Apps.
@@ -636,17 +641,17 @@ picks another theme.
 
 V2 designs 01-setup B and r2-setup-checklist, made one page by F28 (the project lead, 2026-11-02). Shown on demand from
 the dev bar (Jump to → First run). A page without the nav: "First run", "Set up your Home screen", "Everything has a
-sensible default. Move right to open a row, or start right away.", and three rows, each with its number, title, a line
-under it, the current value and a pill: Features ("4 of 4 on", the features on, Suggested), Streaming services
-("8 ticked", "Netflix, Prime Video +6", Suggested), Stores for rent and buy ("Apple TV Store, Amazon Video +3",
-Suggested). A value that only
-repeats its pill is left out. Below them **Start using Home** and "The same pages are in Launcher
+sensible default. Move right to open a row, or start right away.", and four rows, each with its number, title, a line
+under it, the current value and a pill: Features ("4 of 4 on", the features on, Suggested), Region ("Services, stores
+and prices", Sweden, Suggested; F12, before the two it decides), Streaming services ("8 ticked", "Netflix, Prime Video
++6", Suggested), Stores for rent and buy ("Apple TV Store, Amazon Video +3", Suggested). A value that only repeats its
+pill is left out. Below them **Start using Home** and "The same pages are in Launcher
 settings."; on the right a help pane for the focused row.
 
 - **One page, the checklist as tabs** (F28): the checklist starts wide and focused. **→ on a row** (or OK) opens that
   step's panel on the same page, focus in it: the checklist shrinks to a column of tabs on the left (the title smaller,
   the lead, values, pills, chevrons and help pane gone) and the panel takes the right, fading in. The panel is the
-  same pane as Launcher settings, with a footer: "Step 2 of 3 · changes save at once" and **Next: Stores** (the last
+  same pane as Launcher settings, with a footer: "Step 2 of 4 · changes save at once" and **Next: Streaming services** (the last
   step: **Done**). No new page opens, and nothing needs OK to open.
 - **While a panel is open:** ↑ and ↓ on the tabs show each step's panel at once, as Launcher settings' sections do
   (shown is not done); → enters it; ← from the panel's left edge, or Back in it, returns to its tab, which stays lit

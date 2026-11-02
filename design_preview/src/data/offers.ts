@@ -1,6 +1,6 @@
 import type { Offer, OfferType, Quality, ServiceId, Title } from '../types';
-import { featureOn, settings } from '../core/settings';
-import { DEFAULT_PRICE_SOURCE, HOME_APPS, PICK_SERVICES, PICK_STORES, PRICE_SOURCE, SERVICES } from './services';
+import { featureOn, settings, pickServices, pickStores } from '../core/settings';
+import { DEFAULT_PRICE_SOURCE, HOME_APPS, PRICE_SOURCE, SERVICES } from './services';
 
 // Offer rules. Prices are Swedish kronor, as the launcher's real catalogue has them (V2 Phase 2): a rent or buy
 // offer keeps a price per picture quality, and a store no price source priced has none at all.
@@ -44,7 +44,7 @@ export function paidAction(o: Offer): string {
 
 /** The household has the service: ticked in Launcher settings (free YouTube always counts). */
 export const isSubscribed = (id: ServiceId) =>
-  !!SERVICES[id].free || PICK_SERVICES.some((p) => p.catalog === id && settings.get().services.includes(p.id));
+  !!SERVICES[id].free || pickServices().some((p) => p.catalog === id && settings.get().services.includes(p.id));
 
 /** How many services are ticked, for "All 8 services". */
 export const subscribedCount = () => settings.get().services.length;
@@ -71,11 +71,11 @@ export const isIncludedOffer = (o: Offer) => o.type === 'free' || (o.type === 's
 
 /** A catalogue service the household ticked in the Streaming services pane. */
 const isTicked = (id: ServiceId) =>
-  PICK_SERVICES.some((p) => p.catalog === id && settings.get().services.includes(p.id));
+  pickServices().some((p) => p.catalog === id && settings.get().services.includes(p.id));
 
 /** Whether the service's app is on the mock TV: as the Streaming services pane has it, else on the Home row. */
 const isInstalled = (id: ServiceId) =>
-  PICK_SERVICES.find((p) => p.catalog === id)?.installed ?? HOME_APPS.some((a) => a.id === id);
+  pickServices().find((p) => p.catalog === id)?.installed ?? HOME_APPS.some((a) => a.id === id);
 
 /**
  * The offers a card counts (F1, 2026-11-01): a subscription the household ticked, a free service whose app is
@@ -202,7 +202,7 @@ export function offersByService(t: Title): ServiceOffers[] {
 
 /** Whether the store's (or service's) app is installed on the mock TV. */
 function hasApp(id: ServiceId): boolean {
-  return (PICK_STORES.find((s) => s.id === id) ?? PICK_SERVICES.find((s) => s.id === id))?.installed ?? false;
+  return (pickStores().find((s) => s.id === id) ?? pickServices().find((s) => s.id === id))?.installed ?? false;
 }
 
 /**

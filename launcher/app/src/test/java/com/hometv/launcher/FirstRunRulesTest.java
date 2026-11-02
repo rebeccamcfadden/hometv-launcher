@@ -19,7 +19,7 @@ import static org.junit.Assert.assertTrue;
  * the keys, the rows' names, and when it opens by itself.
  */
 public class FirstRunRulesTest {
-    private static final List<String> THREE = FirstRunRules.STEPS;
+    private static final List<String> STEPS = FirstRunRules.STEPS;
     private static final List<String> TWO = Arrays.asList("services", "stores");
 
     private static Set<String> opened(String... ids) {
@@ -29,9 +29,9 @@ public class FirstRunRulesTest {
     @Test
     public void theStepsAreFeaturesServicesAndStoresAndLeaveOutWhatIsMissing() {
         // F14 (2026-11-01): Sign in to TMDB and Weather city are no longer steps; turning their feature on in the
-        // Features step sets them up.
-        assertEquals(Arrays.asList("features", "services", "stores"), THREE);
-        assertEquals(THREE, FirstRunRules.steps(SettingsNav.ORDER));
+        // Features step sets them up. F12: Region comes before the services and stores it decides.
+        assertEquals(Arrays.asList("features", "region", "services", "stores"), STEPS);
+        assertEquals(STEPS, FirstRunRules.steps(SettingsNav.ORDER));
         List<String> noFeatures = Arrays.asList("account", "services", "stores", "weather", "apps", "theme", "about");
         assertEquals(TWO, FirstRunRules.steps(noFeatures));
     }
@@ -54,27 +54,29 @@ public class FirstRunRulesTest {
         assertEquals(1, FirstRunRules.doneCount(TWO, opened("features", "stores")));
         assertFalse(FirstRunRules.allDone(TWO, opened("features", "stores")));
         assertTrue(FirstRunRules.allDone(TWO, opened("services", "stores")));
-        assertFalse(FirstRunRules.allDone(THREE, opened("services", "stores")));
+        assertFalse(FirstRunRules.allDone(STEPS, opened("services", "stores")));
     }
 
     @Test
     public void focusGoesBackToTheNextRowNotDoneThenStart() {
-        assertEquals("features", FirstRunRules.nextFocus(THREE, opened()));
-        assertEquals("stores", FirstRunRules.nextFocus(THREE, opened("features", "services")));
+        assertEquals("features", FirstRunRules.nextFocus(STEPS, opened()));
+        assertEquals("region", FirstRunRules.nextFocus(STEPS, opened("features", "services")));
+        assertEquals("stores", FirstRunRules.nextFocus(STEPS, opened("features", "region", "services")));
         // Not "the row after the one just done": the first not done, wherever it is.
-        assertEquals("features", FirstRunRules.nextFocus(THREE, opened("services", "stores")));
-        assertNull(FirstRunRules.nextFocus(THREE, opened("features", "services", "stores")));
+        assertEquals("features", FirstRunRules.nextFocus(STEPS, opened("services", "stores")));
+        assertNull(FirstRunRules.nextFocus(STEPS, opened("features", "region", "services", "stores")));
         assertNull(FirstRunRules.nextFocus(TWO, opened("services", "stores")));
     }
 
     @Test
     public void theFooterCountsStepsAndOffersTheNextOrDone() {
-        assertEquals(2, FirstRunRules.stepNumber(THREE, "services"));
+        assertEquals(3, FirstRunRules.stepNumber(STEPS, "services"));
         assertEquals(1, FirstRunRules.stepNumber(TWO, "services"));
         assertEquals(0, FirstRunRules.stepNumber(TWO, "features"));
-        assertEquals("stores", FirstRunRules.nextStep(THREE, "services"));
-        assertEquals("services", FirstRunRules.nextStep(THREE, "features"));
-        assertNull(FirstRunRules.nextStep(THREE, "stores"));
+        assertEquals("stores", FirstRunRules.nextStep(STEPS, "services"));
+        assertEquals("region", FirstRunRules.nextStep(STEPS, "features"));
+        assertEquals("services", FirstRunRules.nextStep(STEPS, "region"));
+        assertNull(FirstRunRules.nextStep(STEPS, "stores"));
         assertNull(FirstRunRules.nextStep(TWO, "features"));
         assertNull(FirstRunRules.nextStep(Collections.emptyList(), "stores"));
         // A feature's setup opened from the Features step is a step of its own: Step 1 of 1, then Done.
@@ -130,13 +132,13 @@ public class FirstRunRulesTest {
 
     @Test
     public void nextLeadsFromFeaturesThroughItsSetups() {
-        List<String> panels = FirstRunRules.panels(THREE, Arrays.asList("account", "weather"));
-        assertEquals(Arrays.asList("features", "account", "weather", "services", "stores"), panels);
+        List<String> panels = FirstRunRules.panels(STEPS, Arrays.asList("account", "weather"));
+        assertEquals(Arrays.asList("features", "account", "weather", "region", "services", "stores"), panels);
         assertEquals("account", FirstRunRules.nextPanel(panels, "features"));
-        assertEquals("services", FirstRunRules.nextPanel(panels, "weather"));
+        assertEquals("region", FirstRunRules.nextPanel(panels, "weather"));
         assertNull(FirstRunRules.nextPanel(panels, "stores"));
         assertNull(FirstRunRules.nextPanel(panels, "notes"));
-        assertEquals(THREE, FirstRunRules.panels(THREE, Collections.emptyList()));
+        assertEquals(STEPS, FirstRunRules.panels(STEPS, Collections.emptyList()));
     }
 
     @Test

@@ -640,8 +640,8 @@ lead decided its open questions on 2026-10-31.
   with their names (`FirstRunRules.names`). The line under Streaming services is the count ("8 ticked"), as in the
   prototype. Features shows the features on, the same way, or "All off", which is left out while it repeats the All
   off pill; its line is the count ("2 of 4 on").
-- **Features step (F14, the project lead 2026-11-01, 2026-11-02):** the steps are Features, Streaming services and
-  Stores. Every feature starts on, and each has its setup as a tab under Features (`FirstRunRules.setupOf`, `setups`:
+- **Features step (F14, the project lead 2026-11-01, 2026-11-02):** the steps are Features, Region (F12, before the
+  two it decides), Streaming services and Stores. Every feature starts on, and each has its setup as a tab under Features (`FirstRunRules.setupOf`, `setups`:
   TMDB account → Sign in to TMDB, Phone notes → its pane, Weather → Weather city); Next leads from Features through
   them, then on (`FirstRunRules.panels`). A setup tab reads "Not set up yet" until it is. **When First run ends**
   (Start, Back, the remote's Home; not a rebuild) every feature on whose setup isn't finished is switched off and a

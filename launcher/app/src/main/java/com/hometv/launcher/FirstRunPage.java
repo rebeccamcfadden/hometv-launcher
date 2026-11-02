@@ -26,8 +26,8 @@ import java.util.Set;
 
 /**
  * First run (design_preview/README.md, First run; V2 design 01-setup B; src/screens/setup.ts), one page since F28 (the
- * project lead, 2026-11-02): no nav, "Set up your Home screen", one row per step (Features, Streaming services, Stores
- * for rent and buy), each with its number, title, a line under it, the current value and a pill; Start using Home
+ * project lead, 2026-11-02): no nav, "Set up your Home screen", one row per step (Features, Region, Streaming services,
+ * Stores for rent and buy), each with its number, title, a line under it, the current value and a pill; Start using Home
  * under them; on the right a help pane for the focused row, or for Start.
  *
  * <p>→ on a row (or OK) opens that step's panel on the same page, focus in it: the checklist shrinks to a column of
@@ -442,6 +442,8 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             case "features":
                 return ctx.getString(R.string.features_value, FeaturePrefs.live(ctx).onCount(),
                         Features.Feature.values().length);
+            case RegionSection.ID:
+                return ctx.getString(R.string.first_run_region_line);
             case "services":
                 Set<ServiceId> ticked = activity.data().services.subscribed();
                 return ctx.getString(R.string.settings_ticked, ServicePicks.count(ticked,
@@ -595,6 +597,9 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             case "features":
                 return part == 0 ? R.string.first_run_features_help_title
                         : part == 1 ? R.string.first_run_features_help_body : R.string.first_run_features_help_note;
+            case RegionSection.ID:
+                return part == 0 ? R.string.first_run_region_help_title
+                        : part == 1 ? R.string.first_run_region_help_body : R.string.first_run_region_help_note;
             case "services":
                 return part == 0 ? R.string.first_run_services_help_title
                         : part == 1 ? R.string.first_run_services_help_body : R.string.first_run_services_help_note;

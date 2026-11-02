@@ -28,6 +28,9 @@ export const SERVICES: Record<ServiceId, Service> = {
   sfanytime: { id: 'sfanytime', name: 'SF Anytime', store: true },
   amazonvideo: { id: 'amazonvideo', name: 'Amazon Video', store: true, app: 'Prime Video' },
   rakuten: { id: 'rakuten', name: 'Rakuten TV', store: true },
+  // US stores (F12): Fandango at Home (formerly Vudu) and Google TV, which sells films in the US.
+  fandango: { id: 'fandango', name: 'Fandango at Home', store: true },
+  googletv: { id: 'googletv', name: 'Google TV', store: true },
 };
 
 export const appName = (id: ServiceId) => SERVICES[id].app ?? SERVICES[id].name;
@@ -48,7 +51,7 @@ export interface PickService {
   catalog?: ServiceId;
 }
 
-export const PICK_SERVICES: PickService[] = [
+export const SE_PICK_SERVICES: PickService[] = [
   { id: 'netflix', name: 'Netflix', mark: 'NETFLIX', weight: 700, installed: true, catalog: 'netflix' },
   { id: 'prime', name: 'Prime Video', mark: 'prime video', weight: 600, installed: true, catalog: 'prime' },
   { id: 'disney', name: 'Disney+', mark: 'Disney+', weight: 400, installed: true, catalog: 'disney' },
@@ -69,13 +72,43 @@ export const PICK_SERVICES: PickService[] = [
   { id: 'cineast', name: 'Cineast', mark: 'Cineast', weight: 600, installed: false, free: 'Free', more: true },
 ];
 
+/**
+ * The US's subscriptions and free services (F12; the launcher's ServicePicks.US_MAIN and US_MORE): the big
+ * subscriptions, then the free ones first behind More services.
+ */
+export const US_PICK_SERVICES: PickService[] = [
+  { id: 'netflix', name: 'Netflix', mark: 'NETFLIX', weight: 700, installed: true, catalog: 'netflix' },
+  { id: 'prime', name: 'Prime Video', mark: 'prime video', weight: 600, installed: true, catalog: 'prime' },
+  { id: 'disney', name: 'Disney+', mark: 'Disney+', weight: 400, installed: true, catalog: 'disney' },
+  { id: 'max', name: 'HBO Max', mark: 'HBO max', weight: 700, installed: true, catalog: 'max' },
+  { id: 'hulu', name: 'Hulu', mark: 'hulu', weight: 700, installed: true },
+  { id: 'peacock', name: 'Peacock', mark: 'Peacock', weight: 700, installed: false, free: 'Free tier' },
+  { id: 'paramountplus', name: 'Paramount+', mark: 'Paramount+', weight: 600, installed: false },
+  { id: 'appletvplus', name: 'Apple TV', mark: 'Apple TV', weight: 500, installed: true, catalog: 'appletvplus' },
+  { id: 'tubi', name: 'Tubi', mark: 'tubi', weight: 800, installed: false, free: 'Free', more: true },
+  { id: 'plutotv', name: 'Pluto TV', mark: 'pluto tv', weight: 700, installed: false, free: 'Free', more: true },
+  { id: 'rokuchannel', name: 'The Roku Channel', mark: 'Roku Channel', weight: 700, installed: false, free: 'Free', more: true },
+  { id: 'plex', name: 'Plex', mark: 'plex', weight: 700, installed: true, free: 'Free', more: true },
+  { id: 'crunchyroll', name: 'Crunchyroll', mark: 'crunchyroll', weight: 600, installed: false, more: true },
+  { id: 'mubi', name: 'MUBI', mark: 'MUBI', weight: 800, installed: false, more: true },
+  { id: 'britbox', name: 'BritBox', mark: 'BritBox', weight: 700, installed: false, more: true },
+];
+
 /** The stores for rent and buy in Sweden, in the Stores pane's order, with whether their app is on the TV. */
-export const PICK_STORES: { id: ServiceId; installed: boolean }[] = [
+export const SE_PICK_STORES: { id: ServiceId; installed: boolean }[] = [
   { id: 'appletv', installed: true },
   { id: 'amazonvideo', installed: true },
   { id: 'viaplaystore', installed: true },
   { id: 'sfanytime', installed: false },
   { id: 'rakuten', installed: false },
+];
+
+/** The US's stores (F12; ServicePicks.US_STORES). Google TV sells films there. */
+export const US_PICK_STORES: { id: ServiceId; installed: boolean }[] = [
+  { id: 'appletv', installed: true },
+  { id: 'amazonvideo', installed: true },
+  { id: 'fandango', installed: false },
+  { id: 'googletv', installed: true },
 ];
 
 /**
