@@ -363,6 +363,13 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   default for a Seasonal theme), Day or Night (F29). The 40 pictures are levelled to one brightness curve, so dawn, day
   and sunset blend and the seasons step evenly (F24); 8-bit's generator applies the same curve to its scenes. Halloween's jack-o'-lanterns and its house glow less since F30 (2026-11-02, `vector-6`): the pumpkins' brightest pixels match the windows'. Plan and decisions: Figma page "Calendar · Time of day". Open: a TV
   bench of a phase change; stars or clouds that move belong to Animated details, later.
+- **Seasonal picture's cost on the TCL (F33, 2026-11-02):** same build, three cold starts each, Vector art against
+  Midnight: Home is drawn about 100 ms later (978 against 876 ms) and the native heap is about 3 MB larger. That is
+  the picture itself: one 1920×1080 RGB_565 decode (105–129 ms, once) that overlaps `onCreate`. With the picture
+  skipped, Vector art starts like Midnight. F22's phase maths (3–9 ms) and next edge (3–4 ms) run off the main thread,
+  and there is no second bitmap and no decode ahead of time. Kept on purpose: Home shows the cached picture straight
+  away (the project lead's decision). Decoding it after the first frame would win back about 90 ms, with the picture
+  then arriving about 0.15 s later; decoding at background priority won back only about 20 ms.
 - **Seasonal · Nature removed (2026-11-01):** the project lead's decision. A TV that had it shows Vector art; its photos
   stay in `seasonal/nature/` for TVs on an older build.
 
