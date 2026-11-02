@@ -3,7 +3,7 @@ import { imgUrl } from '../core/dom';
 
 // F40: each title's poster on TMDB (its poster_path, looked up by name and year on 2026-11-02), for the portrait gallery
 // cards Rebecca is choosing between. TMDB serves it (image.tmdb.org, as the launcher's TMDB art); a title with none
-// here, or a poster that won't load (offline), shows its landscape art cropped to the poster's shape.
+// here, or a poster that can't load (no internet), shows its landscape art cropped to the poster's shape.
 const POSTERS: Record<string, string> = {
   '911': '/u6HuWWohheyzAj5PUn4rBd0eH92.jpg',
   'arrival': '/pEzNVQfdzYDzVK0XqxERIw2x2se.jpg',

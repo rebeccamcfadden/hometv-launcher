@@ -284,8 +284,8 @@ the one beside it when the change took the card off the page (a title removed fr
   in chip order that holds it, and its genre.
 - **Poster cards (F40, for Rebecca to pick; not decided):** the dev bar's **Cards** menu (or `?cards=poster`,
   `?cards=poster-compact`) swaps the grid for six columns of portrait cards with the title's TMDB poster
-  (`src/data/posters.ts`, loaded from image.tmdb.org; a title with none, or offline, shows its landscape art cropped):
-  the name, then the service and availability on one line ("Netflix · Included"), then the runtime or seasons line
+  (`src/data/posters.ts`, loaded from image.tmdb.org; a title with none, or a poster that can't load, shows its
+  landscape art cropped): the name, then the service and availability on one line ("Netflix · Included"), then the runtime or seasons line
   and the lists line, or, in *name and service only*, just the first two. `compare.html` shows today's cards and the
   poster cards side by side, each a live prototype (Movies or TV Shows; click a side, then use the keys).
 - **Filters drawer** (from the right): Availability, Review score, Genre, Length (movies only), Watch state. ←/→

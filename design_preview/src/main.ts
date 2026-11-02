@@ -49,6 +49,8 @@ const startPhase = params.get('phase') as Phase | null;
 if (startPhase && PHASES.includes(startPhase)) theme.setPhase(startPhase);
 theme.init();
 
+// ?devbar=off hides the dev bar, for the frames of compare.html; before init, which sizes the stage to what is left.
+if (params.get('devbar') === 'off') document.body.classList.add('no-devbar');
 app.init(stage, {
   home: homeScreen,
   movies: () => libraryScreen('movie'),
@@ -137,8 +139,6 @@ if (isCardStyle(startCards)) {
   cards.set(startCards);
   cardsSelect.value = startCards;
 }
-// ?devbar=off hides the dev bar, for the frames of compare.html.
-if (params.get('devbar') === 'off') document.body.classList.add('no-devbar');
 phaseSelect.append(new Option('Time: now (follows the sun)', ''));
 for (const p of PHASES) phaseSelect.append(new Option(`Time: ${PHASE_LABELS[p]}`, p));
 const year = new Date().getFullYear();
