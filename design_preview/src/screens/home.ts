@@ -4,6 +4,7 @@ import { focusable } from '../core/focus';
 import { net, SAVED_AT } from '../core/net';
 import { deg, settings } from '../core/settings';
 import { placeById } from '../data/places';
+import { attachWeather } from '../core/weatherfx';
 import { HOME_APPS, OTHER_APPS } from '../data/services';
 import { icon, type IconName } from '../ui/icons';
 import { navBar } from '../ui/widgets';
@@ -142,6 +143,8 @@ export function homeScreen(): Screen {
   );
 
   const el = h('div.screen.screen--base.home', navBar('home'), content);
+  // F25: snow or rain over the Seasonal picture while Home is idle.
+  attachWeather(el, () => app.top()?.el === el);
 
   return {
     label: 'Home',

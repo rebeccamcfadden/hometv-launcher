@@ -32,7 +32,7 @@ interface Saved {
   timeOfDay: TimeOfDay;
   /**
    * Launcher settings › Performance (with Motion): card shadows, the focus glow, the backdrop picture and the animated
-   * details (petals, snow and leaves drifting over Seasonal backdrops; saved only, nothing moves yet, on the TV either).
+   * details (F25: snow or rain over Seasonal pictures while Home is idle, core/weatherfx; off by default for every TV).
    * The prototype draws no card shadows or glow, so those two are saved only; the backdrop applies.
    */
   cardShadows: CardShadows;
@@ -62,7 +62,7 @@ const defaults = (): Saved => ({
   cardShadows: 'on',
   focusGlow: true,
   backdropPicture: 'photo',
-  movingDetails: true,
+  movingDetails: false,
 });
 
 function load(): Saved {

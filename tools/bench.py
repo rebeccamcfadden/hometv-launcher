@@ -18,6 +18,7 @@ platform tools are not installed by default.
 Usage:
     TV_HOST=192.168.1.50 python tools/bench.py --keys 36 --series 3
     TV_HOST=192.168.1.50 python tools/bench.py --keys 36 --series 3 --out-dir my-results
+    TV_HOST=192.168.1.50 python tools/bench.py --idle-animation 30   # also the frames an idle Home draws
 
 The output is a summary plus the raw per-key numbers, so a run can be compared with another one
 or re-analysed later.
@@ -488,6 +489,34 @@ def pss_of(tv, package):
     return int(match.group(1)) // 1024 if match else None
 
 
+def gfx_summary(text, seconds):
+    """The first window summary in `dumpsys gfxinfo <pkg>`: frames, janky frames, fps over `seconds` and the
+    frame-time percentiles in ms. Its counters cover every frame since the reset, unlike framestats' last 120."""
+    def first(pattern):
+        match = re.search(pattern, text, re.M)
+        return int(match.group(1)) if match else None
+
+    frames = first(r"^\s*Total frames rendered:\s*(\d+)")
+    if frames is None:
+        return None
+    return {"frames": frames, "janky": first(r"^\s*Janky frames:\s*(\d+)"),
+            "fps": round(frames / seconds, 1) if seconds else None,
+            "p50_ms": first(r"^\s*50th percentile:\s*(\d+)ms"),
+            "p90_ms": first(r"^\s*90th percentile:\s*(\d+)ms"),
+            "p95_ms": first(r"^\s*95th percentile:\s*(\d+)ms")}
+
+
+def idle_animation(tv, package, seconds):
+    """Home left idle for `seconds` after a reset of its frame counters: what an idle animation draws (F25's snow
+    and rain, with Animated details on) and what it costs the device. A still Home draws next to nothing."""
+    tv.shell(f"dumpsys gfxinfo {package} reset")
+    device, launcher = idle_cpu(tv, package, seconds)
+    summary = gfx_summary(tv.shell(f"dumpsys gfxinfo {package}"), seconds) or {}
+    summary["device_cpu_pct"] = round(device, 1) if device is not None else None
+    summary["launcher_cpu_pct"] = round(launcher, 1) if launcher is not None else None
+    return summary
+
+
 def stats(values):
     if not values:
         return {"p50": None, "p95": None, "p99": None, "max": None, "n": 0}
@@ -510,6 +539,9 @@ def main():
     parser.add_argument("--cold", type=int, default=5, help="cold starts")
     parser.add_argument("--returns", type=int, default=10, help="returns to Home")
     parser.add_argument("--idle", type=int, default=60, help="idle seconds")
+    parser.add_argument("--idle-animation", type=int, default=0, metavar="SECONDS",
+                        help="after the idle CPU, count the frames Home draws while idle for SECONDS "
+                             "(F25's snow and rain); 0 skips it")
     parser.add_argument("--out-dir", default="bench-results", help="where to write the results")
     args = parser.parse_args()
     if not args.host:
@@ -571,6 +603,10 @@ def main():
     tv.shell("input keyevent 3")
     time.sleep(20)
     device_cpu, launcher_cpu = idle_cpu(tv, package, args.idle)
+    idle_frames = None
+    if args.idle_animation > 0:
+        print(f"Idle animation {args.idle_animation}s")
+        idle_frames = idle_animation(tv, package, args.idle_animation)
     pss = pss_of(tv, package)
 
     result = {
@@ -592,6 +628,7 @@ def main():
         "return_to_home_ms": stats(returns),
         "idle_cpu_pct": round(device_cpu, 1) if device_cpu is not None else None,
         "idle_launcher_cpu_pct": round(launcher_cpu, 1) if launcher_cpu is not None else None,
+        "idle_animation": idle_frames,
         "pss_mb": pss,
         "samples": samples,
     }

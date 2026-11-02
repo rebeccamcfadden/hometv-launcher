@@ -696,6 +696,8 @@ final class HomePage extends Screen {
         LocalDateTime now = w == null ? null : HomeClock.plausible(nowMs) ? w.localTime(nowMs)
                 : w.current != null ? w.current.time : null;
         Weather.Reading reading = now == null ? null : w.now(now);
+        // F25: snow or rain go by the conditions now, or by the season offline or without a reading for now.
+        activity.weatherLayer().setCondition(offline || reading == null ? null : Weather.condition(reading.code));
         forecast.removeAllViews();
         if (now != null) {
             LocalDate today = now.toLocalDate();
@@ -839,6 +841,7 @@ final class HomePage extends Screen {
     private void setVisible(boolean on) {
         if (on == visible) return;
         visible = on;
+        activity.weatherLayer().setHomeVisible(on);
         if (on) {
             IntentFilter f = new IntentFilter(Intent.ACTION_TIME_TICK);
             f.addAction(Intent.ACTION_TIME_CHANGED);

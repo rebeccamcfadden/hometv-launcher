@@ -9,6 +9,7 @@ import { settings } from './core/settings';
 import { settingsMenu } from './screens/quickSettings';
 import { store } from './core/store';
 import { PHASE_LABELS, PHASES, type Phase } from './core/daylight';
+import { setFall, type FallChoice } from './core/weatherfx';
 import { isThemeId, parseDate, PERIOD_DATES, PERIOD_LABELS, periodAt, theme, THEMES } from './core/theme';
 import { getTitle } from './data/catalog';
 import { homeScreen } from './screens/home';
@@ -88,6 +89,19 @@ const themeSelect = document.getElementById('theme') as HTMLSelectElement;
 for (const t of THEMES) themeSelect.append(new Option(`Theme: ${t.group === 'seasonal' ? `Seasonal · ${t.name}` : t.name}`, t.id));
 const dateSelect = document.getElementById('date') as HTMLSelectElement;
 const phaseSelect = document.getElementById('phase') as HTMLSelectElement;
+// F25: what falls while Home is idle: the real weather at the place (the season offline), or forced.
+const fallSelect = document.getElementById('fall') as HTMLSelectElement;
+for (const [v, l] of [['auto', 'Weather: the real weather'], ['off', 'Weather: none'], ['snow', 'Weather: snow'], ['rain', 'Weather: rain']] as const)
+  fallSelect.append(new Option(l, v));
+fallSelect.addEventListener('change', () => {
+  setFall(fallSelect.value as FallChoice);
+  fallSelect.blur();
+});
+const startFall = params.get('fall');
+if (startFall === 'snow' || startFall === 'rain' || startFall === 'off') {
+  setFall(startFall);
+  fallSelect.value = startFall;
+}
 phaseSelect.append(new Option('Time: now (follows the sun)', ''));
 for (const p of PHASES) phaseSelect.append(new Option(`Time: ${PHASE_LABELS[p]}`, p));
 const year = new Date().getFullYear();

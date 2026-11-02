@@ -135,7 +135,7 @@ export const performancePane = (host: PaneHost): Pane => ({
       ),
       perfRow(
         'Animated details',
-        'Snow, rain, leaves and bats drifting over Seasonal backdrops',
+        'Snow or rain over Seasonal pictures while Home is idle',
         onOff('seg-details', () => settings.get().movingDetails, (movingDetails) => settings.set({ movingDetails })),
       ),
     ),

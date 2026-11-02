@@ -67,14 +67,15 @@ final class PerformanceSection implements SettingsSection {
         return R.drawable.ic_ui_gauge;
     }
 
-    /** "All on", "Light mode" at the lightest, "Lighter" while a light-start TV has nothing saved, else "Custom". */
+    /** "All on", "Default" (all on but Animated details, a TV's usual start), "Light mode" at the lightest, "Lighter" while a light-start TV has nothing saved, else "Custom". */
     @Override
     public CharSequence value(Context ctx) {
         MotionChoice m = motion(ctx);
         // Android's animations off keep motion reduced: Full shows as Reduced, Off stays Off.
         if (m == MotionChoice.FULL && systemOff(ctx)) m = MotionChoice.REDUCED;
         PerfChoices p = PerfPrefs.load(ctx, config);
-        if (m == MotionChoice.FULL && p.same(PerfChoices.FULL)) return ctx.getString(R.string.perf_value_all_on);
+        if (m == MotionChoice.FULL && p.same(PerfChoices.ALL)) return ctx.getString(R.string.perf_value_all_on);
+        if (m == MotionChoice.FULL && p.same(PerfChoices.FULL)) return ctx.getString(R.string.perf_value_default);
         if (m == MotionChoice.OFF && p.same(PerfChoices.MINIMUM)) return ctx.getString(R.string.perf_value_light_mode);
         if (config.lightDefaults && !saved(ctx)) return ctx.getString(R.string.perf_value_lighter);
         return ctx.getString(R.string.perf_value_custom);

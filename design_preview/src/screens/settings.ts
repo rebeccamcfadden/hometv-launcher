@@ -18,11 +18,12 @@ import { servicesPane, storesPane } from './panes/services';
 import { themePane } from './panes/theme';
 import { weatherPane } from './panes/weather';
 
-/** "All on" while every Performance choice draws and moves everything, "Light mode" at the lightest, else "Custom". */
+/** "All on" while every Performance choice draws and moves everything, "Default" for the usual start (all on but
+ * Animated details, F25), "Light mode" at the lightest, else "Custom". */
 function performanceValue(): string {
   const s = settings.get();
-  const all = s.motion === 'full' && s.cardShadows === 'on' && s.focusGlow && s.backdropPicture === 'photo' && s.movingDetails;
-  if (all) return 'All on';
+  const full = s.motion === 'full' && s.cardShadows === 'on' && s.focusGlow && s.backdropPicture === 'photo';
+  if (full) return s.movingDetails ? 'All on' : 'Default';
   const light = s.motion === 'off' && s.cardShadows === 'off' && !s.focusGlow && s.backdropPicture === 'plain' && !s.movingDetails;
   return light ? 'Light mode' : 'Custom';
 }

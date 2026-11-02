@@ -368,8 +368,19 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 
 - **Retro themes** (Retro CRT, Synthwave '84, Groovy '70s, 8-bit Arcade): designed in Figma, with their tokens and the
   scanline overlay ready; not in the picker yet.
-- **Animated details** (Launcher settings › Performance, formerly the Theme pane's Moving details): the switch is
-  saved, but nothing moves yet (petals, snow, leaves, bats).
+- **Animated details** (Launcher settings › Performance, formerly the Theme pane's Moving details; F25, the project
+  lead's decisions of 2026-11-01): off by default on every TV. When on, snow or rain falls over a Seasonal picture by
+  the real weather at the Weather place, or by the season offline (snow in Snow and Christmas, rain in Spring rain),
+  only while Home is idle: it starts 3 s after the last key and stops on the next. Vector art at 12 fps, 8-bit at
+  10 fps on the scene's pixel grid. Off with Motion Reduced or Off, or a plain backdrop. For tests and the TV bench,
+  `adb shell am start -a com.hometv.launcher.action.FALL_PREVIEW --es fall snow -n com.hometv.launcher/.MainActivity` forces snow
+  or rain (`off` ends it) until the launcher restarts; public release builds ignore it (`PUBLIC_RELEASE`). TCL bench
+  (2026-11-02, snow on Vector art, Motion Full, 30 s): frame time p50 and p90 7 ms with no janky frames, 16.8 fps
+  before the vsync-anchored timing, the launcher at 11.8 % of one core while it falls against 0.1 % still; that cost
+  follows the frame rate (the whole window redraws on that GPU), not the flake count: about 0.7 % per fps. At the
+  12 fps it ships with, that predicts about 8.5 %. Open: a re-bench at 12 fps
+  (`tools/bench.py --idle-animation 30`); petals, leaves and bats, and wind or lightning; the backdrop window's
+  `buffer_age` on the TCL.
 - **Southern hemisphere:** the Seasonal periods follow the northern calendar everywhere.
 - **Fonts:** downloaded through Google Play services' font provider and kept on the TV; a family the provider can't
   serve comes straight from Google Fonts' CSS API over HTTPS (the TrueType file, at most 2 MB; still none in the APK).

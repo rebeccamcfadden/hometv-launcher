@@ -78,7 +78,8 @@ closes. The sections, top to bottom:
 - **Performance**: how much the launcher draws and moves. Light mode sets everything below to its lightest. Motion
   (Full, or Reduced and Off, where pages, menus and Home's scroll switch without moving, as with `reduced_motion`),
   card shadows (On, Focused card only, Off), the focus glow, the backdrop picture (Photo or the theme's plain colour)
-  and animated details. A low-RAM TV starts with the lighter choices (no card shadows, Motion Reduced), as does any TV
+  and animated details (off to start: snow or rain over a Seasonal picture, by the weather at the Weather place or the
+  season, while Home is idle for 3 s). A low-RAM TV starts with the lighter choices (no card shadows, Motion Reduced), as does any TV
   whose `light_defaults` says `on`. Pushing or resetting a `config.json` clears the choices.
 - **Open on start**, only with `open_on_start_choice`: Home, or an app that opens instead of Home the first time Home
   comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.

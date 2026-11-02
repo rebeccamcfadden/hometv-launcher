@@ -20,12 +20,13 @@
     <string name="perf_backdrop_photo">Photo</string>
     <string name="perf_backdrop_plain">Plain colour</string>
     <string name="perf_details">Animated details</string>
-    <string name="perf_details_sub">Snow, rain, leaves and bats drifting over Seasonal backdrops</string>
+    <string name="perf_details_sub">Snow or rain over Seasonal pictures while Home is idle</string>
     <string name="perf_on">On</string>
     <string name="perf_off">Off</string>
 
     <!-- The section's value in the list. -->
     <string name="perf_value_all_on">All on</string>
+    <string name="perf_value_default">Default</string>
     <string name="perf_value_lighter">Lighter</string>
     <string name="perf_value_light_mode">Light mode</string>
     <string name="perf_value_custom">Custom</string>

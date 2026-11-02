@@ -437,7 +437,7 @@ on the right.
 - **Sections and values:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing in…", "Code
   expired", or the username), Phone notes (Off, On, or amber "3 not matched"), Streaming services ("8 ticked"), Stores
   for rent and buy ("5 ticked"), Weather (the city), Home row apps (7), Theme (Midnight, or "Nature · Halloween"),
-  Performance (All on, or Custom), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values update live. The list
+  Performance (Default, All on, or Custom), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values update live. The list
   stays inside title-safe and scrolls with focus when its sections don't fit.
 - **Moving:** landing on a section shows its pane at once, as a preview. → or OK enters the pane, on its first control
   (the selected option in a segmented control), and the pane's border brightens. ← from the pane's left edge
@@ -543,6 +543,13 @@ picks another theme.
   (New York; on the TV, the Weather place). The picture changes when the sun moves on; the colours stay the period's.
   Always day keeps the day picture. The dev bar's Time menu, or `?phase=dawn|day|sunset|night`, puts the preview on a
   part of the day. `src/core/daylight.ts` is the launcher's `DayPhase`.
+- **Snow and rain (F25):** with Launcher settings › Performance › Animated details on (off by default), snow or rain
+  falls over a Seasonal picture while Home is idle: it starts 3 s after the last key and stops on the next one, so
+  moving around Home never draws it. It falls by the real weather at the Weather place (the mock place's description;
+  snow only in Snow, Thaw, Autumn, Halloween and Christmas) and by the season when offline (Snow and Christmas snow,
+  Spring rain rains). It needs Motion Full and Backdrop picture = Photo. Vector art runs at 12 fps; 8-bit at 10 fps,
+  one scene pixel per flake. The colour follows the part of the day. The dev bar's Weather menu, or
+  `?fall=snow|rain|off`, forces it. `src/core/weatherfx.ts`; the launcher's `WeatherLayer` follows the same rules.
 - **Periods:** Snow 1 Jan – 28/29 Feb, Thaw March, Spring rain April, Bloom May, Pride June, Midsummer July, Late
   summer August, Autumn 1 Sep – 14 Oct and 3 – 30 Nov, Halloween 15 Oct – 2 Nov, Christmas December. The period is
   looked at again on the hour, so it turns over at midnight.
@@ -572,11 +579,11 @@ picks another theme.
   choice, its name and a line on the left and a small segmented control on the right: **Motion** (Full / Reduced /
   Off; Reduced drops slides, rises and focus scale-ups and keeps the fades, Home's scroll jumps and its dimming fades;
   Off stops every animation), **Card shadows** (On / Focused card only / Off), **Focus glow** (On / Off), **Backdrop
-  picture** (Photo / Plain colour: the theme's sky without the picture) and **Animated details** (On / Off; the old
-  Moving details, saved only: nothing moves yet, on the TV either). A low-RAM TV starts at the light
+  picture** (Photo / Plain colour: the theme's sky without the picture) and **Animated details** (On / Off, off to start; the old
+  Moving details: snow and rain over Seasonal pictures while Home is idle, F25). A low-RAM TV starts at the light
   end (no card shadows, Motion Reduced, no animated details; glow and picture on) until the household chooses, and the
   pane says so; config.xml or config.json `light_defaults` can set or stop that per TV. The prototype starts with
-  everything on; it applies Motion and the backdrop, and saves the card shadows and glow, which it doesn't draw.
+  everything on but animated details; it applies Motion and the backdrop, and saves the card shadows and glow, which it doesn't draw.
 - **Open on start:** Home / Last app / Live TV, only saved.
 - **Default Home:** "This launcher is Home", "The remote’s Home button opens it", and **Choose Home app** (Android's
   Home app setting).

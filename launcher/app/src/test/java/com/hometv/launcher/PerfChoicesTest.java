@@ -40,6 +40,19 @@ public class PerfChoicesTest {
     }
 
     @Test
+    public void animatedDetailsStartOffOnEveryTv() {
+        // F25: snow and rain are off until the household turns them on, whatever the TV's start.
+        Map<String, Object> none = new HashMap<>();
+        assertFalse(PerfChoices.resolve(none, false).details);
+        assertFalse(PerfChoices.resolve(none, true).details);
+        // "All on" is the usual start plus Animated details.
+        Map<String, Object> on = new HashMap<>();
+        on.put(PerfChoices.KEY_DETAILS, true);
+        assertTrue(PerfChoices.resolve(on, false).same(PerfChoices.ALL));
+        assertFalse(PerfChoices.ALL.same(PerfChoices.FULL));
+    }
+
+    @Test
     public void savedChoicesWinOverTheStart() {
         Map<String, Object> saved = new HashMap<>();
         saved.put(PerfChoices.KEY_SHADOWS, "focus");

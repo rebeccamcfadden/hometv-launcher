@@ -50,8 +50,11 @@ final class PerfChoices {
         this.details = details;
     }
 
-    /** Everything the theme draws. */
-    static final PerfChoices FULL = new PerfChoices(Shadows.ON, true, false, true);
+    /** A TV's start, unless it is low-RAM: everything the theme draws, still. */
+    // Animated details (F25's snow and rain) start off on every TV, the project lead's decision of 2026-11-01.
+    static final PerfChoices FULL = new PerfChoices(Shadows.ON, true, false, false);
+    /** Everything on, Animated details too: the pane's "All on". */
+    static final PerfChoices ALL = new PerfChoices(Shadows.ON, true, false, true);
     /**
      * A low-RAM TV's start: no card shadows (about 19 points of jank on the TCL), nothing animated; the focus glow
      * (one tile) and the backdrop picture stay, as the theme's look. Motion starts at Reduced (MotionChoice).

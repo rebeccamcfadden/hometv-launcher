@@ -50,6 +50,9 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private LauncherSettingsPage settingsPage;
     /** Opens First run's checklist over Home (FirstRunPage) at any time, for adb; by itself it shows once. */
     static final String ACTION_FIRST_RUN = "com.hometv.launcher.action.FIRST_RUN";
+    /** F25's test-only force for the TV bench (previewFallIfAsked), with EXTRA_FALL snow, rain or off. */
+    static final String ACTION_FALL_PREVIEW = "com.hometv.launcher.action.FALL_PREVIEW";
+    static final String EXTRA_FALL = "fall";
     /** Survive a rebuild with First run open: the checklist reopens with the same steps done. */
     private static final String KEY_FIRST_RUN = "first_run_opened";
     private FirstRunPage firstRun;
@@ -66,6 +69,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private TvInputs inputs;
     private FrameLayout stage;
     private ImageView backdrop;
+    /** F25: snow or rain over a Seasonal picture while Home is idle, between the backdrop and the pages. */
+    private WeatherLayer weather;
     private Backdrops backdrops;
     private boolean backdropLoaded;
     private boolean started;
@@ -210,6 +215,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
                 ViewGroup.LayoutParams.MATCH_PARENT));
         backdrops = new Backdrops(this, backdrop);
         Overlays.add(root, this, theme);
+        weather = new WeatherLayer(this);
+        backdrops.setOnPhase(weather::setPhase);
+        root.addView(weather, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
         stage = new FrameLayout(this);
         root.addView(stage, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
@@ -222,7 +231,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         loadBackdrop();
 
         shell = new Shell(stage, this);
-        shell.setOnShown(() -> pill.atTop(shell.pillAtTop()));
+        shell.setOnShown(() -> {
+            pill.atTop(shell.pillAtTop());
+            weather.setOnTop(shell.top() instanceof HomePage);
+        });
         // F3: holding OK on a title card, wherever one shows, opens the title menu.
         shell.setLongOk(v -> TitleMenu.open(this, v));
         refreshNav();
@@ -241,7 +253,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
         // Not after recreate(): the launch intent survives it and would open them again.
         if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())
-                && !openFirstRunIfAsked(getIntent()) && !openInputsIfAsked(getIntent())
+                && !openFirstRunIfAsked(getIntent()) && !previewFallIfAsked(getIntent()) && !openInputsIfAsked(getIntent())
                 && FirstRunPage.dueOnStart(this)) {
             openFirstRun(null);
         }
@@ -257,6 +269,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     public Screen create(Screen.Tab tab) {
         return Pages.create(this, this, tab);
+    }
+
+    WeatherLayer weatherLayer() {
+        return weather;
     }
 
     @Override
@@ -583,6 +599,18 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         return true;
     }
 
+    /**
+     * F25's test-only force for the TV bench, ignored in public release builds (BuildConfig.PUBLIC_RELEASE):
+     * {@code adb shell am start -a com.hometv.launcher.action.FALL_PREVIEW --es fall snow -n com.hometv.launcher/.MainActivity}
+     * ({@code snow}, {@code rain} or {@code off}). Until the launcher restarts; nothing is saved.
+     */
+    private boolean previewFallIfAsked(Intent intent) {
+        if (intent == null || !ACTION_FALL_PREVIEW.equals(intent.getAction())) return false;
+        setIntent(new Intent(Intent.ACTION_MAIN));
+        if (!BuildConfig.PUBLIC_RELEASE) weather.setPreview(WeatherFall.preview(intent.getStringExtra(EXTRA_FALL)));
+        return true;
+    }
+
     @Override
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
@@ -618,6 +646,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         super.onNewIntent(intent);
         if (openLauncherSettingsIfAsked(intent)) return;
         if (openFirstRunIfAsked(intent)) return;
+        if (previewFallIfAsked(intent)) return;
         if (openInputsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         shell.home();
@@ -648,6 +677,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        // Any key stops the snow or rain before it is handled, so the frame it moves in has none to draw.
+        if (event.getAction() == KeyEvent.ACTION_DOWN && weather != null) weather.onKey();
         if (handleSettingsKey(event)) return true;
         if (shell.dispatch(event)) return true;
         return super.dispatchKeyEvent(event);
@@ -726,6 +757,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             AppArt.clear();
         }
         if (!MemoryTrimPolicy.shouldRelease(level, started)) return;
+        weather.release();
         backdrops.release();
         backdropLoaded = false;
     }

@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -92,6 +93,7 @@ final class Backdrops {
     private BackdropKeys.Key key = BackdropKeys.Key.NONE;
     /** The part of the day a phased key shows; DAY for any other key. */
     private DayPhase phase = DayPhase.DAY;
+    private Consumer<DayPhase> onPhase;
     /** Bumped by every new load and by release(): a result from an older one is dropped. */
     private int generation;
     /** The URL path on screen or on its way; null for other kinds. */
@@ -139,7 +141,7 @@ final class Backdrops {
                     showPhased();
                     break;
                 }
-                phase = DayPhase.DAY;
+                setPhase(DayPhase.DAY);
                 if (key.kind == BackdropKeys.Kind.PIXEL) {
                     showPixel();
                 } else {
@@ -167,7 +169,7 @@ final class Backdrops {
             main.post(() -> {
                 if (gen != generation || activity.isDestroyed()) return;
                 loading = false;
-                phase = p;
+                setPhase(p);
                 wanted = path;
                 if (d != null) reveal(d);
                 if (path != null) prefetch();
@@ -185,6 +187,17 @@ final class Backdrops {
     /** The clock or time zone was set while the theme stayed: the part of the day and its next edge are worked out again. */
     void timeChanged() {
         refresh();
+    }
+
+    /** Told the part of the day the picture shows, when it is worked out (F25's particles take its tint). Main thread. */
+    void setOnPhase(Consumer<DayPhase> listener) {
+        onPhase = listener;
+        if (listener != null) listener.accept(phase);
+    }
+
+    private void setPhase(DayPhase p) {
+        phase = p;
+        if (onPhase != null) onPhase.accept(p);
     }
 
     /**
@@ -234,7 +247,7 @@ final class Backdrops {
 
     private void refresh(DayPhase now) {
         boolean turned = now != phase;
-        phase = now;
+        setPhase(now);
         if (key.kind == BackdropKeys.Kind.URL) {
             String path = BackdropKeys.pick(key, LocalDateTime.now().getHour(), phase);
             // A new picture supersedes one still loading; the same one, still loading, is left to finish.
