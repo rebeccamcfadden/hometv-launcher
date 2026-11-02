@@ -237,7 +237,7 @@ if [ "$FRESH_INSTALL" = 1 ]; then
   # Optional, after the install has worked: a lost connection or a refused start must not report the install failed.
   FIRST_RUN_OUT=$("$PY" -I ../tools/tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity' 2>&1) || FIRST_RUN_OUT="Error: no answer"
   case "$FIRST_RUN_OUT" in
-    *Error*) echo "Installed. First run did not open; open it with: tools/tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity'" ;;
+    *Error*) echo "Installed. First run did not open; from the repository root, open it with: tools/tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity'" ;;
     *) echo "Installed. First run is open on the TV." ;;
   esac
 else
