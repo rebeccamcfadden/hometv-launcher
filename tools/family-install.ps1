@@ -41,7 +41,8 @@ Set-StrictMode -Version 2
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 $ProgressPreference = 'SilentlyContinue'
 # Its own adb server, so a developer's adb on this laptop (another version) is neither killed nor used.
-if (-not $env:ANDROID_ADB_SERVER_PORT) { $env:ANDROID_ADB_SERVER_PORT = '5038' }
+$script:OwnServer = $false
+if (-not $env:ANDROID_ADB_SERVER_PORT) { $env:ANDROID_ADB_SERVER_PORT = '5038'; $script:OwnServer = $true }
 
 # ---- Pinned: the release this copy installs (stamped by tools/release.ps1) and Google's platform-tools ------------
 $ReleaseRepo = 'rebeccamcfadden/hometv-launcher'
@@ -156,8 +157,18 @@ function Get-PinnedAdb {
         Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
         Stop-Install "Google's platform-tools download is not the file this installer expects (its SHA-256 differs). Nothing was changed. Try again later, and tell the person helping you."
     }
-    # Unpacked from the checked zip each run, so a changed adb.exe on disk is never used.
-    if (Test-Path -LiteralPath $dir) { Remove-Item -LiteralPath $dir -Recurse -Force }
+    # Unpacked from the checked zip each run, so a changed adb.exe on disk is never used. A server left by an earlier
+    # run that stopped half-way still holds adb.exe open: stop it first (it is this installer's own, on its own port).
+    if (Test-Path -LiteralPath $dir) {
+        $old = Join-Path $dir 'platform-tools\adb.exe'
+        if ($script:OwnServer -and (Test-Path -LiteralPath $old)) {
+            $saved = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+            try { & $old kill-server 2>&1 | Out-Null } finally { $ErrorActionPreference = $saved }
+            Start-Sleep -Seconds 1
+        }
+        try { Remove-Item -LiteralPath $dir -Recurse -Force }
+        catch { Stop-Install "Could not replace the old copy of adb in $dir. Close any other window running this installer, or restart the laptop, then run it again. Nothing was changed on the TV." }
+    }
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [IO.Compression.ZipFile]::ExtractToDirectory($zip, $dir)
     if (-not (Test-Path -LiteralPath $adb)) { Stop-Install 'The platform-tools zip has no adb.exe.' }
@@ -165,8 +176,10 @@ function Get-PinnedAdb {
 }
 
 # ---- The APK and its signer ----------------------------------------------------------------------------------------
-# The SHA-256 of each signer's certificate, read from the APK Signature Scheme v3 block, else the v2 block
-# (source.android.com/docs/security/features/apksigning/v2). Empty when the APK has neither, or is malformed.
+# The SHA-256 of the signer's certificate in each APK Signature Scheme block present: v2, which Android 8 reads, and v3
+# and v3.1, which newer Android reads instead (source.android.com/docs/security/features/apksigning). Empty when there
+# is no v2 block, a block names more or fewer than one signer, or the APK is malformed. Signatures are not verified:
+# the release APK's SHA-256 is pinned, and this check only catches an APK from anywhere else.
 function Get-ApkSignerDigests([string]$Path) {
     $b = [IO.File]::ReadAllBytes($Path)
     try {
@@ -193,10 +206,8 @@ function Get-ApkSignerDigests([string]$Path) {
             $blocks[$id] = @(($pos + 12), $valueEnd)
             $pos = $valueEnd
         }
-        $v3 = [long][Convert]::ToUInt32('f05368c0', 16)
         $v2 = [long][Convert]::ToUInt32('7109871a', 16)
-        $chosen = if ($blocks.ContainsKey($v3)) { $blocks[$v3] } elseif ($blocks.ContainsKey($v2)) { $blocks[$v2] } else { $null }
-        if (-not $chosen) { return @() }
+        $ids = @($v2, [long][Convert]::ToUInt32('f05368c0', 16), [long][Convert]::ToUInt32('1b93ad61', 16))
         # A uint32 length, then that many bytes: returns the slice and moves the cursor past it.
         $readLp = {
             param([long]$At, [long]$Limit)
@@ -208,17 +219,25 @@ function Get-ApkSignerDigests([string]$Path) {
         }
         $sha = [Security.Cryptography.SHA256]::Create()
         $digests = @()
-        $signers = & $readLp $chosen[0] $chosen[1]
-        $at = $signers[0]
-        while ($at -lt $signers[1]) {
-            $signer = & $readLp $at $signers[1]
-            $at = $signer[1]
-            $signedData = & $readLp $signer[0] $signer[1]
-            $digestSeq = & $readLp $signedData[0] $signedData[1]
-            $certSeq = & $readLp $digestSeq[1] $signedData[1]
-            $cert = & $readLp $certSeq[0] $certSeq[1]
-            $hash = $sha.ComputeHash($b, [int]$cert[0], [int]($cert[1] - $cert[0]))
-            $digests += (($hash | ForEach-Object { $_.ToString('x2') }) -join '')
+        if (-not $blocks.ContainsKey($v2)) { return @() }
+        foreach ($id in $ids) {
+            if (-not $blocks.ContainsKey($id)) { continue }
+            $signers = & $readLp $blocks[$id][0] $blocks[$id][1]
+            $at = $signers[0]
+            $found = 0
+            while ($at -lt $signers[1]) {
+                $signer = & $readLp $at $signers[1]
+                $at = $signer[1]
+                $signedData = & $readLp $signer[0] $signer[1]
+                $digestSeq = & $readLp $signedData[0] $signedData[1]
+                $certSeq = & $readLp $digestSeq[1] $signedData[1]
+                $cert = & $readLp $certSeq[0] $certSeq[1]
+                $hash = $sha.ComputeHash($b, [int]$cert[0], [int]($cert[1] - $cert[0]))
+                $digests += (($hash | ForEach-Object { $_.ToString('x2') }) -join '')
+                $found++
+            }
+            # Each scheme present must name exactly one signer: Android 8 reads only v2, newer Android v3.
+            if ($found -ne 1) { return @() }
         }
         return $digests
     } catch {
@@ -254,7 +273,7 @@ function Get-CheckedApk {
         if (-not (Test-Path -LiteralPath $apk)) { Stop-Install "There is no APK at $apk." }
     }
     $signers = @(Get-ApkSignerDigests $apk)
-    if ($signers.Count -ne 1 -or $signers[0] -ne $cert) {
+    if ($signers.Count -eq 0 -or @($signers | Where-Object { $_ -ne $cert }).Count -gt 0) {
         Stop-Install 'The launcher APK is not signed with the HomeTV release key. Nothing was changed on the TV; tell the person helping you.'
     }
     return $apk
@@ -291,10 +310,12 @@ function Connect-Tv {
         Say "The TV's address: on the TV, Settings > Network & Internet > your network shows its IP address, like 192.168.1.50."
         $tvHost = Ask-Text "Type the TV's IP address"
     }
+    Say 'Watch the TV while the laptop connects: it asks "Allow USB debugging?". Tick "Always allow from this computer", then choose OK.'
     for ($try = 1; $try -le 3; $try++) {
         $serial = "${tvHost}:$AdbPort"
         $out = Invoke-Adb @('connect', $serial)
-        if ($out -match '(already )?connected to') {
+        # A TV that has not allowed this laptop yet answers "failed to authenticate": it is there, waiting on its box.
+        if ($out -match '(already )?connected to|failed to authenticate') {
             if (Wait-Authorized $serial) { return @($tvHost, $serial, $false) }
             Say 'The TV did not allow this laptop. On the TV, accept the "Allow USB debugging?" box.'
         } else {
@@ -310,9 +331,12 @@ function Connect-Tv {
             $port = Ask-Text 'Type just the port number from there'
             $serial = "${tvHost}:$port"
             $out = Invoke-Adb @('connect', $serial)
-            if ($out -match 'connected to' -and (Wait-Authorized $serial)) { return @($tvHost, $serial, $true) }
+            if ($out -match 'connected to|failed to authenticate' -and (Wait-Authorized $serial)) { return @($tvHost, $serial, $true) }
             Say "Could not connect to $serial."
-        } elseif (-not (Ask-YesNo 'Check the address and that USB debugging (and Network debugging, if shown) is on. Try again?' $false)) {
+        } elseif (Ask-YesNo 'Check the address and that USB debugging (and Network debugging, if shown) is on. Try again?' $true) {
+            $typed = Ask-Text "Type the TV's IP address again (Enter keeps $tvHost)"
+            if ($typed) { $tvHost = $typed }
+        } else {
             break
         }
     }
@@ -576,6 +600,15 @@ function Invoke-Install {
         Say 'The HomeTV Launcher is the home screen.'
     }
 
+    # Last on the TV, after every Home check: First run shows by itself on the first Home start after an install, and
+    # the checks above end it (#98). Only after a fresh install, and nothing presses Home after it.
+    if ($packages -notcontains $Launcher) {
+        [void](Invoke-TvShell "am start -a com.hometv.launcher.action.FIRST_RUN -n $LauncherHome")
+        Step 'First run'
+        Say 'First run is open on the TV: it sets up the weather, your streaming services, the apps on Home and your keys.'
+        Wait-Done 'Go through it now with the remote, before debugging goes off.'
+    }
+
     # ---- Debugging off ---------------------------------------------------------------------------------------------
     Step 'Switching debugging off'
     Say 'Debugging lets any computer on this network control the TV, so it goes off now. On the TV:'
@@ -602,7 +635,7 @@ function Invoke-Install {
         "Mode: $mode. Stock home: $stock. Disabled: $($toDisable -join ', ').",
         "USB devices: $usbThings. USB network adapter: $usbEthernet.") -join "`n") + "`n")
     Step 'Done'
-    Say 'Press Home on the remote to see the HomeTV Launcher. Its first-run screen sets up the weather, your apps and your keys.'
+    Say 'Press Home on the remote to see the HomeTV Launcher. Everything First run set up is in Launcher settings too.'
     Say "The backup and undo file are in $backup."
 }
 
@@ -635,4 +668,7 @@ try {
     Write-Host ''
     Write-Host $stop.Message -ForegroundColor $color
     exit $stop.Code
+} finally {
+    # Its own adb server ends with it, whatever happened, so the next run (or -Restore) can replace adb.exe.
+    if ($script:Adb -and $script:OwnServer) { [void](Invoke-Adb @('kill-server')) }
 }

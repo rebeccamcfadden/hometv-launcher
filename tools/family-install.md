@@ -36,8 +36,10 @@ Don't pipe it into `iex`: when the script ends it would close the window, and th
 In this order, and it stops at the first step that fails, saying what was and wasn't changed:
 
 1. **Downloads and checks.** Google's platform-tools at a pinned version, checked against the SHA-256 written in the
-   script, and the release's APK, checked against the stamped SHA-256. It then reads the APK's signing block (APK
-   Signature Scheme v3, else v2) and stops unless there is exactly one signer whose certificate is the release key's.
+   script, and the release's APK, checked against the stamped SHA-256. It then reads the APK's signing block and stops
+   unless it has a v2 block, and every scheme block present (v2, which Android 8 reads; v3 and v3.1, which newer Android
+   reads) names exactly one signer whose certificate is the release key's. The stamped SHA-256 is the trust anchor;
+   this check catches an APK from anywhere else.
 2. **The TV.** It walks the person through Developer options and USB debugging, asks what is plugged into the TV's
    USB ports and whether the network comes through a USB adapter (some TVs cut USB power while debugging is on). Then
    it connects on port 5555, or pairs with Wireless debugging's code and connects to its port.
@@ -61,8 +63,15 @@ In this order, and it stops at the first step that fails, saying what was and wa
    launcher (one package per shell call) and set Home. It then checks that Home resolves to HomeTV and that a Home
    press really shows it (`dumpsys activity activities`). Otherwise it re-enables what it disabled, gives Home back
    to the stock launcher and says so. If even that fails, it points at `-Restore`.
-7. **Debugging off.** It walks them through revoking the authorisations, switching debugging off and restarting the
+7. **First run**, after a fresh install only: the last command it sends the TV opens First run
+   (`com.hometv.launcher.action.FIRST_RUN`), as `build-and-install` does, and nothing presses Home after it. First
+   run shows by itself on the first Home start after an install, and the guard's checks would end it. The person goes
+   through it before debugging goes off.
+8. **Debugging off.** It walks them through revoking the authorisations, switching debugging off and restarting the
    TV, then checks that the debugging port (and the Wireless debugging port, if used) no longer answers.
+
+It runs its own adb server (port 5038), so another `adb` on the laptop is left alone, and stops it however the run
+ends.
 
 It never uninstalls anything, never disables anything but the stock launcher (and setupwraith on Google TV), asks for
 no API keys (they go in on the TV: Launcher settings > API keys, or First run), starts no transcript and sends nothing

@@ -758,7 +758,8 @@ In order, one PR each:
    `tools/release.ps1` stamping each release's copy with its tag, APK name, APK SHA-256 and certificate SHA-256. In
    it: the pinned downloads and the signer check, the walk-through, connect or pair, the model and SDK checks, the
    backup and `undo.txt` (undone with `-Restore`, so no second script), the Google TV Wi-Fi owner check (no override)
-   and Cast warning, the CVTE path, the Home guard with a Home-press check, and debugging off with the port check.
+   and Cast warning, the CVTE path, the Home guard with a Home-press check, First run opened last after a fresh install,
+   and debugging off with the port check.
    Changed: the last-resort command fetches the file with `irm -OutFile` and runs it, since `| iex` closes the window
    at the end; keys go in on the TV (F16), so the installer keeps none. Still to come: key helpers by brand, the
    updates grant (step 5), the debloat (step 6).

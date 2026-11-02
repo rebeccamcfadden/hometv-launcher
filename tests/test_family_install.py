@@ -92,9 +92,15 @@ function Shell([string]$c) {
 if ($a.Count -ge 2 -and $a[0] -eq '-s') { $a = @($a[2..($a.Count - 1)]) }
 $out = ''
 switch ($a[0]) {
-    'connect' { if ($s.connect_ok) { $out = "connected to $($a[1])" } else { $out = "failed to connect to $($a[1])" } }
+    'connect' {
+        if ($s.connect_out) { $out = $s.connect_out -replace 'SERIAL', $a[1] }
+        elseif ($s.connect_ok) { $out = "connected to $($a[1])" } else { $out = "failed to connect to $($a[1])" }
+    }
     'disconnect' { $out = "disconnected $($a[1])" }
-    'get-state' { $out = $s.auth }
+    'get-state' {
+        $seq = @($s.auth_sequence)
+        if ($seq.Count -gt 0 -and $null -ne $seq[0]) { $out = $seq[0]; $s.auth_sequence = @($seq | Select-Object -Skip 1) } else { $out = $s.auth }
+    }
     'push' { $s.pushed = $true; $out = '1 file pushed' }
     'reboot' { $s.reboots = [int]$s.reboots + 1 }
     'pair' { $out = 'Successfully paired' }
@@ -110,8 +116,10 @@ def lp(data):
     return struct.pack("<I", len(data)) + data
 
 
-def write_signed_apk(path, cert):
-    """A zip with an APK Signing Block holding one v2 signer whose certificate is `cert`."""
+def write_signed_apk(path, cert, schemes=None):
+    """A zip with an APK Signing Block: one signer per scheme, v2 with `cert` unless `schemes` names
+    {block id: certificate}."""
+    schemes = schemes or {0x7109871A: cert}
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
         z.writestr("AndroidManifest.xml", b"\0" * 64)
@@ -119,12 +127,14 @@ def write_signed_apk(path, cert):
     data = buf.getvalue()
     eocd = data.rfind(b"PK\x05\x06")
     cd_offset = struct.unpack("<I", data[eocd + 16:eocd + 20])[0]
-    signed_data = lp(b"") + lp(lp(cert)) + lp(b"")          # digests, certificates, additional attributes
-    signer = lp(signed_data) + lp(b"") + lp(b"")            # signed data, signatures, public key
-    value = lp(lp(signer))                                  # the signers: one length-prefixed signer
-    pair = struct.pack("<QI", len(value) + 4, 0x7109871A) + value
-    size = len(pair) + 8 + 16
-    block = struct.pack("<Q", size) + pair + struct.pack("<Q", size) + b"APK Sig Block 42"
+    pairs = b""
+    for block_id, block_cert in schemes.items():
+        signed_data = lp(b"") + lp(lp(block_cert)) + lp(b"")    # digests, certificates, additional attributes
+        signer = lp(signed_data) + lp(b"") + lp(b"")            # signed data, signatures, public key
+        value = lp(lp(signer))                                  # the signers: one length-prefixed signer
+        pairs += struct.pack("<QI", len(value) + 4, block_id) + value
+    size = len(pairs) + 8 + 16
+    block = struct.pack("<Q", size) + pairs + struct.pack("<Q", size) + b"APK Sig Block 42"
     eocd_record = data[eocd:eocd + 16] + struct.pack("<I", cd_offset + len(block)) + data[eocd + 20:]
     Path(path).write_bytes(data[:cd_offset] + block + data[cd_offset:eocd] + eocd_record)
 
@@ -198,7 +208,7 @@ class FamilyInstallTest(unittest.TestCase):
             "claims": [f"{TVLAUNCHER}/.MainActivity"],
             "preferred": f"{TVLAUNCHER}/.MainActivity",
             "hijacker": None, "hijack_when_disabled": None, "front": None,
-            "connect_ok": True, "auth": "device",
+            "connect_ok": True, "connect_out": None, "auth": "device", "auth_sequence": [],
             "install_result": "Success",
             "start_result": "Starting: Intent { cmp=com.hometv.launcher/.MainActivity }\nStatus: ok\nActivity: x\nComplete",
             "set_home_works": True,
@@ -214,7 +224,8 @@ class FamilyInstallTest(unittest.TestCase):
         if apk:
             args += ["-ApkPath", str(self.apk), "-CertSha256", cert or self.cert_sha]
         args += list(extra)
-        env = dict(os.environ, FAKE_ADB_STATE=str(self.state_path))
+        env = {k: v for k, v in os.environ.items() if k != "ANDROID_ADB_SERVER_PORT"}
+        env["FAKE_ADB_STATE"] = str(self.state_path)
         proc = subprocess.run(args, capture_output=True, text=True, env=env, timeout=300)
         return proc, json.loads(self.state_path.read_text(encoding="utf-8-sig"))
 
@@ -222,7 +233,8 @@ class FamilyInstallTest(unittest.TestCase):
         self.state_path.write_text(json.dumps(state), encoding="utf-8")
         args = [PWSH, "-NoProfile", "-NonInteractive", "-File", str(script), "-TvHost", "127.0.0.1",
                 "-AdbPort", str(self.port), "-WorkDir", str(self.work), "-AdbPath", str(self.adb), "-NoPrompt", *extra]
-        env = dict(os.environ, FAKE_ADB_STATE=str(self.state_path))
+        env = {k: v for k, v in os.environ.items() if k != "ANDROID_ADB_SERVER_PORT"}
+        env["FAKE_ADB_STATE"] = str(self.state_path)
         proc = subprocess.run(args, capture_output=True, text=True, env=env, timeout=300)
         return proc, json.loads(self.state_path.read_text(encoding="utf-8-sig"))
 
@@ -233,6 +245,9 @@ class FamilyInstallTest(unittest.TestCase):
 
     def index(self, shell, prefix):
         return next(i for i, c in enumerate(shell) if c.startswith(prefix))
+
+    def assert_tv_untouched(self, end):
+        self.assertFalse([e for e in end["log"] if e.split(' ')[0] in ('connect', '-s', 'start-server')], end["log"])
 
     def assert_nothing_disabled(self, end):
         self.assertFalse([c for c in end["shell"] if c.startswith("pm disable-user")])
@@ -368,20 +383,63 @@ class FamilyInstallTest(unittest.TestCase):
         proc, end = self.run_installer(self.tv(), cert="00" * 32)
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assertIn("release key", proc.stdout)
-        self.assertEqual(end["log"], [])
+        self.assert_tv_untouched(end)
 
     def test_unsigned_apk_stops(self):
         with zipfile.ZipFile(self.apk, "w") as z:
             z.writestr("AndroidManifest.xml", b"x")
         proc, end = self.run_installer(self.tv())
         self.assertEqual(proc.returncode, 1, proc.stdout)
-        self.assertEqual(end["log"], [])
+        self.assert_tv_untouched(end)
+
+    def test_v3_signer_must_match_v2_signer(self):
+        # Android 8 reads only v2: a v3 block naming the release key over a v2 block signed by another must not pass.
+        write_signed_apk(self.apk, None, {0x7109871A: b"someone else", 0xF05368C0: self.cert})
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assert_tv_untouched(end)
+
+    def test_v2_and_v3_with_the_release_key_pass(self):
+        write_signed_apk(self.apk, None, {0x7109871A: self.cert, 0xF05368C0: self.cert})
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+    def test_v3_alone_is_refused(self):
+        write_signed_apk(self.apk, None, {0xF05368C0: self.cert})
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+
+    def test_tv_waiting_on_its_allow_box_connects(self):
+        # A TV that has not allowed this laptop yet answers adb connect with "failed to authenticate".
+        proc, end = self.run_installer(self.tv(connect_out="failed to authenticate to SERIAL",
+                                               auth_sequence=["unauthorized", "unauthorized", "device"]))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("Always allow from this computer", proc.stdout)
+
+    def test_fresh_install_opens_first_run_last(self):
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        opened = [i for i, c in enumerate(end["shell"]) if "action.FIRST_RUN" in c]
+        self.assertEqual(len(opened), 1)
+        self.assertEqual(opened[0], len(end["shell"]) - 1, "nothing on the TV after First run, no Home press")
+
+    def test_update_does_not_open_first_run(self):
+        state = self.tv(packages=self.tv()["packages"] + ["com.hometv.launcher"], disabled=[TVLAUNCHER],
+                        claims=[f"{TVLAUNCHER}/.MainActivity", OURS], preferred=OURS)
+        proc, end = self.run_installer(state)
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertFalse([c for c in end["shell"] if "action.FIRST_RUN" in c])
+
+    def test_adb_server_is_stopped_after_a_stop(self):
+        proc, end = self.run_installer(self.tv(install_result="Failure [INSTALL_FAILED_INSUFFICIENT_STORAGE]"))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertEqual(end["log"][-1], "kill-server")
 
     def test_repository_copy_needs_an_apk(self):
         proc, end = self.run_installer(self.tv(), apk=False)
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assertIn("not from a release", proc.stdout)
-        self.assertEqual(end["log"], [])
+        self.assert_tv_untouched(end)
 
     def test_debugging_still_on_exits_2(self):
         with socket.socket() as listener:
@@ -417,7 +475,7 @@ class FamilyInstallTest(unittest.TestCase):
         script, release = self.stamped_copy("11" * 32)
         proc, end = self.run_script(script, self.tv(), "-DownloadFrom", str(release))
         self.assertEqual(proc.returncode, 1, proc.stdout)
-        self.assertEqual(end["log"], [])
+        self.assert_tv_untouched(end)
         proc, end = self.run_script(script, self.tv(), "-ApkPath", str(self.apk), "-CertSha256", self.cert_sha)
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assertIn("installs release v9.9 only", proc.stdout)
