@@ -90,12 +90,17 @@ final class FolderTile extends LinearLayout {
             boolean focused = false;
             for (int st : getDrawableState()) if (st == android.R.attr.state_focused) focused = true;
             float r = Ui.px(FolderArt.RADIUS);
+            // The glow is drawn around the body's rect; clipped to outside the folder, so none of it shows through
+            // the see-through tab or the tab's square corner.
+            c.save();
+            c.clipOutPath(folder);
             if (focused) {
                 Glow.focusShadow(c, body, r, 255);
                 Glow.focus(c, body, r, 255);
             } else {
                 Glow.rest(c, body, r, 255);
             }
+            c.restore();
             if (focused && Ui.FOCUS_W > 0) {
                 // A stroke twice the ring's width along the outline, clipped to outside the folder: the ring follows
                 // the tab, just outside the shape, as TileFrame's ring sits just outside a tile.
