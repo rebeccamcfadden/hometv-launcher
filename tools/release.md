@@ -70,6 +70,7 @@ ends.
 | `hometv-launcher-v<versionName>.apk` | The public APK, signed with the release key |
 | `version.json` | `versionCode`, `versionName`, the APK's name and SHA-256, the certificate's SHA-256, `minSdk`, the commit |
 | `SHA256SUMS` | Each file's SHA-256, in `sha256sum` format |
-| `family-install.ps1` | The family installer, stamped with this release's tag, APK name, APK SHA-256 and certificate SHA-256, so it installs exactly this APK ([family-install.md](family-install.md)) |
+| `debloat-lists.zip` | Every `examples/<folder>/debloat.txt` at this commit, for the family installer to suggest from ([family-install.md](family-install.md), step 7) |
+| `family-install.ps1` | The family installer, stamped with this release's tag, APK name, APK SHA-256, certificate SHA-256 and the lists' SHA-256, so it installs exactly this APK ([family-install.md](family-install.md)) |
 
 The files are also kept in `%USERPROFILE%\.hometv\releases\v<versionName>\`.

@@ -34,6 +34,8 @@ param(
     [string]$Restore,
     # A debloat list (an examples/ debloat.txt, or one made from this installer's report) to apply after the handover.
     [string]$List,
+    # Testing, in an unstamped copy: a folder of <name>\debloat.txt lists (the repository's examples\) to suggest from.
+    [string]$ListsFrom,
     # Take every question's default answer and skip the pauses (tests, or the project lead on a call).
     [switch]$NoPrompt
 )
@@ -52,6 +54,7 @@ $ReleaseTag = '@RELEASE_TAG@'
 $ReleaseApk = '@RELEASE_APK@'
 $ReleaseApkSha256 = '@RELEASE_APK_SHA256@'
 $ReleaseCertSha256 = '@RELEASE_CERT_SHA256@'
+$ReleaseListsSha256 = '@RELEASE_LISTS_SHA256@'
 $PlatformToolsVersion = '37.0.1'
 $PlatformToolsUrl = 'https://dl.google.com/android/repository/platform-tools_r37.0.1-win.zip'
 $PlatformToolsSha256 = '45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99'
@@ -80,6 +83,8 @@ $Checklist = [ordered]@{
     'firmware updates' = '(ota|update|fota|upgrade)'
 }
 $script:ListNames = @()
+# The folder the release's debloat lists were unpacked to (or -ListsFrom), when the person may pick one.
+$script:ListsDir = $null
 
 $script:Adb = $null
 $script:Serial = $null
@@ -432,6 +437,73 @@ function Invoke-Restore {
 }
 
 # ---- Debloat from a list (Family install step 6) -------------------------------------------------------------------
+# The release's debloat lists (debloat-lists.zip, its SHA-256 stamped), unpacked under -WorkDir; null without one.
+function Get-CheckedLists {
+    if ($ReleaseTag.StartsWith('@')) { return $null }
+    $dir = Join-Path $WorkDir "release-$ReleaseTag"
+    $zip = Join-Path $dir 'debloat-lists.zip'
+    if (-not (Test-Path -LiteralPath $zip) -or (Get-FileSha256 $zip) -ne $ReleaseListsSha256) {
+        if ($DownloadFrom) {
+            $source = Join-Path $DownloadFrom 'debloat-lists.zip'
+            if (-not (Test-Path -LiteralPath $source)) { Say 'No debloat lists next to the APK: nothing beyond the home screen will be switched off.'; return $null }
+            Copy-Item -LiteralPath $source $zip -Force
+        } else {
+            Invoke-WebRequest -UseBasicParsing -OutFile $zip -Uri "https://github.com/$ReleaseRepo/releases/download/$ReleaseTag/debloat-lists.zip"
+        }
+    }
+    if ((Get-FileSha256 $zip) -ne $ReleaseListsSha256) {
+        Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
+        Stop-Install "The debloat lists download is not the file release $ReleaseTag published (its SHA-256 differs). Nothing was changed on the TV."
+    }
+    $out = Join-Path $dir 'lists'
+    if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [IO.Compression.ZipFile]::ExtractToDirectory($zip, $out)
+    return $out
+}
+
+# The lists whose header (the comment lines at the top) names this model as a word: a suggestion only, since one
+# model often has lists from different countries and firmware, and another household's choices aren't theirs.
+function Find-ListsForModel([string]$Dir, [string]$Model) {
+    if (-not $Dir -or -not $Model -or -not (Test-Path -LiteralPath $Dir)) { return @() }
+    $word = '(?<![A-Za-z0-9])' + [regex]::Escape($Model) + '(?![A-Za-z0-9])'
+    $found = @()
+    foreach ($folder in Get-ChildItem -LiteralPath $Dir -Directory | Sort-Object Name) {
+        $file = Join-Path $folder.FullName 'debloat.txt'
+        if (-not (Test-Path -LiteralPath $file)) { continue }
+        $header = @(Get-Content -LiteralPath $file -TotalCount 40 | ForEach-Object { $_ } | Where-Object { $_ -match '^\s*#' })
+        if (($header -join "`n") -match $word) { $found += $folder.Name }
+    }
+    return $found
+}
+
+# Step 6, option (a) (the project lead, 2026-11-02): suggests the lists that name this model, and the person helping
+# picks one by name on the call, or none. Without a pick nothing beyond the home screen is switched off; the report is
+# for making a list.
+function Select-DebloatList([string]$Model) {
+    if (-not $script:ListsDir) { return }
+    $suggested = @(Find-ListsForModel $script:ListsDir $Model)
+    Step 'Debloat lists'
+    if ($suggested.Count -eq 0) {
+        Say "No list in this release names the model $Model. Nothing beyond the home screen will be switched off; report.txt in the backup folder is for making one."
+    } else {
+        Say "Lists in this release that name the model ${Model}:"
+        foreach ($s in $suggested) { Say "  $s" }
+        Say 'Each is another household''s choices: the person helping you picks one with you, or none.'
+    }
+    if ($NoPrompt) { return }
+    while ($true) {
+        $name = Ask-Text 'Type the name of the list to use (the person helping you knows it), or press Enter for none'
+        if (-not $name) { Say 'No list: nothing beyond the home screen will be switched off.'; return }
+        $file = Join-Path (Join-Path $script:ListsDir $name) 'debloat.txt'
+        if ($name -match '^[A-Za-z0-9._-]+$' -and (Test-Path -LiteralPath $file)) {
+            $script:ListNames = @(Read-DebloatList $file)
+            Say "Using $name ($($script:ListNames.Count) apps on it; the ones you use stay on)."
+            return
+        }
+        Say "There is no list called '$name' in this release."
+    }
+}
 # Read and checked before anything reaches the TV: a list that names something that isn't a package, or one of
 # Android's core packages, stops the run with nothing changed, as tools/disable.ps1 refuses it.
 function Read-DebloatList([string]$Path) {
@@ -546,6 +618,7 @@ function Invoke-Install {
     Step 'Checking the downloads'
     $script:Adb = Get-PinnedAdb
     $apk = Get-CheckedApk
+    if (-not $List -and -not $script:ListsDir) { $script:ListsDir = Get-CheckedLists }
     Say 'The launcher and adb are the files this installer expects.'
 
     Step 'Getting the TV ready'
@@ -624,6 +697,7 @@ function Invoke-Install {
         Copy-Item -Force -LiteralPath $PSCommandPath -Destination (Join-Path $WorkDir 'family-install.ps1')
     }
     Write-Report $backup $packages $disabledBefore
+    if ($script:ListNames.Count -eq 0) { Select-DebloatList $model }
     Say "Saved in $backup"
 
     # ---- Which launcher hands over Home (launcher/build-and-install.sh's rules) ------------------------------------
@@ -821,6 +895,7 @@ try {
     $DownloadFrom = & $resolve $DownloadFrom
     $ApkPath = & $resolve $ApkPath
     $List = & $resolve $List
+    $ListsFrom = & $resolve $ListsFrom
     if ($AdbPath) { $AdbPath = & $resolve $AdbPath }
     New-Item -ItemType Directory -Force $WorkDir | Out-Null
     if ($Restore) {
@@ -835,6 +910,7 @@ try {
             Stop-Install 'This copy is not from a release. Download family-install.ps1 from the release page (tools/family-install.md); for a test, pass -ApkPath and -CertSha256.'
         }
         if ($List) { $script:ListNames = @(Read-DebloatList $List) }
+        elseif ($ListsFrom) { $script:ListsDir = $ListsFrom }
         Invoke-Install
     }
     exit 0

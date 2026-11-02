@@ -66,7 +66,7 @@ In this order, and it stops at the first step that fails, saying what was and wa
    refused disable puts everything back and stops. It then checks that Home resolves to HomeTV and that a Home
    press really shows it (`dumpsys activity activities`). Otherwise it re-enables what it disabled, gives Home back
    to the stock launcher and says so. If even that fails, it points at `-Restore`.
-7. **Debloat**, only with `-List <file>` (Family install step 6): a list from `examples/`, or one made from the report. The list is read before anything connects, and one naming a non-package or an Android core package stops the run with nothing changed (`tools/disable.ps1`'s check, in the same words). After the handover, PROMPT.md's checklist runs first: streaming apps, the voice assistant, casting, mirroring and firmware updates on the list stay on unless the person says no one uses them. Then `tools/disable.sh`'s guards, with no overrides: never the app that owns Home; setupwraith only when it doesn't own the Wi-Fi; never an app that asks for `TV_INPUT_HARDWARE` or that opens the inputs or Settings; and if those checks can't run, nothing from the list is switched off. Then five at a time, one package per call, each undo line written first, with Home checked after each batch. If Home moved, that batch is switched back on and the rest is left.
+7. **Debloat** (Family install step 6). A release carries `debloat-lists.zip`, the `examples/` lists of its own commit, checked against the SHA-256 stamped into the installer. After the backup, the installer lists the ones whose header names the TV's model as a word: a suggestion only, since one model often has lists from different countries and firmware. The person helping picks one by name on the call, or none (the project lead's choice, 2026-11-02); with none, or with `-NoPrompt`, nothing beyond the home screen is switched off, and `report.txt` is for making a list. `-List <file>` takes a list directly (one made from a report). The list is read before anything connects, and one naming a non-package or an Android core package stops the run with nothing changed (`tools/disable.ps1`'s check, in the same words). After the handover, PROMPT.md's checklist runs first: streaming apps, the voice assistant, casting, mirroring and firmware updates on the list stay on unless the person says no one uses them. Then `tools/disable.sh`'s guards, with no overrides: never the app that owns Home; setupwraith only when it doesn't own the Wi-Fi; never an app that asks for `TV_INPUT_HARDWARE` or that opens the inputs or Settings; and if those checks can't run, nothing from the list is switched off. Then five at a time, one package per call, each undo line written first, with Home checked after each batch. If Home moved, that batch is switched back on and the rest is left.
 8. **First run**, after a fresh install only: the last command it sends the TV opens First run
    (`com.hometv.launcher.action.FIRST_RUN`), as `build-and-install` does, and nothing presses Home after it. First
    run shows by itself on the first Home start after an install, and the guard's checks would end it. The person goes
@@ -85,7 +85,7 @@ anywhere but the TV.
 
 Every run also writes `report.txt` in the backup folder: the TV's make, model, Android version and firmware build and its packages, and no serial, address, account or network name. The person helping makes a list from it.
 
-Not in it yet: the remote-key helpers by brand, the in-app updates grant (Family install step 5), and the lists bundled in the release (step 6).
+Not in it yet: the remote-key helpers by brand and the in-app updates grant (Family install step 5).
 
 ## Exit codes
 
@@ -117,6 +117,7 @@ gets a new port after a restart, so pass the current one with `-TvHost` and `-Ad
 | `-AdbPath` | An `adb` already on the laptop, instead of the pinned download |
 | `-DownloadFrom` | A folder (a USB stick) with the release's APK, instead of GitHub; the APK is still checked |
 | `-List` | A debloat list to apply after the handover (step 7 above) |
+| `-ListsFrom` | Testing, in the repository's copy only: a folder of lists (`examples`) to suggest from |
 | `-Restore` | Undo an install from its backup folder |
 | `-NoPrompt` | Every question takes its default, and the pauses are skipped |
 | `-ApkPath`, `-CertSha256` | Testing, in the repository's copy only: a local APK and the certificate it must carry |

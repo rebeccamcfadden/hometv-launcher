@@ -175,7 +175,7 @@ class StaticTest(unittest.TestCase):
 
     def test_release_stamps_every_placeholder(self):
         found = placeholders(self.text)
-        self.assertEqual(len(found), 4, found)
+        self.assertEqual(len(found), 5, found)
         release = RELEASE.read_text(encoding="utf-8")
         for token in found:
             self.assertIn(f'"{token}"', release, f"tools/release.ps1 does not stamp {token}")
@@ -590,19 +590,30 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertIn(TVLAUNCHER, report)
         self.assertNotIn("SERIAL12345", report)
 
-    def stamped_copy(self, apk_sha):
+    def lists_zip(self, folder, lists):
+        path = folder / "debloat-lists.zip"
+        with zipfile.ZipFile(path, "w") as z:
+            for name, text in lists.items():
+                z.writestr(f"{name}/debloat.txt", text)
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def stamped_copy(self, apk_sha, lists=None, lists_sha=None):
+        """A release copy of the installer and its release folder; `lists` puts a debloat-lists.zip there, and the
+        stamped SHA-256 is its own unless `lists_sha` names another."""
+        release = self.base / "release"
+        release.mkdir()
+        shutil.copy2(self.apk, release / "hometv-launcher-v9.9.apk")
+        real = self.lists_zip(release, lists) if lists is not None else "00" * 32
         text = INSTALLER.read_text(encoding="utf-8")
         for token, value in {"'@RELEASE_TAG@'": "'v9.9'", "'@RELEASE_APK@'": "'hometv-launcher-v9.9.apk'",
                              "'@RELEASE_APK_SHA256@'": f"'{apk_sha}'",
-                             "'@RELEASE_CERT_SHA256@'": f"'{self.cert_sha}'"}.items():
+                             "'@RELEASE_CERT_SHA256@'": f"'{self.cert_sha}'",
+                             "'@RELEASE_LISTS_SHA256@'": f"'{lists_sha or real}'"}.items():
             text = text.replace(token, value)
         self.assertNotIn("@RELEASE_", text)
         script = self.base / "stamped" / "family-install.ps1"
         script.parent.mkdir()
         script.write_text(text, encoding="utf-8")
-        release = self.base / "release"
-        release.mkdir()
-        shutil.copy2(self.apk, release / "hometv-launcher-v9.9.apk")
         return script, release
 
     def test_stamped_copy_installs_its_release(self):
@@ -610,6 +621,35 @@ class FamilyInstallTest(unittest.TestCase):
         proc, end = self.run_script(script, self.tv(), "-DownloadFrom", str(release))
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(end["preferred"], OURS)
+
+    def test_stamped_copy_suggests_the_lists_naming_this_model(self):
+        lists = {"test-tv-eu": "# Test TV (ro.product.model Test TV), Android 9\ncom.example.bloat1\n",
+                 "test-tv2": "# Test TV2, Android 11\ncom.example.bloat1\n",
+                 "other": "# Other TV\ncom.example.bloat1\n"}
+        script, release = self.stamped_copy(hashlib.sha256(self.apk.read_bytes()).hexdigest(), lists)
+        proc, end = self.run_script(script, self.tv(packages=self.tv()["packages"] + ["com.example.bloat1"]),
+                                    "-DownloadFrom", str(release))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("  test-tv-eu", proc.stdout)
+        self.assertNotIn("  test-tv2", proc.stdout, "Test TV2 is another model")
+        self.assertNotIn("  other", proc.stdout)
+        # No one picked a list (-NoPrompt): nothing but the home screen is switched off.
+        self.assertEqual([c for c in end["shell"] if c.startswith("pm disable-user")], [f"pm disable-user --user 0 {TVLAUNCHER}"])
+
+    def test_stamped_copy_refuses_lists_it_did_not_publish(self):
+        script, release = self.stamped_copy(hashlib.sha256(self.apk.read_bytes()).hexdigest(), {"x": "# x\n"}, "22" * 32)
+        proc, end = self.run_script(script, self.tv(), "-DownloadFrom", str(release))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("debloat lists download", proc.stdout)
+        self.assert_tv_untouched(end)
+
+    def test_repository_copy_suggests_from_lists_from(self):
+        lists = self.base / "examples" / "test-tv-x"
+        lists.mkdir(parents=True)
+        (lists / "debloat.txt").write_text("# TestCo Test TV\ncom.example.x\n", encoding="utf-8")
+        proc, end = self.run_installer(self.tv(), "-ListsFrom", str(self.base / "examples"))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("  test-tv-x", proc.stdout)
 
     def test_stamped_copy_refuses_another_apk(self):
         script, release = self.stamped_copy("11" * 32)
