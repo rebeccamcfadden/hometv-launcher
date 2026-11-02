@@ -58,6 +58,11 @@ final class DeepLinks {
     private static final Pattern SVT = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._/-]{0,127}");
     private static final Pattern UUID = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     /**
+     * Hulu: a UUID, as Wikidata documents it, or Hulu's own address form with the name in front
+     * ("the-testaments-9e859f3c-…"); a few values also carry a stray "movie/" or "series/", which is dropped.
+     */
+    private static final Pattern HULU = Pattern.compile("(?:(?:movie|series)/)?((?:[a-z0-9]+-)*" + UUID.pattern() + ")");
+    /**
      * Peacock: Wikidata holds "tv/name", "movies/name" and, for some, "stream-tv/name" (its formatter adds the
      * "stream-" itself), so a leading "stream-" is dropped before it goes into the link.
      */
@@ -100,10 +105,10 @@ final class DeepLinks {
             // The US's: each the service's web address for the title, as Wikidata's formatter URL gives it
             // (Paramount+'s movies under /movies/). Checked on paper only: a TV with each app checks them later.
             case "hulu":
-                v = ok(ids.first(movie ? WikidataIds.HULU_MOVIE : WikidataIds.HULU_SERIES), UUID);
+                v = firstGroup(ids.all(movie ? WikidataIds.HULU_MOVIE : WikidataIds.HULU_SERIES), HULU);
                 return v == null ? null : "https://www.hulu.com/" + (movie ? "movie/" : "series/") + v;
             case "peacock":
-                v = peacock(ids.all(WikidataIds.PEACOCK));
+                v = firstGroup(ids.all(WikidataIds.PEACOCK), PEACOCK);
                 return v == null ? null : "https://www.peacocktv.com/stream-" + v;
             case "paramountplus":
                 v = ok(ids.first(WikidataIds.PARAMOUNT), PARAMOUNT);
@@ -119,10 +124,10 @@ final class DeepLinks {
         }
     }
 
-    /** Peacock's "tv/name" or "movies/name" from the first value that has that shape, without a leading "stream-". */
-    private static String peacock(List<String> values) {
+    /** Group 1 of the first value that has the shape (Hulu's id without a stray prefix, Peacock's without "stream-"). */
+    private static String firstGroup(List<String> values, Pattern shape) {
         for (String v : values) {
-            Matcher m = PEACOCK.matcher(v);
+            Matcher m = shape.matcher(v);
             if (m.matches()) return m.group(1);
         }
         return null;

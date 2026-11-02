@@ -193,6 +193,19 @@ public class WikidataLinksTest {
     }
 
     @Test
+    public void hulusNamedIdsAndStrayPrefixes() {
+        Map<String, List<String>> v = new HashMap<>();
+        v.put(WikidataIds.HULU_SERIES, Arrays.asList("the-testaments-9e859f3c-4ba0-48ed-8421-37b34ceffa04"));
+        assertEquals("https://www.hulu.com/series/the-testaments-9e859f3c-4ba0-48ed-8421-37b34ceffa04",
+                DeepLinks.link("hulu", Kind.SHOW, new WikidataIds("Q1", v), "X"));
+        v.put(WikidataIds.HULU_MOVIE, Arrays.asList("not-an-id", "movie/pizza-movie-bcdb52a3-1c0e-49a8-9da9-c571a7a20fec"));
+        assertEquals("https://www.hulu.com/movie/pizza-movie-bcdb52a3-1c0e-49a8-9da9-c571a7a20fec",
+                DeepLinks.link("hulu", Kind.MOVIE, new WikidataIds("Q1", v), "X"));
+        v.put(WikidataIds.HULU_MOVIE, Arrays.asList("../x-bcdb52a3-1c0e-49a8-9da9-c571a7a20fec", "a/b-bcdb52a3-1c0e-49a8-9da9-c571a7a20fec"));
+        assertNull(DeepLinks.link("hulu", Kind.MOVIE, new WikidataIds("Q1", v), "X"));
+    }
+
+    @Test
     public void peacocksStreamPrefixIsNotDoubled() {
         Map<String, List<String>> v = new HashMap<>();
         v.put(WikidataIds.PEACOCK, Arrays.asList("stream-tv/poker-face"));
