@@ -3,9 +3,12 @@ package com.hometv.launcher;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -16,9 +19,13 @@ public class LaunchableTest {
 
     private final Set<String> installed = new HashSet<>();
     private final List<String> asked = new ArrayList<>();
+    private final List<String> named = new ArrayList<>();
     private final Launchable launchable = new Launchable(pkg -> {
         asked.add(pkg);
         return installed.contains(pkg);
+    }, pkg -> {
+        named.add(pkg);
+        return pkg.toUpperCase(Locale.ROOT);
     });
 
     @Test
@@ -68,24 +75,39 @@ public class LaunchableTest {
     }
 
     @Test
-    public void listenersHearEachChangeUntilTheyStop() {
-        int[] heard = {0};
-        Runnable home = () -> heard[0]++;
+    public void namesAreRememberedAndForgottenWithTheApp() {
+        assertEquals("A.ONE", launchable.label("a.one"));
+        assertEquals("A.ONE", launchable.label("a.one"));
+        launchable.label("a.two");
+        launchable.forget("a.one");
+        launchable.label("a.one");
+        launchable.label("a.two");
+        assertEquals(List.of("a.one", "a.two", "a.one"), named);
+        launchable.forgetAll();
+        launchable.label("a.two");
+        assertEquals(List.of("a.one", "a.two", "a.one", "a.two"), named);
+    }
+
+    @Test
+    public void listenersHearWhichAppChangedUntilTheyStop() {
+        List<String> heard = new ArrayList<>();
+        Consumer<String> home = heard::add;
         launchable.listen(home);
         launchable.listen(home);
         launchable.forget("a.one");
         launchable.forgetAll();
-        assertEquals("listening twice still hears once", 2, heard[0]);
+        assertEquals("listening twice still hears once; null is any app", Arrays.asList("a.one", null), heard);
         launchable.unlisten(home);
         launchable.forget("a.one");
-        assertEquals(2, heard[0]);
+        assertEquals(2, heard.size());
     }
 
     @Test
     public void aListenerMayStopListeningWhileItIsTold() {
         int[] heard = {0};
-        Runnable[] self = new Runnable[1];
-        self[0] = () -> {
+        @SuppressWarnings("unchecked")
+        Consumer<String>[] self = new Consumer[1];
+        self[0] = pkg -> {
             heard[0]++;
             launchable.unlisten(self[0]);
         };

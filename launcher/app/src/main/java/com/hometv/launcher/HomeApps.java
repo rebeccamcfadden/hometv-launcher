@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * The installed apps the launcher can open, and Home's app row stored on the TV (AppRow is its pure logic). An app
@@ -63,7 +64,7 @@ final class HomeApps {
     private static Launchable launchable(Context ctx) {
         if (launchable == null) {
             PackageManager pm = ctx.getApplicationContext().getPackageManager();
-            launchable = new Launchable(pkg -> launchIntent(pm, pkg) != null);
+            launchable = new Launchable(pkg -> launchIntent(pm, pkg) != null, pkg -> systemLabel(pm, pkg));
         }
         return launchable;
     }
@@ -78,13 +79,13 @@ final class HomeApps {
         launchable(ctx).forgetAll();
     }
 
-    /** Runs r after any app's launchability may have changed; Home listens while it is on screen. */
-    static void listen(Context ctx, Runnable r) {
-        launchable(ctx).listen(r);
+    /** Tells l which app's launchability or name may have changed (null: any); Home listens while it is on screen. */
+    static void listen(Context ctx, Consumer<String> l) {
+        launchable(ctx).listen(l);
     }
 
-    static void unlisten(Context ctx, Runnable r) {
-        launchable(ctx).unlisten(r);
+    static void unlisten(Context ctx, Consumer<String> l) {
+        launchable(ctx).unlisten(l);
     }
 
     /** The row's full list (with apps not installed now), the household's once saved, else the seed. */
@@ -162,8 +163,10 @@ final class HomeApps {
     /** The app's name, or the one app_labels gives it. */
     String label(String pkg) {
         String own = labels.get(pkg);
-        if (own != null) return own;
-        PackageManager pm = ctx.getPackageManager();
+        return own != null ? own : launchable(ctx).label(pkg);
+    }
+
+    private static String systemLabel(PackageManager pm, String pkg) {
         try {
             ApplicationInfo info = pm.getApplicationInfo(pkg, 0);
             return pm.getApplicationLabel(info).toString();

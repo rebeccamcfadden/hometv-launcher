@@ -339,7 +339,17 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         // config.xml, overlaid by config.json from a pushed theme or example (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
         config = cfg;
-        // Apps may have changed while no activity's package receiver was listening (registered below).
+        // The package receiver first, then a clean memory of which apps open: a change before the receiver listened
+        // (none listened while no activity was alive) can't stay remembered.
+        IntentFilter packages = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
+        packages.addAction(Intent.ACTION_PACKAGE_REPLACED);
+        packages.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        packages.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        packages.addDataScheme("package");
+        registerReceiver(packageReceiver, packages);
+        IntentFilter storage = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
+        storage.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
+        registerReceiver(packageReceiver, storage);
         HomeApps.forgetAll(this);
         Ui.init(this, cfg.reducedMotion());
         theme = ThemeStore.current(this);
@@ -409,15 +419,6 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (cm != null) cm.registerDefaultNetworkCallback(networkCallback);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.registerCallback(inputCallback, handler);
-        IntentFilter packages = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
-        packages.addAction(Intent.ACTION_PACKAGE_REPLACED);
-        packages.addAction(Intent.ACTION_PACKAGE_CHANGED);
-        packages.addAction(Intent.ACTION_PACKAGE_REMOVED);
-        packages.addDataScheme("package");
-        registerReceiver(packageReceiver, packages);
-        IntentFilter storage = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
-        storage.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
-        registerReceiver(packageReceiver, storage);
 
         // First run cut short without ending (a power cut mid-setup, Home brought back cold): it ends now, switching off
         // what isn't set up, and the launcher is rebuilt with that. Cut short before any step was opened, it shows again.

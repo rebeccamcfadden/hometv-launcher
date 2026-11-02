@@ -25,6 +25,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 /**
  * Home (design_preview/src/screens/home.ts and the .home styles in screens.css; README, Home). Resting: the greeting,
@@ -102,10 +103,11 @@ final class HomePage extends Screen {
     private boolean retryWeather;
     /**
      * An app was installed, changed or removed while Home is on screen (the broadcast can land after the first frame
-     * back). Not mid-Move: the row catches up when Home next shows.
+     * back): the row is rebuilt only for an app in its list (null: any app). Not mid-Move: the row catches up when
+     * Home next shows.
      */
-    private final Runnable appsChanged = () -> {
-        if (moving == null) refreshApps(false);
+    private final Consumer<String> appsChanged = pkg -> {
+        if (moving == null && (pkg == null || full.contains(pkg))) refreshApps(false);
     };
     /** The inputs' catch-up when Home shows again, after its first frame: TvInputManager's binder calls. */
     private final Runnable inputsAfterFrame = () -> {
@@ -424,15 +426,28 @@ final class HomePage extends Screen {
     boolean onLongOk(View focused) {
         if (!(focused instanceof AppTile) || moving != null || focused.getParent() != appRow) return false;
         AppTile tile = (AppTile) focused;
+        String pkg = tile.pkg;
         List<MenuPanel.Row> rows = new ArrayList<>();
-        rows.add(new MenuPanel.Row(activity.getString(R.string.tile_move), 0, () -> pickUp(tile)));
-        rows.add(new MenuPanel.Row(activity.getString(R.string.library_remove_shortcut), 0, () -> remove(tile)));
-        Intent info = SystemSettings.appInfo(activity, tile.pkg);
+        // The row can be rebuilt while the menu is open (an app changed): act on the tile it has now, if any.
+        rows.add(new MenuPanel.Row(activity.getString(R.string.tile_move), 0, () -> {
+            AppTile now = tileOf(pkg);
+            if (now != null) pickUp(now);
+        }));
+        rows.add(new MenuPanel.Row(activity.getString(R.string.library_remove_shortcut), 0, () -> {
+            AppTile now = tileOf(pkg);
+            if (now != null) remove(now);
+        }));
+        Intent info = SystemSettings.appInfo(activity, pkg);
         if (info != null) {
             rows.add(new MenuPanel.Row(activity.getString(R.string.library_app_info), 0, () -> activity.start(info)));
         }
         shell.push(TileMenu.create(shell, tile, rows, hero));
         return true;
+    }
+
+    private AppTile tileOf(String pkg) {
+        View v = Focus.byKey(appRow, "app-" + pkg);
+        return v instanceof AppTile ? (AppTile) v : null;
     }
 
     // ---- Resting and scrolled ----------------------------------------------------------------------------------
