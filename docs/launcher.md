@@ -31,6 +31,7 @@ The TV needs Android 8.0 (API 26) or newer. `minSdk` is a compile-time floor in
 It needs JDK 17 and Android SDK platform 34. On macOS: `brew install openjdk@17 android-commandlinetools` and
 `sdkmanager "platforms;android-34" "build-tools;34.0.0"`. On Linux the install script finds `~/Android/Sdk` and the
 `java` on your PATH. Then `launcher/build-and-install.sh` (`build-and-install.ps1` on Windows) builds and installs it.
+On a fresh install it ends by opening First run on the TV; an update leaves the TV at Home.
 
 The weather's default location and temperature unit come from `launcher/tv.properties`, which is gitignored: copy
 [`launcher/tv.properties.example`](../launcher/tv.properties.example) (New York, °C) and edit the copy. Both can be

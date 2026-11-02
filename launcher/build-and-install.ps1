@@ -63,6 +63,21 @@ Write-Host "Stock launcher: $StockLauncher"
 $disableStock = if ($StockLauncher -eq 'none') { 'echo stock launcher left alone' } else { "pm disable-user --user 0 $StockLauncher" }
 
 $apk = 'app\build\outputs\apk\release\app-release.apk'
+# A fresh install (the package was not on the TV) ends by opening First run; an update must not. Only an answer that
+# is plainly "not installed" counts as fresh: nothing, or package lines without this one. A query that fails or
+# answers anything else (tv.py passes the TV's error text on with exit 0) counts as an update, so nothing is opened.
+$before = @()
+$queryExit = 1
+# Under 'Stop', Windows PowerShell 5.1 turns a native command's stderr (tv.py's traceback on a lost connection) into a
+# terminating error: run the query under 'Continue' so a failure is judged by its exit code, as an update.
+$saved = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    $before = @(& $py -I ..\tools\tv.py 'pm list packages com.hometv.launcher' 2>$null | ForEach-Object { "$_".Trim() } | Where-Object { $_ })
+    $queryExit = $LASTEXITCODE
+} catch { $queryExit = 1 } finally { $ErrorActionPreference = $saved }
+$freshInstall = ($queryExit -eq 0) -and -not ($before -contains 'package:com.hometv.launcher') -and
+    -not ($before | Where-Object { $_ -notlike 'package:*' })
 & $py -I ..\tools\b64push.py $apk /data/local/tmp/tvhome.apk
 if ($LASTEXITCODE -ne 0) { throw 'APK upload failed' }
 $out = & $py -I ..\tools\tv.py 'pm install -r /data/local/tmp/tvhome.apk; rm -f /data/local/tmp/tvhome.apk'
@@ -114,4 +129,22 @@ if ($HomeKeyService) { Enable-Service 'HomeKeyService' }
 if ($RestoreKeyServices) {
     'pm grant com.hometv.launcher android.permission.WRITE_SECURE_SETTINGS && echo restore-granted' | & $py -I ..\tools\tv.py --batch
 }
-Write-Host 'Installed. Press Home on the remote to see it.'
+# Last, after every Home check: First run shows by itself on the first Home start after an install, and the checks
+# above would end it (#98). Nothing presses Home after this.
+if ($freshInstall) {
+    # Optional, after the install has worked: a refused start or a lost connection only changes the message (under
+    # 'Continue', as above, so tv.py's stderr can't fail a good install).
+    $firstRun = ''
+    $firstRunExit = 1
+    $saved = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $firstRun = (& $py -I ..\tools\tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity' 2>$null) -join "`n"
+        $firstRunExit = $LASTEXITCODE
+    } catch { $firstRunExit = 1 } finally { $ErrorActionPreference = $saved }
+    if ($firstRunExit -ne 0 -or $firstRun -match 'Error') {
+        Write-Host "Installed. First run did not open; from the repository root, open it with: tools\venv\Scripts\python.exe tools\tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity'"
+    } else { Write-Host 'Installed. First run is open on the TV.' }
+} else {
+    Write-Host 'Installed. Press Home on the remote to see it.'
+}

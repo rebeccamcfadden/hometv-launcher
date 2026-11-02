@@ -9,6 +9,7 @@ Run from the repository root: python3 -m unittest discover -s tests -v
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -19,6 +20,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 STOCK_HOME = "com.google.android.tvlauncher/.MainActivity"
 NEW_HOME = "com.hometv.launcher/.MainActivity"
+FIRST_RUN = "com.hometv.launcher.action.FIRST_RUN"
 
 # Stands in for tools/tv.py: a TV that answers shell commands and keeps the state the script changes.
 FAKE_TV = r'''
@@ -48,6 +50,16 @@ state = load()
 
 
 def run(command):
+    if command.startswith("pm list packages"):
+        if state["list_fails"]:
+            raise LinkLost()
+        if state["list_answer"] is not None:
+            return state["list_answer"]
+        return "package:com.hometv.launcher\n" if state["installed_before"] else ""
+    if "action.FIRST_RUN" in command and state.get("first_run_drops"):
+        raise LinkLost()
+    if "action.FIRST_RUN" in command and state["first_run_fails"]:
+        return "Starting: Intent { act=com.hometv.launcher.action.FIRST_RUN }\nError: Activity not started\n"
     if "pm install" in command:
         return "Success\n"
     if "am start" in command:
@@ -111,6 +123,7 @@ sys.exit(main())
 '''.replace("STOCK", repr(STOCK_HOME)).replace("NEW", repr(NEW_HOME))
 
 
+@unittest.skipUnless(shutil.which("bash"), "needs bash (Git Bash on Windows)")
 class HandoverTest(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
@@ -137,7 +150,7 @@ class HandoverTest(unittest.TestCase):
         self.home = self.base / "home"
         self.home.mkdir()
 
-    def handover(self, **overrides):
+    def handover(self, env_extra=None, **overrides):
         state = {
             "stock_home": STOCK_HOME,
             "home": STOCK_HOME,
@@ -148,6 +161,10 @@ class HandoverTest(unittest.TestCase):
             "enable_fails": False,
             "drop_after_handover": False,
             "link_lost": False,
+            "installed_before": False,
+            "list_fails": False,
+            "list_answer": None,
+            "first_run_fails": False,
             "commands": [],
         }
         state.update(overrides)
@@ -157,6 +174,7 @@ class HandoverTest(unittest.TestCase):
         env.update(TV_HOST="192.168.1.50", FAKE_TV_STATE=str(self.state_path),
                    HOME=str(self.home), JAVA_HOME=str(self.base / "java"),
                    ANDROID_HOME=str(self.base / "android-sdk"))
+        env.update(env_extra or {})
         result = subprocess.run(
             ["bash", str(self.launcher / "build-and-install.sh")],
             cwd=self.launcher, env=env, capture_output=True, text=True, timeout=180,
@@ -216,6 +234,145 @@ class HandoverTest(unittest.TestCase):
         self.assertIn("recovery is incomplete", result.stderr)
         self.assertTrue(any("pm enable --user 0" in c for c in state["commands"]))
         self.assertIsNotNone(self.record())
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+
+    def test_fresh_install_opens_first_run_last(self):
+        # First run shows by itself on the first Home start after an install, and the guard's checks end it (#98),
+        # so the script opens it again as its very last TV command.
+        result, state = self.handover()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(FIRST_RUN, state["commands"][-1])
+        self.assertEqual(sum(FIRST_RUN in c for c in state["commands"]), 1)
+        self.assertIn("First run is open", result.stdout)
+
+    def test_update_does_not_open_first_run(self):
+        result, state = self.handover(installed_before=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+        self.assertIn("Press Home", result.stdout)
+
+    def test_unanswered_package_query_counts_as_an_update(self):
+        result, state = self.handover(list_fails=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+
+    def test_rollback_does_not_open_first_run(self):
+        result, state = self.handover(set_home_fails=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+
+    def test_first_run_opens_after_the_key_services(self):
+        result, state = self.handover(env_extra={"INPUT_KEY_SERVICE": "1", "HOME_KEY_SERVICE": "1",
+                                                 "RESTORE_KEY_SERVICES": "1"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        commands = state["commands"]
+        self.assertIn(FIRST_RUN, commands[-1])
+        self.assertTrue(any("InputKeyService" in c for c in commands[:-1]))
+        self.assertTrue(any("WRITE_SECURE_SETTINGS" in c for c in commands[:-1]))
+
+    def test_an_error_answer_counts_as_an_update(self):
+        # tools/tv.py passes the TV's error text on with exit 0.
+        result, state = self.handover(list_answer="cmd: Can't find service: package\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+
+    def test_other_packages_alone_count_as_fresh(self):
+        result, state = self.handover(list_answer="package:com.hometv.launcher.addon\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(FIRST_RUN, state["commands"][-1])
+
+    def test_first_run_that_does_not_open_still_reports_the_install(self):
+        result, state = self.handover(first_run_fails=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("First run did not open", result.stdout)
+        self.assertNotIn("First run is open", result.stdout)
+
+
+class WindowsTwinTest(unittest.TestCase):
+    """build-and-install.ps1 can't run here (no pwsh in CI): its First run step is read instead."""
+
+    def test_ps1_opens_first_run_last_and_only_when_fresh(self):
+        text = (ROOT / "launcher" / "build-and-install.ps1").read_text(encoding="utf-8")
+        query = text.index("'pm list packages com.hometv.launcher'")
+        push = text.index("b64push.py $apk")
+        opened = text.index(FIRST_RUN)
+        self.assertLess(query, push, "the fresh-install check runs before the APK is pushed")
+        self.assertGreater(opened, text.index("if ($RestoreKeyServices)"), "First run opens after the key services")
+        block = text.rfind("if ($freshInstall)", 0, opened)
+        self.assertNotEqual(block, -1, "First run opens inside if ($freshInstall)")
+        self.assertNotIn("} else {", text[block:opened], "First run opens in the fresh branch")
+        self.assertNotIn("& $py", text[text.index("\n", opened):])
+        # The decision itself: exit 0, ours not listed, and nothing but package lines in the answer.
+        decision = re.search(r"\$freshInstall = (.+?)\n(?!\s+-)", text, re.S).group(1)
+        self.assertIn("($queryExit -eq 0)", decision)
+        self.assertRegex(decision, r"-and -not \(\$before -contains 'package:com\.hometv\.launcher'\)")
+        self.assertRegex(decision, r"-not \(\$before \| Where-Object \{ \$_ -notlike 'package:\*' \}\)")
+
+
+POWERSHELL = shutil.which("powershell.exe") if os.name == "nt" else None
+
+
+@unittest.skipUnless(POWERSHELL, "needs Windows PowerShell 5.1")
+class WindowsPowerShellHandoverTest(unittest.TestCase):
+    """build-and-install.ps1 itself, under Windows PowerShell 5.1, against the same fake TV: its stderr handling under
+    ErrorActionPreference Stop is what a dropped connection tests (tv.py's traceback on stderr)."""
+
+    @classmethod
+    def setUpClass(cls):
+        tmp = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(tmp.cleanup)
+        cls.venv = Path(tmp.name) / "venv"
+        subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(cls.venv)], check=True, timeout=120)
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.base = Path(tmp.name)
+        self.launcher = self.base / "launcher"
+        self.launcher.mkdir()
+        shutil.copy2(ROOT / "launcher" / "build-and-install.ps1", self.launcher)
+        (self.launcher / "gradlew.bat").write_text(
+            "@echo off\r\nmkdir app\\build\\outputs\\apk\\release 2>nul\r\necho apk> app\\build\\outputs\\apk\\release\\app-release.apk\r\n")
+        (self.launcher / "local.properties").write_text("sdk.dir=C:/sdk\n")
+        (self.base / "java" / "bin").mkdir(parents=True)
+        (self.base / "java" / "bin" / "java.exe").write_text("")
+        tools = self.base / "tools"
+        tools.mkdir()
+        (tools / "tv.py").write_text(FAKE_TV)
+        (tools / "b64push.py").write_text("print('pushed')\n")
+        shutil.copytree(self.venv, tools / "venv")
+        self.state_path = self.base / "tv-state.json"
+
+    def run_ps1(self, **overrides):
+        state = {"stock_home": STOCK_HOME, "home": STOCK_HOME, "stock_disabled": False, "start_fails": False,
+                 "disable_fails": False, "set_home_fails": False, "enable_fails": False, "drop_after_handover": False,
+                 "link_lost": False, "installed_before": False, "list_fails": False, "list_answer": None,
+                 "first_run_fails": False, "first_run_drops": False, "commands": []}
+        state.update(overrides)
+        self.state_path.write_text(json.dumps(state))
+        env = {k: v for k, v in os.environ.items() if k not in ("PSModulePath", "TV_HOST")}
+        env.update(FAKE_TV_STATE=str(self.state_path), JAVA_HOME=str(self.base / "java"))
+        result = subprocess.run([POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+                                 str(self.launcher / "build-and-install.ps1"), "-TvHost", "192.168.1.50"],
+                                cwd=self.base, env=env, capture_output=True, text=True, timeout=180)
+        return result, json.loads(self.state_path.read_text())
+
+    def test_fresh_install_opens_first_run_last(self):
+        result, state = self.run_ps1()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(FIRST_RUN, state["commands"][-1])
+        self.assertIn("First run is open", result.stdout)
+
+    def test_a_dropped_package_query_counts_as_an_update(self):
+        result, state = self.run_ps1(list_fails=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+        self.assertIn("Press Home", result.stdout)
+
+    def test_a_dropped_first_run_start_still_reports_the_install(self):
+        result, state = self.run_ps1(first_run_drops=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("First run did not open; from the repository root", result.stdout)
 
 
 if __name__ == "__main__":
