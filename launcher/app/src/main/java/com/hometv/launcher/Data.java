@@ -45,7 +45,9 @@ final class Data {
     private final Runnable accountChanged;
 
     static Data create(Context ctx, Config cfg) {
-        String token = BuildConfig.TMDB_TOKEN;
+        // F14: TMDB account switched off in Features makes this a build without a token: the mock catalogue and no
+        // account, so nothing reaches TMDB (Movies, TV Shows and Search say they need it, TmdbGate).
+        String token = Features.isOn(Features.Feature.TMDB) ? BuildConfig.TMDB_TOKEN : "";
         Region region = RegionChoice.get(ctx);
         Catalog catalog = token.isEmpty() ? new MockCatalog() : new TmdbCatalog(ctx, token, region);
         catalog.setPriceStores(ServiceChoices.stores(ctx, region));
@@ -56,8 +58,12 @@ final class Data {
                 new Accounts(ctx, household, token), region);
         Context app = ctx.getApplicationContext();
         data.tickedStores = () -> ServiceChoices.stores(app, region);
+        data.appContext = app;
         return data;
     }
+
+    /** For close(): reads the Features switches as saved now. */
+    private Context appContext;
 
     /** Launcher settings' Stores ticks (ServiceChoices), read each time so a change shows at once; null if never set. */
     private java.util.function.Supplier<Set<ServiceId>> tickedStores;
@@ -110,6 +116,8 @@ final class Data {
      * Data stops listening, so nothing keeps it alive.
      */
     void close() {
+        // TMDB account switched off while this ran: its sign-in and sync stop rather than finish in the background.
+        if (appContext != null && !FeaturePrefs.live(appContext).on(Features.Feature.TMDB)) accounts.stop();
         household.removeListener(wantHousehold);
         accounts.removeListener(accountChanged);
         catalog.close();

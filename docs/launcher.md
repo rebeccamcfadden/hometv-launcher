@@ -70,6 +70,10 @@ closes. The sections, top to bottom:
 - **Streaming services**: tick the services the household pays for; titles on them show as Included.
 - **Stores for rent and buy**: tick the stores whose rent and buy prices show.
 - **Home row apps**: pick an app up with OK to move it, take it off Home, or add another app.
+- **Features**: TMDB account, Phone notes, Price lookup and Weather, each On or Off (`features` in a pushed
+  config.json). Every one starts on, and First run switches off any whose setup isn't finished when it ends. A feature
+  that is off never starts; its section stays and reads Off, and its pane, like Movies, TV Shows and Search's "needs a
+  TMDB account", has **Turn on**, which switches it on and goes straight into its setup.
 - **Theme**: the look of every page. Typeface switches between the theme's own fonts (downloaded from Google Fonts and
   kept on the TV) and Roboto. The theme's pictures, except 8-bit's, are downloaded once from `theme_assets_url`.
 - **Weather**: the place Home's weather is for, with the weather there now. Change city searches Open-Meteo's places

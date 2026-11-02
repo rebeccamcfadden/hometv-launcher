@@ -238,11 +238,21 @@ final class Shell {
         View last = s.lastFocus;
         if (last != null && last.isAttachedToWindow() && last.isShown() && Focus.isInside(s.view, last)) return last;
         View byKey = Focus.byKey(s.view, s.lastFocusKey);
-        if (byKey != null) return byKey;
+        // A hidden item is passed over (Pick for me with nothing to pick), as in the prototype's restoreTarget.
+        if (byKey != null && visibleIn(s.view, byKey)) return byKey;
         View d = s.defaultFocus();
         if (d != null) return d;
         List<View> all = Focus.all(s.view);
         return all.isEmpty() ? null : all.get(0);
+    }
+
+    /** Whether v and every parent up to root are VISIBLE (works before the page is attached, unlike isShown). */
+    private static boolean visibleIn(View root, View v) {
+        for (View x = v; x != null; x = x.getParent() instanceof View ? (View) x.getParent() : null) {
+            if (x.getVisibility() != View.VISIBLE) return false;
+            if (x == root) return true;
+        }
+        return true;
     }
 
     /** Call after a screen rebuilt part of itself, so focus never stays on a view that has gone. */

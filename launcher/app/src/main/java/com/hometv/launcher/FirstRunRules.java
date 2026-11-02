@@ -16,15 +16,100 @@ import java.util.Set;
 final class FirstRunRules {
     private FirstRunRules() {}
 
-    /** The checklist's rows, in order, as SettingsSection ids. */
+    /**
+     * The checklist's rows, in order, as SettingsSection ids. Since F14 (the project lead, 2026-11-01) Features comes
+     * first and there is no other on/off: turning a feature on there opens its setup (Sign in to TMDB, Weather city,
+     * Phone notes, Theme), which are no longer rows of their own.
+     */
     static final List<String> STEPS = Collections.unmodifiableList(Arrays.asList(
-            "account", "services", "stores", "weather"));
+            "features", "services", "stores"));
 
-    /** The steps this build shows: STEPS among the sections present (Account is left out without a TMDB token). */
+    /** The steps this build shows: STEPS among the sections present. */
     static List<String> steps(Collection<String> present) {
         List<String> out = new ArrayList<>();
         for (String id : STEPS) if (present.contains(id)) out.add(id);
         return out;
+    }
+
+    /**
+     * The setup a feature turned on in the Features step opens, as a SettingsSection id (F14, design_preview's
+     * features.ts): TMDB account signs in, Weather picks the city, Phone notes pairs a phone. Price lookup's keys page is
+     * Builder E's F16 and opens nothing until it exists.
+     */
+    static String setupOf(Features.Feature f) {
+        switch (f) {
+            case TMDB: return "account";
+            case NOTES: return "notes";
+            case WEATHER: return "weather";
+            default: return null;
+        }
+    }
+
+    /** Every setup the Features step can open, as SettingsSection ids. */
+    static final List<String> SETUPS = Collections.unmodifiableList(Arrays.asList("account", "notes", "weather"));
+
+    /** The setups' tabs under Features (F28): one per feature on that has a setup, in the features' order. */
+    static List<String> setups(Features on) {
+        List<String> out = new ArrayList<>();
+        for (Features.Feature f : Features.Feature.values()) {
+            String id = setupOf(f);
+            if (id != null && on.on(f)) out.add(id);
+        }
+        return out;
+    }
+
+    /** The feature whose setup that section is, or null. */
+    static Features.Feature featureOf(String setupId) {
+        for (Features.Feature f : Features.Feature.values()) {
+            if (setupId != null && setupId.equals(setupOf(f))) return f;
+        }
+        return null;
+    }
+
+    /**
+     * Whether a feature's setup is finished (the project lead, 2026-11-02): when First run ends, a feature on without it
+     * is switched off, so nothing shows half set up. TMDB account: the TV is signed in. Phone notes: TMDB account is set
+     * up and the TV is listening (Phone notes' own switch; the TV can't tell a phone paired until it sends a note).
+     * Price lookup: the Watchmode and Movie of the Night keys are set (F16's keys page, or the build's). Weather: a
+     * place is set, which the TV's default always is. A build without a TMDB token ({@code tmdbBuild} false: the
+     * emulator, CI) has no sign-in to finish, so TMDB account and Phone notes count as set up there and stay on.
+     */
+    static boolean setUp(Features.Feature f, boolean tmdbBuild, boolean signedIn, boolean notesListening,
+                         boolean priceKeys) {
+        switch (f) {
+            case TMDB: return !tmdbBuild || signedIn;
+            case NOTES: return !tmdbBuild || (signedIn && notesListening);
+            case PRICES: return priceKeys;
+            default: return true;
+        }
+    }
+
+    /**
+     * The panels in the order Next steps through them (the project lead, 2026-11-02): Features, then each setup under
+     * it, then the other steps.
+     */
+    static List<String> panels(List<String> steps, List<String> setups) {
+        List<String> out = new ArrayList<>();
+        for (String id : steps) {
+            out.add(id);
+            if (FeaturesSection.ID.equals(id)) out.addAll(setups);
+        }
+        return out;
+    }
+
+    /** The panel Next opens after id; null on the last, whose button is Done. */
+    static String nextPanel(List<String> panels, String id) {
+        int i = panels.indexOf(id);
+        return i < 0 || i + 1 >= panels.size() ? null : panels.get(i + 1);
+    }
+
+    /**
+     * Whether the launcher must be rebuilt before the feature's setup can work: TMDB account's sign-in needs the TMDB
+     * client the launcher only makes with it on, and Phone notes' pairing its inbox. Not when the launcher already runs
+     * with it (switched off and on again since it was built).
+     */
+    static boolean setupNeedsRebuild(Features.Feature f, boolean runsNow) {
+        return !runsNow && (f == Features.Feature.TMDB || f == Features.Feature.NOTES);
     }
 
     /**
@@ -71,7 +156,7 @@ final class FirstRunRules {
     }
 
     /**
-     * Whether a row's value only repeats its pill (Weather's "Default" beside the Default pill): the checklist leaves
+     * Whether a row's value only repeats its pill (Features' "All off" beside the All off pill): the checklist leaves
      * it out while the pill shows.
      */
     static boolean repeatsPill(String value, String pill) {

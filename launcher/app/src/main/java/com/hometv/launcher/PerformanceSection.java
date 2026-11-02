@@ -239,8 +239,8 @@ final class PerformanceSection implements SettingsSection {
                 });
     }
 
-    /** A choice's row: its name over a line saying what it is, and the segmented control on the right. */
-    private static View row(Context ctx, int title, int sub, View control) {
+    /** A choice's row: its name over a line saying what it is, and the control on the right (Features uses it too). */
+    static View row(Context ctx, int title, int sub, View control) {
         LinearLayout row = Kit.unclip(new LinearLayout(ctx));
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);

@@ -20,6 +20,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +49,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     /** Survive a rebuild with Launcher settings open (a theme change): the page reopens on the same section. */
     private static final String KEY_SETTINGS_SECTION = "settings_section";
     private static final String KEY_SETTINGS_IN_PANE = "settings_in_pane";
+    /** And whether Back in its pane returns to the page it was opened from (an empty state's Turn on). */
+    private static final String KEY_SETTINGS_BACK_CLOSES = "settings_back_closes";
+    /** A message for the launcher rebuilt after First run switched off what wasn't set up (the rebuild drops a toast). */
+    private static String toastAfterRebuild;
     private LauncherSettingsPage settingsPage;
     /** Opens First run's checklist over Home (FirstRunPage) at any time, for adb; by itself it shows once. */
     static final String ACTION_FIRST_RUN = "com.hometv.launcher.action.FIRST_RUN";
@@ -56,6 +61,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     static final String EXTRA_FALL = "fall";
     /** Survive a rebuild with First run open: the checklist reopens with the same steps done. */
     private static final String KEY_FIRST_RUN = "first_run_opened";
+    /** And the panel it had open (F28), which opens again. */
+    private static final String KEY_FIRST_RUN_SETUP = "first_run_setup";
     private FirstRunPage firstRun;
     /**
      * F26: where the household was (the nav's page, its focus and choices, the title previews over it), so Back from
@@ -205,6 +212,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         systemFont = ThemeStore.systemFont(this);
         Ui.apply(theme);
         PerfChoices.apply(PerfPrefs.load(this, cfg));
+        // F14: which features run, before anything that starts one is built.
+        Features.apply(FeaturePrefs.load(this));
+        // The Phone notes inbox lives as long as the process: it opens or closes with the switches the launcher is
+        // built with now.
+        Notes.get(this).allow(Features.isOn(Features.Feature.NOTES));
         if (!ThemeFonts.apply(this, theme)) ThemeFonts.fetch(this, theme, fontsArrived);
         // restore_key_services: after a force stop, put back the remote's accessibility helpers that Android took
         // off the list (needs WRITE_SECURE_SETTINGS, granted by build-and-install with RESTORE_KEY_SERVICES=1).
@@ -263,6 +275,16 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         packages.addDataScheme("package");
         registerReceiver(packageReceiver, packages);
 
+        // First run cut short without ending (a power cut mid-setup, Home brought back cold): it ends now, switching off
+        // what isn't set up, and the launcher is rebuilt with that.
+        if (savedInstanceState == null && FirstRunPage.interrupted(this)) {
+            List<String> off = FirstRunPage.switchOffUnfinished(this);
+            if (!off.isEmpty()) {
+                toastAfterRebuild = getString(R.string.first_run_switched_off, TextUtils.join(", ", off));
+                recreate();
+                return;
+            }
+        }
         // Not after recreate(): the launch intent survives it and would open them again.
         if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())
                 && !openFirstRunIfAsked(getIntent()) && !previewFallIfAsked(getIntent()) && !openInputsIfAsked(getIntent())
@@ -273,9 +295,16 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         ArrayList<String> firstRunDone = savedInstanceState == null ? null
                 : savedInstanceState.getStringArrayList(KEY_FIRST_RUN);
         if (firstRunDone != null) openFirstRun(firstRunDone);
+        String firstRunSetup = savedInstanceState == null ? null : savedInstanceState.getString(KEY_FIRST_RUN_SETUP);
+        if (firstRunDone != null && firstRunSetup != null && firstRun != null) firstRun.reopen(firstRunSetup);
         // Rebuilt with Launcher settings open (a theme change, or a choice made before a trip to another app).
         String section = savedInstanceState == null ? null : savedInstanceState.getString(KEY_SETTINGS_SECTION);
-        if (section != null) openLauncherSettings(section, savedInstanceState.getBoolean(KEY_SETTINGS_IN_PANE));
+        if (section != null) openLauncherSettings(section, savedInstanceState.getBoolean(KEY_SETTINGS_IN_PANE),
+                savedInstanceState.getBoolean(KEY_SETTINGS_BACK_CLOSES));
+        if (toastAfterRebuild != null) {
+            shell.toast(toastAfterRebuild);
+            toastAfterRebuild = null;
+        }
     }
 
     @Override
@@ -335,6 +364,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     /** M7: Pick for me's setup page, pushed over whichever page is showing, so Back returns to it. */
     @Override
     public void openPick(Kind kind) {
+
         shell.push(PickSetupPage.create(this, kind));
     }
 
@@ -460,10 +490,26 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
      * into section's pane when enter. Already open, it stays as it is.
      */
     void openLauncherSettings(String section, boolean enter) {
+        openLauncherSettings(section, enter, false);
+    }
+
+    /** backCloses: Back in the pane returns to the page underneath (an empty state's Turn on or Sign in). */
+    void openLauncherSettings(String section, boolean enter, boolean backCloses) {
         shell.closeDialogs();
         if (settingsPage != null && shell.has(settingsPage)) return;
-        settingsPage = LauncherSettingsPage.create(this, section, enter);
+        settingsPage = LauncherSettingsPage.create(this, section, enter, backCloses);
         shell.push(settingsPage);
+    }
+
+    /**
+     * Movies, TV Shows or Search's "needs a TMDB account" (TmdbGate): Turn on (switched off) or Sign in, straight into
+     * Account's sign-in; Back returns to the page (the project lead, 2026-11-02). Turned on, the launcher is rebuilt with
+     * TMDB account first (it makes the TMDB client only with it on), and comes back to the page with Account over it.
+     */
+    void signInFromPage(boolean turnOn) {
+        if (turnOn) FeaturePrefs.turnOn(this, Features.Feature.TMDB);
+        openLauncherSettings("account", true, true);
+        if (turnOn && !Features.isOn(Features.Feature.TMDB)) recreate();
     }
 
     void openLauncherSettings() {
@@ -503,6 +549,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     /** Start using Home, or Back: Home, rebuilt if a step changed a choice, as Launcher settings does on close. */
     void closeFirstRun() {
         shell.goTab(Screen.Tab.HOME, false);
+        firstRunEnded();
         firstRunClosed();
         if (settingsPage != null && !shell.has(settingsPage)) settingsClosed();
         if (Config.settingsChanged(settingsRevision, settingsRevision())) recreate();
@@ -511,6 +558,19 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private void firstRunClosed() {
         if (firstRun != null) firstRun.closed();
         firstRun = null;
+    }
+
+    /**
+     * First run has ended (Start, Back, the remote's Home; not a rebuild): every feature on whose setup isn't finished
+     * is switched off, so nothing shows half set up (the project lead, 2026-11-02), and a toast names them.
+     */
+    private void firstRunEnded() {
+        if (firstRun == null) return;
+        List<String> off = FirstRunPage.switchOffUnfinished(this);
+        if (off.isEmpty()) return;
+        String msg = getString(R.string.first_run_switched_off, TextUtils.join(", ", off));
+        if (Config.settingsChanged(settingsRevision, settingsRevision())) toastAfterRebuild = msg;
+        else shell.toast(msg);
     }
 
     /** Whether there are inputs to list and which network icon to show, on every page's nav. */
@@ -630,10 +690,15 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
         savePlace(out);
-        if (firstRun != null && shell.has(firstRun)) out.putStringArrayList(KEY_FIRST_RUN, firstRun.opened());
+        if (firstRun != null && shell.has(firstRun)) {
+            out.putStringArrayList(KEY_FIRST_RUN, firstRun.opened());
+            out.putString(KEY_FIRST_RUN_SETUP, firstRun.panelShowing());
+        }
         if (settingsPage != null && shell.has(settingsPage)) {
             out.putString(KEY_SETTINGS_SECTION, settingsPage.section());
-            out.putBoolean(KEY_SETTINGS_IN_PANE, settingsPage.inPane());
+            // Opened for one setup from a page (backCloses), it is about its pane: it reopens there.
+            out.putBoolean(KEY_SETTINGS_IN_PANE, settingsPage.inPane() || settingsPage.backCloses());
+            out.putBoolean(KEY_SETTINGS_BACK_CLOSES, settingsPage.backCloses());
         }
     }
 
@@ -731,7 +796,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         shell.home();
         if (settingsPage != null && !shell.has(settingsPage)) settingsClosed();
-        if (firstRun != null && !shell.has(firstRun)) firstRunClosed();
+        if (firstRun != null && !shell.has(firstRun)) {
+            firstRunEnded();
+            firstRunClosed();
+        }
         // Home closed Launcher settings: rebuild with what changed there, as Back would have.
         if (Config.settingsChanged(settingsRevision, settingsRevision())) recreate();
     }

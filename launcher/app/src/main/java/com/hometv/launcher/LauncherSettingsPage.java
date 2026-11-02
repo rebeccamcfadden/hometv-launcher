@@ -28,33 +28,9 @@ import java.util.List;
  * page closes (MainActivity#closeLauncherSettings). A theme change rebuilds at once, and MainActivity reopens the page
  * on the same section ({@link #section()}).
  *
- * <p>First run opens the same page cut down to its steps ({@link #setup}, V2 design r2-setup-checklist): its own
- * title, hint and row labels, a footer under the pane, and Back on the list returning to the checklist. What differs
- * is all in {@link Setup}; null for Launcher settings itself.
+ * <p>First run (FirstRunPage) shows the same sections' panes on its own page, as tabs (F28).
  */
 final class LauncherSettingsPage extends Screen implements SettingsSection.Host {
-    /** First run's cut-down split (FirstRunSplit): what it changes on this page. */
-    interface Setup {
-        CharSequence title();
-
-        CharSequence hint();
-
-        /** The row's label ("Sign in to TMDB" for Account). */
-        CharSequence label(SettingsSection s);
-
-        /** The row's value, given the section's own ("Optional" for "Not signed in"). */
-        CharSequence value(SettingsSection s, CharSequence value);
-
-        /** The footer under the pane for the section showing; rebuilt each time another section shows. */
-        View foot(String section);
-
-        /** A section's pane was entered: the checklist ticks its row. */
-        void entered(String section);
-
-        /** Back on the list: return to the checklist. */
-        void close();
-    }
-
     static final String GROUP_SECTIONS = "sections";
     private static final float TOP = 160, LIST_LEFT = 104, LIST_W = 470, ROW_H = 70, ROW_GAP = 4;
     /** Room around the list inside its clip, for a focused row's 1.03 scale-up (8 px from the safe margin). */
@@ -64,8 +40,7 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
     private static final float PANE_LEFT = 630, PANE_PAD_X = 52, PANE_PAD_Y = 44;
     /** Room inside the pane's scroll area for a focused control's ring and scale-up (.pane-scroll). */
     private static final float PANE_ROOM = 10;
-    /** First run's footer (.pane-foot): a 24 px gap above its row of 56 px buttons (Kit.SMALL), 80 px in all. */
-    private static final float FOOT_GAP = 24, FOOT_ROW = 56, FOOT_H = FOOT_GAP + FOOT_ROW;
+
 
     private final MainActivity activity;
     private final Context ctx;
@@ -75,9 +50,7 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
     private final FrameLayout pane;
     private final ViewGroup paneScroll;
     private final FrameLayout paneHolder;
-    /** First run's hooks and the footer they fill; both null on Launcher settings. */
-    private final Setup setup;
-    private final FrameLayout foot;
+
     private String current;
     private String shown;
     private boolean inPane;
@@ -86,24 +59,29 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
     private boolean showedOnce;
 
     static LauncherSettingsPage create(MainActivity activity, String section, boolean enter) {
-        return new LauncherSettingsPage(activity, StubPage.frame(activity), SettingsSections.all(activity), section,
-                enter, null);
+        return create(activity, section, enter, false);
     }
 
-    /** First run's split: only these sections, opened straight into section's pane, with setup's changes. */
-    static LauncherSettingsPage setup(MainActivity activity, List<SettingsSection> sections, String section,
-                                      Setup setup) {
-        return new LauncherSettingsPage(activity, StubPage.frame(activity), sections, section, true, setup);
+    /**
+     * backCloses: opened for one setup from a page's empty state (Turn on, Sign in; the project lead, 2026-11-02): Back
+     * in the pane closes the page and returns to that page, rather than to the section list first.
+     */
+    static LauncherSettingsPage create(MainActivity activity, String section, boolean enter, boolean backCloses) {
+        LauncherSettingsPage page = new LauncherSettingsPage(activity, StubPage.frame(activity),
+                SettingsSections.all(activity), section, enter);
+        page.backCloses = backCloses;
+        return page;
     }
+
+    /** See {@link #create(MainActivity, String, boolean, boolean)}. */
+    private boolean backCloses;
 
     private LauncherSettingsPage(MainActivity activity, FrameLayout root, List<SettingsSection> sections,
-                                 String section, boolean enter, Setup setup) {
-        super(setup != null ? setup.title().toString() : activity.getString(R.string.launcher_settings), root,
-                Layer.PAGE);
+                                 String section, boolean enter) {
+        super(activity.getString(R.string.launcher_settings), root, Layer.PAGE);
         this.activity = activity;
         this.ctx = activity;
         this.sections = sections;
-        this.setup = setup;
         List<String> ids = new ArrayList<>();
         for (SettingsSection s : sections) ids.add(s.id());
         current = SettingsNav.initial(section, ids);
@@ -112,13 +90,11 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         // ---- The title and the hint.
         FrameLayout head = new FrameLayout(ctx);
         TextView title = Ui.line(ctx, Ui.T_H1, Ui.TEXT_1, Ui.DISPLAY);
-        if (setup != null) title.setText(setup.title());
-        else title.setText(R.string.launcher_settings);
+        title.setText(R.string.launcher_settings);
         head.addView(title, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL));
         TextView hint = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
-        if (setup != null) hint.setText(setup.hint());
-        else hint.setText(R.string.settings_hint);
+        hint.setText(R.string.settings_hint);
         head.addView(hint, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.CENTER_VERTICAL));
         FrameLayout.LayoutParams hlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -128,23 +104,19 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         hlp.rightMargin = Ui.px(Ui.SAFE_X);
         root.addView(head, hlp);
 
-        // ---- The sections: 8 px in from the safe margin, so a focused row's scale-up stays inside it. Launcher
-        // settings groups them under headings (F23, SettingsNav.lines); First run lists its steps as they come.
+        // ---- The sections: 8 px in from the safe margin, so a focused row's scale-up stays inside it, grouped under
+        // headings (F23, SettingsNav.lines). First run shows the same panes on its own page (FirstRunPage, F28).
         list = Kit.unclip(new LinearLayout(ctx));
         list.setOrientation(LinearLayout.VERTICAL);
-        if (setup == null) {
-            boolean first = true;
-            for (SettingsNav.Line l : SettingsNav.lines(ids)) {
-                if (l.isHeading()) {
-                    list.addView(heading(l.group, first));
-                } else {
-                    addRow(section(l.id), first || list.getChildAt(list.getChildCount() - 1).getTag(
-                            R.id.settings_section) == null);
-                }
-                first = false;
+        boolean first = true;
+        for (SettingsNav.Line l : SettingsNav.lines(ids)) {
+            if (l.isHeading()) {
+                list.addView(heading(l.group, first));
+            } else {
+                addRow(section(l.id), first || list.getChildAt(list.getChildCount() - 1).getTag(
+                        R.id.settings_section) == null);
             }
-        } else {
-            for (SettingsSection s : sections) addRow(s, rows.isEmpty());
+            first = false;
         }
         // The list scrolls with focus when its sections don't fit above the safe area, keeping a group's heading in
         // view over its first section (LIST_REVEAL). Its holder clips it, with LIST_ROOM spare all round for a
@@ -179,19 +151,7 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
-        // First run: the footer sits under the scrolling content (.pane-foot), exactly FOOT_H tall and flush with the
-        // scroll's bottom. The scroll's own room and the footer's top padding make the FOOT_GAP above the buttons;
-        // the room left at the footer's sides and bottom keeps a focused button's ring inside the footer.
-        if (setup != null) {
-            foot = Kit.unclip(new FrameLayout(ctx));
-            foot.setPadding(room, Ui.px(FOOT_GAP) - room, room, room);
-            slp.bottomMargin = Ui.px(FOOT_H);
-            pane.addView(foot, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(FOOT_H),
-                    Gravity.BOTTOM));
-        } else {
-            foot = null;
-        }
-        pane.addView(paneScroll, 0, slp);
+        pane.addView(paneScroll, slp);
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
         plp.topMargin = Ui.px(TOP);
@@ -257,8 +217,7 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         icon.setDuplicateParentStateEnabled(true);
         row.addView(icon, new LinearLayout.LayoutParams(Ui.px(28), Ui.px(28)));
         TextView label = Ui.line(ctx, Ui.T_BODY, Ui.TEXT_2, Ui.REGULAR);
-        if (setup != null) label.setText(setup.label(s));
-        else label.setText(s.label());
+        label.setText(s.label());
         label.setTextColor(Ui.colors(Ui.TEXT_2, Ui.TEXT_1, Ui.ON_ACCENT));
         label.setDuplicateParentStateEnabled(true);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
@@ -297,25 +256,15 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         paneHolder.addView(v, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         paneScroll.scrollTo(0, 0);
-        if (foot != null) {
-            foot.removeAllViews();
-            View f = setup.foot(id);
-            if (f != null) foot.addView(f, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT));
-        }
     }
 
     private void show(String id) {
         show(id, false);
     }
 
-    /**
-     * Focuses the section's first control, after showing its pane; stays on the section when there is none. Also
-     * First run's Next (FirstRunSplit), which enters the next step's pane.
-     */
-    void enter(String id) {
+    /** Focuses the section's first control, after showing its pane; stays on the section when there is none. */
+    public void enter(String id) {
         show(id);
-        if (setup != null) setup.entered(id);
         SettingsSection s = section(id);
         View first = s == null ? null : s.firstFocus();
         if (first != null) shell().focus(first);
@@ -325,7 +274,6 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         for (View row : rows) {
             SettingsSection s = section((String) row.getTag(R.id.settings_section));
             CharSequence value = s == null ? "" : s.value(ctx);
-            if (setup != null && s != null) value = setup.value(s, value);
             TextView v = (TextView) row.getTag(R.id.settings_row_value);
             v.setText(value == null ? "" : value);
             row.setContentDescription(((TextView) row.getTag(R.id.settings_row_title)).getText()
@@ -379,7 +327,6 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
     View defaultFocus() {
         if (enterFirst) {
             enterFirst = false;
-            if (setup != null) setup.entered(current);
             SettingsSection s = section(current);
             View first = s == null ? null : s.firstFocus();
             if (first != null) return first;
@@ -424,20 +371,22 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
                     shell().moveWithin(list, Shell.dirOf(key));
                     return true;
                 case CLOSE:
-                    if (setup != null) setup.close();
-                    else activity.closeLauncherSettings();
+                    activity.closeLauncherSettings();
                     return true;
                 default:
                     return true;
             }
         }
         SettingsSection s = section(current);
-        // First run's footer is the page's, not the section's: the section never sees its keys.
-        boolean inFoot = foot != null && Focus.isInside(foot, focused);
-        if (s != null && !inFoot && key != Key.BACK && key != Key.UP && s.onKey(key, focused)) return true;
+        // Features handles ↑ itself (row to row, on the selected option); other sections leave it to the page.
+        if (s != null && key != Key.BACK && (key != Key.UP || s instanceof FeaturesSection) && s.onKey(key, focused)) {
+            return true;
+        }
         switch (SettingsNav.inPane(key)) {
             case BACK:
-                if (s == null || !s.onBack()) shell().focus(rowOf(current));
+                if (s != null && s.onBack()) return true;
+                if (backCloses) activity.closeLauncherSettings();
+                else shell().focus(rowOf(current));
                 return true;
             case PASS:
                 return false;
@@ -467,6 +416,32 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         changed(ctx);
         activity.recreate();
     }
+
+    /**
+     * Turn on in a switched-off section: the feature on, then its setup's pane (Account when TMDB account had to come on
+     * first). TMDB account and Phone notes need the launcher rebuilt with them, which reopens this page in that pane.
+     */
+    @Override
+    public void turnOn(Features.Feature f) {
+        Features.Feature first = FeaturePrefs.turnOn(ctx, f);
+        String setup = FirstRunRules.setupOf(first);
+        String target = setup != null && section(setup) != null ? setup : current;
+        if (FirstRunRules.setupNeedsRebuild(first, Features.isOn(first))) {
+            current = target;
+            inPane = true;
+            activity.recreate();
+            return;
+        }
+        paintValues();
+        show(target, true);
+        enter(target);
+    }
+
+    /** Whether Back in the pane closes the page (kept over a rebuild). */
+    boolean backCloses() {
+        return backCloses;
+    }
+
 
     @Override
     public Shell shell() {

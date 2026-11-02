@@ -68,6 +68,7 @@ final class HomePage extends Screen {
     private final MainActivity activity;
     private final Shell shell;
     private final HomeApps apps;
+    /** Null with Weather switched off in Features (F14). */
     private final WeatherStore weatherStore;
 
     private final View dim;
@@ -105,7 +106,7 @@ final class HomePage extends Screen {
         public void onReceive(Context context, Intent intent) {
             tick();
             // The clock was set (network time after a boot at the epoch): HTTPS works now, so fetch the weather.
-            if (Intent.ACTION_TIME_CHANGED.equals(intent.getAction())) weatherStore.retry();
+            if (Intent.ACTION_TIME_CHANGED.equals(intent.getAction()) && weatherStore != null) weatherStore.retry();
         }
     };
 
@@ -118,7 +119,8 @@ final class HomePage extends Screen {
         this.activity = activity;
         this.shell = host.shell();
         apps = new HomeApps(activity, activity.config());
-        weatherStore = new WeatherStore(activity, w -> renderWeather());
+        // F14: with Weather off in Features no store is made, so nothing is read or fetched, and Home shows no weather.
+        weatherStore = Features.isOn(Features.Feature.WEATHER) ? new WeatherStore(activity, w -> renderWeather()) : null;
         Context ctx = activity;
 
         // The landscape shows through more than on other pages, darkening towards the apps (.home background).
@@ -316,7 +318,7 @@ final class HomePage extends Screen {
             if (internetChanged) renderWeather();
             if (retryWeather) {
                 retryWeather = false;
-                weatherStore.retry();
+                if (weatherStore != null) weatherStore.retry();
             }
             refreshInputs();
         });
@@ -690,6 +692,13 @@ final class HomePage extends Screen {
      * none saved, the strip and the line under the clock say "Weather unavailable offline".
      */
     private void renderWeather() {
+        if (weatherStore == null) {
+            // Weather off (F14): the line under the clock keeps its place, empty, and there is no strip to focus.
+            forecast.removeAllViews();
+            forecast.setVisibility(View.INVISIBLE);
+            weatherFrame.setVisibility(View.GONE);
+            return;
+        }
         Weather w = weatherStore.current();
         boolean offline = !hadInternet;
         long nowMs = System.currentTimeMillis();
@@ -850,9 +859,9 @@ final class HomePage extends Screen {
             tick();
             if (retryWeather) {
                 retryWeather = false;
-                weatherStore.retry();
+                if (weatherStore != null) weatherStore.retry();
             }
-            weatherStore.refresh();
+            if (weatherStore != null) weatherStore.refresh();
             refreshApps(false);
             refreshInputs();
         } else {

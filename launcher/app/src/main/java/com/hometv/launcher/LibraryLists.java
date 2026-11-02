@@ -35,6 +35,14 @@ final class LibraryLists {
         return c.isAll() ? lists.onAnyList(t) : lists.isOn(t, c);
     }
 
+    /**
+     * Whether Movies or TV Shows offers Pick for me (the project lead, 2026-11-02): the page has titles on its lists to
+     * pick from, and isn't offline with nothing saved. The page itself only shows with TMDB account on and signed in.
+     */
+    static boolean pickable(int poolSize, boolean offlineEmpty) {
+        return poolSize > 0 && !offlineEmpty;
+    }
+
     /** The page's titles: its kind, on some list (All lists), in the catalogue's order. */
     static List<Title> pool(List<Title> all, Kind kind, ListMembership lists) {
         List<Title> out = new ArrayList<>();

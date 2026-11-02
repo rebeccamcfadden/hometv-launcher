@@ -19,19 +19,21 @@ import static org.junit.Assert.assertTrue;
  * the keys, the rows' names, and when it opens by itself.
  */
 public class FirstRunRulesTest {
-    private static final List<String> FOUR = FirstRunRules.STEPS;
-    private static final List<String> THREE = Arrays.asList("services", "stores", "weather");
+    private static final List<String> THREE = FirstRunRules.STEPS;
+    private static final List<String> TWO = Arrays.asList("services", "stores");
 
     private static Set<String> opened(String... ids) {
         return new HashSet<>(Arrays.asList(ids));
     }
 
     @Test
-    public void theStepsFollowTheSettingsOrderAndLeaveOutWhatIsMissing() {
-        assertEquals(FOUR, FirstRunRules.steps(SettingsNav.ORDER));
-        // Without a TMDB token Launcher settings has no Account section: three steps.
-        List<String> noAccount = Arrays.asList("services", "stores", "weather", "apps", "theme", "about");
-        assertEquals(THREE, FirstRunRules.steps(noAccount));
+    public void theStepsAreFeaturesServicesAndStoresAndLeaveOutWhatIsMissing() {
+        // F14 (2026-11-01): Sign in to TMDB and Weather city are no longer steps; turning their feature on in the
+        // Features step sets them up.
+        assertEquals(Arrays.asList("features", "services", "stores"), THREE);
+        assertEquals(THREE, FirstRunRules.steps(SettingsNav.ORDER));
+        List<String> noFeatures = Arrays.asList("account", "services", "stores", "weather", "apps", "theme", "about");
+        assertEquals(TWO, FirstRunRules.steps(noFeatures));
     }
 
     @Test
@@ -48,34 +50,102 @@ public class FirstRunRulesTest {
 
     @Test
     public void doneCountsOnlyTheStepsShown() {
-        assertEquals(0, FirstRunRules.doneCount(THREE, opened()));
-        assertEquals(1, FirstRunRules.doneCount(THREE, opened("account", "weather")));
-        assertFalse(FirstRunRules.allDone(THREE, opened("account", "weather")));
-        assertTrue(FirstRunRules.allDone(THREE, opened("services", "stores", "weather")));
-        assertFalse(FirstRunRules.allDone(FOUR, opened("services", "stores", "weather")));
+        assertEquals(0, FirstRunRules.doneCount(TWO, opened()));
+        assertEquals(1, FirstRunRules.doneCount(TWO, opened("features", "stores")));
+        assertFalse(FirstRunRules.allDone(TWO, opened("features", "stores")));
+        assertTrue(FirstRunRules.allDone(TWO, opened("services", "stores")));
+        assertFalse(FirstRunRules.allDone(THREE, opened("services", "stores")));
     }
 
     @Test
     public void focusGoesBackToTheNextRowNotDoneThenStart() {
-        assertEquals("account", FirstRunRules.nextFocus(FOUR, opened()));
-        assertEquals("stores", FirstRunRules.nextFocus(FOUR, opened("account", "services")));
+        assertEquals("features", FirstRunRules.nextFocus(THREE, opened()));
+        assertEquals("stores", FirstRunRules.nextFocus(THREE, opened("features", "services")));
         // Not "the row after the one just done": the first not done, wherever it is.
-        assertEquals("account", FirstRunRules.nextFocus(FOUR, opened("services", "stores")));
-        assertNull(FirstRunRules.nextFocus(FOUR, opened("account", "services", "stores", "weather")));
-        assertNull(FirstRunRules.nextFocus(THREE, opened("services", "stores", "weather")));
+        assertEquals("features", FirstRunRules.nextFocus(THREE, opened("services", "stores")));
+        assertNull(FirstRunRules.nextFocus(THREE, opened("features", "services", "stores")));
+        assertNull(FirstRunRules.nextFocus(TWO, opened("services", "stores")));
     }
 
     @Test
     public void theFooterCountsStepsAndOffersTheNextOrDone() {
-        assertEquals(2, FirstRunRules.stepNumber(FOUR, "services"));
-        assertEquals(1, FirstRunRules.stepNumber(THREE, "services"));
-        assertEquals(0, FirstRunRules.stepNumber(THREE, "account"));
-        assertEquals("stores", FirstRunRules.nextStep(FOUR, "services"));
-        assertEquals("services", FirstRunRules.nextStep(FOUR, "account"));
-        assertNull(FirstRunRules.nextStep(FOUR, "weather"));
-        assertNull(FirstRunRules.nextStep(THREE, "weather"));
-        assertNull(FirstRunRules.nextStep(THREE, "account"));
-        assertNull(FirstRunRules.nextStep(Collections.emptyList(), "weather"));
+        assertEquals(2, FirstRunRules.stepNumber(THREE, "services"));
+        assertEquals(1, FirstRunRules.stepNumber(TWO, "services"));
+        assertEquals(0, FirstRunRules.stepNumber(TWO, "features"));
+        assertEquals("stores", FirstRunRules.nextStep(THREE, "services"));
+        assertEquals("services", FirstRunRules.nextStep(THREE, "features"));
+        assertNull(FirstRunRules.nextStep(THREE, "stores"));
+        assertNull(FirstRunRules.nextStep(TWO, "features"));
+        assertNull(FirstRunRules.nextStep(Collections.emptyList(), "stores"));
+        // A feature's setup opened from the Features step is a step of its own: Step 1 of 1, then Done.
+        assertEquals(1, FirstRunRules.stepNumber(Collections.singletonList("account"), "account"));
+        assertNull(FirstRunRules.nextStep(Collections.singletonList("account"), "account"));
+    }
+    @Test
+    public void aFeatureTurnedOnOpensItsOwnSetup() {
+        assertEquals("account", FirstRunRules.setupOf(Features.Feature.TMDB));
+        assertEquals("notes", FirstRunRules.setupOf(Features.Feature.NOTES));
+        assertEquals("weather", FirstRunRules.setupOf(Features.Feature.WEATHER));
+        // Prices' keys page is F16's; nothing until it exists.
+        assertNull(FirstRunRules.setupOf(Features.Feature.PRICES));
+        for (Features.Feature f : Features.Feature.values()) {
+            String id = FirstRunRules.setupOf(f);
+            if (id != null) assertTrue(id, SettingsNav.ORDER.contains(id));
+        }
+    }
+
+    @Test
+    public void theSetupTabsFollowTheFeaturesOn() {
+        Features none = Features.ALL_OFF;
+        assertTrue(FirstRunRules.setups(none).isEmpty());
+        assertEquals(Arrays.asList("account", "notes", "weather"), FirstRunRules.setups(Features.ALL_ON));
+        // TMDB account and Phone notes off: Weather and Price lookup on, and Price lookup has no setup here yet (F16).
+        java.util.Map<String, Object> saved = new java.util.HashMap<>();
+        saved.put("feature_tmdb", false);
+        saved.put("feature_notes", false);
+        assertEquals(Collections.singletonList("weather"), FirstRunRules.setups(Features.resolve(saved, null)));
+        assertEquals(FirstRunRules.SETUPS, FirstRunRules.setups(Features.ALL_ON));
+        assertSame(Features.Feature.NOTES, FirstRunRules.featureOf("notes"));
+        assertNull(FirstRunRules.featureOf("services"));
+        assertNull(FirstRunRules.featureOf(null));
+    }
+
+    @Test
+    public void whatCountsAsSetUp() {
+        assertTrue(FirstRunRules.setUp(Features.Feature.TMDB, true, true, false, false));
+        assertFalse(FirstRunRules.setUp(Features.Feature.TMDB, true, false, true, true));
+        // Phone notes: signed in and listening.
+        assertTrue(FirstRunRules.setUp(Features.Feature.NOTES, true, true, true, false));
+        assertFalse(FirstRunRules.setUp(Features.Feature.NOTES, true, true, false, false));
+        assertFalse(FirstRunRules.setUp(Features.Feature.NOTES, true, false, true, false));
+        assertTrue(FirstRunRules.setUp(Features.Feature.PRICES, true, false, false, true));
+        assertFalse(FirstRunRules.setUp(Features.Feature.PRICES, true, true, true, false));
+        // Weather always has a place (the TV's default).
+        assertTrue(FirstRunRules.setUp(Features.Feature.WEATHER, true, false, false, false));
+        // A build without a TMDB token has no sign-in to finish: TMDB account and Phone notes stay on.
+        assertTrue(FirstRunRules.setUp(Features.Feature.TMDB, false, false, false, false));
+        assertTrue(FirstRunRules.setUp(Features.Feature.NOTES, false, false, false, false));
+        assertFalse(FirstRunRules.setUp(Features.Feature.PRICES, false, true, true, false));
+    }
+
+    @Test
+    public void nextLeadsFromFeaturesThroughItsSetups() {
+        List<String> panels = FirstRunRules.panels(THREE, Arrays.asList("account", "weather"));
+        assertEquals(Arrays.asList("features", "account", "weather", "services", "stores"), panels);
+        assertEquals("account", FirstRunRules.nextPanel(panels, "features"));
+        assertEquals("services", FirstRunRules.nextPanel(panels, "weather"));
+        assertNull(FirstRunRules.nextPanel(panels, "stores"));
+        assertNull(FirstRunRules.nextPanel(panels, "notes"));
+        assertEquals(THREE, FirstRunRules.panels(THREE, Collections.emptyList()));
+    }
+
+    @Test
+    public void onlyTmdbAndPhoneNotesRebuildBeforeTheirSetup() {
+        assertTrue(FirstRunRules.setupNeedsRebuild(Features.Feature.TMDB, false));
+        assertTrue(FirstRunRules.setupNeedsRebuild(Features.Feature.NOTES, false));
+        assertFalse(FirstRunRules.setupNeedsRebuild(Features.Feature.TMDB, true));
+        assertFalse(FirstRunRules.setupNeedsRebuild(Features.Feature.WEATHER, false));
+        assertFalse(FirstRunRules.setupNeedsRebuild(Features.Feature.PRICES, false));
     }
 
     @Test
@@ -139,11 +209,13 @@ public class FirstRunRulesTest {
 
     @Test
     public void theDoneRowsAreKeptAndReadBack() {
-        assertEquals("services,weather", FirstRunRules.encode(opened("weather", "services")));
+        assertEquals("features,services", FirstRunRules.encode(opened("services", "features")));
         assertEquals("", FirstRunRules.encode(opened()));
-        assertEquals(Arrays.asList("services", "weather"), FirstRunRules.decode("services,weather"));
-        assertEquals(Arrays.asList("services", "weather"),
-                FirstRunRules.decode(FirstRunRules.encode(opened("services", "weather", "theme"))));
+        assertEquals(Arrays.asList("features", "services"), FirstRunRules.decode("features,services"));
+        assertEquals(Arrays.asList("features", "services"),
+                FirstRunRules.decode(FirstRunRules.encode(opened("services", "features", "theme"))));
+        // Steps from before F14 (Sign in to TMDB, Weather city) are no longer steps: left out.
+        assertEquals(Collections.singletonList("services"), FirstRunRules.decode("account,services,weather"));
         // Unknown ids, blanks and repeats are left out; nothing kept reads as none.
         assertEquals(Collections.singletonList("stores"), FirstRunRules.decode("stores,,theme,stores"));
         assertTrue(FirstRunRules.decode("").isEmpty());

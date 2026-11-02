@@ -315,13 +315,18 @@ final class StateUi {
      * actions in a row 16 apart. Returns the block; {@link #actions} finds the row.
      */
     static LinearLayout offlineBlock(Context ctx, CharSequence title, CharSequence note, View... actions) {
+        return offlineBlock(ctx, R.drawable.ic_ui_wifi_off, title, note, actions);
+    }
+
+    /** The same .state with another icon in the circle (F14's needs-a-TMDB-account state: the person). */
+    static LinearLayout offlineBlock(Context ctx, int icon, CharSequence title, CharSequence note, View... actions) {
         LinearLayout box = Kit.unclip(new LinearLayout(ctx));
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.START);
         box.setPadding(0, Ui.px(16), 0, 0);
         FrameLayout circle = new FrameLayout(ctx);
         circle.setBackground(Ui.oval(Ui.SURFACE_2));
-        circle.addView(Ui.icon(ctx, R.drawable.ic_ui_wifi_off, 48, Ui.TEXT_2),
+        circle.addView(Ui.icon(ctx, icon, 48, Ui.TEXT_2),
                 new FrameLayout.LayoutParams(Ui.px(48), Ui.px(48), Gravity.CENTER));
         box.addView(circle, new LinearLayout.LayoutParams(Ui.px(96), Ui.px(96)));
         TextView t = Ui.line(ctx, Ui.T_H2, Ui.TEXT_1, Ui.REGULAR);

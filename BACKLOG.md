@@ -615,9 +615,10 @@ key still opens the TV maker's panel, or `settings_key_panel`'s old quick-settin
 
 ## First run
 
-The checklist (design 01-setup B; `FirstRunPage`) and its cut-down split (r2-setup-checklist; Launcher settings'
-own page through `LauncherSettingsPage.Setup`, filled by `FirstRunSplit`). The project lead decided its open
-questions on 2026-10-31.
+`FirstRunPage`, one page since F28 (the project lead, 2026-11-02): the checklist (design 01-setup B) starts wide, and
+→ on a row opens its step's panel on the same page, the checklist shrinking to tabs on the left. The panel is the
+step's Launcher settings pane (`SettingsSection.pane`, with `FirstRunPage` as its `Host`) and a footer. The project
+lead decided its open questions on 2026-10-31.
 
 - **When it shows by itself:** once, on the first start of Home after a fresh install, never after an update
   (`PackageInfo.firstInstallTime` equal to `lastUpdateTime`), so a TV that had the launcher before, this code
@@ -627,17 +628,36 @@ questions on 2026-10-31.
   itself. The intent action `com.hometv.launcher.action.FIRST_RUN` on `MainActivity` opens it at any time, for adb:
   `adb shell am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity`. There is no
   quick-settings or Launcher settings row for it, and no "Set up again" row. The rule is `FirstRunRules.showOnStart`.
-- **When a row counts as done:** as in the prototype, once its pane was opened (OK on the row, or Next to it),
-  whatever was chosen there (`FirstRunRules.done`). The done steps are kept as `done` in the `first_run` preferences,
-  so the green checks stay after the launcher restarts, and over a rebuild.
+- **Tabs and panel (F28):** with a panel open, ↑/↓ on the tabs show each panel at once (shown is not done), → enters
+  it, ← from its left edge or Back in it returns to its tab, and Back on a tab widens the checklist again. The footer
+  reads "Step N of 3 · changes save at once" with Next, or Done on the last step, which widens the checklist with focus
+  on the first row not done, or Start.
+- **When a row counts as done:** as in the prototype, once its panel was entered (→ or OK on the row, or Next to
+  it), whatever was chosen there (`FirstRunRules.done`). The done steps are kept as `done` in the `first_run`
+  preferences, so the green checks stay after the launcher restarts, and over a rebuild.
 - **Row values:** Streaming services and Stores for rent and buy show the ticked names as the prototype does, the
   first two then "+N" ("Netflix, Prime Video +6"; one name alone; nothing when none is ticked), in the panes' order and
   with their names (`FirstRunRules.names`). The line under Streaming services is the count ("8 ticked"), as in the
-  prototype. Weather's value is left out while it is "Default" beside the Default pill, and the signed-in account
-  shows the username without the avatar.
-- **A step that recreates the launcher:** a rebuild (Theme or Typeface, for example) reopens First run with its done
-  steps, not the split it was in. None of the four steps rebuilds mid-split today; a new step that does needs the
-  restore path to know it came from First run.
+  prototype. Features shows the features on, the same way, or "All off", which is left out while it repeats the All
+  off pill; its line is the count ("2 of 4 on").
+- **Features step (F14, the project lead 2026-11-01, 2026-11-02):** the steps are Features, Streaming services and
+  Stores. Every feature starts on, and each has its setup as a tab under Features (`FirstRunRules.setupOf`, `setups`:
+  TMDB account → Sign in to TMDB, Phone notes → its pane, Weather → Weather city); Next leads from Features through
+  them, then on (`FirstRunRules.panels`). A setup tab reads "Not set up yet" until it is. **When First run ends**
+  (Start, Back, the remote's Home; not a rebuild) every feature on whose setup isn't finished is switched off and a
+  toast names them (`FirstRunPage.switchOffUnfinished`); Start's help pane lists them first. What counts as set up
+  (`FirstRunRules.setUp`): TMDB account, signed in; Phone notes, signed in and the TV listening; Price lookup, both
+  keys set (`PriceKeys.ready`, F16's keys page later); Weather, always (the TV's default place counts). Price lookup
+  opens nothing until Builder E's F16 key page exists; with it off the Stores row's pill reads "Price lookup off" and
+  its panel is the off state, with Turn on.
+- **Turn on (2026-11-02):** every off state has Turn on, which switches the feature on (and the one it needs) and goes
+  straight into its setup (`SettingsSection.Host#turnOn`, `FeaturePrefs.turnOn`): a Launcher settings section, First
+  run's Stores, and Movies, TV Shows and Search's "needs a TMDB account" (`MainActivity#signInFromPage`, where Back
+  from the sign-in returns to the page, `backCloses`).
+- **A step that recreates the launcher:** TMDB account and Phone notes rebuild the launcher before their setup (it
+  makes the TMDB client and the notes inbox only with them on; `FirstRunRules.setupNeedsRebuild`), and a theme change
+  in Launcher settings rebuilds it too. The rebuild reopens First run with its done steps and the panel it had open
+  (MainActivity keeps `first_run_setup`).
 
 ## Family install
 
@@ -653,7 +673,8 @@ In order, one PR each:
    later is a new app, and their lists, ticks and sign-in stay behind in the old one.
 1. **Settings at run time.** A `household.json` pushed over ADB into the launcher's files folder, as `tools/theme.sh`
    pushes `config.json`: the TMDB token, the Watchmode and Movie of the Night keys, the region, this TV's share of
-   each key's quota (for two TVs on one key), the shown lists and the default weather place. The launcher moves it
+   each key's quota (for two TVs on one key), the shown lists, the default weather place and the Features switches
+   (F14; today config.xml's `feature_<id>` and a pushed config.json's `features`). The launcher moves it
    into private storage and deletes the file. The `tv.properties` keys stay as the fallback for our own builds. This
    lets one public APK carry no secrets.
 2. **US region.** The region as a setting, SE by default, US from `household.json`: TMDB's region and watch
@@ -740,7 +761,7 @@ it is built.
 
 - Search and Home's weather while loading (06-states A designs offline and errors, not these).
 - First run and setup: the checklist (01-setup B) and its panes (r2-setup-checklist) are built in the launcher
-  (`FirstRunPage`, `FirstRunSplit`); see [First run](#first-run) for how it behaves.
+  (`FirstRunPage`); see [First run](#first-run) for how it behaves.
 - Launcher settings in the new UI: the split (05-settings A) and every pane are built in the launcher (M9, see
   [From M1](#from-m1)). Home row apps (with reordering) has no design; the prototype's is a stand-in.
 - Removing a recent search.

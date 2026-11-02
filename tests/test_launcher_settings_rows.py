@@ -45,8 +45,9 @@ def row_label(name, strings):
 
 
 def section_classes(registry_text):
-    """The section classes `SettingsSections.all` adds, in the order it adds them."""
-    return re.findall(r"\bout\.add\(new (\w+)\(", registry_text)
+    """The section classes `SettingsSections.all` adds, in the order it adds them. A section a Features switch can turn
+    off is wrapped (`new FeatureOffSection(new AccountSection(home), ...)`): the wrapped class is the one listed."""
+    return re.findall(r"\bout\.add\(new (?:FeatureOffSection\(new )?(\w+)\(", registry_text)
 
 
 def label_name(class_text):

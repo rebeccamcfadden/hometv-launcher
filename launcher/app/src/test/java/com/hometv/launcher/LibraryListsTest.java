@@ -196,4 +196,11 @@ public class LibraryListsTest {
                 "a", "b", "c", "d"), COMMA, AND, MORE));
         assertEquals("", LibraryLists.names(Collections.<String>emptyList(), COMMA, AND, MORE));
     }
+    @Test
+    public void pickForMeNeedsTitlesOnTheLists() {
+        assertTrue(LibraryLists.pickable(3, false));
+        assertFalse(LibraryLists.pickable(0, false));
+        // Offline with nothing saved: nothing to pick from, even if the lists name titles.
+        assertFalse(LibraryLists.pickable(3, true));
+    }
 }

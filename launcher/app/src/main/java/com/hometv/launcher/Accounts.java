@@ -69,6 +69,8 @@ final class Accounts implements Household.Recorder {
     private boolean signInVisible;
     private long lastFull;
     private boolean running;
+    /** Stopped (TMDB account switched off): no sign-in step, no session saved, no sync from now on. */
+    private boolean stopped;
     private SyncPlan.Run again = SyncPlan.Run.NONE;
     /** Worker thread only; shared like the worker, so an Accounts made after a rebuild sees the same queue. */
     private static SyncLedger ledger;
@@ -199,7 +201,7 @@ final class Accounts implements Household.Recorder {
     // ---- Syncing -------------------------------------------------------------------------------------------------
 
     private void request(SyncPlan.Run run) {
-        if (run == SyncPlan.Run.NONE || !visible || !available()) return;
+        if (stopped || run == SyncPlan.Run.NONE || !visible || !available()) return;
         if (running) {
             again = SyncPlan.combine(again, run);
             return;
@@ -676,6 +678,18 @@ final class Accounts implements Household.Recorder {
      * The sign-in page closed before the code was approved. An approved one (FINISHING) is let finish: its access
      * token lives only in memory until the session is saved, so its next step is scheduled again.
      */
+    /**
+     * TMDB account was switched off (in Features, or by First run's end) while this launcher ran (Data#close): a
+     * sign-in under way stops, its token exchange after the phone approved included, so it can't sign the TV in
+     * afterwards, and no list import or sync starts. A session already saved stays (the project lead, 2026-11-02).
+     */
+    void stop() {
+        stopped = true;
+        flow.cancel();
+        main.removeCallbacks(signInTick);
+        importPending = false;
+    }
+
     void cancelSignIn() {
         flow.cancel();
         main.removeCallbacks(signInTick);
@@ -684,6 +698,7 @@ final class Accounts implements Household.Recorder {
 
     private void signInTick() {
         main.removeCallbacks(signInTick);
+        if (stopped) return;
         long t = now();
         AccountHttp.Call call = flow.due(t, signInVisible && visible);
         if (call != null) {
@@ -712,6 +727,7 @@ final class Accounts implements Household.Recorder {
     }
 
     private void afterStep() {
+        if (stopped) return;
         if (flow.phase() == SignInFlow.Phase.SIGNED_IN && session == null) {
             TmdbSession s = flow.session();
             store.save(s);

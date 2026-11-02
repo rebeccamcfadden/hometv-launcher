@@ -9,9 +9,10 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Every section of Launcher settings, in {@link SettingsNav#ORDER}: the one registry the page reads. A section
- * whose feature this build or TV leaves out is not listed: Account and Phone notes without a TMDB token, Open on start
- * unless open_on_start_choice is on.
+ * Every section of Launcher settings, in {@link SettingsNav#ORDER}: the one registry the page reads. A section whose
+ * feature this build leaves out is not listed: Account and Phone notes without a TMDB token, Open on start unless
+ * open_on_start_choice is on. A feature switched off in Features (F14) keeps its section, which says so
+ * (FeatureOffSection).
  */
 final class SettingsSections {
     private SettingsSections() {}
@@ -20,14 +21,18 @@ final class SettingsSections {
         MainActivity home = ctx instanceof MainActivity ? (MainActivity) ctx : null;
         Config config = home != null ? home.config() : Config.load(ctx);
         List<SettingsSection> out = new ArrayList<>();
-        if (home != null && home.data().accounts.available()) out.add(new AccountSection(home));
-        if (home != null && home.data().accounts.available()) out.add(new NotesSection(home));
+        // A build with a TMDB token has Account and Phone notes; Features can switch them off, and then they say so.
+        boolean tmdbBuild = !BuildConfig.TMDB_TOKEN.isEmpty();
+        if (home != null && tmdbBuild) out.add(new FeatureOffSection(new AccountSection(home), Features.Feature.TMDB));
+        if (home != null && tmdbBuild) out.add(new FeatureOffSection(new NotesSection(home), Features.Feature.NOTES));
         if (home != null) out.add(new ServicesSection(home));
-        if (home != null) out.add(new StoresSection(home));
-        out.add(new WeatherSection());
+        // Price lookup off: Stores says so (the project lead, 2026-11-02), as F16's price keys page will.
+        if (home != null) out.add(new FeatureOffSection(new StoresSection(home), Features.Feature.PRICES));
+        out.add(new FeatureOffSection(new WeatherSection(), Features.Feature.WEATHER));
         if (home != null) out.add(new HomeAppsSection(new HomeApps(home, config)));
         out.add(new ThemeSection());
         out.add(new PerformanceSection(config));
+        out.add(new FeaturesSection());
         if (config.openOnStartChoice) out.add(new OpenOnStartSection());
         out.add(new DefaultHomeSection());
         out.add(new TvSettingsSection());

@@ -5,4 +5,5 @@
     <item name="first_run_digit" type="id" />
     <item name="first_run_check" type="id" />
     <item name="first_run_pill" type="id" />
+    <item name="first_run_chevron" type="id" />
 </resources>

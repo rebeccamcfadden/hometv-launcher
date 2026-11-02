@@ -74,13 +74,19 @@ final class Notes {
     private volatile boolean portTaken;
     /** Main thread: what the pill shows, or null. */
     private NoteWords.Pill pill;
+    /**
+     * F14: Phone notes switched on in Features (and TMDB account with it). Off, the inbox never opens, whatever this
+     * TV's own switch says; main thread.
+     */
+    private boolean allowed;
 
     private Notes(Context app) {
         this.app = app;
         this.prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         this.byDefault = configDefault(app);
         this.book = NoteBook.restore(prefs.getString(PENDING, null), prefs.getString(SENDS, null));
-        if (on()) open();
+        this.allowed = Features.isOn(Features.Feature.NOTES);
+        if (on() && allowed) open();
     }
 
     /** config.xml's note_inbox, overlaid by a pushed config.json like every other key. */
@@ -107,6 +113,21 @@ final class Notes {
         // Notes that waited for a rebuild (or a restart) are tried once the account has synced.
     }
 
+    /**
+     * Features' switch, as the launcher is built with it (MainActivity): off closes the inbox and clears the pill; back
+     * on opens it again if this TV's own switch is on. Main thread.
+     */
+    void allow(boolean on) {
+        if (on == allowed) return;
+        allowed = on;
+        // Off: the pill goes whatever this TV's own switch says (an import may have been running).
+        if (!on) setPill(null);
+        if (!on()) return;
+        if (on) open();
+        else close();
+        changed();
+    }
+
     // ---- The switch and the code ---------------------------------------------------------------------------------
 
     boolean on() {
@@ -119,8 +140,8 @@ final class Notes {
         SharedPreferences.Editor e = prefs.edit().putBoolean(ON, on);
         if (on && prefs.getString(CODE, "").isEmpty()) e.putString(CODE, NoteInbox.newCode(new SecureRandom()));
         e.apply();
-        if (on) open();
-        else close();
+        if (on && allowed) open();
+        else if (!on) close();
         changed();
     }
 
@@ -216,6 +237,8 @@ final class Notes {
 
     /** The oldest note waiting whose list isn't in {@code skip} (list keys), or null. */
     NoteBook.Pending next(java.util.Set<String> skip) {
+        // F14: Phone notes off imports nothing, not even notes that arrived before; they wait for it to be on again.
+        if (!allowed) return null;
         return book.next(skip);
     }
 
@@ -307,6 +330,8 @@ final class Notes {
     }
 
     private void setPill(NoteWords.Pill p) {
+        // Phone notes switched off in Features: an import still finishing in the background shows nothing.
+        if (p != null && !allowed) return;
         main.removeCallbacks(clearPill);
         pill = p;
         for (Runnable l : new ArrayList<>(pillListeners)) l.run();

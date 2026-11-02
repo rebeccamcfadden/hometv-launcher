@@ -10,8 +10,8 @@ import android.view.View;
  */
 interface SettingsSection {
     /**
-     * The settings.ts section id: account, notes, services, stores, weather, apps, theme, motion, start, home, tv,
-     * about.
+     * The settings.ts section id: account, notes, services, stores, weather, apps, theme, performance, features, start,
+     * home, tv, about.
      */
     String id();
 
@@ -59,6 +59,23 @@ interface SettingsSection {
 
         /** The theme or its fonts changed: re-apply and rebuild the launcher, returning to this section. */
         void themeChanged();
+
+        /** Shows another section and enters its pane. */
+        void enter(String id);
+
+        /**
+         * A switched-off feature's Turn on (the project lead, 2026-11-02): the feature on (FeaturePrefs.turnOn), then
+         * straight into its setup.
+         */
+        void turnOn(Features.Feature f);
+
+        /** First run's cut-down split rather than Launcher settings: Features' lead says what turning one on does. */
+        default boolean inSetup() {
+            return false;
+        }
+
+        /** A feature was just turned on in First run's Features step: First run opens its setup next. */
+        default void featureTurnedOn(Features.Feature f) {}
 
         Shell shell();
     }

@@ -16,6 +16,11 @@ final class PriceKeys {
         return pick(BuildConfig.MOVIE_OF_THE_NIGHT_KEY, BuildConfig.STREAMING_AVAILABILITY_KEY);
     }
 
+    /** Price lookup is set up (First run): both keys are set. F16's keys page (Builder E) adds its own keys. */
+    static boolean ready() {
+        return !watchmode().trim().isEmpty() && !movieOfTheNight().isEmpty();
+    }
+
     /** The first key that is set, trimmed; "" for none. */
     static String pick(String preferred, String alias) {
         String a = preferred == null ? "" : preferred.trim();

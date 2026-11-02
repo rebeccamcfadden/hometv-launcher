@@ -111,7 +111,8 @@ final class QuickSettings {
         rows.add(page(act, R.string.qs_inputs, R.drawable.ic_ui_input, null));
 
         List<Row> household = new ArrayList<>();
-        // Without a TMDB token the build can't sign in, and Launcher settings has no account row either.
+        // Without a TMDB token the build can't sign in, and Launcher settings has no account row either; with TMDB
+        // account switched off in Features (F14) the account has no token, and the row goes too.
         if (data.accounts.available()) {
             household.add(section(act, R.string.qs_account, R.drawable.ic_ui_user, "account",
                     ctx -> accountValue(ctx, data.accounts)));
@@ -120,8 +121,11 @@ final class QuickSettings {
             int n = QuickWords.servicesTicked(data.services.subscribed(), data.table);
             return ctx.getResources().getQuantityString(R.plurals.qs_services_ticked, n, n);
         }));
-        household.add(section(act, R.string.qs_weather, R.drawable.ic_ui_cloud, "weather",
-                QuickSettings::weatherValue));
+        // Weather switched off in Features (F14): no row here (its Launcher settings section says it is off).
+        if (Features.isOn(Features.Feature.WEATHER)) {
+            household.add(section(act, R.string.qs_weather, R.drawable.ic_ui_cloud, "weather",
+                    QuickSettings::weatherValue));
+        }
         household.get(0).divider();
         rows.addAll(household);
 

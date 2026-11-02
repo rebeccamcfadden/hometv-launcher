@@ -94,6 +94,9 @@ final class SearchPage extends Screen {
     private final LinearLayout list;
     private final View keyA;
     private final FrameLayout viewport;
+    /** F14: the needs-a-TMDB-account state, in place of the bar, keyboard and results while TmdbGate says so. */
+    private final FrameLayout gate;
+    private TmdbGate.Need gateShown = TmdbGate.Need.NONE;
     private final ViewGroup scroll;
     private final LinearLayout body;
 
@@ -240,6 +243,12 @@ final class SearchPage extends Screen {
         plp.leftMargin = Ui.px(Ui.SAFE_X);
         content.addView(panel, plp);
 
+        gate = new FrameLayout(ctx);
+        gate.setPadding(Ui.px(Ui.SAFE_X), Ui.px(190), Ui.px(Ui.SAFE_X), 0);
+        gate.setVisibility(View.GONE);
+        content.addView(gate, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
         // Recently viewed and From My list fill in as their titles' details arrive.
         onCatalog = () -> {
             savedIds = null;
@@ -276,6 +285,10 @@ final class SearchPage extends Screen {
 
     @Override
     View defaultFocus() {
+        if (gateShown != TmdbGate.Need.NONE) {
+            View b = Focus.byKey(gate, TmdbGate.KEY);
+            if (b != null) return b;
+        }
         return expanded ? firstResult() : keyA;
     }
 
@@ -325,7 +338,7 @@ final class SearchPage extends Screen {
 
     @Override
     boolean onText(char c) {
-        if (!SearchQuery.isTypeable(c)) return false;
+        if (gateShown != TmdbGate.Need.NONE || !SearchQuery.isTypeable(c)) return false;
         boolean wasExpanded = expanded;
         expanded = false;
         setQuery(SearchQuery.type(query, c));
@@ -335,6 +348,7 @@ final class SearchPage extends Screen {
 
     @Override
     boolean onKey(Key key, View focused) {
+        if (gateShown != TmdbGate.Need.NONE) return false;
         switch (key) {
             case BACK:
                 if (!expanded) return false;
@@ -375,6 +389,8 @@ final class SearchPage extends Screen {
      */
     private void askRemote() {
         String q = query;
+        // Behind the TMDB gate (switched off, or signed out since the query was typed) nothing is asked of TMDB.
+        if (TmdbGate.need(data.accounts) != TmdbGate.Need.NONE) return;
         if (q.trim().length() < REMOTE_MIN || !StateUi.online(ctx)) return;
         data.catalog.search(q, f -> {
             if (!q.equals(query)) return;
@@ -446,10 +462,33 @@ final class SearchPage extends Screen {
     }
 
     /**
+     * F14: while TMDB account is off, or the TV isn't signed in, Search is only the state that says so (TmdbGate): no
+     * keyboard, no suggestions, nothing asked of TMDB. True while it shows.
+     */
+    private boolean showGate() {
+        TmdbGate.Need need = TmdbGate.need(data.accounts);
+        boolean on = need != TmdbGate.Need.NONE;
+        // Gated: a search queued before (a restored query, the network coming back) is dropped.
+        if (on) view.removeCallbacks(askRemote);
+        if (need != gateShown) {
+            gate.removeAllViews();
+            if (on) gate.addView(TmdbGate.block(ctx, label, need));
+            gateShown = need;
+        }
+        bar.setVisibility(on ? View.GONE : View.VISIBLE);
+        panel.setVisibility(on ? View.GONE : View.VISIBLE);
+        viewport.setVisibility(on ? View.GONE : View.VISIBLE);
+        gate.setVisibility(on ? View.VISIBLE : View.GONE);
+        if (shell.top() == this) shell.refocus();
+        return on;
+    }
+
+    /**
      * Builds the page for the current state. With refocus, focus moves off whatever the rebuild removed or made
      * inert; expand and collapse pass false and place focus themselves, so the keyboard's memory survives.
      */
     private void render(boolean refocus) {
+        if (showGate()) return;
         // 06-states A, offline: the results come from the titles saved on the TV, without people; with nothing saved,
         // the results area says so beside the keyboard.
         boolean offline = data.catalog.isRemote() && !StateUi.online(ctx);
