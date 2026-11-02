@@ -2,22 +2,25 @@ package com.hometv.launcher;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.List;
-
 /**
- * All Apps' TV Utilities folder tile (F35; design_preview/src/styles/screens.css, .aa-folder): an app tile's frame
- * holding the names of its first four apps two by two, with "TV Utilities · 13" under it. Focused, it scales up inside
- * the focus ring as an AppTile does.
+ * All Apps' TV Utilities folder tile (F35, F41; design_preview/src/ui/folderArt.ts): a folder, with a tab on its top
+ * edge and a gear in the middle, drawn in code (FolderArt) in the theme's colours, with "TV Utilities · 13" under it.
+ * Focused, it scales up 5% and the accent focus ring follows the folder's outline, tab included, as an AppTile's ring
+ * follows its tile.
  */
 @SuppressLint("ViewConstructor") // built in code only, never inflated
 final class FolderTile extends LinearLayout {
-    FolderTile(Context ctx, List<CharSequence> names, int count, float width, float height, float labelGap) {
+    FolderTile(Context ctx, int count, float width, float height, float labelGap) {
         super(ctx);
         setOrientation(VERTICAL);
         setGravity(Gravity.CENTER_HORIZONTAL);
@@ -27,41 +30,10 @@ final class FolderTile extends LinearLayout {
         setContentDescription(label);
 
         int ring = AppTile.RING;
-        FrameLayout frame = new FrameLayout(ctx);
-        frame.setPadding(Ui.px(ring), Ui.px(ring), Ui.px(ring), Ui.px(ring));
-        frame.setBackground(Ui.states(TileFrame.resting(ring, Ui.RADIUS_L), null, TileFrame.focused(ring, Ui.RADIUS_L)));
-        frame.setDuplicateParentStateEnabled(true);
-        frame.setClipChildren(false);
-
-        LinearLayout tile = new LinearLayout(ctx);
-        tile.setOrientation(VERTICAL);
-        int pad = Ui.px(12), gap = Ui.px(8);
-        tile.setPadding(pad, pad, pad, pad);
-        tile.setBackground(Ui.states(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W), null,
-                Ui.round(Ui.SURFACE_2, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W)));
-        tile.setDuplicateParentStateEnabled(true);
         int w = Ui.px(width), h = Ui.px(height);
-        for (int r = 0; r < 2; r++) {
-            LinearLayout row = new LinearLayout(ctx);
-            row.setOrientation(HORIZONTAL);
-            for (int c = 0; c < 2; c++) {
-                int i = r * 2 + c;
-                TextView mini = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_2, Ui.REGULAR);
-                mini.setGravity(Gravity.CENTER);
-                mini.setPadding(Ui.px(6), 0, Ui.px(6), 0);
-                mini.setBackground(Ui.round(Ui.SURFACE_2, Ui.RADIUS_S));
-                if (i < names.size()) mini.setText(names.get(i));
-                else mini.setVisibility(INVISIBLE);
-                LayoutParams mlp = new LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-                if (c > 0) mlp.leftMargin = gap;
-                row.addView(mini, mlp);
-            }
-            LayoutParams rlp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
-            if (r > 0) rlp.topMargin = gap;
-            tile.addView(row, rlp);
-        }
-        frame.addView(tile, new FrameLayout.LayoutParams(w, h));
-        addView(frame, new LayoutParams(w + 2 * Ui.px(ring), h + 2 * Ui.px(ring)));
+        Face face = new Face(ctx, width, height, ring);
+        face.setDuplicateParentStateEnabled(true);
+        addView(face, new LayoutParams(w + 2 * Ui.px(ring), h + 2 * Ui.px(ring)));
 
         TextView under = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_2, Ui.REGULAR);
         under.setText(label);
@@ -74,7 +46,82 @@ final class FolderTile extends LinearLayout {
 
         setOnFocusChangeListener((v, focused) -> {
             float s = focused ? 1.05f : 1f;
-            frame.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
+            face.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
+    }
+
+    /** The folder itself, {@code ring} design px inside the view's bounds, the room the focus ring needs. */
+    private static final class Face extends View {
+        private final float width, height, ring;
+        private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint focusRing = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF body = new RectF();
+        private Path folder, gear;
+
+        Face(Context ctx, float width, float height, float ring) {
+            super(ctx);
+            this.width = width;
+            this.height = height;
+            this.ring = ring;
+            line.setStyle(Paint.Style.STROKE);
+            focusRing.setStyle(Paint.Style.STROKE);
+        }
+
+        @Override
+        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+            super.onSizeChanged(w, h, oldw, oldh);
+            float s = Ui.px(1000) / 1000f, in = Ui.px(ring), fw = Ui.px(width), fh = Ui.px(height);
+            folder = FolderArt.folder(in, in, fw, fh, s);
+            float t = Ui.px(FolderArt.TAB_H);
+            body.set(in, in + t, in + fw, in + fh);
+            gear = FolderArt.gear(in + fw / 2f, in + t + (fh - t) / 2f, Ui.px(FolderArt.gearRadius(width, height)));
+        }
+
+        @Override
+        protected void drawableStateChanged() {
+            super.drawableStateChanged();
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(Canvas c) {
+            if (folder == null) return;
+            boolean focused = false;
+            for (int st : getDrawableState()) if (st == android.R.attr.state_focused) focused = true;
+            float r = Ui.px(FolderArt.RADIUS);
+            // The glow is drawn around the body's rect; clipped to outside the folder, so none of it shows through
+            // the see-through tab or the tab's square corner.
+            c.save();
+            c.clipOutPath(folder);
+            if (focused) {
+                Glow.focusShadow(c, body, r, 255);
+                Glow.focus(c, body, r, 255);
+            } else {
+                Glow.rest(c, body, r, 255);
+            }
+            c.restore();
+            if (focused && Ui.FOCUS_W > 0) {
+                // A stroke twice the ring's width along the outline, clipped to outside the folder: the ring follows
+                // the tab, just outside the shape, as TileFrame's ring sits just outside a tile.
+                float w = Math.max(1, Ui.px(Ui.FOCUS_W));
+                c.save();
+                c.clipOutPath(folder);
+                focusRing.setStrokeWidth(2 * w);
+                focusRing.setColor(Ui.ACCENT);
+                c.drawPath(folder, focusRing);
+                c.restore();
+            }
+            fill.setColor(focused ? Ui.SURFACE_2 : Ui.SURFACE);
+            c.drawPath(folder, fill);
+            int lw = Ui.linePx();
+            if (lw > 0) {
+                line.setStrokeWidth(lw);
+                line.setColor(Ui.LINE);
+                c.drawPath(folder, line);
+            }
+            fill.setColor(focused ? Ui.TEXT_1 : Ui.TEXT_2);
+            c.drawPath(gear, fill);
+        }
     }
 }

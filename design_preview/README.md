@@ -742,7 +742,9 @@ settings."; on the right a help pane for the focused row.
   TV, `TvUtilities`): an app goes in when it came on the system image, or comes from a TV maker's package (`com.tcl.`,
   `com.sony.`, `org.droidtv.` and so on), unless it is a watch app the launcher knows (the streaming services and
   stores, Play Store, Google's YouTube and media apps). It is only about where an app came from, so an app on Home's
-  row stays in it (F35 Q4). The tile shows its first four apps and how many it holds; OK opens it as a page like All
+  row stays in it (F35 Q4). The tile is a folder, with a tab on its top edge and a gear in the middle, drawn in code in
+  the theme's colours (F41, `src/ui/folderArt.ts`; on the TV, `FolderArt`), and the focus ring follows its outline;
+  under it, "TV Utilities · 13". OK opens it as a page like All
   Apps, and Back returns to the tile. It hides when empty.
 - Hold OK on an app: Add to Home or Remove from Home, Move to TV Utilities or Move out of TV Utilities, and App info.
   A move is kept on the TV (`utilityMoves`); one that matches the rule is forgotten, so the rule takes over again. An
