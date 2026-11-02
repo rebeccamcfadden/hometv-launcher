@@ -813,6 +813,13 @@ In order, one PR each:
    (`ACTION_MANAGE_UNKNOWN_APP_SOURCES`), with a line saying what to switch on. On a TV without that screen, updates
    go back to re-running the installer, and About says that too. To check on a TV: a Home app replacing itself comes
    back cleanly (the #1101-style restart).
+   **Built (launcher):** `Updates` and `UpdateRules`. The project lead's answers (2026-11-02): About and Home say a newer
+   version is *available*, and nothing is downloaded until Install update is pressed; Check for updates starts On.
+   Install downloads the APK from the release's own tag into the cache, and hands it to Android's PackageInstaller only
+   when its SHA-256 is `version.json`'s and its one signer is both the release certificate and the installed launcher's.
+   Home shows one notice per version. A debug-key build can be pointed at a test feed with `-PupdateFeed` (https, or
+   http to 127.0.0.1 or the emulator's 10.0.2.2; refused with a release key or a public release), which is how it was
+   checked on an emulator. Still to come: the installer's `appops` grant, and the TV check.
 6. **Debloat from a report.** A matching model doesn't make another household's choices theirs: a list can disable
    apps its owner didn't use (YouTube Music and the Assistant in `examples/jvc-android-tv-menlo`). So before
    applying a list for the model it read, the installer asks PROMPT.md's checklist question (streaming apps, the
