@@ -34,7 +34,7 @@ public class NoteImportTest {
     @Before
     public void setUp() throws JSONException {
         tmdb = new FakeTmdb();
-        tmdb.lists.put(50L, new FakeList("Rebecca", new ArrayList<>(Collections.singletonList("movie:10")), false));
+        tmdb.lists.put(50L, new FakeList("Alex", new ArrayList<>(Collections.singletonList("movie:10")), false));
         tmdb.lists.put(51L, new FakeList("Partner", new ArrayList<String>(), true));
         tmdb.movie("Dune", 438631, "Dune", "2021-09-15");
         tmdb.movie("Arrival", 10, "Arrival", "2016-11-10");
@@ -54,7 +54,7 @@ public class NoteImportTest {
 
     @Test
     public void findsTheListByNameIgnoringCaseAndSpaces() {
-        NoteImport.Outcome o = run("  rebecca ", "Dune\nFargo (tv)", null);
+        NoteImport.Outcome o = run("  alex ", "Dune\nFargo (tv)", null);
         assertEquals(NoteImport.Status.DONE, o.status);
         assertEquals(50, o.listId);
         assertFalse(o.created);
@@ -88,7 +88,7 @@ public class NoteImportTest {
     @Test
     public void addsOnlyTitlesNotOnTheListAndListsWhatMatchedNothing() {
         tmdb.lists.get(50L).items.add("movie:438631");
-        NoteImport.Outcome o = run("Rebecca", "Movies to watch\n- Dune\n- Fargo (tv)\n- Zzyzx Qq", null);
+        NoteImport.Outcome o = run("Alex", "Movies to watch\n- Dune\n- Fargo (tv)\n- Zzyzx Qq", null);
         assertEquals(NoteImport.Status.DONE, o.status);
         assertEquals(1, o.added);
         assertEquals(Arrays.asList("movie:10", "movie:438631", "tv:60622"), tmdb.lists.get(50L).items);
@@ -98,7 +98,7 @@ public class NoteImportTest {
 
     @Test
     public void aTickedTitleGoesToSeenAndComesOffTheList() {
-        NoteImport.Outcome o = run("Rebecca", "☐ Dune\n☑ Arrival", null);
+        NoteImport.Outcome o = run("Alex", "☐ Dune\n☑ Arrival", null);
         assertEquals(NoteImport.Status.DONE, o.status);
         assertEquals(Collections.singletonList("movie:10"), seen);
         assertEquals(1, o.seen);
@@ -127,7 +127,7 @@ public class NoteImportTest {
 
     @Test
     public void anAllTickedNoteForAnExistingListStillTakesThemOff() {
-        NoteImport.Outcome o = run("Rebecca", "☑ Arrival", null);
+        NoteImport.Outcome o = run("Alex", "☑ Arrival", null);
         assertEquals(50, o.listId);
         assertEquals(Collections.singletonList("movie:10"), seen);
         assertTrue(tmdb.lists.get(50L).items.isEmpty());
@@ -136,28 +136,28 @@ public class NoteImportTest {
     @Test
     public void aPickGoesOntoTheListAndIsRemembered() {
         NoteMatch.Ask ask = new NoteMatch.Ask("zzyzx qq", "Zzyzx Qq", false, null);
-        NoteImport.Outcome o = new NoteImport(tmdb, SESSION, seen::addAll).pick("Rebecca", ask, "tv:60622", null);
+        NoteImport.Outcome o = new NoteImport(tmdb, SESSION, seen::addAll).pick("Alex", ask, "tv:60622", null);
         assertEquals(NoteImport.Status.DONE, o.status);
         assertEquals(50, o.listId);
         assertEquals(1, o.added);
         assertEquals(Arrays.asList("movie:10", "tv:60622"), tmdb.lists.get(50L).items);
-        assertEquals("tv:60622", o.memory.get("Rebecca", "zzyzx qq"));
+        assertEquals("tv:60622", o.memory.get("Alex", "zzyzx qq"));
         // Picked again (or already there): nothing more is written.
         tmdb.log.clear();
-        assertEquals(0, new NoteImport(tmdb, SESSION, seen::addAll).pick("Rebecca", ask, "tv:60622", o.memory).added);
+        assertEquals(0, new NoteImport(tmdb, SESSION, seen::addAll).pick("Alex", ask, "tv:60622", o.memory).added);
         assertEquals(0, calls("POST"));
     }
 
     @Test
     public void aTickedPickGoesToSeenAndNoneOfTheseIsRemembered() {
         NoteImport n = new NoteImport(tmdb, SESSION, seen::addAll);
-        NoteImport.Outcome o = n.pick("Rebecca", new NoteMatch.Ask("a", "A", true, null), "movie:10", null);
+        NoteImport.Outcome o = n.pick("Alex", new NoteMatch.Ask("a", "A", true, null), "movie:10", null);
         assertEquals(Collections.singletonList("movie:10"), seen);
         assertEquals(0, o.listId);
         assertEquals(0, calls("POST"));
-        NoteImport.Outcome none = n.pick("Rebecca", new NoteMatch.Ask("b", "B", false, null), null, null);
+        NoteImport.Outcome none = n.pick("Alex", new NoteMatch.Ask("b", "B", false, null), null, null);
         assertEquals(NoteImport.Status.DONE, none.status);
-        assertEquals(NoteMatch.DISMISSED, none.memory.get("Rebecca", "b"));
+        assertEquals(NoteMatch.DISMISSED, none.memory.get("Alex", "b"));
         assertEquals(0, calls("POST"));
     }
 
@@ -187,10 +187,10 @@ public class NoteImportTest {
 
     @Test
     public void theSameNoteAgainAddsNothingAndLooksNothingUp() {
-        NoteImport.Outcome first = run("Rebecca", "Dune\nFargo (tv)\nZzyzx Qq", null);
+        NoteImport.Outcome first = run("Alex", "Dune\nFargo (tv)\nZzyzx Qq", null);
         int searches = calls("GET https://api.themoviedb.org/3/search");
         tmdb.log.clear();
-        NoteImport.Outcome again = run("Rebecca", "Dune\nFargo (tv)\nZzyzx Qq", first.memory);
+        NoteImport.Outcome again = run("Alex", "Dune\nFargo (tv)\nZzyzx Qq", first.memory);
         assertEquals(NoteImport.Status.DONE, again.status);
         assertEquals(0, again.added);
         assertEquals(0, calls("GET https://api.themoviedb.org/3/search"));
@@ -201,10 +201,10 @@ public class NoteImportTest {
 
     @Test
     public void aListDeletedOnTmdbIsMadeAgainWithEveryLine() {
-        NoteImport.Outcome first = run("Rebecca", "Dune\nFargo (tv)", null);
+        NoteImport.Outcome first = run("Alex", "Dune\nFargo (tv)", null);
         assertEquals(2, first.added);
         tmdb.lists.remove(50L);
-        NoteImport.Outcome again = run("Rebecca", "Dune\nFargo (tv)", first.memory);
+        NoteImport.Outcome again = run("Alex", "Dune\nFargo (tv)", first.memory);
         assertTrue(again.created);
         assertEquals(2, again.added);
         assertEquals(Arrays.asList("movie:438631", "tv:60622"), tmdb.lists.get(again.listId).items);
@@ -212,9 +212,9 @@ public class NoteImportTest {
 
     @Test
     public void aTitleTakenOffOnTheTvIsNotPutBack() {
-        NoteImport.Outcome first = run("Rebecca", "Dune", null);
+        NoteImport.Outcome first = run("Alex", "Dune", null);
         tmdb.lists.get(50L).items.remove("movie:438631");
-        NoteImport.Outcome again = run("Rebecca", "Dune\nFargo (tv)", first.memory);
+        NoteImport.Outcome again = run("Alex", "Dune\nFargo (tv)", first.memory);
         assertEquals(1, again.added);
         assertEquals(Arrays.asList("movie:10", "tv:60622"), tmdb.lists.get(50L).items);
     }
@@ -222,19 +222,19 @@ public class NoteImportTest {
     @Test
     public void theMemoryHandedInIsNotChanged() {
         NoteMatch.Memory memory = new NoteMatch.Memory();
-        run("Rebecca", "Dune", memory);
-        assertNull(memory.get("Rebecca", "dune"));
+        run("Alex", "Dune", memory);
+        assertNull(memory.get("Alex", "dune"));
     }
 
     @Test
     public void aRefusedListWriteKeepsTheNoteWholeForNextTime() {
         tmdb.refuseWrites = true;
-        NoteImport.Outcome failed = run("Rebecca", "Dune\nFargo (tv)", null);
+        NoteImport.Outcome failed = run("Alex", "Dune\nFargo (tv)", null);
         assertEquals(NoteImport.Status.FAILED, failed.status);
         assertNull("nothing remembered", failed.memory);
         assertEquals(Collections.singletonList("movie:10"), tmdb.lists.get(50L).items);
         tmdb.refuseWrites = false;
-        NoteImport.Outcome later = run("Rebecca", "Dune\nFargo (tv)", failed.memory);
+        NoteImport.Outcome later = run("Alex", "Dune\nFargo (tv)", failed.memory);
         assertEquals(NoteImport.Status.DONE, later.status);
         assertEquals(2, later.added);
     }
@@ -251,7 +251,7 @@ public class NoteImportTest {
     @Test
     public void offlineWaits() {
         tmdb.offline = true;
-        NoteImport.Outcome o = run("Rebecca", "Dune", null);
+        NoteImport.Outcome o = run("Alex", "Dune", null);
         assertEquals(NoteImport.Status.OFFLINE, o.status);
         assertNull(o.memory);
     }
@@ -259,13 +259,13 @@ public class NoteImportTest {
     @Test
     public void lookupsThatFailAreTriedAgainAndTheRestStays() {
         tmdb.searchDown = "Fargo";
-        NoteImport.Outcome o = run("Rebecca", "Dune\nFargo (tv)", null);
+        NoteImport.Outcome o = run("Alex", "Dune\nFargo (tv)", null);
         assertEquals("the note waits for the line that couldn't be looked up", NoteImport.Status.OFFLINE, o.status);
         assertEquals(1, o.added);
         assertNotNull(o.memory);
         tmdb.searchDown = null;
         tmdb.log.clear();
-        NoteImport.Outcome later = run("Rebecca", "Dune\nFargo (tv)", o.memory);
+        NoteImport.Outcome later = run("Alex", "Dune\nFargo (tv)", o.memory);
         assertEquals(NoteImport.Status.DONE, later.status);
         assertEquals(1, later.added);
         assertEquals("only Fargo is looked up again", 1, calls("GET https://api.themoviedb.org/3/search"));
@@ -274,15 +274,15 @@ public class NoteImportTest {
     @Test
     public void aRefusedSessionWaitsForASignIn() {
         tmdb.revoked = true;
-        assertEquals(NoteImport.Status.SIGNED_OUT, run("Rebecca", "Dune", null).status);
+        assertEquals(NoteImport.Status.SIGNED_OUT, run("Alex", "Dune", null).status);
     }
 
     @Test
     public void progressCountsEveryLineFromTheStart() {
-        NoteMatch.Memory memory = run("Rebecca", "Dune", null).memory;
+        NoteMatch.Memory memory = run("Alex", "Dune", null).memory;
         steps.clear();
         // Dune is known, so it counts at once; the pill reads "0 of 3" before anything is looked up.
-        run("Rebecca", "Dune\nFargo (tv)\nZzyzx Qq", memory);
+        run("Alex", "Dune\nFargo (tv)\nZzyzx Qq", memory);
         assertEquals(Arrays.asList("0/3", "1/3", "2/3", "3/3"), steps);
     }
 
@@ -301,7 +301,7 @@ public class NoteImportTest {
 
     @Test
     public void searchesUseTheAppsTokenAndListCallsTheAccounts() {
-        run("Rebecca", "Dune", null);
+        run("Alex", "Dune", null);
         for (String c : tmdb.log) {
             if (c.contains("/3/search/")) assertTrue(c, c.endsWith("APP"));
             else assertTrue(c, c.endsWith("USER"));

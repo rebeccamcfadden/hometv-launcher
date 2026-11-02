@@ -35,7 +35,7 @@
         <item quantity="one">%d line</item>
         <item quantity="other">%d lines</item>
     </plurals>
-    <!-- Notes that arrived but aren't on their lists yet: "Waiting to add: Rebecca, Partner". -->
+    <!-- Notes that arrived but aren't on their lists yet: "Waiting to add: Alex, Partner". -->
     <string name="notes_waiting">Waiting to add: %1$s</string>
 
     <!-- The import pill, over every screen. -->

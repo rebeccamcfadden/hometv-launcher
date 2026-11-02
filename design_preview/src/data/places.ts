@@ -13,7 +13,7 @@ export interface Place {
 }
 
 export const PLACES: Place[] = [
-  { id: 'new-york', name: 'New York', region: 'New York', country: 'Sweden', temp: 9, desc: 'Partly cloudy' },
+  { id: 'new-york', name: 'New York', region: 'New York', country: 'United States', temp: 9, desc: 'Partly cloudy' },
   { id: 'gothenburg', name: 'Gothenburg', local: 'Göteborg', region: 'Västra Götaland', country: 'Sweden', temp: 11, desc: 'Cloudy' },
   { id: 'gothenburg-ne', name: 'Gothenburg', region: 'Nebraska', country: 'United States', temp: 4, desc: 'Clear' },
   { id: 'gothenburg-za', name: 'Gothenburg', region: 'Kwazulu-Natal', country: 'South Africa', temp: 22, desc: 'Sunny' },

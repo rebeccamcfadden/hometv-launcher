@@ -5,8 +5,8 @@ import { icon } from './icons';
 
 /**
  * The import pill (Phone notes): while a phone's note is being looked up, a small pill at the bottom centre of whatever
- * screen shows, "Importing Rebecca · 3 of 12" over a thin bar; at the end, for a few seconds, "Rebecca · 12 added", or
- * "Rebecca · 9 added · 3 not matched" (amber: the lines are listed in Launcher settings → Phone notes). Never
+ * screen shows, "Importing Alex · 3 of 12" over a thin bar; at the end, for a few seconds, "Alex · 12 added", or
+ * "Alex · 9 added · 3 not matched" (amber: the lines are listed in Launcher settings → Phone notes). Never
  * focusable, never in the way of the nav. The shape is the offline pill's (06-states A); amber only for problems. On
  * Launcher settings, whose pane runs to the bottom edge, it sits at the top centre beside the title instead.
  */

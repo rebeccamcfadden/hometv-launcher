@@ -225,7 +225,7 @@ final class NotePicker {
         };
     }
 
-    /** "“Inglorious basterds” in Rebecca’s note matched nothing exactly." and what a pick does. */
+    /** "“Inglorious basterds” in Alex’s note matched nothing exactly." and what a pick does. */
     private static CharSequence body(Context ctx, String list, NoteMatch.Ask ask, String searched) {
         String line = searched != null ? ctx.getString(R.string.notes_pick_results, searched)
                 : ctx.getString(R.string.notes_pick_line, ask.query, list);

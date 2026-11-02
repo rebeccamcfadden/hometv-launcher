@@ -23,7 +23,7 @@ public class WeatherPlaceTest {
     /** Trimmed from a real answer for "Gothenburg" (language=en, count=10); ids and extra fields left out. */
     private static final String GOTHENBURG = "{\"results\":["
             + "{\"id\":2711537,\"name\":\"Gothenburg\",\"latitude\":57.70716,\"longitude\":11.96679,"
-            + "\"feature_code\":\"PPLA\",\"country_code\":\"SE\",\"timezone\":\"America/New_York\","
+            + "\"feature_code\":\"PPLA\",\"country_code\":\"SE\","
             + "\"population\":608462,\"country\":\"Sweden\",\"admin1\":\"Västra Götaland County\","
             + "\"admin2\":\"Gothenburg Municipality\"},"
             + "{\"id\":5695743,\"name\":\"Gothenburg\",\"latitude\":40.92945,\"longitude\":-100.16068,"
@@ -150,7 +150,7 @@ public class WeatherPlaceTest {
     // ---- WeatherSettings: what is saved on the TV over tv.properties -------------------------------------------
 
     private static final double NEW_YORK_LAT = 40.7128;
-    private static final double NEW_YORK_LON = -74.0060;
+    private static final double NEW_YORK_LON = -74.006;
 
     private static Map<String, Object> gothenburg() {
         Map<String, Object> m = new HashMap<>();

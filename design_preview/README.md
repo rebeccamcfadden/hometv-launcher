@@ -496,9 +496,9 @@ The dev bar's Jump to → "Phone notes · a phone sends a note" plays a send; `?
 
 While a note is looked up, a small pill sits at the bottom centre of whatever screen shows, between the guide line's
 ends, and on Launcher settings at the top centre on the title's line, as its pane runs to the bottom edge (the project
-lead, 2026-11-01): an accent dot, "Importing Rebecca · 6 of 12" and a thin bar (every line of the note counts, so it
+lead, 2026-11-01): an accent dot, "Importing Alex · 6 of 12" and a thin bar (every line of the note counts, so it
 reads "0 of 12" from the start). At the end it reads
-"Partner · 8 added" with a tick for four seconds, or in amber "Rebecca · 9 added · 3 not matched", or "Rebecca ·
+"Partner · 8 added" with a tick for four seconds, or in amber "Alex · 9 added · 3 not matched", or "Alex ·
 waiting for the internet" when the TV went offline (the lines are tried again). Never focusable; the shape is the
 offline pill's (06-states A), amber only for a problem. Motion Off drops its slide.
 

@@ -17,9 +17,9 @@ import static org.junit.Assert.assertTrue;
 /** Home's weather: Open-Meteo's answer, the WMO codes as icons and words, and which hours and days show. */
 public class WeatherTest {
 
-    /** Trimmed from a real answer for New York (timezone=auto, so times are local and the offset is +1 h). */
+    /** Shaped like Open-Meteo's answer for New York (timezone=auto, so times are local and the offset is -4 h). */
     private static final String ANSWER = "{"
-            + "\"latitude\":40.71,\"longitude\":-74.01,\"utc_offset_seconds\":3600,\"timezone\":\"America/New_York\","
+            + "\"latitude\":40.71,\"longitude\":-74.01,\"utc_offset_seconds\":-14400,\"timezone\":\"America/New_York\","
             + "\"current\":{\"time\":\"2026-10-29T20:45\",\"interval\":900,\"temperature_2m\":13.6,"
             + "\"weather_code\":2,\"is_day\":0},"
             + "\"hourly\":{\"time\":[\"2026-10-29T19:00\",\"2026-10-29T20:00\",\"2026-10-29T21:00\","
@@ -39,7 +39,7 @@ public class WeatherTest {
     @Test
     public void parsesCurrentHoursAndDays() throws JSONException {
         Weather w = Weather.parse(ANSWER);
-        assertEquals(3600, w.utcOffsetSeconds);
+        assertEquals(-14400, w.utcOffsetSeconds);
         assertEquals(14, w.current.temp);
         assertEquals(2, w.current.code);
         assertFalse(w.current.day);
@@ -76,8 +76,8 @@ public class WeatherTest {
     @Test
     public void localTimeFollowsTheLocationsOffset() throws JSONException {
         Weather w = Weather.parse(ANSWER);
-        // 2026-10-29 19:45 UTC is 20:45 in New York (+1 h after the end of summer time).
-        long utc = java.time.LocalDateTime.of(2026, 10, 29, 19, 45).toEpochSecond(java.time.ZoneOffset.UTC) * 1000;
+        // 2026-10-30 00:45 UTC is 20:45 on the 29th in New York (-4 h: US summer time runs until 1 November).
+        long utc = java.time.LocalDateTime.of(2026, 10, 30, 0, 45).toEpochSecond(java.time.ZoneOffset.UTC) * 1000;
         assertEquals(t("2026-10-29T20:45"), w.localTime(utc));
     }
 
@@ -186,7 +186,7 @@ public class WeatherTest {
 
     @Test
     public void theQueryAsksForWhatTheParserReads() {
-        String q = WeatherStore.query(40.7128, -74.0060, false);
+        String q = WeatherStore.query(40.7128, -74.006, false);
         assertTrue(q.startsWith("https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060"));
         assertTrue(q.contains("current=temperature_2m,weather_code,is_day"));
         assertTrue(q.contains("hourly=temperature_2m,weather_code,is_day"));

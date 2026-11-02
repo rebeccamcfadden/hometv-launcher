@@ -14,9 +14,12 @@ import java.time.ZonedDateTime;
 import org.junit.Test;
 
 public class DayPhaseTest {
-    private static final ZoneId SWEDEN = ZoneId.of("America/New_York");
+    /** Sweden's and Norway's clocks are the same (CET, CEST in summer): Gothenburg is read on Oslo's. */
+    private static final ZoneId OSLO = ZoneId.of("Europe/Oslo");
     private static final ZoneId NEW_YORK = ZoneId.of("America/New_York");
-    private static final double NEW_YORK_LAT = 40.71, NEW_YORK_LON = -74.01;
+    private static final double OSLO_LAT = 59.91, OSLO_LON = 10.75;
+    private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
+    private static final double BERLIN_LAT = 52.52, BERLIN_LON = 13.40;
     private static final double GOTHENBURG_LAT = 57.71, GOTHENBURG_LON = 11.97;
 
     private static ZonedDateTime at(int y, int m, int d, int h, int min, ZoneId zone) {
@@ -38,18 +41,18 @@ public class DayPhaseTest {
     }
 
     @Test
-    public void midsummerInNewYork() {
-        DayPhase.Day d = DayPhase.day(LocalDate.of(2026, 6, 21), SWEDEN, NEW_YORK_LAT, NEW_YORK_LON);
+    public void midsummerInOslo() {
+        DayPhase.Day d = DayPhase.day(LocalDate.of(2026, 6, 21), OSLO, OSLO_LAT, OSLO_LON);
         assertNull(d.always);
-        near(LocalTime.of(3, 31), sunrise(d, SWEDEN));
-        near(LocalTime.of(22, 8), sunset(d, SWEDEN));
+        near(LocalTime.of(3, 54), sunrise(d, OSLO));
+        near(LocalTime.of(22, 43), sunset(d, OSLO));
     }
 
     @Test
     public void midwinterInGothenburg() {
-        DayPhase.Day d = DayPhase.day(LocalDate.of(2026, 12, 21), SWEDEN, GOTHENBURG_LAT, GOTHENBURG_LON);
-        near(LocalTime.of(8, 56), sunrise(d, SWEDEN));
-        near(LocalTime.of(15, 23), sunset(d, SWEDEN));
+        DayPhase.Day d = DayPhase.day(LocalDate.of(2026, 12, 21), OSLO, GOTHENBURG_LAT, GOTHENBURG_LON);
+        near(LocalTime.of(8, 56), sunrise(d, OSLO));
+        near(LocalTime.of(15, 23), sunset(d, OSLO));
     }
 
     @Test
@@ -62,24 +65,24 @@ public class DayPhaseTest {
     @Test
     public void phasesThroughADay() {
         double lat = GOTHENBURG_LAT, lon = GOTHENBURG_LON;
-        assertEquals(DayPhase.NIGHT, DayPhase.at(at(2026, 12, 21, 7, 0, SWEDEN), lat, lon));
-        assertEquals(DayPhase.DAWN, DayPhase.at(at(2026, 12, 21, 8, 40, SWEDEN), lat, lon));
-        assertEquals(DayPhase.DAY, DayPhase.at(at(2026, 12, 21, 12, 0, SWEDEN), lat, lon));
-        assertEquals(DayPhase.SUNSET, DayPhase.at(at(2026, 12, 21, 15, 0, SWEDEN), lat, lon));
-        assertEquals(DayPhase.NIGHT, DayPhase.at(at(2026, 12, 21, 16, 30, SWEDEN), lat, lon));
+        assertEquals(DayPhase.NIGHT, DayPhase.at(at(2026, 12, 21, 7, 0, OSLO), lat, lon));
+        assertEquals(DayPhase.DAWN, DayPhase.at(at(2026, 12, 21, 8, 40, OSLO), lat, lon));
+        assertEquals(DayPhase.DAY, DayPhase.at(at(2026, 12, 21, 12, 0, OSLO), lat, lon));
+        assertEquals(DayPhase.SUNSET, DayPhase.at(at(2026, 12, 21, 15, 0, OSLO), lat, lon));
+        assertEquals(DayPhase.NIGHT, DayPhase.at(at(2026, 12, 21, 16, 30, OSLO), lat, lon));
     }
 
     @Test
     public void nextChangeIsTheNextEdge() {
         double lat = GOTHENBURG_LAT, lon = GOTHENBURG_LON;
-        ZonedDateTime noon = at(2026, 12, 21, 12, 0, SWEDEN);
-        DayPhase.Day d = DayPhase.day(noon.toLocalDate(), SWEDEN, lat, lon);
+        ZonedDateTime noon = at(2026, 12, 21, 12, 0, OSLO);
+        DayPhase.Day d = DayPhase.day(noon.toLocalDate(), OSLO, lat, lon);
         assertEquals(d.edges[2], DayPhase.nextChange(noon, lat, lon).toInstant());
-        ZonedDateTime late = at(2026, 12, 21, 23, 0, SWEDEN);
-        DayPhase.Day tomorrow = DayPhase.day(LocalDate.of(2026, 12, 22), SWEDEN, lat, lon);
+        ZonedDateTime late = at(2026, 12, 21, 23, 0, OSLO);
+        DayPhase.Day tomorrow = DayPhase.day(LocalDate.of(2026, 12, 22), OSLO, lat, lon);
         assertEquals(tomorrow.edges[0], DayPhase.nextChange(late, lat, lon).toInstant());
         // The edge itself belongs to the phase it starts.
-        assertEquals(DayPhase.SUNSET, DayPhase.at(d.edges[2].atZone(SWEDEN), lat, lon));
+        assertEquals(DayPhase.SUNSET, DayPhase.at(d.edges[2].atZone(OSLO), lat, lon));
     }
 
     @Test
@@ -119,8 +122,8 @@ public class DayPhaseTest {
         double lat = 65.6, lon = 18.07;
         DayPhase prev = null;
         boolean handedOver = false;
-        ZonedDateTime t = at(2026, 6, 20, 12, 0, SWEDEN);
-        while (t.isBefore(at(2026, 6, 25, 12, 0, SWEDEN))) {
+        ZonedDateTime t = at(2026, 6, 20, 12, 0, OSLO);
+        while (t.isBefore(at(2026, 6, 25, 12, 0, OSLO))) {
             DayPhase p = DayPhase.at(t, lat, lon);
             if (prev != null && p != prev) {
                 boolean forward = p == next(prev) || (prev == DayPhase.SUNSET && p == DayPhase.DAWN);
@@ -148,7 +151,7 @@ public class DayPhaseTest {
                 {"Pacific/Auckland", -36.85, 174.76}, {"Pacific/Kiritimati", 1.87, -157.4},
                 {"Pacific/Apia", -13.83, -171.76}, {"Pacific/Honolulu", 21.31, -157.86},
                 {"America/Los_Angeles", 34.05, -118.24}, {"America/New_York", 40.71, -74.01},
-                {"America/New_York", NEW_YORK_LAT, NEW_YORK_LON}, {"Asia/Tokyo", 35.68, 139.69}};
+                {"Europe/Oslo", OSLO_LAT, OSLO_LON}, {"Asia/Tokyo", 35.68, 139.69}};
         for (Object[] place : places) {
             ZoneId zone = ZoneId.of((String) place[0]);
             double lat = (Double) place[1], lon = (Double) place[2];
@@ -162,24 +165,26 @@ public class DayPhaseTest {
 
     @Test
     public void theTvsZoneNeverSkipsACycleAtThePlace() {
-        // The TV in Pacific/Chatham (UTC+12:45, +13:45 in summer), the Weather place in New York: counting cycles by the
-        // TV's local noon skipped one across Chatham's daylight-saving change, and New York's noon read NIGHT.
+        // The TV in Pacific/Chatham (UTC+12:45, +13:45 in summer), the Weather place in Berlin: counting cycles by the
+        // TV's local noon skipped one across Chatham's daylight-saving change, and the place's noon read NIGHT. It
+        // shows only for a place east of about 11.3 E (the old rounding of Chatham's noon plus lon/360 crossed 0.5),
+        // so not Oslo.
         ZoneId chatham = ZoneId.of("Pacific/Chatham");
-        ZonedDateTime newYorkNoon = Instant.parse("2026-04-04T10:00:00Z").atZone(chatham);
-        assertEquals(DayPhase.DAY, DayPhase.at(newYorkNoon, NEW_YORK_LAT, NEW_YORK_LON));
+        ZonedDateTime berlinNoon = Instant.parse("2026-04-04T10:00:00Z").atZone(chatham);
+        assertEquals(DayPhase.DAY, DayPhase.at(berlinNoon, BERLIN_LAT, BERLIN_LON));
         for (String tv : new String[] {"Pacific/Chatham", "Pacific/Kiritimati", "Pacific/Apia", "America/Los_Angeles"}) {
             ZoneId zone = ZoneId.of(tv);
             for (LocalDate d = LocalDate.of(2026, 1, 1); d.getYear() == 2026; d = d.plusDays(1)) {
-                ZonedDateTime noon = d.atTime(13, 0).atZone(SWEDEN).withZoneSameInstant(zone);
-                assertEquals(tv + " " + d, DayPhase.DAY, DayPhase.at(noon, NEW_YORK_LAT, NEW_YORK_LON));
+                ZonedDateTime noon = d.atTime(13, 0).atZone(BERLIN).withZoneSameInstant(zone);
+                assertEquals(tv + " " + d, DayPhase.DAY, DayPhase.at(noon, BERLIN_LAT, BERLIN_LON));
             }
-            // Across Chatham's change (5 April) and New York's (29 March): every phase holds until nextChange.
+            // Across Chatham's change (5 April) and Berlin's (29 March): every phase holds until nextChange.
             ZonedDateTime t = at(2026, 3, 27, 0, 0, zone);
             while (t.isBefore(at(2026, 4, 8, 0, 0, zone))) {
-                DayPhase p = DayPhase.at(t, NEW_YORK_LAT, NEW_YORK_LON);
-                ZonedDateTime n = DayPhase.nextChange(t, NEW_YORK_LAT, NEW_YORK_LON);
+                DayPhase p = DayPhase.at(t, BERLIN_LAT, BERLIN_LON);
+                ZonedDateTime n = DayPhase.nextChange(t, BERLIN_LAT, BERLIN_LON);
                 assertTrue(n.isAfter(t));
-                assertEquals(tv + " " + t, p, DayPhase.at(n.minusSeconds(1), NEW_YORK_LAT, NEW_YORK_LON));
+                assertEquals(tv + " " + t, p, DayPhase.at(n.minusSeconds(1), BERLIN_LAT, BERLIN_LON));
                 t = t.plusMinutes(11);
             }
         }
@@ -207,10 +212,10 @@ public class DayPhaseTest {
 
     @Test
     public void withoutAPlaceTheFixedTimes() {
-        DayPhase.Day d = DayPhase.day(LocalDate.of(2026, 3, 1), SWEDEN, Double.NaN, Double.NaN);
-        assertEquals(LocalTime.of(6, 20), d.edges[0].atZone(SWEDEN).toLocalTime());
-        assertEquals(LocalTime.of(19, 40), d.edges[3].atZone(SWEDEN).toLocalTime());
-        assertEquals(DayPhase.DAY, DayPhase.at(at(2026, 3, 1, 12, 0, SWEDEN), Double.NaN, Double.NaN));
+        DayPhase.Day d = DayPhase.day(LocalDate.of(2026, 3, 1), OSLO, Double.NaN, Double.NaN);
+        assertEquals(LocalTime.of(6, 20), d.edges[0].atZone(OSLO).toLocalTime());
+        assertEquals(LocalTime.of(19, 40), d.edges[3].atZone(OSLO).toLocalTime());
+        assertEquals(DayPhase.DAY, DayPhase.at(at(2026, 3, 1, 12, 0, OSLO), Double.NaN, Double.NaN));
     }
 
     @Test

@@ -50,16 +50,16 @@ public class NoteWordsTest {
 
     @Test
     public void importingCountsTheNewLines() {
-        NoteWords.Pill p = NoteWords.Pill.importing("Rebecca", 6, 12);
-        assertEquals("Importing Rebecca · 6 of 12", NoteWords.pill(p, texts));
+        NoteWords.Pill p = NoteWords.Pill.importing("Alex", 6, 12);
+        assertEquals("Importing Alex · 6 of 12", NoteWords.pill(p, texts));
         assertEquals(0.5f, p.fraction(), 0.001f);
         assertFalse(p.kind.warn);
     }
 
     @Test
     public void beforeTheLinesAreCountedItJustSaysImporting() {
-        NoteWords.Pill p = NoteWords.Pill.importing("Rebecca", 0, 0);
-        assertEquals("Importing Rebecca", NoteWords.pill(p, texts));
+        NoteWords.Pill p = NoteWords.Pill.importing("Alex", 0, 0);
+        assertEquals("Importing Alex", NoteWords.pill(p, texts));
         assertEquals(0f, p.fraction(), 0f);
     }
 
@@ -73,22 +73,22 @@ public class NoteWordsTest {
 
     @Test
     public void linesThatMatchedNothingAreAmber() {
-        NoteWords.Pill p = NoteWords.Pill.ended("Rebecca", NoteImport.Status.DONE, 9, 3);
+        NoteWords.Pill p = NoteWords.Pill.ended("Alex", NoteImport.Status.DONE, 9, 3);
         assertTrue(p.kind.warn);
-        assertEquals("Rebecca · 9 added · 3 not matched", NoteWords.pill(p, texts));
+        assertEquals("Alex · 9 added · 3 not matched", NoteWords.pill(p, texts));
     }
 
     @Test
     public void problemsAreAmberAndSayWhatTheNoteWaitsFor() {
-        assertEquals("Rebecca · waiting for the internet",
-                NoteWords.pill(NoteWords.Pill.ended("Rebecca", NoteImport.Status.OFFLINE, 0, 0), texts));
-        assertEquals("Rebecca · couldn’t reach TMDB",
-                NoteWords.pill(NoteWords.Pill.ended("Rebecca", NoteImport.Status.FAILED, 0, 0), texts));
-        assertEquals("Rebecca · waiting for TMDB sign-in",
-                NoteWords.pill(NoteWords.Pill.ended("Rebecca", NoteImport.Status.SIGNED_OUT, 0, 0), texts));
+        assertEquals("Alex · waiting for the internet",
+                NoteWords.pill(NoteWords.Pill.ended("Alex", NoteImport.Status.OFFLINE, 0, 0), texts));
+        assertEquals("Alex · couldn’t reach TMDB",
+                NoteWords.pill(NoteWords.Pill.ended("Alex", NoteImport.Status.FAILED, 0, 0), texts));
+        assertEquals("Alex · waiting for TMDB sign-in",
+                NoteWords.pill(NoteWords.Pill.ended("Alex", NoteImport.Status.SIGNED_OUT, 0, 0), texts));
         for (NoteImport.Status s : new NoteImport.Status[]{NoteImport.Status.OFFLINE, NoteImport.Status.FAILED,
                 NoteImport.Status.SIGNED_OUT}) {
-            assertTrue(s.name(), NoteWords.Pill.ended("Rebecca", s, 0, 0).kind.warn);
+            assertTrue(s.name(), NoteWords.Pill.ended("Alex", s, 0, 0).kind.warn);
         }
     }
 
