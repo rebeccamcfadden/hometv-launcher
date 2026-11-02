@@ -594,7 +594,8 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   75), response p50 20 ms, cold start about 900 ms, return to Home p50 86 to 97 ms (these benches ran before the key
   sequence was corrected, so their Left and Right moves were partly on the row below the apps). Ideas tried on it that
   showed no gain within the noise of one run, kept here in case a `tools/trace.py` run (hwui GPU time) ever shows the
-  TV is fill-rate bound:
+  TV is fill-rate bound (the emulator can't show it: every frame there spends 80–100 ms issuing draw commands, about
+  50 ms even with every layer switched off, while the UI thread's animation, layout and recording stay under 1 ms):
   - **Fewer full-screen fills:** no root fill under a settled opaque backdrop, and Home's dim fading without an
     offscreen layer; a card's art painted without the fill under it unless the art has transparent parts. Jank 5 to
     7% against main's 1.4%, response 21 to 23 ms against 20: noise. A 960x540 pre-baked backdrop cost 17 MB for no
