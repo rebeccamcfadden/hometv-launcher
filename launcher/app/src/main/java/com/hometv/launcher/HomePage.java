@@ -100,6 +100,17 @@ final class HomePage extends Screen {
     private boolean hadInternet;
     /** The network came back: fetch the weather now rather than after WeatherStore's pause between tries. */
     private boolean retryWeather;
+    /**
+     * An app was installed, changed or removed while Home is on screen (the broadcast can land after the first frame
+     * back). Not mid-Move: the row catches up when Home next shows.
+     */
+    private final Runnable appsChanged = () -> {
+        if (moving == null) refreshApps(false);
+    };
+    /** The inputs' catch-up when Home shows again, after its first frame: TvInputManager's binder calls. */
+    private final Runnable inputsAfterFrame = () -> {
+        if (visible) refreshInputs();
+    };
 
     private final BroadcastReceiver clockReceiver = new BroadcastReceiver() {
         @Override
@@ -864,10 +875,17 @@ final class HomePage extends Screen {
                 if (weatherStore != null) weatherStore.retry();
             }
             if (weatherStore != null) weatherStore.refresh();
+            // Launchable answers from memory, so the row is right in the first frame back without a binder call.
+            HomeApps.listen(activity, appsChanged);
             refreshApps(false);
-            refreshInputs();
+            // Posted from inside the traversal that draws that frame, so it runs once the frame is drawn, as
+            // MainActivity's refreshNav does.
+            content.removeCallbacks(inputsAfterFrame);
+            content.post(inputsAfterFrame);
         } else {
             activity.unregisterReceiver(clockReceiver);
+            HomeApps.unlisten(activity, appsChanged);
+            content.removeCallbacks(inputsAfterFrame);
             putDown();
         }
     }

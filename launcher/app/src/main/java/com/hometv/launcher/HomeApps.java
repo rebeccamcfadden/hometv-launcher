@@ -54,7 +54,37 @@ final class HomeApps {
 
     /** Whether an app can be on the row or in All Apps: openable, not hidden and not this launcher. */
     boolean shown(String pkg) {
-        return !hidden.contains(pkg) && !pkg.equals(ctx.getPackageName()) && launchIntent(pkg) != null;
+        return !hidden.contains(pkg) && !pkg.equals(ctx.getPackageName()) && launchable(ctx).test(pkg);
+    }
+
+    /** One per process, so it outlives a recreate(); MainActivity's package receiver keeps it current. Main thread. */
+    private static Launchable launchable;
+
+    private static Launchable launchable(Context ctx) {
+        if (launchable == null) {
+            PackageManager pm = ctx.getApplicationContext().getPackageManager();
+            launchable = new Launchable(pkg -> launchIntent(pm, pkg) != null);
+        }
+        return launchable;
+    }
+
+    /** An app was installed, updated, enabled, disabled or removed. */
+    static void forget(Context ctx, String pkg) {
+        launchable(ctx).forget(pkg);
+    }
+
+    /** Apps may have changed while no receiver was listening, or a whole storage's apps came or went. */
+    static void forgetAll(Context ctx) {
+        launchable(ctx).forgetAll();
+    }
+
+    /** Runs r after any app's launchability may have changed; Home listens while it is on screen. */
+    static void listen(Context ctx, Runnable r) {
+        launchable(ctx).listen(r);
+    }
+
+    static void unlisten(Context ctx, Runnable r) {
+        launchable(ctx).unlisten(r);
     }
 
     /** The row's full list (with apps not installed now), the household's once saved, else the seed. */
@@ -149,7 +179,10 @@ final class HomeApps {
 
     /** The app's TV entry point, else its phone one; null when it has neither. */
     Intent launchIntent(String pkg) {
-        PackageManager pm = ctx.getPackageManager();
+        return launchIntent(ctx.getPackageManager(), pkg);
+    }
+
+    private static Intent launchIntent(PackageManager pm, String pkg) {
         Intent i = pm.getLeanbackLaunchIntentForPackage(pkg);
         return i != null ? i : pm.getLaunchIntentForPackage(pkg);
     }

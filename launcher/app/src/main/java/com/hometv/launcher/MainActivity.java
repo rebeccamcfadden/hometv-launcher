@@ -132,7 +132,15 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         @Override
         public void onReceive(Context context, Intent intent) {
             String pkg = intent.getData() == null ? null : intent.getData().getSchemeSpecificPart();
-            if (pkg != null) AppArt.forget(pkg);
+            if (pkg != null) {
+                AppArt.forget(pkg);
+                HomeApps.forget(context, pkg);
+                return;
+            }
+            // Apps on removable storage came or went (EXTERNAL_APPLICATIONS_*), named in an extra, not the data.
+            String[] pkgs = intent.getStringArrayExtra(Intent.EXTRA_CHANGED_PACKAGE_LIST);
+            if (pkgs != null) for (String p : pkgs) AppArt.forget(p);
+            HomeApps.forgetAll(context);
         }
     };
 
@@ -331,6 +339,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         // config.xml, overlaid by config.json from a pushed theme or example (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
         config = cfg;
+        // Apps may have changed while no activity's package receiver was listening (registered below).
+        HomeApps.forgetAll(this);
         Ui.init(this, cfg.reducedMotion());
         theme = ThemeStore.current(this);
         systemFont = ThemeStore.systemFont(this);
@@ -405,6 +415,9 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         packages.addAction(Intent.ACTION_PACKAGE_REMOVED);
         packages.addDataScheme("package");
         registerReceiver(packageReceiver, packages);
+        IntentFilter storage = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
+        storage.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
+        registerReceiver(packageReceiver, storage);
 
         // First run cut short without ending (a power cut mid-setup, Home brought back cold): it ends now, switching off
         // what isn't set up, and the launcher is rebuilt with that. Cut short before any step was opened, it shows again.
