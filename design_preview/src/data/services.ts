@@ -143,5 +143,22 @@ export const OTHER_APPS: HomeApp[] = [
   { id: 'viaplay', name: 'Viaplay', mark: 'viaplay', weight: 600 },
 ];
 
+/**
+ * Full colour (F43): a stand-in for each app's own banner, which the TV draws and the prototype has no licence for:
+ * the brand's tile colour and mark colour only. Minimal shows every app as the Figma Home frames do (off-white on glass).
+ */
+export const APP_BRAND: Record<string, { bg: string; fg: string }> = {
+  netflix: { bg: '#000000', fg: '#e50914' },
+  youtube: { bg: '#ffffff', fg: '#ff0000' },
+  prime: { bg: '#00a8e1', fg: '#ffffff' },
+  disney: { bg: 'linear-gradient(135deg, #0b1f4a, #0f6e7a)', fg: '#ffffff' },
+  max: { bg: 'linear-gradient(135deg, #1b1f3b, #2a1b5e)', fg: '#ffffff' },
+  appletvplus: { bg: '#1c1c1e', fg: '#ffffff' },
+  spotify: { bg: '#000000', fg: '#1ed760' },
+  svtplay: { bg: '#003a2b', fg: '#ffffff' },
+  tv4play: { bg: '#e2002b', fg: '#ffffff' },
+  viaplay: { bg: '#170a3a', fg: '#ffffff' },
+};
+
 /** Home's row holds at most this many tiles. */
 export const HOME_ROW_MAX = 7;

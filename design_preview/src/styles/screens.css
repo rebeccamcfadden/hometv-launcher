@@ -115,6 +115,12 @@
   font-size: var(--t-small);
   color: var(--text-2);
 }
+/* F43, App logos › Minimal (Figma 2:741): the glass tile, white at 3% inside a white 9% line, and an off-white mark. */
+.app-tile--mono {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 0 var(--line-w) rgba(255, 255, 255, 0.09);
+  color: var(--text-1);
+}
 .app.is-focused .app-tile {
   box-shadow: var(--focus-ring);
   transform: scale(1.05);

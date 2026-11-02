@@ -1,3 +1,4 @@
+import { APP_BRAND } from '../data/services';
 import { app, type Screen } from '../core/app';
 import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
@@ -44,14 +45,26 @@ export function homeScreen(): Screen {
   let painted = '';
   const paintApps = () => {
     // Only when the row changed, so other settings don't reset focus on it.
-    if (painted === settings.get().homeApps.join()) return;
-    painted = settings.get().homeApps.join();
+    const key = `${settings.get().homeApps.join()}|${settings.get().appLogos}`;
+    if (painted === key) return;
+    painted = key;
+    // Theme › App logos (F43): Minimal is the Figma Home frames' glass tile with an off-white wordmark.
+    const mono = settings.get().appLogos === 'minimal';
     const shown = settings.get().homeApps.map((id) => TV_APPS.find((a) => a.id === id)).filter((a) => !!a);
     replace(
       appsRow,
       shown.map((a, i) =>
         focusable(
-          h('div.app', h('div.app-tile', h('span', { style: `font-weight:${a.weight}` }, a.mark)), h('div.app-name', a.name)),
+          h(
+            'div.app',
+            h(
+              `div.app-tile${mono ? '.app-tile--mono' : ''}`,
+              // Full colour: the brand's colours stand in for the app's banner (APP_BRAND); an app without one keeps the tile.
+              { style: !mono && APP_BRAND[a.id] ? `background:${APP_BRAND[a.id].bg};color:${APP_BRAND[a.id].fg}` : '' },
+              h('span', { style: `font-weight:${a.weight}` }, a.mark),
+            ),
+            h('div.app-name', a.name),
+          ),
           { group: 'apps', key: `app-${a.id}`, isDefault: i === 0, onOk: () => app.toast(`Opening ${a.name}…`) },
         ),
       ),
