@@ -13,7 +13,7 @@ The launcher stays small on purpose, so pick the smallest home that fits:
 | A TV model, a fix, a translation, a small switch that is off by default | A pull request here (sections 1 to 3 below); a new switch with a screenshot in [`docs/switches.md`](docs/switches.md) |
 | A new look: colours, wallpaper, dock, columns | [`themes/`](themes/README.md), with a screenshot from a real TV |
 | A widget or tile that can be its own small app | [`addons/`](addons/README.md), as a module card with a screenshot from a real TV; it never touches `launcher/` |
-| A whole new launcher, a heavy restyle, a port to another platform | Your own repo, plus one row in [`SHOWCASE.md`](SHOWCASE.md) (section 4) |
+| A whole new launcher, a heavy restyle, a port to another platform | Your own repo (section 4) |
 
 Everything merged into `themes/` and `addons/` shows up on [cleanyour.tv/addons](https://cleanyour.tv/addons).
 In this fork the reworked launcher reads neither themes nor module cards; both folders wait for V2
@@ -133,14 +133,13 @@ you find a cleaner workaround, open an issue first.
 ## 4. Show what you built
 
 Built your own launcher, a port to another platform, or an add-on that is too big or too personal
-for the shared launcher? Put it in its own repository and add one row to
-[`SHOWCASE.md`](SHOWCASE.md). That page is the place for alternative launchers, forks with a
-different look, and tools around the launcher; this repo keeps one small reference launcher and
-points at everything else. The rules for a row are on that page.
+for the shared launcher? Put it in its own repository: this repo keeps one small reference launcher.
+Upstream lists projects like these in its
+[SHOWCASE.md](https://github.com/Gathin23/cleanyourtv/blob/main/SHOWCASE.md).
 
 Things that stay in this repo: debloat lists, fixes and small, opt-in features for the reference
 launcher, prompt and tool improvements. A feature that can be its own small app goes in [`addons/`](addons/README.md)
-as a module card. Things that go in the showcase: a second launcher, a
+as a module card. Things that go in their own repository: a second launcher, a
 restyle, a platform port, anything with its own background services, or network access beyond the limited use
 above.
 

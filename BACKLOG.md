@@ -472,10 +472,6 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 - **Network icon state:** the nav shows the prototype's Wi-Fi arcs, on Ethernet too (the project lead, 2026-10-31), or the arcs crossed out when offline, which since 06-states A
   includes a network with no internet behind it. The old pill could also
   tint by state (`wifi_status_color`, `wifi_status_warnings`); not designed for the new nav.
-- **README card:** since M1b `tools/gen_tables.py` no longer counts languages, and `docs/card.jpg` and
-  `docs/stats.png` show TV models, brands and the launcher's size. Its "after", `docs/new-home.jpg`, is a screenshot
-  of the new Home from the TV (2026-10-30). The stat strip still says 1.6 MB: redraw it once the APK size settles
-  (V2 Phase 1 brought it to about 0.27 MB).
 - **Last opened:** `LastOpened` could note when Home or All Apps last opened each app (on the TV only, no permission).
   Recording is off since F15 (the project lead, 2026-11-01): nothing read it since the old Home's "Last opened" line
   went in M1, and it wrote a file each time an app started. Wanted: a use for it, for example ordering All Apps or the
@@ -740,7 +736,7 @@ In order, one PR each:
    - reads the model, Android version and brand itself, and stops below `minSdk` 26;
    - before changing anything, backs up the package list, the disabled list, `getprop` and settings to the laptop,
      and writes the restore file that undoes every step it is about to take;
-   - on Google TV, warns that Home needs `setupwraith` gone and that it can cost casting (Cast Fix, SHOWCASE.md);
+   - on Google TV, warns that Home needs `setupwraith` gone and that it can cost casting (Cast Fix, in upstream's SHOWCASE.md);
    - runs the Home guard, ported from `build-and-install`. On a CVTE board (any `com.cvte.*` package) it keeps the
      stock launcher (`com.cvte.tv.launcher.*`) enabled unless the `examples/` list for that exact board disables
      it: it sets the new Home with `set-home-activity`, reboots once, and confirms Home and ADB came back before
@@ -779,7 +775,7 @@ In order, one PR each:
 ### Tizen port (separate repo)
 - **Finding:** a Samsung TV runs Tizen, so nothing here installs on it, and no third-party app can replace Smart Hub
   or start at power-on. The best case is an app they open (some models reopen the last app used).
-- **Planned (2026-11-01):** a spike in its own repository, listed in SHOWCASE.md once it works, as a
+- **Planned (2026-11-01):** a spike in its own repository, as a
   [TizenBrew](https://github.com/reisxd/TizenBrew) application module: a web app served from npm, so it updates
   whenever it's published, and TizenBrew is installed once from a PC in Developer Mode. Its logic (TMDB catalogue,
   prices, deep links) is shared with `design_preview/` as a TypeScript package rather than copied; the Android

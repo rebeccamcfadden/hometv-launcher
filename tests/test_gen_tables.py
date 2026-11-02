@@ -27,9 +27,7 @@ END = "<!-- {}:end -->"
 
 README = f"""# Title
 
-![card](docs/card.jpg "2 TV models · 2 brands · 1 KB launcher")
-
-Tested lists from contributors:
+2 TV models · 2 brands · tested lists from contributors:
 
 {START.format("tv-brands")}
 
@@ -64,18 +62,15 @@ EXAMPLES = f"""# Examples
 Notes for models that have no tested list yet: hand-written.
 """
 
-STATS = 'STATS = [("2", "TV MODELS"), ("2", "BRANDS"), ("1 KB", "LAUNCHER")]\n'
-
 
 def tree(tmp, lists):
-    """A small repository: the three files the script writes parts of, and one folder per (name, tv.json)."""
+    """A small repository: the two files the script writes parts of, and one folder per (name, tv.json)."""
     root = Path(tmp)
     (root / "examples").mkdir()
     (root / "tools").mkdir()
     (root / "docs").mkdir()
     (root / gen_tables.TV_PAGE).write_text(README, encoding="utf-8")
     (root / "examples" / "README.md").write_text(EXAMPLES, encoding="utf-8")
-    (root / "tools" / "readme_stats.py").write_text(STATS, encoding="utf-8")
     for name, data in lists:
         add(root, name, data)
     return root
@@ -174,9 +169,7 @@ class GeneratorTest(unittest.TestCase):
             self.assertEqual(section(examples, "tv-table")[-1],
                              "| `tcl-c/` | TCL C | Android TV 11 | `com.tcl.ads` disabled |")
             self.assertEqual(section(readme, "tv-brands"), ["**TCL** 2 ·", "Sony ·"])
-            self.assertIn('"3 TV models · 2 brands · 1 KB launcher"', readme)
-            self.assertIn('("3", "TV MODELS"), ("2", "BRANDS"), ("1 KB", "LAUNCHER")',
-                          (root / "tools/readme_stats.py").read_text(encoding="utf-8"))
+            self.assertIn("3 TV models · 2 brands · tested lists", readme)
             self.assertTrue(readme.endswith("Hand-written text stays.\n"))
             self.assertTrue(examples.endswith("Notes for models that have no tested list yet: hand-written.\n"))
 

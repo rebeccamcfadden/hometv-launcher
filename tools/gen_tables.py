@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Writes the TV tables, the brand line and the counts from each examples/<folder>/tv.json.
 
-    gen_tables.py [--root DIR]                 rewrite docs/supported-tvs.md, examples/README.md, tools/readme_stats.py
+    gen_tables.py [--root DIR]                 rewrite docs/supported-tvs.md and examples/README.md
     gen_tables.py --check                      write nothing; exit 1 when a file is out of date
-    gen_tables.py --font Fredoka.ttf           also redraw docs/stats.png and docs/card.jpg if a count moved
     gen_tables.py --adopt PATCH                write tv.json for folders that have none, from the table rows
                                                in PATCH (an old-style PR diff), then rewrite as above
 
@@ -24,14 +23,12 @@ the folders in the same order, alphabetical by "tv" (case ignored), so a brand's
 
 The tables live between <!-- tv-table:start ... --> and <!-- tv-table:end --> lines, the brand line
 between <!-- tv-brands:start ... --> and <!-- tv-brands:end -->; everything outside them is hand-written.
-The counts are the card's alt text ("N TV models · B brands · ") and STATS in tools/readme_stats.py. The
-launcher in this fork is English only (docs/rework.md, Languages), so the card no longer counts languages.
+The counts are the "N TV models · B brands · " line in docs/supported-tvs.md.
 Exit codes: 0 up to date (or written), 1 out of date (--check), 2 a tv.json or a marker is wrong.
 """
 import argparse
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -172,18 +169,12 @@ def counts(text, entries):
     return re.sub(r"\b\d+ TV models · \d+ brands · ", f"{n} TV models · {b} brands · ", text)
 
 
-def stats(text, entries):
-    for value, label in ((len(entries), "TV MODELS"), (len(brands(entries)), "BRANDS")):
-        text = re.sub(rf'\("\d+", "{label}"\)', f'("{value}", "{label}")', text)
-    return text
-
-
 TV_PAGE = "docs/supported-tvs.md"
-OWNED = (TV_PAGE, "examples/README.md", "tools/readme_stats.py")
+OWNED = (TV_PAGE, "examples/README.md")
 
 
 def render(root, texts=None):
-    """{relative path: the text it should have}, for the three files this script owns parts of.
+    """{relative path: the text it should have}, for the two files this script owns parts of.
 
     texts, if given, stands in for what those files hold now (by the same paths)."""
     entries = load(root)
@@ -192,8 +183,7 @@ def render(root, texts=None):
     page = between(page, "tv-table", readme_rows(entries), TV_PAGE)
     page = counts(page, entries)
     examples = between(now["examples/README.md"], "tv-table", examples_rows(entries), "examples/README.md")
-    stats_py = stats(now["tools/readme_stats.py"], entries)
-    return {TV_PAGE: page, "examples/README.md": examples, "tools/readme_stats.py": stats_py}
+    return {TV_PAGE: page, "examples/README.md": examples}
 
 
 def stale(root):
@@ -274,7 +264,6 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--root", default=str(Path(__file__).resolve().parents[1]))
     ap.add_argument("--check", action="store_true", help="write nothing; exit 1 when a file is out of date")
-    ap.add_argument("--font", help="Fredoka TTF: redraw docs/stats.png and docs/card.jpg when a count changed")
     ap.add_argument("--adopt", metavar="PATCH", help="write missing tv.json files from the rows in PATCH first")
     a = ap.parse_args(argv)
     root = Path(a.root)
@@ -297,14 +286,6 @@ def main(argv=None):
     except Problem as e:
         print(e, file=sys.stderr)
         return 2
-    if "tools/readme_stats.py" in changed:
-        if a.font:
-            for script, out in (("tools/readme_stats.py", "docs/stats.png"), ("tools/readme_card.py", "docs/card.jpg")):
-                subprocess.run([sys.executable, script, a.font, out], cwd=root, check=True)
-            changed += ["docs/stats.png", "docs/card.jpg"]
-        else:
-            print("A count changed: redraw docs/stats.png and docs/card.jpg (--font Fredoka.ttf, or "
-                  "tools/readme_stats.py and tools/readme_card.py).")
     print("Updated: " + ", ".join(changed) if changed else "Up to date.")
     return 0
 
