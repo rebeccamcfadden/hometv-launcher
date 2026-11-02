@@ -1,5 +1,6 @@
 package com.hometv.launcher;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -11,10 +12,70 @@ import java.util.List;
 final class SettingsNav {
     private SettingsNav() {}
 
-    /** The sections in the order the list shows them (SettingsSection.id). */
-    static final List<String> ORDER = Collections.unmodifiableList(Arrays.asList(
-            "account", "notes", "services", "stores", "weather", "apps", "theme", "performance", "start", "home", "tv",
-            "about"));
+    /** One group of sections under its heading (F23): a key for its heading's string, and its sections in order. */
+    static final class Group {
+        final String key;
+        final List<String> ids;
+
+        Group(String key, String... ids) {
+            this.key = key;
+            this.ids = Collections.unmodifiableList(Arrays.asList(ids));
+        }
+    }
+
+    /**
+     * The section list's groups, in order (F23, grouping A, the project lead, 2026-11-01; design_preview settings.ts
+     * GROUPS). Features (F14), API keys (F16) and Region (F12) have their places already: a group with none of its
+     * sections on this TV isn't shown.
+     */
+    static final List<Group> GROUPS = Collections.unmodifiableList(Arrays.asList(
+            new Group("accounts", "account", "notes"),
+            new Group("watch", "services", "stores", "features", "keys"),
+            new Group("look", "theme", "performance", "apps", "weather"),
+            new Group("tv", "start", "home", "region", "tv", "about")));
+
+    /** The sections in the order the list shows them (SettingsSection.id): the groups' in turn. */
+    static final List<String> ORDER = order();
+
+    private static List<String> order() {
+        List<String> out = new ArrayList<>();
+        for (Group g : GROUPS) out.addAll(g.ids);
+        return Collections.unmodifiableList(out);
+    }
+
+    /** A line of the section list: a group's heading (id null) or a section. */
+    static final class Line {
+        final String group;
+        final String id;
+
+        private Line(String group, String id) {
+            this.group = group;
+            this.id = id;
+        }
+
+        boolean isHeading() {
+            return id == null;
+        }
+    }
+
+    /**
+     * The section list for the sections this TV shows ({@code shown}, any order): each group that has one, its heading
+     * then its sections in {@link #ORDER}. A section in no group (none today) comes last, under no heading.
+     */
+    static List<Line> lines(List<String> shown) {
+        List<Line> out = new ArrayList<>();
+        for (Group g : GROUPS) {
+            boolean head = false;
+            for (String id : g.ids) {
+                if (!shown.contains(id)) continue;
+                if (!head) out.add(new Line(g.key, null));
+                head = true;
+                out.add(new Line(g.key, id));
+            }
+        }
+        for (String id : shown) if (!ORDER.contains(id)) out.add(new Line(null, id));
+        return out;
+    }
 
     enum Action {
         /** Focus the section's pane, on its first control. */

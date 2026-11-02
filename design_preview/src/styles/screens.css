@@ -1576,6 +1576,19 @@
 .sec.is-focused * {
   color: var(--on-accent) !important;
 }
+/* F23: the sections in groups, under small headings; the list scrolls instead of squeezing the rows. */
+.sec-list--grouped > * {
+  flex: none;
+}
+.sec-head {
+  padding: 22px 22px 6px;
+  font-size: var(--t-min);
+  font-weight: 600;
+  color: var(--text-3);
+}
+.sec-head:first-child {
+  padding-top: 0;
+}
 .set-pane {
   position: absolute;
   top: 160px;

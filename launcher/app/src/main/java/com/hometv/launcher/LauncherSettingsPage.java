@@ -57,6 +57,10 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
 
     static final String GROUP_SECTIONS = "sections";
     private static final float TOP = 160, LIST_LEFT = 104, LIST_W = 470, ROW_H = 70, ROW_GAP = 4;
+    /** Room around the list inside its clip, for a focused row's 1.03 scale-up (8 px from the safe margin). */
+    private static final float LIST_ROOM = 8;
+    /** Kept around a section the list scrolls to: room for its group's heading above it ({@code .sec-head}). */
+    private static final float LIST_REVEAL = 56;
     private static final float PANE_LEFT = 630, PANE_PAD_X = 52, PANE_PAD_Y = 44;
     /** Room inside the pane's scroll area for a focused control's ring and scale-up (.pane-scroll). */
     private static final float PANE_ROOM = 10;
@@ -124,22 +128,44 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         hlp.rightMargin = Ui.px(Ui.SAFE_X);
         root.addView(head, hlp);
 
-        // ---- The sections: 8 px in from the safe margin, so a focused row's scale-up stays inside it.
+        // ---- The sections: 8 px in from the safe margin, so a focused row's scale-up stays inside it. Launcher
+        // settings groups them under headings (F23, SettingsNav.lines); First run lists its steps as they come.
         list = Kit.unclip(new LinearLayout(ctx));
         list.setOrientation(LinearLayout.VERTICAL);
-        for (SettingsSection s : sections) {
-            View row = row(s);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                    Ui.px(ROW_H));
-            if (!rows.isEmpty()) lp.topMargin = Ui.px(ROW_GAP);
-            list.addView(row, lp);
-            rows.add(row);
+        if (setup == null) {
+            boolean first = true;
+            for (SettingsNav.Line l : SettingsNav.lines(ids)) {
+                if (l.isHeading()) {
+                    list.addView(heading(l.group, first));
+                } else {
+                    addRow(section(l.id), first || list.getChildAt(list.getChildCount() - 1).getTag(
+                            R.id.settings_section) == null);
+                }
+                first = false;
+            }
+        } else {
+            for (SettingsSection s : sections) addRow(s, rows.isEmpty());
         }
-        FrameLayout.LayoutParams llp = new FrameLayout.LayoutParams(Ui.px(LIST_W),
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
-        llp.topMargin = Ui.px(TOP);
-        llp.leftMargin = Ui.px(LIST_LEFT);
-        root.addView(list, llp);
+        // The list scrolls with focus when its sections don't fit above the safe area, keeping a group's heading in
+        // view over its first section (LIST_REVEAL). Its holder clips it, with LIST_ROOM spare all round for a
+        // focused row's scale-up.
+        int listRoom = Ui.px(LIST_ROOM);
+        ViewGroup listScroll = ScrollBox.vertical(ctx, LIST_REVEAL);
+        listScroll.setPadding(listRoom, listRoom, listRoom, listRoom);
+        listScroll.addView(list, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        FrameLayout listHolder = new FrameLayout(ctx);
+        listHolder.addView(listScroll, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        FrameLayout.LayoutParams llp = new FrameLayout.LayoutParams(Ui.px(LIST_W) + 2 * listRoom,
+                ViewGroup.LayoutParams.MATCH_PARENT, Gravity.TOP | Gravity.START);
+        llp.topMargin = Ui.px(TOP) - listRoom;
+        llp.leftMargin = Ui.px(LIST_LEFT) - listRoom;
+        llp.bottomMargin = Ui.px(Ui.SAFE_Y);
+        root.addView(listHolder, llp);
+        // Opened straight into a lower section's pane (a quick-settings row, or back after a theme change): focus goes
+        // to the pane, so bring the section's row into the list's view too, once laid out.
+        ScrollBox.reveal(rowOf(current));
 
         // ---- The pane: its content scrolls inside the rounded frame, with room kept for focus rings.
         pane = new FrameLayout(ctx);
@@ -178,6 +204,43 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         paintRows();
         paintValues();
         show(current);
+    }
+
+    /** Adds a section's row to the list, with the 4 px gap above it unless it opens the list or a group. */
+    private void addRow(SettingsSection s, boolean opens) {
+        if (s == null) return;
+        View row = row(s);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                Ui.px(ROW_H));
+        if (!opens) lp.topMargin = Ui.px(ROW_GAP);
+        list.addView(row, lp);
+        rows.add(row);
+    }
+
+    /**
+     * {@code .sec-head}: a group's name over its sections (F23), 18 px semibold in the tertiary colour, 22 px in like
+     * the rows' icons, 22 px above it (none over the first group) and 6 px below. Not focusable: ↑ and ↓ step over it.
+     */
+    private View heading(String group, boolean first) {
+        TextView t = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.MEDIUM);
+        t.setGravity(Gravity.START);
+        t.setText(groupName(group));
+        t.setPadding(Ui.px(22), first ? 0 : Ui.px(22), Ui.px(22), Ui.px(6));
+        if (android.os.Build.VERSION.SDK_INT >= 28) t.setAccessibilityHeading(true);
+        return t;
+    }
+
+    private int groupName(String group) {
+        switch (group) {
+            case "accounts":
+                return R.string.settings_group_accounts;
+            case "watch":
+                return R.string.settings_group_watch;
+            case "look":
+                return R.string.settings_group_look;
+            default:
+                return R.string.settings_group_tv;
+        }
     }
 
     /** {@code .sec}: 70 px, the 28 px icon, the label (24 px) and the value right-aligned (18 px, tertiary). */

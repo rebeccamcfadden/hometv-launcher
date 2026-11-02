@@ -54,6 +54,18 @@ const SECTIONS: Section[] = [
   { id: 'about', label: 'About', icon: 'info', value: () => ({ text: '2.0.0' }) },
 ];
 
+/**
+ * F23 (the project lead chose grouping A, 2026-11-01): the sections in four groups, under small headings, in this
+ * order. Headings only: every section keeps its place in the path (Launcher settings › Phone notes), so nothing that
+ * names one changes. Sections still to come go in a group here: Features (F14) and API keys (F16) under What you
+ * watch, Region (F12) under This TV before TV settings. First run keeps its steps, without headings.
+ */
+const GROUPS: { title: string; items: SectionId[] }[] = [
+  { title: 'Accounts', items: ['account', 'notes'] },
+  { title: 'What you watch', items: ['services', 'stores'] },
+  { title: 'Home & look', items: ['theme', 'performance', 'apps', 'weather'] },
+  { title: 'This TV', items: ['start', 'home', 'tv', 'about'] },
+];
 /** First run's cut-down split (V2 design r2-setup-checklist): the four setup sections and a footer to step through. */
 export interface SetupOpts {
   steps: SectionId[];
@@ -71,12 +83,14 @@ export interface SetupOpts {
  */
 export function launcherSettings(initial: SectionId = 'account', opts: { enter?: boolean; setup?: SetupOpts } = {}): Screen {
   const setup = opts.setup;
-  const sections = setup ? SECTIONS.filter((s) => setup.steps.includes(s.id)) : SECTIONS;
+  const groups = setup ? null : GROUPS;
+  const byId = (id: SectionId) => SECTIONS.find((s) => s.id === id)!;
+  const sections = setup ? SECTIONS.filter((s) => setup.steps.includes(s.id)) : GROUPS.flatMap((g) => g.items.map(byId));
   let current: SectionId = sections.some((s) => s.id === initial) ? initial : sections[0].id;
   let shown: SectionId | null = null;
   let inPane = false;
 
-  const list = h('div.sec-list', { 'data-scroll': 'y', 'data-scroll-pad': 0 });
+  const list = h(`div.sec-list${groups ? '.sec-list--grouped' : ''}`, { 'data-scroll': 'y', 'data-scroll-pad': groups ? 56 : 0 });
   const scroll = h('div.pane-scroll', { 'data-scroll': 'y', 'data-scroll-pad': 40 });
   const foot = h('div.pane-foot');
   const pane = h('div.set-pane', scroll, setup ? foot : null);
@@ -119,7 +133,15 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
       { group: 'sections', key: `sec-${sec.id}`, isDefault: sec.id === current, onFocus: () => show(sec.id), onOk: () => enter(sec.id) },
     ),
   );
-  replace(list, rows);
+  replace(
+    list,
+    groups
+      ? groups.map((g) => [
+          h('div.sec-head', g.title),
+          g.items.map((id) => rows[sections.findIndex((s) => s.id === id)]),
+        ])
+      : rows,
+  );
   const rowOf = (id: SectionId) => rows[sections.findIndex((s) => s.id === id)];
 
   function paintValues() {

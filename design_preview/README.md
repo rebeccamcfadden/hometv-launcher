@@ -434,11 +434,16 @@ settings, and from the remote's Settings key stand-in. A full page without the n
 save at once", the section list on the left (470 px, each row with its icon and current value in grey) and the pane
 on the right.
 
-- **Sections and values:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing in…", "Code
-  expired", or the username), Phone notes (Off, On, or amber "3 not matched"), Streaming services ("8 ticked"), Stores
-  for rent and buy ("5 ticked"), Weather (the city), Home row apps (7), Theme (Midnight, or "Nature · Halloween"),
-  Performance (Default, All on, or Custom), Open on start (Home), Default Home (On), TV settings, About (2.0.0). Values update live. The list
-  stays inside title-safe and scrolls with focus when its sections don't fit.
+- **Sections, in groups** (F23, the project lead's choice, 2026-11-01): the list is split by small grey headings into
+  four groups, in this order. **Accounts:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing
+  in…", "Code expired", or the username), Phone notes (Off, On, or amber "3 not matched"). **What you watch:**
+  Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"). **Home & look:** Theme (Midnight, or
+  "Nature · Halloween"), Performance (Default, All on, or Custom), Home row apps (7), Weather (the city). **This TV:** Open on
+  start (Home), Default Home (On), TV settings, About (2.0.0). Values update live. Headings aren't focusable; ↑/↓
+  step over them. Features and API keys join What you watch, and Region joins This TV before TV settings, as they
+  are built. A section's name doesn't change with its group, so a path such as Launcher settings › Phone notes stays
+  as it is. The list stays inside title-safe and scrolls with focus when its sections don't fit, keeping a group's
+  heading in view above its first section. First run's cut-down page has no headings.
 - **Moving:** landing on a section shows its pane at once, as a preview. → or OK enters the pane, on its first control
   (the selected option in a segmented control), and the pane's border brightens. ← from the pane's left edge
   returns to the section. Back leaves a sub-state first (Choose lists, Change city, an app being moved), then the pane,

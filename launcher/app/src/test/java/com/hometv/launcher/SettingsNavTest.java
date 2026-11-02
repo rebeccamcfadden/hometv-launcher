@@ -2,6 +2,7 @@ package com.hometv.launcher;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -51,8 +52,49 @@ public class SettingsNavTest {
     }
 
     @Test
-    public void theSectionsAreInTheSpecsOrderWithThemeAfterHomeRowAppsAndPerformanceAfterTheme() {
-        assertEquals(Arrays.asList("account", "notes", "services", "stores", "weather", "apps", "theme",
-                "performance", "start", "home", "tv", "about"), SettingsNav.ORDER);
+    public void theSectionsAreInGroupingAsOrder() {
+        assertEquals(Arrays.asList("account", "notes", "services", "stores", "features", "keys", "theme",
+                "performance", "apps", "weather", "start", "home", "region", "tv", "about"), SettingsNav.ORDER);
+        List<String> groups = new ArrayList<>();
+        for (SettingsNav.Group g : SettingsNav.GROUPS) groups.add(g.key);
+        assertEquals(Arrays.asList("accounts", "watch", "look", "tv"), groups);
+    }
+
+    private static String lines(List<String> shown) {
+        StringBuilder b = new StringBuilder();
+        for (SettingsNav.Line l : SettingsNav.lines(shown)) {
+            if (b.length() > 0) b.append(' ');
+            b.append(l.isHeading() ? "#" + l.group : l.id);
+        }
+        return b.toString();
+    }
+
+    @Test
+    public void eachGroupWithASectionShowsItsHeadingThenItsSectionsInOrder() {
+        // Today's sections, given in any order; Features, API keys and Region aren't built yet.
+        List<String> today = Arrays.asList("about", "account", "notes", "services", "stores", "weather", "apps",
+                "theme", "performance", "home", "tv");
+        assertEquals("#accounts account notes #watch services stores #look theme performance apps weather"
+                + " #tv home tv about", lines(today));
+    }
+
+    @Test
+    public void aGroupWithNoneOfItsSectionsHasNoHeading() {
+        // A build without a TMDB token has no Account or Phone notes.
+        assertEquals("#watch services #tv tv", lines(Arrays.asList("tv", "services")));
+        assertEquals("", lines(Collections.<String>emptyList()));
+    }
+
+    @Test
+    public void sectionsStillToComeTakeTheirPlaces() {
+        assertEquals("#watch services stores features keys #tv start region tv",
+                lines(Arrays.asList("keys", "region", "features", "services", "stores", "start", "tv")));
+    }
+
+    @Test
+    public void aSectionInNoGroupComesLastWithoutAHeading() {
+        SettingsNav.Line last = SettingsNav.lines(Arrays.asList("x-new", "about")).get(2);
+        assertEquals("x-new", last.id);
+        assertNull(last.group);
     }
 }

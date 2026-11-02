@@ -3,6 +3,11 @@
      their panes; and V2 Phase 4's Wi-Fi dropdown's saved networks. -->
 <resources>
     <string name="settings_hint">Back closes · changes save at once</string>
+    <!-- F23: the headings over Launcher settings' groups of sections (SettingsNav.GROUPS). -->
+    <string name="settings_group_accounts">Accounts</string>
+    <string name="settings_group_watch">What you watch</string>
+    <string name="settings_group_look">Home &amp; look</string>
+    <string name="settings_group_tv">This TV</string>
 
     <!-- The sections, in the list's order. -->
     <string name="settings_account">Account</string>
