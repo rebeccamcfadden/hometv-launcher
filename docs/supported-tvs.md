@@ -2,6 +2,11 @@
 
 Anything running **Android TV** or **Google TV**.
 
+The lists in [`examples/`](../examples/) and the notes in [`docs/devices/`](devices/) come from upstream
+[CleanYourTV](https://github.com/Gathin23/cleanyourtv)'s contributors, who ran upstream's launcher, package
+`com.gathin.tvhome`. They are kept as they were run. Where a list or note gives a command with that package
+(`set-home-activity`, `am force-stop`, an accessibility helper), use this launcher's `com.hometv.launcher` instead.
+
 | Platform | What works |
 |---|---|
 | **Android TV, Google TV** | The debloat and the launcher. |
