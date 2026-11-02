@@ -1,20 +1,21 @@
 // In-app updates (Family install step 5). A launcher from a release (tools/release.ps1) reads the latest GitHub
-// Release once a day while Home shows, downloads a newer APK in the background, checks it against the release's
-// SHA-256 and signing certificate, and lets Android ask "Install this update?". About shows where that stands, and Home
-// shows one notice per new version. The prototype keeps the state in localStorage and simulates each step.
+// Release once a day while Home shows. When a newer one is out, About says so and Home shows one notice per version;
+// nothing is downloaded until Install update is pressed (the project lead, 2026-11-02). Then the APK is downloaded,
+// checked against the release's SHA-256 and signing certificate, and Android asks "Install this update?". The
+// prototype keeps the state in localStorage and simulates each step.
 
 export type UpdateState =
   /** A build made on a computer (tv.properties), not a release: it updates from that computer; no check runs. */
   | 'own'
   /** The newest release is this one. */
   | 'current'
-  /** A newer release is downloading in the background. */
+  /** A newer release is out; nothing is downloaded until Install update. */
+  | 'available'
+  /** Install update was pressed: the update is downloading, then Android asks. */
   | 'downloading'
-  /** Downloaded and checked: Android will ask to install it. */
-  | 'ready'
-  /** Downloaded, but Android doesn't let the launcher install apps yet: About opens the screen that allows it. */
+  /** A newer release is out, but Android doesn't let the launcher install apps yet: Install opens the screen to allow it. */
   | 'nogrant'
-  /** Downloaded, and this TV has no screen to allow it: the installer on the laptop updates it. */
+  /** A newer release is out, and this TV has no screen to allow it: the installer on the laptop updates it. */
   | 'noscreen'
   /** The check couldn't reach GitHub; tried again tomorrow. */
   | 'failed';
@@ -22,10 +23,10 @@ export type UpdateState =
 export const UPDATE_STATES: [UpdateState, string][] = [
   ['own', 'own build (no check)'],
   ['current', 'up to date'],
-  ['downloading', 'downloading 2.8'],
-  ['ready', '2.8 ready'],
-  ['nogrant', '2.8 ready, no permission'],
-  ['noscreen', '2.8 ready, no permission screen'],
+  ['available', '2.8 available'],
+  ['downloading', 'downloading 2.8 (after Install)'],
+  ['nogrant', '2.8 available, no permission'],
+  ['noscreen', '2.8 available, no permission screen'],
   ['failed', 'check failed'],
 ];
 
@@ -44,7 +45,7 @@ interface Saved {
   noticed: string;
 }
 
-const STORE = 'hometv-preview-updates-v1';
+const STORE = 'hometv-preview-updates-v2';
 const DEFAULTS: Saved = { state: 'current', check: true, checkedAt: Date.now() - 3 * 3600_000, progress: 0, noticed: '' };
 
 const load = (): Saved => {
@@ -65,8 +66,8 @@ const commit = (next: Partial<Saved>) => {
   listeners.forEach((fn) => fn());
 };
 
-/** A newer version is on the TV and waiting for the person: Home's notice and About's Install say so. */
-const waiting = (s: UpdateState) => s === 'ready' || s === 'nogrant' || s === 'noscreen';
+/** A newer version is out and waiting for the person: Home's notice and About's Install say so. */
+const waiting = (s: UpdateState) => s === 'available' || s === 'nogrant' || s === 'noscreen';
 
 const time = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -77,9 +78,10 @@ export const updates = {
     return () => listeners.delete(fn);
   },
   waiting: () => saved.check && waiting(saved.state),
-  /** Launcher settings' About row: the version, or that an update waits. */
+  /** Launcher settings' About row: the version, or that an update is out. */
   value(): { text: string; warn?: boolean } {
-    if (saved.check && waiting(saved.state)) return { text: `${NEW_VERSION} ready`, warn: saved.state !== 'ready' };
+    if (saved.check && (waiting(saved.state) || saved.state === 'downloading'))
+      return { text: `${NEW_VERSION} available`, warn: saved.state === 'nogrant' || saved.state === 'noscreen' };
     return { text: CURRENT_VERSION };
   },
   /** About's line under Updates. */
@@ -90,14 +92,14 @@ export const updates = {
     switch (s.state) {
       case 'current':
         return `Up to date · checked today at ${time(s.checkedAt)}`;
+      case 'available':
+        return `Version ${NEW_VERSION} is available. Install update downloads it, then Android asks; your lists and settings stay.`;
       case 'downloading':
-        return `Downloading version ${NEW_VERSION}… ${s.progress}%`;
-      case 'ready':
-        return `Version ${NEW_VERSION} is ready to install. Your lists and settings stay.`;
+        return `Downloading version ${NEW_VERSION}… ${s.progress}% · then Android asks to install it`;
       case 'nogrant':
-        return `Version ${NEW_VERSION} is ready, but this TV doesn’t let the launcher install it yet. Install update opens the screen to allow it: switch HomeTV Launcher on.`;
+        return `Version ${NEW_VERSION} is available, but this TV doesn’t let the launcher install it yet. Install update opens the screen to allow it: switch HomeTV Launcher on.`;
       case 'noscreen':
-        return `Version ${NEW_VERSION} is ready, but this TV can’t install it from here. Run the installer on the laptop again to update.`;
+        return `Version ${NEW_VERSION} is available, but this TV can’t install it from here. Run the installer on the laptop again to update.`;
       case 'failed':
         return `Couldn’t check for updates (no internet) · tries again tomorrow`;
     }
@@ -105,17 +107,22 @@ export const updates = {
   setCheck(on: boolean) {
     commit({ check: on });
   },
-  /** Check now: the release is newer, so it downloads, then waits for Install. */
+  /** Check now: the release is newer, so About offers Install update (nothing is downloaded yet). */
   checkNow() {
+    commit({ state: 'available', checkedAt: Date.now(), noticed: '' });
+  },
+  /** Install update: downloads, then calls `prompt` for Android's own "Install this update?". */
+  download(prompt: () => void) {
     window.clearInterval(timer);
-    commit({ state: 'downloading', progress: 0, checkedAt: Date.now() });
+    commit({ state: 'downloading', progress: 0 });
     timer = window.setInterval(() => {
-      const progress = Math.min(100, saved.progress + 20);
+      const progress = Math.min(100, saved.progress + 25);
       if (progress >= 100) {
         window.clearInterval(timer);
-        commit({ state: 'ready', progress: 100 });
+        commit({ state: 'available', progress: 0 });
+        prompt();
       } else commit({ progress });
-    }, 500);
+    }, 400);
   },
   /** Android installed it: the launcher restarts as the new version (the prototype goes back to up to date). */
   installed() {

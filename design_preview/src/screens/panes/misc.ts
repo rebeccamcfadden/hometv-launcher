@@ -193,9 +193,9 @@ export const tvPane = (): Pane => ({
 
 /**
  * Launcher settings › About. Updates (Family install step 5, the project lead's Q4 a, 2026-11-01): only a release build
- * (tools/release.ps1) checks GitHub once a day while Home shows; a line says where that stands, Install update hands
- * the downloaded APK to Android's own prompt, and the check can be switched off. A build from a computer says so and
- * has no check.
+ * (tools/release.ps1) checks GitHub once a day while Home shows; a line says where that stands, Install update downloads
+ * the APK only then (the project lead, 2026-11-02) and hands it to Android's own prompt, and the check can be switched
+ * off (it starts on). A build from a computer says so and has no check.
  */
 export const aboutPane = (host: PaneHost): Pane => ({
   render: () => {
@@ -208,12 +208,13 @@ export const aboutPane = (host: PaneHost): Pane => ({
           confirmDialog({
             title: 'Install unknown apps',
             body: 'Android’s own screen for HomeTV Launcher. Switch “Allow from this source” on, then press Back: the update installs from About.',
-            actions: [{ label: 'Allow from this source', primary: true, onOk: () => updates.devSet('ready') }],
+            actions: [{ label: 'Allow from this source', primary: true, onOk: () => updates.devSet('available') }],
           }),
         );
         return;
       }
-      app.push(
+      updates.download(() =>
+        app.push(
         confirmDialog({
           title: 'HomeTV Launcher',
           body: 'Android asks: Do you want to install an update to this existing app? Your existing data will not be lost.',
@@ -228,6 +229,7 @@ export const aboutPane = (host: PaneHost): Pane => ({
             },
           ],
         }),
+        ),
       );
     };
     return [
@@ -237,7 +239,7 @@ export const aboutPane = (host: PaneHost): Pane => ({
       h(
         'div.about-updates',
         h('div.perf-title', 'Updates'),
-        h(`div.about-update-line${waiting && u.state !== 'ready' ? '.is-warn' : ''}`, updates.line()),
+        h(`div.about-update-line${u.check && (u.state === 'nogrant' || u.state === 'noscreen') ? '.is-warn' : ''}`, updates.line()),
         release
           ? perfRow(
               'Check for updates',

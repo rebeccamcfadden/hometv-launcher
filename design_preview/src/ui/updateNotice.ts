@@ -5,7 +5,7 @@ import { icon } from './icons';
 
 /**
  * Home's update notice (Family install step 5, the project lead's Q4 a): once per new version, when Home shows with an
- * update downloaded and waiting, the import pill's shape at the bottom centre for 8 s, "HomeTV Launcher 2.8 is ready ·
+ * update downloaded and waiting, the import pill's shape at the bottom centre for 8 s, "HomeTV Launcher 2.8 is available ·
  * Launcher settings › About". Never focusable, never in the way of the nav, and gone for that version after once.
  */
 export function updateNotice(): HTMLElement {
@@ -17,7 +17,7 @@ export function updateNotice(): HTMLElement {
     el.setAttribute('aria-hidden', 'true');
   };
   const show = () => {
-    replace(el, h('span', { html: icon('sync', 22) }), `HomeTV Launcher ${NEW_VERSION} is ready · Launcher settings › About`);
+    replace(el, h('span', { html: icon('sync', 22) }), `HomeTV Launcher ${NEW_VERSION} is available · Launcher settings › About`);
     el.classList.add('is-shown');
     el.setAttribute('aria-hidden', 'false');
     clearTimeout(hideTimer);
