@@ -156,7 +156,7 @@ final class TmdbParse {
             Title t = summary(r, null);
             if (t != null && t.art != null) titles.add(t);
         }
-        return new Catalog.Found(titles, people, knownFor);
+        return new Catalog.Found(titles, people, knownFor, o.optInt("page", 1), o.optInt("total_pages", 1));
     }
 
     /**

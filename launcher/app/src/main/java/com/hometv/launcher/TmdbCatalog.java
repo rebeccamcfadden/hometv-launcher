@@ -474,18 +474,25 @@ final class TmdbCatalog implements Catalog {
 
     @Override
     public void search(String query, Consumer<Found> done) {
+        searchPage(query, 1, done);
+    }
+
+    /** Each page is cached on its own (the same hour as the first), so the screen merges them (Found.merge). */
+    @Override
+    public void searchPage(String query, int page, Consumer<Found> done) {
         String q = query.trim().toLowerCase(java.util.Locale.ROOT);
-        if (q.length() < 2) return;
-        Found hit = searches.get(q);
+        if (q.length() < 2 || page < 1) return;
+        String key = page == 1 ? q : q + "\n" + page;
+        Found hit = searches.get(key);
         if (hit != null) {
             done.accept(hit);
             return;
         }
-        fetch(TmdbApi.search(q), TmdbParse::search, f -> {
+        fetch(TmdbApi.search(q, page), TmdbParse::search, f -> {
             Map<Integer, List<Title>> knownFor = new HashMap<>();
             for (Person p : f.people) knownFor.put(p.id, upsertAll(f.knownFor(p)));
-            Found stored = new Found(upsertAll(f.titles), f.people, knownFor);
-            searches.put(q, stored);
+            Found stored = new Found(upsertAll(f.titles), f.people, knownFor, f.page, f.totalPages);
+            searches.put(key, stored);
             done.accept(stored);
         });
     }

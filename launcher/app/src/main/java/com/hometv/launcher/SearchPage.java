@@ -62,6 +62,8 @@ final class SearchPage extends Screen {
     private static final int ROW_REVEAL = 96;
     /** How long typing must pause before TMDB is asked, and how many letters it takes. */
     private static final int DEBOUNCE_MS = 300;
+    /** A later page of results that hasn't come in this long may be asked for again. */
+    private static final int RETRY_PAGE_MS = 10_000;
     private static final int REMOTE_MIN = 2;
     private static final int GENRE_MIN = 3;
 
@@ -114,6 +116,11 @@ final class SearchPage extends Screen {
     /** What TMDB found for {@link #foundFor}, merged into the results while the query is still that. */
     private Catalog.Found found;
     private String foundFor;
+    /** The later page of results on its way (SearchPages), 0 for none, and when it was asked. */
+    private int askingPage;
+    private long askedAt;
+    /** The full results' card keys in grid order, to tell when focus reaches the last row. */
+    private final List<String> gridKeys = new ArrayList<>();
     /** The popular titles of a genre typed in full, and the genre asked for last. */
     private List<Title> genreFound;
     private String genreFoundName, genreAsked;
@@ -292,6 +299,13 @@ final class SearchPage extends Screen {
         return expanded ? firstResult() : keyA;
     }
 
+    /** On the full results' last row, the next page of TMDB's results is asked for (SearchPages). */
+    @Override
+    void onFocus(View v) {
+        if (!expanded || !GROUP_GRID.equals(Focus.group(v)) || !Focus.isInside(body, v)) return;
+        if (SearchPages.onLastRow(gridKeys.indexOf(Focus.key(v)), gridKeys.size(), COLUMNS)) askMorePages();
+    }
+
     /** Coming back from a title or another tab: Recent searches, My list and the offers may have changed. */
     @Override
     void onShow() {
@@ -313,6 +327,7 @@ final class SearchPage extends Screen {
         view.removeCallbacks(askRemote);
         found = null;
         foundFor = null;
+        askingPage = 0;
         genreAsked = null;
         memory.clear();
         lastFocus = null;
@@ -396,6 +411,7 @@ final class SearchPage extends Screen {
             if (!q.equals(query)) return;
             found = f;
             foundFor = q;
+            askingPage = 0;
             if (shell.top() == this) render();
         });
         String genre = results == null ? null : SearchIndex.strongGenre(results);
@@ -413,6 +429,27 @@ final class SearchPage extends Screen {
         Catalog.Found f = query.equals(foundFor) ? found : null;
         if (f == null && genreFound == null) return null;
         return new SearchIndex.Remote(f, genreFoundName, genreFound);
+    }
+
+    /**
+     * Focus reached the last row of the full results: asks TMDB for the query's next page (SearchPages), merged in
+     * when it comes while the query is still the one asked. A page that never came may be asked again after a while.
+     */
+    private void askMorePages() {
+        Catalog.Found f = query.equals(foundFor) ? found : null;
+        int page = SearchPages.next(f);
+        if (page == 0 || !StateUi.online(ctx) || TmdbGate.need(data.accounts) != TmdbGate.Need.NONE) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (askingPage == page && now - askedAt < RETRY_PAGE_MS) return;
+        String q = query;
+        askingPage = page;
+        askedAt = now;
+        data.catalog.searchPage(q, page, more -> {
+            if (askingPage == page) askingPage = 0;
+            if (!q.equals(foundFor) || found == null || more.page <= found.page) return;
+            found = Catalog.Found.merge(found, more);
+            if (shell.top() == this) render();
+        });
     }
 
     private void expand() {
@@ -894,6 +931,7 @@ final class SearchPage extends Screen {
         LinearLayout grid = Kit.unclip(new LinearLayout(ctx));
         grid.setOrientation(LinearLayout.VERTICAL);
         int shown = expanded ? items.size() : Math.min(items.size(), PREVIEW_ROWS * COLUMNS);
+        gridKeys.clear();
         LinearLayout row = null;
         for (int i = 0; i < shown; i++) {
             if (i % COLUMNS == 0) {
@@ -902,6 +940,7 @@ final class SearchPage extends Screen {
                 grid.addView(row, below(i == 0 ? 0 : ROW_GAP));
             }
             View card = resultCard(items.get(i), i == 0);
+            gridKeys.add(Focus.key(card));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(CARD_W), ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.leftMargin = i % COLUMNS == 0 ? 0 : Ui.px(COLUMN_GAP);
             row.addView(card, lp);

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,6 +99,9 @@ interface Catalog {
     /** Titles and people the network finds for a query. The mock catalogue has no more than it holds, so never. */
     default void search(String query, Consumer<Found> done) {}
 
+    /** The query's later page of results ({@link SearchPages}): page 2 onwards, TMDB's next 20. Never for the mock. */
+    default void searchPage(String query, int page, Consumer<Found> done) {}
+
     /**
      * Asks for t's real prices and the links into its services' apps (V2 Phase 2) when its preview opens
      * ({@code preview}; anything else asks nothing: grids and search never do). {@code done}, which may be null, runs
@@ -167,17 +171,43 @@ interface Catalog {
         final List<Title> titles;
         final List<Person> people;
         private final Map<Integer, List<Title>> knownFor;
+        /** TMDB's page this answer reaches (1 for the first 20 results), and how many it has for the query. */
+        final int page;
+        final int totalPages;
 
         Found(List<Title> titles, List<Person> people, Map<Integer, List<Title>> knownFor) {
+            this(titles, people, knownFor, 1, 1);
+        }
+
+        Found(List<Title> titles, List<Person> people, Map<Integer, List<Title>> knownFor, int page, int totalPages) {
             this.titles = Collections.unmodifiableList(new ArrayList<>(titles));
             this.people = Collections.unmodifiableList(new ArrayList<>(people));
             this.knownFor = new HashMap<>(knownFor);
+            this.page = Math.max(1, page);
+            this.totalPages = Math.max(this.page, totalPages);
         }
 
         /** The titles a found person is known for; empty for anyone else. */
         List<Title> knownFor(Person p) {
             List<Title> list = knownFor.get(p.id);
             return list == null ? Collections.emptyList() : Collections.unmodifiableList(list);
+        }
+
+        /**
+         * What the pages so far found, with {@code next} (a later page) after them: titles and people once each, in
+         * the order TMDB gave them, and next's page and total.
+         */
+        static Found merge(Found sofar, Found next) {
+            Map<String, Title> titles = new LinkedHashMap<>();
+            for (Title t : sofar.titles) titles.put(t.id, t);
+            for (Title t : next.titles) if (!titles.containsKey(t.id)) titles.put(t.id, t);
+            Map<Integer, Person> people = new LinkedHashMap<>();
+            for (Person p : sofar.people) people.put(p.id, p);
+            for (Person p : next.people) if (!people.containsKey(p.id)) people.put(p.id, p);
+            Map<Integer, List<Title>> known = new HashMap<>(next.knownFor);
+            known.putAll(sofar.knownFor);
+            return new Found(new ArrayList<>(titles.values()), new ArrayList<>(people.values()), known,
+                    Math.max(sofar.page, next.page), next.totalPages);
         }
     }
 }
