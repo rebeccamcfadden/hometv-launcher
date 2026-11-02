@@ -104,7 +104,10 @@ closes. The sections, top to bottom:
   decides which streaming services and stores the two sections above list, the currency of prices, and the country
   TMDB's availability is read for. Each region keeps its own store ticks; the streaming services stay ticked. Changing it rebuilds Home and comes back to it.
   First run asks it before Streaming services and Stores.
-- **About**: the version, and the TMDB, availability, price and weather notices.
+- **About**: the version, and the TMDB, availability, price and weather notices. In a release build (`tools/release.ps1`)
+  also Updates: once a day while Home shows the launcher looks at the latest GitHub Release, and when a newer version
+  is out About says so (and Home once). Install update downloads it and Android asks before installing; Check for
+  updates switches the daily look off. A build from a computer updates from that computer.
 
 To stop using this launcher as Home, choose the original one in Default Home. The original launcher must be enabled:
 if the install script disabled it, run the restore script ([Restoring your TV](restore.md#restoring-your-tv))

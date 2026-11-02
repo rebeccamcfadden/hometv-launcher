@@ -27,6 +27,10 @@
     <!-- YaOS (Yandex TV OS): HDMI, AV and the tuner all play in com.yandex.tv.live, whose activities require
          this permission (protection level normal, so it is granted at install). Ignored on other TVs. -->
     <uses-permission android:name="yandex.tv.permission.ACCESS_TV_SOURCE" />
+    <!-- In-app updates (Updates, Family install step 5): lets a release build hand its own update, downloaded when the
+         person presses Install, to Android's installer, which asks them first. The person (or the family installer,
+         with appops) allows "install unknown apps" for the launcher. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Android 11+ package visibility: lets the launcher list the TV apps it shows as tiles, and the
          apps that declare a module card (docs/specs/card.md). -->
@@ -80,6 +84,7 @@
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="${updateFeedCleartext}"
         tools:targetApi="31">
 
         <activity
@@ -197,5 +202,11 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/input_key_service" />
         </service>
+
+        <!-- PackageInstaller's answers to an in-app update: its confirmation screen, then the result (Updates). Only
+             this app's own PendingIntent reaches it. -->
+        <receiver
+            android:name=".Updates$StatusReceiver"
+            android:exported="false" />
     </application>
 </manifest>

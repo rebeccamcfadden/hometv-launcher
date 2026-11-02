@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- In-app updates (Updates, Family install step 5; design_preview core/updates.ts and About). -->
+<resources>
+    <string name="updates_title">Updates</string>
+    <string name="updates_own">This build came from a computer, not a release: it updates from that computer.</string>
+    <string name="updates_off">Checking for updates is off.</string>
+    <string name="updates_current">Up to date · checked %1$s</string>
+    <string name="updates_never">Not checked yet</string>
+    <string name="updates_checking">Checking for updates…</string>
+    <string name="updates_available">Version %1$s is available. Install update downloads it, then Android asks; your lists and settings stay.</string>
+    <string name="updates_downloading">Downloading version %1$s… then Android asks to install it</string>
+    <string name="updates_no_grant">Version %1$s is available, but this TV doesn’t let the launcher install it yet. Install update opens the screen to allow it: switch HomeTV Launcher on.</string>
+    <string name="updates_no_screen">Version %1$s is available, but this TV can’t install it from here. Run the installer on the laptop again to update.</string>
+    <string name="updates_failed">Couldn’t check for updates (no internet) · tries again tomorrow</string>
+    <string name="updates_check">Check for updates</string>
+    <string name="updates_check_sub">Once a day while Home shows, from the HomeTV Launcher releases on GitHub. Nothing else is sent.</string>
+    <string name="updates_install">Install update</string>
+    <string name="updates_check_now">Check now</string>
+    <string name="updates_install_failed">Couldn’t download the update. Try again later.</string>
+    <string name="updates_rejected">Android didn’t install version %1$s: %2$s. Install update tries again.</string>
+    <string name="updates_value">%1$s available</string>
+    <string name="updates_notice">HomeTV Launcher %1$s is available · Launcher settings › About</string>
+</resources>
