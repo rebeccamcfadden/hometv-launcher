@@ -94,7 +94,10 @@ function Shell([string]$c) {
         $s.disabled = @(@($s.disabled) | Where-Object { $_ -ne $p }); if (Claims $p) { $s.preferred = $null }
         return "Package $p new state: enabled"
     }
-    if ($c -match '^cmd package set-home-activity --user 0 (\S+)$') { if ($s.set_home_works) { $s.preferred = $Matches[1] }; return 'Success' }
+    if ($c -match '^cmd package set-home-activity --user 0 (\S+)$') {
+        if ($s.set_home_works -and -not ($s.set_home_once -and $s.set_home_used)) { $s.preferred = $Matches[1]; $s.set_home_used = $true }
+        return 'Success'
+    }
     if ($c -like 'dumpsys activity activities*') {
         $front = if ($s.front) { $s.front } else { HomeNow }
         return "  mResumedActivity: ActivityRecord{1 u0 $front t1}"
@@ -233,7 +236,7 @@ class FamilyInstallTest(unittest.TestCase):
             "start_result": "Starting: Intent { cmp=com.hometv.launcher/.MainActivity }\nStatus: ok\nActivity: x\nComplete",
             "set_home_works": True,
             "wifi": "", "log": [], "shell": [], "reboots": 0, "pushed": False,
-            "refuse_disable": [], "enable_fails": False,
+            "refuse_disable": [], "enable_fails": False, "set_home_once": False, "set_home_used": False,
             "tv_hw": [], "input_apps": [], "settings_apps": [], "hw_fails": False,
         }
         state.update(overrides)
@@ -579,6 +582,28 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(end["disabled"], [TVLAUNCHER])
         self.assertNotIn("com.example.bloat6", self.disables(end), "the batch after is not started")
         self.assertIn("Home moved away", proc.stdout)
+        self.assertEqual(end["preferred"], OURS, "Home is set back to ours after the batch is undone")
+
+    def test_a_batch_whose_undo_leaves_home_elsewhere_stops(self):
+        # Disabling a Home app drops the saved default and so does enabling it again (Android 9 and older); here
+        # set-home-activity works only for the handover, so Home stays on the chooser after the batch is undone.
+        state = self.debloat_tv(set_home_once=True)
+        state["claims"] = state["claims"] + ["com.example.alt1/.Main", "com.example.alt2/.Main"]
+        state["packages"] = state["packages"] + ["com.example.alt1", "com.example.alt2"]
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.example.alt1"])))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertNotIn("com.example.alt1", end["disabled"])
+        self.assertIn("-Restore", proc.stdout)
+        self.assertNotIn("== Done", proc.stdout)
+
+    def test_a_batch_that_cannot_be_undone_stops_with_restore(self):
+        state = self.debloat_tv(hijacker="com.example.setup/.Recovery", hijack_when_disabled="com.example.bloat2",
+                                enable_fails=True)
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("Keep debugging on", proc.stdout)
+        self.assertIn("-Restore", proc.stdout)
+        self.assertNotIn("== Done", proc.stdout)
 
     def test_the_report_has_no_serial(self):
         state = self.tv()

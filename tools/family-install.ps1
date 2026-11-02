@@ -83,6 +83,7 @@ $Checklist = [ordered]@{
     'firmware updates' = '(ota|update|fota|upgrade)'
 }
 $script:ListNames = @()
+$script:BackupDir = $null
 # The folder the release's debloat lists were unpacked to (or -ListsFrom), when the person may pick one.
 $script:ListsDir = $null
 
@@ -585,8 +586,21 @@ function Invoke-Debloat([string[]]$Names) {
             if ($out -match 'new state: disabled') { $off += $p } else { Say "The TV did not switch off ${p}: $out" }
         }
         if (-not (Get-HomeNow).StartsWith("$Launcher/")) {
-            foreach ($p in $off) { [void](Invoke-TvShell "pm enable --user 0 $p") }
-            Say "Home moved away from the HomeTV Launcher after switching off $($off -join ', '), so those are back on and the rest stays as it was."
+            # The whole batch back on (its undo lines are all written), Home set to ours again, and checked: on Android 9
+            # and older, re-enabling a Home app doesn't bring the saved default back by itself.
+            $notBack = @()
+            foreach ($p in $batch) {
+                $out = Invoke-TvShell "pm enable --user 0 $p"
+                if ($out -notmatch 'new state: enabled') { $notBack += $p }
+            }
+            [void](Invoke-TvShell "cmd package set-home-activity --user 0 $LauncherHome")
+            $homeBack = (Get-HomeNow).StartsWith("$Launcher/") -and (Test-HomeShowsOurs)
+            if ($notBack.Count -gt 0 -or -not $homeBack) {
+                Stop-Install ("Switching off $($batch -join ', ') moved Home away from the HomeTV Launcher, and it did not all come back" +
+                    $(if ($notBack.Count -gt 0) { " (still off: $($notBack -join ', '))" } else { '' }) +
+                    ". Keep debugging on and run: powershell -ExecutionPolicy Bypass -File family-install.ps1 -Restore `"$script:BackupDir`"")
+            }
+            Say "Home moved away from the HomeTV Launcher after switching off $($batch -join ', '), so those are back on, Home is the HomeTV Launcher again, and the rest of the list is left as it was."
             break
         }
         $done += $off
@@ -677,6 +691,7 @@ function Invoke-Install {
     Step 'Backing up the TV to this laptop'
     $safeModel = ($model -replace '[^A-Za-z0-9._-]', '_')
     $backup = Join-Path $WorkDir ("backups\{0}-{1}" -f $safeModel, (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    $script:BackupDir = $backup
     New-Item -ItemType Directory -Force $backup | Out-Null
     $saves = [ordered]@{
         'packages.txt' = 'pm list packages -f'; 'packages-disabled.txt' = 'pm list packages -d'; 'getprop.txt' = 'getprop'
