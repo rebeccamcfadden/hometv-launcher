@@ -121,6 +121,7 @@ sys.exit(main())
 '''.replace("STOCK", repr(STOCK_HOME)).replace("NEW", repr(NEW_HOME))
 
 
+@unittest.skipUnless(shutil.which("bash"), "needs bash (Git Bash on Windows)")
 class HandoverTest(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
