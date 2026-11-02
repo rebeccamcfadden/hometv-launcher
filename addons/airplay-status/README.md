@@ -6,9 +6,8 @@ announcements (`_airplay._tcp` for video and mirroring, `_raop._tcp` for audio) 
 is open. It is for TVs that run an AirPlay receiver such as
 [AirPlay Server](https://github.com/jqssun/android-airplay-server) (open source); it is not made by or affiliated
 with Apple or that project. With HomeTV Launcher it is an ordinary app: open it from its tile in All Apps, or add it
-to Home's row. It also declares a [module card](../../docs/specs/card.md), which upstream's
-[CleanYourTV](https://github.com/Gathin23/cleanyourtv) launcher shows on Home; this launcher doesn't show module cards
-yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
+to Home's row. It also declares a [module card](../../docs/specs/card.md), under this launcher's names (upstream's launcher reads its own, so it won't show this build's card);
+this launcher doesn't show module cards yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
 
 ![AirPlay Status on a TV](screenshot.jpg)
 

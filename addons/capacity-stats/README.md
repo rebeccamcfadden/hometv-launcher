@@ -8,8 +8,8 @@ the repository when building. Install the APK you build with ADB or your preferr
 No binaries or prebuilt APKs are committed.
 
 With HomeTV Launcher it is an ordinary app: open it from its tile in All Apps, or add it to Home's row. It also
-declares a [module card](../../docs/specs/card.md), which upstream's [CleanYourTV](https://github.com/Gathin23/cleanyourtv)
-launcher shows on Home; this launcher doesn't show module cards yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
+declares a [module card](../../docs/specs/card.md), under this launcher's names (upstream's launcher reads its own, so it won't show this build's card);
+this launcher doesn't show module cards yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
 Module spec 1 has static captions, so a card can't show live counters on Home either way; the app shows live
 readings. English and Hebrew UI, standard locale direction for other languages.
 Reads refresh every ten seconds only while this screen is resumed; no background service survives leaving it.

@@ -4,9 +4,8 @@ Your [Home Assistant](https://www.home-assistant.io) on the TV: scenes, lights a
 and humidity sensors, doors and windows, and locks, in sections you work with the remote. OK runs a scene or
 switches a light; ◀ ▶ dims a light by 10 % or moves a thermostat by half a degree. A community add-on, not made by
 or affiliated with the Home Assistant project. With HomeTV Launcher it is an ordinary app: open it from its tile in
-All Apps, or add it to Home's row. It also declares a [module card](../../docs/specs/card.md), which upstream's
-[CleanYourTV](https://github.com/Gathin23/cleanyourtv) launcher shows on Home; this launcher doesn't show module cards
-yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
+All Apps, or add it to Home's row. It also declares a [module card](../../docs/specs/card.md), under this launcher's names (upstream's launcher reads its own, so it won't show this build's card);
+this launcher doesn't show module cards yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
 
 ![Smart Home on a TV, with demo data](screenshot.jpg)
 

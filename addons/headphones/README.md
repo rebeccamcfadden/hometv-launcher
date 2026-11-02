@@ -4,9 +4,8 @@ Bluetooth headphones on the TV, made easy to keep quiet: one screen that shows w
 paired headphones with their battery, a shortcut to pairing, and a **quiet guard** that pauses and mutes the
 speakers when headphones drop, so a flat battery doesn't send a film's sound into a room where someone is
 asleep. With HomeTV Launcher it is an ordinary app: open it from its tile in All Apps, or add it to Home's row. It
-also declares a [module card](../../docs/specs/card.md), which upstream's
-[CleanYourTV](https://github.com/Gathin23/cleanyourtv) launcher shows on Home; this launcher doesn't show module cards
-yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
+also declares a [module card](../../docs/specs/card.md), under this launcher's names (upstream's launcher reads its own, so it won't show this build's card);
+this launcher doesn't show module cards yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
 
 ![Headphones on a TV with none paired yet](screenshot.jpg)
 
