@@ -1,5 +1,5 @@
 import { net } from './net';
-import { featureOn, settings } from './settings';
+import { featureOn, setFeature, settings } from './settings';
 
 // Phone notes (BACKLOG.md, Phone notes): each phone shares a note to a "Send to TV" Shortcut, which posts its text to
 // the TV over the home network with a pairing code. The TV looks each new line up on TMDB and adds it to that
@@ -50,7 +50,8 @@ const CODE_CHARS = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 const newCode = () =>
   Array.from({ length: 8 }, (_, i) => (i === 4 ? '-' : '') + CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('');
 
-let on = false;
+// F34 (Rebecca, 2026-11-02): Phone notes' listening switch is the feature's own switch (settings.features.notes).
+const on = () => settings.get().features.notes;
 let code = 'K7QM-4PXT';
 const sends: NoteSend[] = [
   { list: 'Partner', at: 'Yesterday 21:05', lines: 14, added: 14, unmatched: [] },
@@ -66,9 +67,9 @@ const emit = () => listeners.forEach((fn) => fn());
 export const FINISHED_MS = 4000;
 
 export const notes = {
-  on: () => on,
+  on,
   setOn(v: boolean) {
-    on = v;
+    setFeature('notes', v);
     // Off: the TV stops listening, and a note being imported stops with it.
     if (!v) stop();
     emit();
@@ -87,7 +88,7 @@ export const notes = {
   },
   /** Section value in Launcher settings. */
   value(): { text: string; warn?: boolean } {
-    if (!on) return { text: 'Off' };
+    if (!on()) return { text: 'Off' };
     const unmatched = sends.reduce((n, s) => n + s.unmatched.length, 0);
     return unmatched ? { text: `${unmatched} not matched`, warn: true } : { text: 'On' };
   },
@@ -121,7 +122,7 @@ export const notes = {
    */
   simulate(list: string, lines: number, misses: NoteAsk[]) {
     // F14: with Phone notes off in Features the TV isn't listening at all.
-    if (!on || importing || !featureOn('notes')) return;
+    if (importing || !featureOn('notes')) return;
     clearTimeout(finishTimer);
     finished = null;
     importing = { list, done: 0, total: lines };

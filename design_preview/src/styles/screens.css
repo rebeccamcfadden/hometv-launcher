@@ -2705,6 +2705,19 @@
   font-size: 20px;
   color: var(--text-3);
 }
+/* F34: a feature's own switch, on top of its setup's pane; and Features' overview rows, each opening a setup. */
+.feat-bar {
+  margin: 0 0 26px;
+}
+.feat-bars {
+  margin-top: 26px;
+}
+.feat-link {
+  background: var(--surface);
+}
+.feat-link .status {
+  flex: none;
+}
 /* Every control starts at the same x, so ↑/↓ go row by row (controls of different widths made the D-pad skip one). */
 .perf-ctl {
   flex: none;

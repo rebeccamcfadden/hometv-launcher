@@ -1,11 +1,12 @@
 import { account } from '../../core/account';
-import type { Key } from '../../core/app';
 import { h, type Child } from '../../core/dom';
 import { keys } from '../../core/keys';
 import { notes } from '../../core/notes';
 import { featureOn, FEATURES, setFeature, settings, type FeatureId } from '../../core/settings';
 import { placeById } from '../../data/places';
-import { button, segmented } from '../../ui/widgets';
+import { focusable } from '../../core/focus';
+import { icon } from '../../ui/icons';
+import { segmented } from '../../ui/widgets';
 import type { Pane, PaneHost } from './pane';
 
 /** "6 of 6 on": the section's value. */
@@ -55,94 +56,93 @@ export const SETUP_SECTION: Partial<Record<FeatureId, 'account' | 'notes' | 'key
 };
 
 /**
- * A Launcher settings section whose feature is off (F14, the project lead 2026-11-01): it stays in the list, reading
- * Off, and its pane says so. **Turn on** (2026-11-02) switches the feature on (and the one it needs) and goes straight
- * into its setup; Back from there returns to the page.
+ * A feature's own switch (F34, Rebecca 2026-11-02): on top of its setup's pane, in First run and in Launcher settings,
+ * so a feature is switched where it is set up and its row never goes. On, it turns on the one it needs too (Phone notes
+ * needs TMDB account); `after` gets the feature to set up first. Phone notes' switch is its listening switch.
  */
-export function featureOffPane(id: FeatureId, section: string, turnOnAndSetUp: () => void): Child {
+export function featureBar(id: FeatureId, after: (first: FeatureId | null) => void, entry = false): HTMLElement {
+  const f = FEATURES.find((x) => x.id === id)!;
+  const on = featureOn(id);
+  return h(
+    'div.perf-row.feat-bar',
+    h('div.perf-text', h('div.perf-title', f.label), h('div.perf-sub', on ? f.sub : `Off: ${f.off}`)),
+    h(
+      'div.perf-ctl',
+      segmented<'on' | 'off'>({
+        options: [
+          ['on', 'On'],
+          ['off', 'Off'],
+        ],
+        get: () => (featureOn(id) ? 'on' : 'off'),
+        set: (v) => {
+          if (v === 'on') after(featureOn(id) ? null : turnOn(id));
+          else {
+            setFeature(id, false);
+            after(null);
+          }
+        },
+        group: `seg-feat-${id}`,
+        small: true,
+        entry,
+      }),
+    ),
+  );
+}
+
+/**
+ * A feature's pane while it is off (F14; F34): its row stays, reading Off, and the pane says so above the feature's
+ * switch, which turns it on right here and shows its setup.
+ */
+export function featureOffPane(id: FeatureId, section: string, after: (first: FeatureId | null) => void): Child {
   const f = FEATURES.find((x) => x.id === id)!;
   const needs = f.needs && !featureOn(f.needs) ? FEATURES.find((x) => x.id === f.needs)! : null;
-  const on = button('Turn on', { icon: 'power', primary: true, key: 'turn-on', onOk: turnOnAndSetUp });
-  on.dataset.entry = '';
   return [
     h('div.eyebrow', section),
     h('div.pane-title', `${f.label} is off`),
     h(
       'div.pane-sub',
       needs
-        ? `${f.label} needs ${needs.label}, which is off. Turn on switches on both, then sets up ${needs.label}.`
-        : `This household has ${f.label} switched off, so it doesn’t run. Turn on switches it on and sets it up.`,
+        ? `${f.label} needs ${needs.label}, which is off. Switch it on to turn on both, then sign in.`
+        : `It doesn’t run while it is off. Switch it on to set it up here.`,
     ),
-    h('div.pane-actions', on),
-    h('div.pane-note', `Off: ${f.off}. Also in Launcher settings › Features.`),
+    h('div.feat-bars', featureBar(id, after, true)),
   ];
 }
+
+/** A feature's state in a word or two, for the Features overview and First run's tabs. */
+export function featureState(id: FeatureId): { text: string; done: boolean } {
+  const f = FEATURES.find((x) => x.id === id)!;
+  if (f.needs && !featureOn(f.needs)) return { text: `Off · needs ${FEATURES.find((x) => x.id === f.needs)!.label}`, done: false };
+  if (!featureOn(id)) return { text: 'Off', done: false };
+  return featureSetUp(id) ? { text: 'On · set up', done: true } : { text: 'On · not set up yet', done: false };
+}
+
 /**
- * Launcher settings › Features (F14, decided 2026-11-01; no Figma frame): one row per feature, each On or Off, laid
- * out like Performance. A feature switched off never starts: its pages, its settings section and its network calls
- * go. A row whose feature needs another that is off (Phone notes without TMDB account) says so and can't be changed.
+ * Features (F14; F34, Rebecca 2026-11-02): no switches here any more. Each feature is switched on its own setup's
+ * pane (featureBar); this lists the four with their state, and OK on one opens its setup.
  */
 export const featuresPane = (host: PaneHost): Pane => ({
-  /** ↓ goes to the next row's control on its selected option; → stays within the control, as in Performance. */
-  onKey(key: Key, focused: HTMLElement) {
-    const at = FEATURES.findIndex((f) => focused.dataset.key?.startsWith(`seg-feat-${f.id}-`));
-    if (at < 0) return false;
-    if (key === 'right') {
-      if (focused.dataset.key?.endsWith('-on')) host.focusKey(`seg-feat-${FEATURES[at].id}-off`);
-      return true;
-    }
-    if (key === 'left' && focused.dataset.key?.endsWith('-off')) {
-      host.focusKey(`seg-feat-${FEATURES[at].id}-on`);
-      return true;
-    }
-    if (key !== 'down' && key !== 'up') return false;
-    const step = key === 'down' ? 1 : -1;
-    for (let i = at + step; i >= 0 && i < FEATURES.length; i += step) {
-      const f = FEATURES[i];
-      if (f.needs && !featureOn(f.needs)) continue;
-      host.focusKey(`seg-feat-${f.id}-${settings.get().features[f.id] ? 'on' : 'off'}`);
-      return true;
-    }
-    // Past the last row: in First run on to the panel's footer (Next); in Launcher settings ↓ stays.
-    return key === 'down' && !host.setup;
-  },
   render: () => [
     h('div.eyebrow', 'Features'),
     h('div.pane-title', 'Features'),
     h(
       'div.pane-sub',
       host.setup
-        ? 'Everything starts on, and each is set up next. Switch off what this household won’t use; one not set up when you finish is switched off.'
-        : 'Turn on what this household uses. A feature that is off never starts: no page and nothing fetched for it.',
+        ? 'Everything starts on. Each is set up on its own row below, where you can also switch it off; one not set up when you finish is switched off.'
+        : 'What this TV runs. Each is switched on or off in its own section; a feature that is off never starts.',
     ),
     h(
       'div.perf-rows',
       FEATURES.map((f, i) => {
-        const blocked = !!f.needs && !featureOn(f.needs);
-        const needs = blocked ? FEATURES.find((x) => x.id === f.needs)!.label : '';
-        const on = settings.get().features[f.id];
-        const control = blocked
-          ? h('span.feat-blocked', `Off · needs ${needs}`)
-          : segmented<'on' | 'off'>({
-              options: [
-                ['on', 'On'],
-                ['off', 'Off'],
-              ],
-              get: () => (settings.get().features[f.id] ? 'on' : 'off'),
-              set: (v) => {
-                const was = featureOn(f.id);
-                setFeature(f.id, v === 'on');
-                // First run (F14): a feature turned on is set up at once, on its own tab; Back to Features returns here.
-                if (v === 'on' && !was) host.openSetup?.(f.id);
-              },
-              group: `seg-feat-${f.id}`,
-              small: true,
-              entry: i === 0,
-            });
-        return h(
-          'div.perf-row',
-          h('div.perf-text', h('div.perf-title', f.label), h('div.perf-sub', on && !blocked ? f.sub : `Off: ${f.off}`)),
-          h('div.perf-ctl', control),
+        const s = featureState(f.id);
+        return focusable(
+          h(
+            'div.lrow.feat-link',
+            h('div.lr-main', h('div.lr-title', f.label), h('div.lr-sub', featureOn(f.id) ? f.sub : `Off: ${f.off}`)),
+            h(`span.status.status--${s.done || !featureOn(f.id) ? 'muted' : 'accent'}`, s.text),
+            h('span.lr-icon', { html: icon('chevRight', 26) }),
+          ),
+          { group: 'feat-links', key: `feat-link-${f.id}`, isDefault: i === 0, onOk: () => host.openSetup?.(f.id) },
         );
       }),
     ),
