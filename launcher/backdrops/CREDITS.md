@@ -33,7 +33,7 @@ else is changed. The page links use Pixabay's short form, which leads to the pho
 
 ## Seasonal · Vector art
 
-`seasonal/vector-2/*.webp` (all ten periods) and `seasonal/vector-5/*.webp` (each period at dawn, day, sunset and
+`seasonal/vector-2/*.webp` (all ten periods), and `seasonal/vector-5/*.webp` and `vector-6/*.webp` (each period at dawn, day, sunset and
 night): drawn for CleanYourTV, in the project's Figma file "CleanTV · Theme explorations" (component sets "Calendar ·
 Vector art" and "Calendar · Vector art · Time of day"), released with the repo under its MIT licence.
 

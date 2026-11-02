@@ -88,7 +88,7 @@ final class Themes {
         switch (id) {
             case "seasonal-vector":
                 style = VECTOR;
-                backdrop = "url:seasonal/vector-5/" + slug + "-" + BackdropKeys.PHASE + ".webp";
+                backdrop = "url:seasonal/vector-6/" + slug + "-" + BackdropKeys.PHASE + ".webp";
                 break;
             case "seasonal-8bit":
                 style = PIXEL;

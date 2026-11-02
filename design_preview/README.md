@@ -566,7 +566,7 @@ picks another theme.
 - **Backdrops:** Midnight keeps the bundled evening landscape; OLED Black and High Contrast have none, only their
   background. The others are downloaded once from `launcher/backdrops/` in the repo (through jsDelivr; one constant,
   `BACKDROP_BASE` in `src/core/theme.ts`) and kept: `classic/daylight.webp`, `classic/cinema.webp`,
-  `classic/landscapes-1.webp` … `-4.webp` (a new one every hour), `seasonal/vector-5/<period>-<phase>.webp` and
+  `classic/landscapes-1.webp` … `-4.webp` (a new one every hour), `seasonal/vector-6/<period>-<phase>.webp` and
   8-bit's `seasonal/8bit/<period>[-<phase>].png` (no suffix for day), 160 × 90 pixels scaled up without smoothing. While a picture loads, when it can't be fetched, and offline when it never arrived, the theme's sky shows
   instead: a gradient from its sky to its horizon colour. Cinema adds a soft vignette.
 - **Not taken from Figma:** shadows under tiles and the focus glow (Midnight has none today), and the photo or

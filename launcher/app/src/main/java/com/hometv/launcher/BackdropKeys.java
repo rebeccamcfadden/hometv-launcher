@@ -139,7 +139,7 @@ final class BackdropKeys {
 
     /**
      * The same picture for another period when the path is named after the current one
-     * ({@code seasonal/vector-5/autumn-{phase}.webp} → {@code seasonal/vector-5/halloween-{phase}.webp}, or a name
+     * ({@code seasonal/vector-6/autumn-{phase}.webp} → {@code seasonal/vector-6/halloween-{phase}.webp}, or a name
      * that is the period's alone); null for any other path.
      */
     static String forPeriod(String path, SeasonCalendar.Period current, SeasonCalendar.Period other) {

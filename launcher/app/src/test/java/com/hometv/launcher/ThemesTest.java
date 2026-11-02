@@ -100,12 +100,12 @@ public class ThemesTest {
         assertEquals("seasonal-vector:halloween", t.id);
         assertEquals("Halloween", t.name);
         assertEquals(Theme.Group.SEASONAL, t.group);
-        assertEquals("url:seasonal/vector-5/halloween-{phase}.webp", t.backdrop);
+        assertEquals("url:seasonal/vector-6/halloween-{phase}.webp", t.backdrop);
 
         t = Themes.resolve("seasonal-vector", LocalDate.of(2026, 4, 10));
         assertEquals("seasonal-vector:spring-rain", t.id);
         assertEquals("Spring rain", t.name);
-        assertEquals("url:seasonal/vector-5/spring-rain-{phase}.webp", t.backdrop);
+        assertEquals("url:seasonal/vector-6/spring-rain-{phase}.webp", t.backdrop);
 
         t = Themes.resolve("seasonal-8bit", LocalDate.of(2026, 8, 1));
         assertEquals("seasonal-8bit:late-summer", t.id);
