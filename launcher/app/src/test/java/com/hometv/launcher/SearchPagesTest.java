@@ -57,6 +57,36 @@ public class SearchPagesTest {
     }
 
     @Test
+    public void theSameCardAsksAgainOnlyAfterFocusLeftTheLastRow() {
+        // A redraw puts focus back on the card that asked: it keeps the guard and doesn't ask.
+        String g = SearchPages.guard("r-title-movie:1", true);
+        assertFalse(SearchPages.asks(g, "r-title-movie:1", false));
+        // Another last-row card asks.
+        assertTrue(SearchPages.asks(g, "r-title-movie:2", false));
+        // Focus went up a row (or to a filter chip) and came back: the guard is gone, the same card asks again.
+        g = SearchPages.guard(g, false);
+        assertTrue(SearchPages.asks(g, "r-title-movie:1", false));
+        // While a page is on its way, askMorePages' own retry rule decides.
+        assertTrue(SearchPages.asks("r-title-movie:1", "r-title-movie:1", true));
+    }
+
+    @Test
+    public void askingOnItsOwn() {
+        Catalog.Found more = found(1, 3, Collections.emptyList(), Collections.emptyList());
+        // Nothing shows (the art filter, or a filter chip): ask.
+        assertTrue(SearchPages.askOnItsOwn(0, 0, more));
+        // The page just merged showed nothing new: ask.
+        assertTrue(SearchPages.askOnItsOwn(7, 7, more));
+        // It showed new cards: wait for focus to reach the new last row.
+        assertFalse(SearchPages.askOnItsOwn(7, 12, more));
+        // No page left, or the cap reached: never.
+        assertFalse(SearchPages.askOnItsOwn(0, 0, found(3, 3, Collections.emptyList(), Collections.emptyList())));
+        assertFalse(SearchPages.askOnItsOwn(0, 0,
+                found(SearchPages.MAX_PAGES, 40, Collections.emptyList(), Collections.emptyList())));
+        assertFalse(SearchPages.askOnItsOwn(0, 0, null));
+    }
+
+    @Test
     public void pagesMergeInOrderWithoutRepeats() {
         Catalog.Found one = found(1, 4, Arrays.asList("movie:1", "movie:2"), Collections.singletonList(7));
         Catalog.Found two = found(2, 4, Arrays.asList("movie:2", "tv:3"), Arrays.asList(7, 8));

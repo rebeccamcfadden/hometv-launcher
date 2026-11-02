@@ -22,4 +22,27 @@ final class SearchPages {
         if (index < 0 || index >= count || columns <= 0) return false;
         return index / columns == (count - 1) / columns;
     }
+
+    /**
+     * The card that asked last, after focus lands somewhere: kept while focus is on the last row (a redraw puts it back
+     * on that card, which must not ask again), forgotten anywhere else (another row, a filter chip), so coming back
+     * to the same card asks again (a page that showed no new card leaves that card last).
+     */
+    static String guard(String askedFrom, boolean onLastRow) {
+        return onLastRow ? askedFrom : null;
+    }
+
+    /** Whether focus on this last-row card asks: not when it is the card that asked last and nothing is on its way. */
+    static boolean asks(String askedFrom, String key, boolean pageOnItsWay) {
+        return pageOnItsWay || key == null || !key.equals(askedFrom);
+    }
+
+    /**
+     * Whether to ask for the next page without a key press: nothing shows for the query and filter yet (no card to
+     * reach the last row with), or the page just merged showed no new card.
+     */
+    static boolean askOnItsOwn(int visibleBefore, int visibleNow, Catalog.Found found) {
+        if (next(found) == 0) return false;
+        return visibleNow == 0 || visibleNow <= visibleBefore;
+    }
 }
