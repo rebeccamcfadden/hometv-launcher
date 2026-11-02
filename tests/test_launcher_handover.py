@@ -19,6 +19,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 STOCK_HOME = "com.google.android.tvlauncher/.MainActivity"
 NEW_HOME = "com.hometv.launcher/.MainActivity"
+FIRST_RUN = "com.hometv.launcher.action.FIRST_RUN"
 
 # Stands in for tools/tv.py: a TV that answers shell commands and keeps the state the script changes.
 FAKE_TV = r'''
@@ -48,6 +49,10 @@ state = load()
 
 
 def run(command):
+    if command.startswith("pm list packages"):
+        if state["list_fails"]:
+            raise LinkLost()
+        return "package:com.hometv.launcher\n" if state["installed_before"] else ""
     if "pm install" in command:
         return "Success\n"
     if "am start" in command:
@@ -148,6 +153,8 @@ class HandoverTest(unittest.TestCase):
             "enable_fails": False,
             "drop_after_handover": False,
             "link_lost": False,
+            "installed_before": False,
+            "list_fails": False,
             "commands": [],
         }
         state.update(overrides)
@@ -216,6 +223,46 @@ class HandoverTest(unittest.TestCase):
         self.assertIn("recovery is incomplete", result.stderr)
         self.assertTrue(any("pm enable --user 0" in c for c in state["commands"]))
         self.assertIsNotNone(self.record())
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+
+    def test_fresh_install_opens_first_run_last(self):
+        # First run shows by itself on the first Home start after an install, and the guard's checks end it (#98),
+        # so the script opens it again as its very last TV command.
+        result, state = self.handover()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(FIRST_RUN, state["commands"][-1])
+        self.assertEqual(sum(FIRST_RUN in c for c in state["commands"]), 1)
+        self.assertIn("First run is open", result.stdout)
+
+    def test_update_does_not_open_first_run(self):
+        result, state = self.handover(installed_before=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+        self.assertIn("Press Home", result.stdout)
+
+    def test_unanswered_package_query_counts_as_an_update(self):
+        result, state = self.handover(list_fails=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+
+    def test_rollback_does_not_open_first_run(self):
+        result, state = self.handover(set_home_fails=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(FIRST_RUN in c for c in state["commands"]))
+
+
+class WindowsTwinTest(unittest.TestCase):
+    """build-and-install.ps1 can't run here (no pwsh in CI): its First run step is read instead."""
+
+    def test_ps1_opens_first_run_last_and_only_when_fresh(self):
+        text = (ROOT / "launcher" / "build-and-install.ps1").read_text(encoding="utf-8")
+        query = text.index("'pm list packages com.hometv.launcher'")
+        push = text.index("b64push.py $apk")
+        opened = text.index(FIRST_RUN)
+        self.assertLess(query, push, "the fresh-install check runs before the APK is pushed")
+        self.assertGreater(opened, text.index("if ($RestoreKeyServices)"), "First run opens after the key services")
+        self.assertIn("if ($freshInstall)", text[text.rindex("\n", 0, opened) - 200:opened])
+        self.assertNotIn("tv.py", text[text.index("\n", opened):])
 
 
 if __name__ == "__main__":

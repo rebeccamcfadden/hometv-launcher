@@ -63,6 +63,10 @@ Write-Host "Stock launcher: $StockLauncher"
 $disableStock = if ($StockLauncher -eq 'none') { 'echo stock launcher left alone' } else { "pm disable-user --user 0 $StockLauncher" }
 
 $apk = 'app\build\outputs\apk\release\app-release.apk'
+# A fresh install (the package was not on the TV) ends by opening First run; an update must not. A query that fails
+# counts as an update, so nothing is opened.
+$before = & $py -I ..\tools\tv.py 'pm list packages com.hometv.launcher'
+$freshInstall = ($LASTEXITCODE -eq 0) -and -not (@($before | ForEach-Object { "$_".Trim() }) -contains 'package:com.hometv.launcher')
 & $py -I ..\tools\b64push.py $apk /data/local/tmp/tvhome.apk
 if ($LASTEXITCODE -ne 0) { throw 'APK upload failed' }
 $out = & $py -I ..\tools\tv.py 'pm install -r /data/local/tmp/tvhome.apk; rm -f /data/local/tmp/tvhome.apk'
@@ -114,4 +118,11 @@ if ($HomeKeyService) { Enable-Service 'HomeKeyService' }
 if ($RestoreKeyServices) {
     'pm grant com.hometv.launcher android.permission.WRITE_SECURE_SETTINGS && echo restore-granted' | & $py -I ..\tools\tv.py --batch
 }
-Write-Host 'Installed. Press Home on the remote to see it.'
+# Last, after every Home check: First run shows by itself on the first Home start after an install, and the checks
+# above would end it (#98). Nothing presses Home after this.
+if ($freshInstall) {
+    & $py -I ..\tools\tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity' | Out-Null
+    Write-Host 'Installed. First run is open on the TV.'
+} else {
+    Write-Host 'Installed. Press Home on the remote to see it.'
+}

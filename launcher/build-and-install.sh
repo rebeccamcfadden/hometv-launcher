@@ -100,6 +100,12 @@ HOME_QUERY='cmd package resolve-activity --brief -a android.intent.action.MAIN -
 if [ "$STOCK_LAUNCHER" = none ]; then DISABLE_STOCK="echo stock launcher left alone"
 else DISABLE_STOCK="pm disable-user --user 0 $STOCK_LAUNCHER"; fi
 APK=app/build/outputs/apk/release/app-release.apk
+# A fresh install (the package was not on the TV) ends by opening First run; an update must not. A query that fails
+# counts as an update, so nothing is opened.
+FRESH_INSTALL=0
+INSTALLED_BEFORE=$("$PY" -I ../tools/tv.py 'pm list packages com.hometv.launcher' 2>/dev/null | tr -d '\r') && {
+  printf '%s\n' "$INSTALLED_BEFORE" | grep -x 'package:com.hometv.launcher' >/dev/null || FRESH_INSTALL=1
+}
 "$PY" -I ../tools/b64push.py "$APK" /data/local/tmp/tvhome.apk
 # Install on its own: in the batch below a failed install (e.g. "not enough space" on a full /data)
 # would not stop the stock launcher from being disabled.
@@ -221,4 +227,11 @@ if [ "${HOME_KEY_SERVICE:-0}" = 1 ]; then enable_service HomeKeyService; fi
 if [ "${RESTORE_KEY_SERVICES:-0}" = 1 ]; then
   "$PY" -I ../tools/tv.py "pm grant com.hometv.launcher android.permission.WRITE_SECURE_SETTINGS && echo restore-granted"
 fi
-echo "Installed. Press Home on the remote to see it."
+# Last, after every Home check: First run shows by itself on the first Home start after an install, and the checks
+# above would end it (#98). Nothing presses Home after this.
+if [ "$FRESH_INSTALL" = 1 ]; then
+  "$PY" -I ../tools/tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity' >/dev/null
+  echo "Installed. First run is open on the TV."
+else
+  echo "Installed. Press Home on the remote to see it."
+fi
