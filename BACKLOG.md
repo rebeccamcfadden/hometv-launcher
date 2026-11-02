@@ -249,6 +249,15 @@ milestones: [docs/rework.md](docs/rework.md).
 - **V2 Phase 1:** with the real catalogue, Trailer opens TMDB's trailer for the title in YouTube's TV app (an official
   YouTube trailer first, else any), and falls back to the search while the details load or when TMDB has none. The
   emulator has no YouTube, so only the "not installed" toast was seen; check the video opens on the TV.
+- **Back from a trailer walks YouTube's pages first (F32, open):** YouTube for Android TV (5.30.340, on the TCL,
+  2026-11-02) takes the trailer link in its existing activity ("its current task has been brought to the front",
+  despite `NEW_TASK | CLEAR_TASK`) and keeps its page history in that activity's saved state, which outlives its
+  process. So Back first steps through what the household browsed in YouTube before. Ending YouTube's background
+  process before the trailer (`killBackgroundProcesses`) was tried: Back was unchanged and the start took about 0.5 s
+  longer, so it was dropped (and Android 14 ignores that call for another app anyway). Untried: a separate task for
+  the trailer (`FLAG_ACTIVITY_MULTIPLE_TASK`), which depends on YouTube's activity launch mode
+  (`dumpsys package com.google.android.youtube.tv`), and the `vnd.youtube:<id>` link, whose start was also brought
+  to the front.
 
 ### Title deep links
 - **V1:** "Watch on …", episode rows and Where to watch open the service's app on its home screen. Still so with the
@@ -576,18 +585,26 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   tab and season (it reopens on Overview, or on More like this if it opened there). The place also goes to disk
   (`SavedPlace`), because Home keeps `stateNotNeeded` and Android may bring it back without its saved state; it is
   dropped once the launcher is in front again and only read in the same boot, install and Home task, so after a force
-  stop or a crash Home starts on Home. The trailer and title links start in a
-  cleared task of their own, so Back from YouTube's player comes straight back here. Seen on the emulator with Settings
-  as the app and `am kill` as Android; the TV check is Back from a real trailer.
+  stop or a crash Home starts on Home. The trailer and title links start in a cleared task of their own; for YouTube that
+  is not enough (see Trailers: Back walks YouTube's own pages first). Seen on the emulator with Settings as the app and
+  `am kill` as Android.
 
-- **Jank on Home's key moves:** the real TV measured 47% janky frames (337 of 712), movement p50 197 ms, response p50
-  21 ms. The emulator can't show where that goes: every frame there spends 80–100 ms issuing draw commands,
-  about 50 ms even with the backdrop, shades, hero, nav, lower rows, banners and labels all switched off, and
-  turning any single one off moved it by less than the noise. The UI thread is not the cost (animation 1 ms, layout
-  and recording under 0.2 ms per frame, no layout pass on a focus change). Wanted: a `tools/trace.py` run on the real
-  TV (hwui and gfx) to see whether the GPU's fill (backdrop, shade and, when scrolled, the dim layer, each full
-  screen) or the number of frames per move (140 ms scale and state fades, the 240 ms row slide) is the cost, then
-  the fix.
+- **Jank on Home's key moves:** V1 on the real TV measured 47% janky frames (337 of 712), movement p50 197 ms. V2's
+  Home on the TCL (2026-11-02, `tools/bench.py --keys 36 --series 3`) is at 1 to 4% (1 to 3 janky frames of about
+  75), response p50 20 ms, cold start about 900 ms, return to Home p50 86 to 97 ms (these benches ran before the key
+  sequence was corrected, so their Left and Right moves were partly on the row below the apps). Ideas tried on it that
+  showed no gain within the noise of one run, kept here in case a `tools/trace.py` run (hwui GPU time) ever shows the
+  TV is fill-rate bound:
+  - **Fewer full-screen fills:** no root fill under a settled opaque backdrop, and Home's dim fading without an
+    offscreen layer; a card's art painted without the fill under it unless the art has transparent parts. Jank 5 to
+    7% against main's 1.4%, response 21 to 23 ms against 20: noise. A 960x540 pre-baked backdrop cost 17 MB for no
+    gain.
+  - **Home's refresh after the first frame:** reading the apps and inputs back (PackageManager and TvInputManager
+    binder calls) after the first frame on return to Home, not before it. Return to Home p50 79 ms against 97 ms, but
+    main alone read 86 to 97 ms across runs: needs two runs or more of each before it counts.
+- **Benches compare noisily on memory:** `bench.py` reads PSS once, after the idle wait, so a garbage collection just
+  before or after moves it by up to 15 MB (25 to 40 MB on one build, settling at 23 MB on the emulator). Wanted: a GC
+  first, or the lowest of a few readings, before PSS is compared between builds.
 - **Accessibility in the prototype:** the launcher now reports the current preview tab and nav section as selected
   and reads Pick for me's fields with their value; the prototype has no ARIA roles or states to match.
 
