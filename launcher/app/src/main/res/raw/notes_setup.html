@@ -147,8 +147,9 @@
       + encodeURIComponent(location.origin + '/android-shortcut.json');
   var alist = document.getElementById('alist'), apair = document.getElementById('apair');
   var curl = function (name) {
-    var q = function (s) { return "'" + s.replace(/'/g, "'\\''") + "'"; };
-    return 'curl -X POST ' + q(notesUrl + '?list=' + encodeURIComponent(name)) + ' -H ' + q('Authorization: Bearer ' + code)
+    // HTTP Shortcuts' cURL import can't read a shell-escaped quote, so the URL keeps no apostrophe to escape.
+    var q = function (s) { return "'" + s + "'"; };
+    return 'curl -X POST ' + q(notesUrl + '?list=' + encodeURIComponent(name).replace(/'/g, '%27')) + ' -H ' + q('Authorization: Bearer ' + code)
         + ' -H ' + q('Content-Type: text/plain') + ' --data-raw ' + q('{{note}}');
   };
   var listChanged = function () {

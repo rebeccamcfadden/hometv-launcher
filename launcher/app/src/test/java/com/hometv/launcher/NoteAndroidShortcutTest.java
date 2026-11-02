@@ -147,6 +147,20 @@ public class NoteAndroidShortcutTest {
         for (String k : new String[] {"hometv_url", "hometv_auth", "hometv_list"}) {
             assertTrue(k, pair.getString("codeOnPrepare").contains("setVariable('" + k + "'"));
         }
+        // HTTP Shortcuts hands a deep link's value to getVariable already URL-encoded when the variable has urlEncode,
+        // and encodes the stored value again on every send: Pair stores the list decoded, or "Mary Ann" would go out
+        // as Mary%2520Ann.
+        String code = pair.getString("codeOnPrepare");
+        assertTrue(code.indexOf("decodeURIComponent(l)") >= 0);
+        assertTrue(code.indexOf("decodeURIComponent(l)") < code.indexOf("setVariable('hometv_list', l)"));
+    }
+
+    /** HTTP Shortcuts' cURL import doesn't understand the shell's '\'' escape, so the page's URL carries no apostrophe. */
+    @Test
+    public void theCurlCommandNeedsNoShellEscapes() throws Exception {
+        String page = read("src/main/res/raw/notes_setup.html");
+        assertTrue(page.contains("encodeURIComponent(name).replace(/'/g, '%27')"));
+        assertFalse(page.contains("'\\''"));
     }
 
     /** The page's links name the template's path, the Pair shortcut and the variables it fills. */

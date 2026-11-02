@@ -32,7 +32,7 @@
           "description": "Opened from the TV's setup page: keeps the TV's address, code and your list on this phone",
           "hidden": true,
           "excludeFromFileSharing": true,
-          "codeOnPrepare": "var u = getVariable('hometv_url'), a = getVariable('hometv_auth'), l = getVariable('hometv_list'); if (!u || !a || !l) { showToast('Open Pair this phone on the TV\\'s setup page.'); abort(); } setVariable('hometv_url', u); setVariable('hometv_auth', a); setVariable('hometv_list', l); showToast('Paired: notes you share to Send to TV go to ' + l + '\\'s list.');"
+          "codeOnPrepare": "var u = getVariable('hometv_url'), a = getVariable('hometv_auth'), l = getVariable('hometv_list'); if (!u || !a || !l) { showToast('Open Pair this phone on the TV\\'s setup page.'); abort(); } setVariable('hometv_url', u); setVariable('hometv_auth', a); try { l = decodeURIComponent(l); } catch (e) {} setVariable('hometv_list', l); showToast('Paired: notes you share to Send to TV go to ' + l + '\\'s list.');"
         }
       ]
     }
