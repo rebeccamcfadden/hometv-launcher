@@ -353,7 +353,7 @@ From the old launcher; not in V1 by decision.
 - The clock screensaver. Until it returns, a remote key mapped to `screensaver` (`app_keys`) starts the TV's own
   screensaver only where the firmware has the system's "start now" shortcut; the launcher's clock fallback went
   with the old Home in M1.
-- Module cards and the add-ons in `addons/`.
+- Module cards: the add-ons in `addons/` run as their own apps; see [Add-on cards on Home](#add-on-cards-on-home).
 - The Watch Next row.
 - Festivals, the sky and the lunar calendars.
 - The old Home's on-screen extras: the idle clock (`home_idle_clock_minutes`), the stats line (`show_stats`), the
@@ -373,6 +373,30 @@ options from it to bring back properly:
   with no switch in Launcher settings and no screenshot here any more.
 - **`screensaver`**: the clock screensaver went with the old Home in M1 (above). As an `app_keys` action,
   `screensaver` starts the TV's own screensaver only where the firmware has the system's "start now" shortcut.
+
+### Add-on cards on Home
+
+The project lead, 2026-11-02, later. The 19 add-ons in `addons/` work with this launcher as ordinary apps (each has
+its own tile; all build and pass their tests), and their manifests already declare the module card under this
+launcher's names (`com.hometv.launcher.card`, `com.hometv.launcher.category.DOCK_CARD`; spec in
+[docs/specs/card.md](docs/specs/card.md)). What's missing is a host that shows the cards. A minimal one, about 3 to 4
+builder-days:
+
+- **Design first** (design_preview, then the project lead): a card replaces its app's tile in Home's app row (upstream's way,
+  no new row), or a Cards row in Home's lower area; the consent prompt (a new card stays hidden until the owner says
+  Show); a Launcher settings list to show or hide each card.
+- **Launcher:** upstream's `Cards.java` (discovery, XML parsing, validation, signer, decisions) and `CardFeature.java`,
+  with their tests, carry over almost as they are (at the fork point `eb0131a3`); new glue for Home, the prompt and
+  the list; a Features switch, off by default; a `<queries>` entry for the card category.
+- **TV check:** the cost of the card lookup each time Home comes to the front (bench), D-pad, the prompt.
+
+Test it with capacity stats, headphones, AirPlay status and smart home first.
+
+### Headphones and Bluetooth pill
+
+The project lead, 2026-11-02, later; design first. A new pill in Home's top bar that opens a headphones and
+Bluetooth menu, built into the launcher: where the sound goes now, the paired headphones with their battery, pairing,
+and the quiet guard. The `headphones` add-on does this today as its own app, and its code is the starting point.
 
 ## Themes
 

@@ -3,9 +3,10 @@
 Bluetooth headphones on the TV, made easy to keep quiet: one screen that shows where the sound goes now, your
 paired headphones with their battery, a shortcut to pairing, and a **quiet guard** that pauses and mutes the
 speakers when headphones drop, so a flat battery doesn't send a film's sound into a room where someone is
-asleep. For the [Clean Your TV](../../README.md) launcher it declares a [module card](https://github.com/Gathin23/cleanyourtv/blob/main/docs/modules.md):
-once you answer **Show card** its tile reads "Headphones" with a blue glow. On any other Android TV home it is an
-ordinary app.
+asleep. With HomeTV Launcher it is an ordinary app: open it from its tile in All Apps, or add it to Home's row. It
+also declares a [module card](../../docs/specs/card.md), which upstream's
+[CleanYourTV](https://github.com/Gathin23/cleanyourtv) launcher shows on Home; this launcher doesn't show module cards
+yet ([BACKLOG.md](../../BACKLOG.md#add-on-cards-on-home)).
 
 ![Headphones on a TV with none paired yet](screenshot.jpg)
 
@@ -49,13 +50,12 @@ JDK 17 and Android SDK platform 34 with build-tools 34.0.0, as for the launcher.
 TV_HOST=<tv ip> addons/headphones/install.sh
 ```
 
-It builds the add-on, installs it, grants Bluetooth access (and TCL's auto-start), and opens it. Press Home: the
-launcher asks once whether to show the card. Change the answer later by holding OK on Settings, then Module
-cards. To build only: `cd addons/headphones && ./gradlew assembleRelease`; the JVM tests run with
+It builds the add-on, installs it, grants Bluetooth access (and TCL's auto-start), and opens it. Later, open it from
+its tile. To build only: `cd addons/headphones && ./gradlew assembleRelease`; the JVM tests run with
 `./gradlew testReleaseUnitTest`.
 
 The release build is signed with the debug key so it installs over ADB like the launcher. Sign your own builds
-with your own key if you hand them out; the launcher pins its Show answer to the signing key.
+with your own key if you hand them out; a launcher that shows module cards pins its Show answer to the signing key.
 
 ## Limits
 
@@ -82,10 +82,12 @@ for an Android 14 TV without LE Audio broadcast.
 The JVM tests cover the guard's decisions (audio devices only, pause only on fixed volume, unmute only its own
 mute), the battery and sharing wording, and name cleaning.
 
-Still to check, with a pair of Bluetooth headphones and on a TV running this repo's launcher (the test TV's home
-app has no module cards):
+With HomeTV Launcher, on the Android TV 9 emulator (API 28), 2026-11-02: builds with its tests, installs, opens from
+its launcher entry; the emulator has no Bluetooth, so the list says "No Bluetooth on this TV".
 
-1. The card prompt and **Show card**; the card opens the app.
+Still to check, with a pair of Bluetooth headphones, on a TV running HomeTV Launcher:
+
+1. The tile in All Apps opens the app.
 2. Pairing through the shortcut, then the pair listed as Connected, with its battery where reported.
 3. "Sound now plays through" names the headphones, then the speakers after disconnecting.
 4. With a video playing, switch the headphones off: it pauses and the speakers are muted. Switch them on: the
