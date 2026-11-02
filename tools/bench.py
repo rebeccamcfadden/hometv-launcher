@@ -9,7 +9,8 @@ one at a time, and reads the frame timestamps that `dumpsys gfxinfo <pkg> frames
   * jank      = janky frames / total frames, from the same dump
 
 It also measures the cold start (`am start -W`), the return to Home (HOME key from another app),
-the idle CPU of the whole device and the launcher's own PSS. Nothing on the TV is changed.
+the idle CPU of the whole device and the launcher's own PSS (the median of three readings, 5 s apart). Nothing on
+the TV is changed.
 
 The TV is reached through tools/tv.py, the client this project already ships: it speaks ADB over
 TCP with the adb_shell library, so no adb binary is needed. That matters on macOS, where the
@@ -499,6 +500,19 @@ def pss_of(tv, package):
     return int(match.group(1)) // 1024 if match else None
 
 
+def pss_median(tv, package, samples=3, gap=5):
+    """The median of a few PSS readings `gap` seconds apart: one reading moves by about 10 MB with the Java heap's
+    garbage collection on a TV (F33), more than the differences a bench looks for. None when none could be read."""
+    values = []
+    for i in range(samples):
+        if i:
+            time.sleep(gap)
+        value = pss_of(tv, package)
+        if value is not None:
+            values.append(value)
+    return int(statistics.median(values)) if values else None
+
+
 def gfx_summary(text, seconds):
     """The first window summary in `dumpsys gfxinfo <pkg>`: frames, janky frames, fps over `seconds` and the
     frame-time percentiles in ms. Its counters cover every frame since the reset, unlike framestats' last 120."""
@@ -612,7 +626,7 @@ def main():
     if args.idle_animation > 0:
         print(f"Idle animation {args.idle_animation}s")
         idle_frames = idle_animation(tv, package, args.idle_animation)
-    pss = pss_of(tv, package)
+    pss = pss_median(tv, package)
 
     result = {
         "launcher": component, "version": version, "package": package,
