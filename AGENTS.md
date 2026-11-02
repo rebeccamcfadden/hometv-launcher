@@ -91,8 +91,7 @@ share their TV's list afterwards, follow [`docs/workflows/tv-list.md`](docs/work
 | `addons/` | Optional module-card apps, each its own Gradle project, never built into the launcher. |
 | `tools/` | The ADB client (`tv.py`) and the scripts, listed in `docs/tools.md`. Shell scripts have PowerShell twins. Each script's usage is in its first lines, and the larger ones have a guide beside them (`tools/*.md`): read it before running the script. |
 | `tests/` | Python `unittest` suite: list format, README tables, press counts, themes, add-ons, the Home guard and the tools against fake TVs. |
-| `.github/workflows/` | `ci.yml` (tests, launcher build, APK size; after a merge to main only: PRs run `tools/ci-local.ps1`), `addons.yml`, `maintainer-bot.yml`. |
-| `.github/maintainer/MAINTAINER.md` | The review policy the maintainer and the PR bot apply. |
+| `.github/workflows/` | `ci.yml` (tests, launcher build, APK size; after a merge to main only: PRs run `tools/ci-local.ps1`), `addons.yml`, `pages.yml`. |
 | `.github/pull_request_template.md` | The PR checklist. Fill it in. |
 
 ## Where a change goes
@@ -109,8 +108,7 @@ The core stays small on purpose. Pick the smallest home that fits (CONTRIBUTING,
 | A port to another platform, a lower `minSdk`, Fire TV Home takeover | Your own repository, plus one row in `SHOWCASE.md` |
 | Safety rules in `PROMPT.md`, the Home-safety logic in the scripts, protected packages, CI and workflows | Open an issue for the maintainer; do not change it in a PR |
 
-Every PR is reviewed by the maintainer and by a bot that apply `.github/maintainer/MAINTAINER.md`: read its
-verdicts before a non-trivial PR. Changes to the Home or launch path (Home key, boot, return to Home, the
+Every PR is reviewed by the maintainer. Changes to the Home or launch path (Home key, boot, return to Home, the
 install scripts) are usually held for a run on a real TV.
 
 ## Workflows

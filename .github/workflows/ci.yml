@@ -6,7 +6,7 @@ name: CI
 on:
   push:
     branches: [main]
-    paths-ignore: ["**.md", "docs/**", "shots/**", "work/**", ".github/maintainer/**"]
+    paths-ignore: ["**.md", "docs/**", "shots/**", "work/**"]
   workflow_dispatch:
 
 concurrency:
