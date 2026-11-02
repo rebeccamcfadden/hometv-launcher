@@ -39,7 +39,6 @@ class ManageTest(unittest.TestCase):
 
     def test_find_by_folder_or_name(self):
         self.assertEqual("weather", manage.find("Weather")["id"])
-        self.assertEqual("theme", manage.find("aurora/")["kind"])
         self.assertEqual("switch", manage.find("columns")["kind"])
         self.assertIsNone(manage.find("no-such-thing"))
 
@@ -76,12 +75,12 @@ class ManageTest(unittest.TestCase):
         self.assertIn("launcher: not installed", out)
         self.assertIn("theme: none", out)
 
-    def test_status_finds_the_launcher_and_a_theme(self):
-        theme = ROOT / "themes" / manage.themes()[0]["id"] / "config.json"
-        code, out = self.status(("package:" + manage.LAUNCHER_PKG + "\n", 0, ""), (theme.read_text(encoding="utf-8"), 0, ""))
+    def test_status_finds_the_launcher_and_a_pushed_config(self):
+        pushed = '{"dock_apps": ["com.netflix.ninja"]}'
+        code, out = self.status(("package:" + manage.LAUNCHER_PKG + "\n", 0, ""), (pushed, 0, ""))
         self.assertEqual(code, 0)
         self.assertIn("launcher: installed", out)
-        self.assertIn("theme: " + manage.themes()[0]["id"], out)
+        self.assertIn("theme: your own", out)
 
 if __name__ == "__main__":
     unittest.main()

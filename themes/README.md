@@ -49,26 +49,8 @@ TV_HOST=192.168.1.50 tools/theme.sh --reset                # back to the built-i
 powershell -ExecutionPolicy Bypass -File tools\theme.ps1 -TvHost 192.168.1.50 examples\<your tv>
 ```
 
-`tools/manage.py list themes` and `list switches` list them from this file, `show <name>` gives one with its
-screenshot, and `manage.py set <switch> <value> --theme <your folder>` writes a key into a folder of your own and
-pushes it with `theme.sh`.
-
-## The old launcher's theme folders
-
-> **Frozen.** The folders here were themes for the old launcher: a `config.json` with its look and layout keys, a
-> picture and a screenshot. The reworked launcher reads only their per-TV keys, so they no longer change its look;
-> they stay as a reference ([docs/rework.md](../docs/rework.md), M1b scope).
-
-| Theme | What it did | Screenshot (old launcher) |
-|---|---|---|
-| `default/` | The built-in look written out as JSON, as a starting point for your own | [screenshot](default/screenshot.jpg) |
-| `aurora/` | A dark aurora wallpaper (teal and violet on navy, darker at the bottom) with a matching background colour | [screenshot](aurora/screenshot.jpg) |
-| `dussehra/` | Festive skin for Dussehra (ends 21 Oct 2026): a marigold toran, a faint gold rangoli, a diya for Wi-Fi, a bell for Inputs, a marigold for Settings and a petal shower | [screenshot](dussehra/screenshot.jpg) |
-| `glass/` | Dark navy wallpaper with soft teal and violet light, the cinematic top shelf, a frosted-glass dock, icon-only buttons and the focus glow in the app's colour, gliding without overshoot | [screenshot](glass/screenshot.jpg) |
-| `ruska/` | A Finnish autumn ("ruska") dusk over a lake: spruce shoreline, birches in autumn colour, a few falling leaves, drawn in code by `make_wallpaper.py`. The app-colour glow stays off the picture so the autumn colours keep their own light; the dock is 70% opaque so the lake shows through, and the focus glows in the app's colour without overshoot | [screenshot](ruska/screenshot.jpg) |
-| `scenes/` | 14 dark illustrated landscapes in `wallpapers/`, a new one every hour; drawn from code by upstream's [`tools/scenes_wallpapers.py`](https://github.com/Gathin23/cleanyourtv/blob/main/tools/scenes_wallpapers.py) | [screenshot](scenes/screenshot.jpg) |
-| `six-columns/` | Six smaller tiles per row and one grid row visible under the dock | [screenshot](six-columns/screenshot.jpg) |
-| `sweden/` | Three photos of Sweden from Wikimedia Commons (the aurora over Abisko, Vasabron at dusk, Skeppsbron in the evening), a new one every hour with its place and photographer under the buttons; six small tiles in a frosted-glass dock, round icon-only buttons, no hero name. The photos are CC BY / CC BY-SA, not MIT: see `sweden/CREDITS.md` | [screenshot](sweden/screenshot.jpg) |
+`tools/manage.py list switches` lists the keys from this file, and `manage.py set <switch> <value> --theme <your
+folder>` writes one into a folder of your own and pushes it with `theme.sh`.
 
 ## Keys
 
@@ -265,7 +247,3 @@ which checks every theme's text contrast), into the design preview's `src/styles
 one, into [`launcher/backdrops/`](../launcher/backdrops/README.md) with its credit. Add a row to the table at the top
 with a screenshot of Home on a real TV in `docs/themes/`, a 1280×720 JPEG under 300 KB with nothing that identifies
 the household (no account names, Wi-Fi names or cities).
-
-The old launcher's folders took a `config.json`, a `wallpaper.jpg` or `wallpapers/` and a required `screenshot.jpg`
-of Home on a real TV (1280×720, 16:9, under 300 KB; `tests/test_themes.py` checks it); the folders above keep that
-shape.

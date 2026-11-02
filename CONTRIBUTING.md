@@ -11,13 +11,12 @@ The launcher stays small on purpose, so pick the smallest home that fits:
 | Your idea | Where it goes |
 |---|---|
 | A TV model, a fix, a translation, a small switch that is off by default | A pull request here (sections 1 to 3 below) |
-| A new look: colours, wallpaper, dock, columns | [`themes/`](themes/README.md), with a screenshot from a real TV |
+| A new built-in theme | The launcher and the design preview, as [Adding a theme](themes/README.md#adding-a-theme) describes, with a screenshot from a real TV |
 | A widget or tile that can be its own small app | [`addons/`](addons/README.md), as a module card with a screenshot from a real TV; it never touches `launcher/` |
 | A whole new launcher, a heavy restyle, a port to another platform | Your own repo (section 4) |
 
-Everything merged into `themes/` and `addons/` shows up on [cleanyour.tv/addons](https://cleanyour.tv/addons).
-In this fork the reworked launcher reads neither themes nor module cards; both folders wait for V2
-([docs/rework.md](docs/rework.md)).
+In this fork the launcher's themes are built in (the old `themes/` folders went in R1), and it doesn't read module
+cards yet: the add-ons in `addons/` run as their own apps ([docs/rework.md](docs/rework.md)).
 
 ## 1. Add your TV model
 
