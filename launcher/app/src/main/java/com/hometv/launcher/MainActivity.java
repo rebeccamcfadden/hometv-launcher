@@ -573,9 +573,13 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             shell.goTab(Screen.Tab.HOME, false);
             settingsClosed();
         }
+        // Opened afresh, not rebuilt: what an earlier First run switched off as it ended starts on again (F34).
+        boolean restored = done == null && FeaturePrefs.restoreFirstRunOff(this);
         firstRun = FirstRunPage.create(this, done, keyTab);
         FirstRunPage.markShown(this);
         shell.push(firstRun);
+        // The launcher runs without them: rebuilt with them on, First run reopens over it as after any rebuild.
+        if (restored && !FeaturePrefs.live(this).same(Features.current())) recreate();
     }
 
     /** Start using Home, or Back: Home, rebuilt if a step changed a choice, as Launcher settings does on close. */

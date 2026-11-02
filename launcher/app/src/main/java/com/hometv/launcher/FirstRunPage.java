@@ -833,7 +833,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         prefs(a).edit().remove(KEY_IN_PROGRESS).apply();
         for (Features.Feature f : Features.Feature.values()) {
             if (!on.on(f) || setUp(a, f)) continue;
-            FeaturePrefs.save(a, f, false);
+            FeaturePrefs.switchOffUnfinished(a, f);
             names.add(a.getString(FeaturesSection.label(f)));
         }
         return names;
