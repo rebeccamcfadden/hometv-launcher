@@ -73,7 +73,7 @@ final class AboutSection implements SettingsSection {
     /**
      * {@code .tmdb}: TMDB's approved logo (Primary short, R.drawable.tmdb_logo) beside their notice, in a framed box.
      * Their terms ask for the logo to be less prominent than the app's own mark: it is 18 px tall, under the pane's
-     * 44 px title.
+     * 40 px title.
      */
     private static View tmdbBox(Context ctx) {
         LinearLayout box = new LinearLayout(ctx);

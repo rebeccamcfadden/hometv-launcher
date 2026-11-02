@@ -60,7 +60,7 @@ milestones: [docs/rework.md](docs/rework.md).
   product uses the TMDB API but is not endorsed or certified by TMDB" in the app's About or Credits section, and for
   one of their approved logos (themoviedb.org/about/logos-attribution), less prominent than the app's own mark. The
   notice is in Launcher settings' About pane (only in builds with a TMDB key) and in the README; beside it in About is
-  their "Primary short" logo, unchanged (`res/drawable/tmdb_logo.xml`, 18 px tall under the pane's 44 px title).
+  their "Primary short" logo, unchanged (`res/drawable/tmdb_logo.xml`, 18 px tall under the pane's 40 px title).
 - **The token is in the APK:** `BuildConfig.TMDB_TOKEN` can be read out of the APK by anyone who has it. A read
   access token can only read TMDB's public data, but it is the account's: keep a token build to yourself, and
   revoke the token on themoviedb.org if an APK leaks.
