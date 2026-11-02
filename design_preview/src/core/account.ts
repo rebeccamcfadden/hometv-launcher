@@ -1,4 +1,5 @@
 import { net } from './net';
+import { featureOn, settings } from './settings';
 
 // The TMDB account, as the Account pane shows it (V2 design r2-account A). The sign-in is mocked: a code is "fetched",
 // the QR waits until the dev bar's Account menu approves it (or it runs out), then the lists are "imported". On the TV
@@ -146,3 +147,9 @@ export const account = {
   /** The dev bar's Account menu. */
   devSet: (s: AccountState) => go(s),
 };
+
+// TMDB account switched off (in Features, or by First run's end): a sign-in under way stops, its code, its wait for the
+// phone and its list import included, so it can't sign the TV in afterwards. A session already in stays.
+settings.on(() => {
+  if (!featureOn('tmdb') && (state === 'getting' || state === 'waiting' || state === 'approved')) go('out');
+});

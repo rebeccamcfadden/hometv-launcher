@@ -208,9 +208,9 @@ class App {
     s.onFocus?.(el);
   }
 
-  /** Focus survives re-renders by key; falls back to the screen's default. */
+  /** Focus survives re-renders by key; falls back to the screen's default. A hidden item is passed over, as on the TV. */
   restoreTarget(s: Screen): HTMLElement | null {
-    if (s.lastFocus?.isConnected && s.el.contains(s.lastFocus)) return s.lastFocus;
+    if (s.lastFocus?.isConnected && s.el.contains(s.lastFocus) && s.lastFocus.getClientRects().length) return s.lastFocus;
     if (s.lastFocusKey) {
       const el = s.el.querySelector<HTMLElement>(`[data-key="${CSS.escape(s.lastFocusKey)}"]`);
       if (el && el.getClientRects().length) return el;
@@ -222,7 +222,7 @@ class App {
   refocus() {
     const s = this.top();
     if (!s) return;
-    if (this.focused?.isConnected && !this.focused.closest('[data-inert]')) return;
+    if (this.focused?.isConnected && !this.focused.closest('[data-inert]') && this.focused.getClientRects().length) return;
     this.focus(this.restoreTarget(s));
   }
 

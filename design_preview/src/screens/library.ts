@@ -12,6 +12,8 @@ import { filtersDrawer } from './filters';
 import { dropdown } from './dropdown';
 import { recentRanks, SORTS, sortTitles, type SortId } from './librarySort';
 import { pickSetup } from './pick';
+import { needsTmdb, tmdbReady } from './needsTmdb';
+import { account } from '../core/account';
 import { titlePreview } from './preview';
 import { store } from '../core/store';
 
@@ -62,11 +64,24 @@ export function libraryScreen(kind: Kind): Screen {
   const listStatus = h('div.lib-list-status');
   const grid = h('div.lib-grid');
 
+  /** Pick for me shows: there is something on the lists to pick from. */
+  let pickable = false;
   const render = () => {
+    // F14: TMDB account off or not signed in: the page is the empty state alone, and nothing is fetched.
+    const tmdb = tmdbReady();
+    tmdbOff.paint();
+    tmdbOff.el.style.display = tmdb ? 'none' : '';
+    for (const c of page.children) if (c !== tmdbOff.el) (c as HTMLElement).style.display = tmdb ? '' : 'none';
+    guideEl.style.display = tmdb ? '' : 'none';
+    if (!tmdb) return app.refocus();
     const state = net.get();
     // Offline with nothing saved yet: no lists to count or show (06-states A).
     const empty = state === 'offline-empty';
     const all = empty ? [] : pool();
+    // Pick for me (the project lead, 2026-11-02) is no switch of its own: it is there with TMDB account on, signed in,
+    // and something on the lists to pick from. With nothing on them it is hidden, and the page's empty state says why.
+    pickable = all.length > 0;
+    pickBtn.style.display = pickable ? '' : 'none';
     // A list hidden or gone since (Choose lists, a sign-out) falls back to All lists.
     if (list !== 'all' && !lists.byId(list)) list = 'all';
     const choices: ListChoice[] = ['all', ...lists.all().map((l) => l.id)];
@@ -220,10 +235,12 @@ export function libraryScreen(kind: Kind): Screen {
   };
 
   const pickBtn = button('Pick for me', { icon: 'shuffle', primary: true, key: 'pick', onOk: () => app.push(pickSetup(kind)) });
+  const tmdbOff = needsTmdb(heading);
 
   const page = h(
     'div.page-scroll',
     { 'data-scroll': 'y', 'data-scroll-pad': 70 },
+    tmdbOff.el,
     h(
       'div.lib-intro',
       h('div', h('h1.page-title', heading), contextEl),
@@ -249,6 +266,11 @@ export function libraryScreen(kind: Kind): Screen {
   );
 
   render();
+  // The dev bar's Account menu signs in or out while the page shows.
+  account.on(() => {
+    render();
+    app.refocus();
+  });
   net.on(() => {
     render();
     app.refocus();
@@ -258,9 +280,14 @@ export function libraryScreen(kind: Kind): Screen {
     label: heading,
     el,
     defaultFocus: () =>
-      net.get() === 'loading'
-        ? chipsEl.querySelector<HTMLElement>('.chip.is-selected')
-        : (grid.querySelector<HTMLElement>('[data-default]') ?? grid.querySelector<HTMLElement>('[data-focus]') ?? pickBtn),
+      !tmdbReady()
+        ? tmdbOff.el.querySelector<HTMLElement>('[data-focus]')
+        : net.get() === 'loading'
+          ? chipsEl.querySelector<HTMLElement>('.chip.is-selected')
+          : (grid.querySelector<HTMLElement>('[data-default]') ??
+            grid.querySelector<HTMLElement>('[data-focus]') ??
+            // Nothing in the grid: Pick for me when there is something to pick, else the selected list chip.
+            (pickable ? pickBtn : chipsEl.querySelector<HTMLElement>('.chip.is-selected'))),
     onShow: () => {
       // F2: back on the page after more than an hour away, what was set on it starts again, from the top, with focus
       // on the page's default rather than a card that may now be out of view.
@@ -295,6 +322,8 @@ export function libraryScreen(kind: Kind): Screen {
       // F4: nothing is left of Sort, so ← stays on it.
       if (f.dataset.key === 'sort' && key === 'left') return true;
       if (!chipsEl.contains(f)) return false;
+      // No Pick for me (nothing on the lists): the chips lead on to the nav, as any row does.
+      if (!pickable) return false;
       const all = [...chipsEl.querySelectorAll<HTMLElement>('[data-focus]')];
       if (key === 'up' || (key === 'right' && all[all.length - 1] === f)) {
         app.focus(pickBtn);

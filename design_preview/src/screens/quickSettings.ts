@@ -1,6 +1,6 @@
 import { account } from '../core/account';
 import { app, type Screen } from '../core/app';
-import { MOTION_LABELS, settings, unitSuffix, type Motion } from '../core/settings';
+import { featureOn, MOTION_LABELS, settings, unitSuffix, type Motion } from '../core/settings';
 import { placeById } from '../data/places';
 import { dropdown } from './dropdown';
 import { launcherSettings, type SectionId } from './settings';
@@ -26,15 +26,16 @@ export function settingsMenu(anchor: HTMLElement | null): Screen {
       { label: 'Sound', icon: 'sound', onOk: open('sound settings') },
       { label: 'Network & Wi-Fi', icon: 'wifi', onOk: open('network and Wi-Fi settings') },
       { label: 'Inputs', icon: 'input', onOk: open('the TV’s inputs') },
-      { label: 'TMDB account', icon: 'user', divider: true, chevron: true, status: () => account.value().text, onOk: pane('account') },
-      { label: 'Streaming services', icon: 'tv', chevron: true, status: () => `${settings.get().services.length} ticked`, onOk: pane('services') },
-      {
+      // F14: a household row whose feature is off isn't in the menu; the group's line goes above its first row.
+      ...(featureOn('tmdb') ? [{ label: 'TMDB account', icon: 'user' as const, divider: true, chevron: true, status: () => account.value().text, onOk: pane('account') }] : []),
+      { label: 'Streaming services', icon: 'tv', divider: !featureOn('tmdb'), chevron: true, status: () => `${settings.get().services.length} ticked`, onOk: pane('services') },
+      ...(featureOn('weather') ? [{
         label: 'Weather',
-        icon: 'cloud',
+        icon: 'cloud' as const,
         chevron: true,
         status: () => `${placeById(settings.get().place).name} · ${unitSuffix()}`,
         onOk: pane('weather'),
-      },
+      }] : []),
       {
         label: 'Motion',
         icon: 'motion',

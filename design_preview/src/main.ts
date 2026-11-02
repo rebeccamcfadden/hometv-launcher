@@ -57,6 +57,13 @@ app.overlay(importPill());
 app.longOk = titleMenu;
 // ?notes=on starts with Launcher settings › Phone notes switched on.
 if (params.get('notes') === 'on') notes.setOn(true);
+// ?features=on starts with every feature on (F14: a new install starts with them all off), and ?features=off with
+// none, whatever was saved.
+const startFeatures = params.get('features');
+if (startFeatures === 'on' || startFeatures === 'off') {
+  const on = startFeatures === 'on';
+  settings.set({ features: { tmdb: on, notes: on, prices: on, weather: on } });
+}
 
 // ---- Dev bar under the stage: the screen stack, the data state, quick jumps and a state reset ----
 const trail = document.getElementById('trail')!;
@@ -162,10 +169,10 @@ const jumps: [string, string, () => void][] = [
       app.push(launcherSettings());
     },
   ],
-  ...(['account', 'notes', 'services', 'stores', 'weather', 'apps', 'theme', 'performance'] as const).map(
+  ...(['account', 'notes', 'services', 'stores', 'weather', 'apps', 'theme', 'performance', 'features'] as const).map(
     (id): [string, string, () => void] => [
       `settings-${id}`,
-      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance' }[id]}`,
+      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features' }[id]}`,
       () => {
         app.goTab('home');
         app.push(launcherSettings(id, { enter: true }));

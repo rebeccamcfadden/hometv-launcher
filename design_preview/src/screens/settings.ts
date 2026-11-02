@@ -4,15 +4,15 @@ import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { net } from '../core/net';
 import { theme } from '../core/theme';
-import { settings, START_LABELS } from '../core/settings';
+import { featureOn, settings, START_LABELS, type FeatureId } from '../core/settings';
 import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
-import { button } from '../ui/widgets';
 import { accountPane } from './panes/account';
 import { notesPane } from './panes/notes';
 import { notes } from '../core/notes';
 import { appsPane } from './panes/apps';
 import { aboutPane, homePane, performancePane, startPane, tvPane } from './panes/misc';
+import { featureOffPane, featuresPane, featuresValue, SETUP_SECTION, turnOn } from './panes/features';
 import type { Pane, PaneHost } from './panes/pane';
 import { servicesPane, storesPane } from './panes/services';
 import { themePane } from './panes/theme';
@@ -27,27 +27,48 @@ function performanceValue(): string {
   const light = s.motion === 'off' && s.cardShadows === 'off' && !s.focusGlow && s.backdropPicture === 'plain' && !s.movingDetails;
   return light ? 'Light mode' : 'Custom';
 }
-export type SectionId = 'account' | 'notes' | 'services' | 'stores' | 'weather' | 'apps' | 'theme' | 'performance' | 'start' | 'home' | 'tv' | 'about';
+export type SectionId =
+  | 'account'
+  | 'notes'
+  | 'services'
+  | 'stores'
+  | 'weather'
+  | 'apps'
+  | 'theme'
+  | 'performance'
+  | 'features'
+  | 'start'
+  | 'home'
+  | 'tv'
+  | 'about';
 
 interface Section {
   id: SectionId;
   label: string;
-  /** First run's wording for the same section ("Sign in to TMDB"). */
-  setupLabel?: string;
   icon: IconName;
   /** The current value, in grey at the row's right; amber while the sign-in is under way. */
   value: () => { text: string; warn?: boolean };
+  /** F14: while this feature is off, the section reads Off and its pane says how to turn it on. */
+  feature?: FeatureId;
 }
 
 const SECTIONS: Section[] = [
-  { id: 'account', label: 'Account', setupLabel: 'Sign in to TMDB', icon: 'user', value: () => account.value() },
-  { id: 'notes', label: 'Phone notes', icon: 'phone', value: () => notes.value() },
+  { id: 'account', label: 'Account', icon: 'user', value: () => account.value(), feature: 'tmdb' },
+  { id: 'notes', label: 'Phone notes', icon: 'phone', value: () => notes.value(), feature: 'notes' },
   { id: 'services', label: 'Streaming services', icon: 'tv', value: () => ({ text: `${settings.get().services.length} ticked` }) },
-  { id: 'stores', label: 'Stores for rent and buy', icon: 'cart', value: () => ({ text: `${settings.get().stores.length} ticked` }) },
-  { id: 'weather', label: 'Weather', setupLabel: 'Weather city', icon: 'cloud', value: () => ({ text: placeById(settings.get().place).name }) },
+  // The project lead, 2026-11-02: with Price lookup off, Stores says so (F16's price keys page will too).
+  { id: 'stores', label: 'Stores for rent and buy', icon: 'cart', value: () => ({ text: `${settings.get().stores.length} ticked` }), feature: 'prices' },
+  {
+    id: 'weather',
+    label: 'Weather',
+    icon: 'cloud',
+    value: () => ({ text: placeById(settings.get().place).name }),
+    feature: 'weather',
+  },
   { id: 'apps', label: 'Home row apps', icon: 'apps', value: () => ({ text: String(settings.get().homeApps.length) }) },
   { id: 'theme', label: 'Theme', icon: 'palette', value: () => ({ text: theme.label() }) },
   { id: 'performance', label: 'Performance', icon: 'gauge', value: () => ({ text: performanceValue() }) },
+  { id: 'features', label: 'Features', icon: 'list', value: () => ({ text: featuresValue() }) },
   { id: 'start', label: 'Open on start', icon: 'power', value: () => ({ text: START_LABELS[settings.get().openOnStart] }) },
   { id: 'home', label: 'Default Home', icon: 'home', value: () => ({ text: 'On' }) },
   { id: 'tv', label: 'TV settings', icon: 'settings', value: () => ({ text: '' }) },
@@ -57,21 +78,15 @@ const SECTIONS: Section[] = [
 /**
  * F23 (the project lead chose grouping A, 2026-11-01): the sections in four groups, under small headings, in this
  * order. Headings only: every section keeps its place in the path (Launcher settings › Phone notes), so nothing that
- * names one changes. Sections still to come go in a group here: Features (F14) and API keys (F16) under What you
- * watch, Region (F12) under This TV before TV settings. First run keeps its steps, without headings.
+ * names one changes. Features (F14) is under What you watch; still to come: API keys (F16) there too, Region (F12)
+ * under This TV before TV settings. First run (setup.ts) shows its own steps as tabs.
  */
 const GROUPS: { title: string; items: SectionId[] }[] = [
   { title: 'Accounts', items: ['account', 'notes'] },
-  { title: 'What you watch', items: ['services', 'stores'] },
+  { title: 'What you watch', items: ['services', 'stores', 'features'] },
   { title: 'Home & look', items: ['theme', 'performance', 'apps', 'weather'] },
   { title: 'This TV', items: ['start', 'home', 'tv', 'about'] },
 ];
-/** First run's cut-down split (V2 design r2-setup-checklist): the four setup sections and a footer to step through. */
-export interface SetupOpts {
-  steps: SectionId[];
-  /** A section's pane was entered: the checklist ticks its row. */
-  onVisit(id: SectionId): void;
-}
 
 /**
  * Launcher settings (V2 design 05-settings A with the r2 panes): sections on the left with their values; the pane on
@@ -79,24 +94,29 @@ export interface SetupOpts {
  * brightens), ← from its left edge returns to the section. Back in the pane leaves a sub-state first (Choose lists,
  * Change city, an app being moved), then the pane; Back on the list closes the page. Changes save at once.
  *
- * First run opens the same page cut down to its four sections, with a footer: "Back to checklist" and "Next: …".
+ * First run (setup.ts) shows the same panes on its own page, as tabs (F28).
  */
-export function launcherSettings(initial: SectionId = 'account', opts: { enter?: boolean; setup?: SetupOpts } = {}): Screen {
-  const setup = opts.setup;
-  const groups = setup ? null : GROUPS;
+/**
+ * opts.backCloses: opened for one setup from a page's empty state (Turn on, Sign in): Back in the pane returns straight to
+ * that page, as the project lead asked (2026-11-02), rather than to the section list first.
+ */
+export function launcherSettings(initial: SectionId = 'account', opts: { enter?: boolean; backCloses?: boolean } = {}): Screen {
+  const groups = GROUPS;
   const byId = (id: SectionId) => SECTIONS.find((s) => s.id === id)!;
-  const sections = setup ? SECTIONS.filter((s) => setup.steps.includes(s.id)) : GROUPS.flatMap((g) => g.items.map(byId));
+  const sections = GROUPS.flatMap((g) => g.items.map(byId));
+  /** F14 (the project lead, 2026-11-01): a section whose feature is off stays, says so, and offers Turn on. */
+  const isOff = (s: Section) => !!s.feature && !featureOn(s.feature);
   let current: SectionId = sections.some((s) => s.id === initial) ? initial : sections[0].id;
+  /** The section showing has its own pane (its feature is on). */
+  const live = () => !isOff(sections.find((s) => s.id === current)!);
   let shown: SectionId | null = null;
   let inPane = false;
 
   const list = h(`div.sec-list${groups ? '.sec-list--grouped' : ''}`, { 'data-scroll': 'y', 'data-scroll-pad': groups ? 56 : 0 });
   const scroll = h('div.pane-scroll', { 'data-scroll': 'y', 'data-scroll-pad': 40 });
-  const foot = h('div.pane-foot');
-  const pane = h('div.set-pane', scroll, setup ? foot : null);
+  const pane = h('div.set-pane', scroll);
 
-  const entryOf = () =>
-    scroll.querySelector<HTMLElement>('[data-entry]') ?? scroll.querySelector<HTMLElement>('[data-focus]') ?? foot.querySelector<HTMLElement>('[data-focus]');
+  const entryOf = () => scroll.querySelector<HTMLElement>('[data-entry]') ?? scroll.querySelector<HTMLElement>('[data-focus]');
 
   const host: PaneHost = {
     rerender: () => rerender(),
@@ -104,7 +124,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
       const target = k ? pane.querySelector<HTMLElement>(`[data-key="${CSS.escape(k)}"]`) : entryOf();
       if (target) app.focus(target);
     },
-    setup: !!setup,
+    setup: false,
   };
   const panes: Record<SectionId, Pane> = {
     account: accountPane(host),
@@ -115,6 +135,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     apps: appsPane(host),
     theme: themePane(),
     performance: performancePane(host),
+    features: featuresPane(host),
     start: startPane(),
     home: homePane(),
     tv: tvPane(),
@@ -127,7 +148,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
         'div.sec',
         { 'data-section': sec.id },
         h('span.sec-icon', { html: icon(sec.icon, 28) }),
-        h('span.sec-label', setup ? (sec.setupLabel ?? sec.label) : sec.label),
+        h('span.sec-label', sec.label),
         h('span.sec-value'),
       ),
       { group: 'sections', key: `sec-${sec.id}`, isDefault: sec.id === current, onFocus: () => show(sec.id), onOk: () => enter(sec.id) },
@@ -146,40 +167,25 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
 
   function paintValues() {
     sections.forEach((sec, i) => {
-      let { text, warn } = sec.value();
-      if (setup && sec.id === 'account' && text === 'Not signed in') text = 'Optional';
+      const { text, warn } = isOff(sec) ? { text: 'Off', warn: false } : sec.value();
       const v = rows[i].querySelector<HTMLElement>('.sec-value')!;
       v.textContent = text;
       v.classList.toggle('is-warn', !!warn);
     });
   }
 
-  function paintFoot() {
-    if (!setup) return;
-    const i = setup.steps.indexOf(current);
-    const next = sections.find((s) => s.id === setup.steps[i + 1]);
-    replace(
-      foot,
-      h('span.pane-foot-note', `Step ${i + 1} of ${setup.steps.length} · changes save at once`),
-      h(
-        'div.pane-foot-actions',
-        button('Back to checklist', { icon: 'back', small: true, key: 'foot-back', onOk: () => app.pop() }),
-        button(next ? `Next: ${next.id === 'stores' ? 'Stores' : (next.setupLabel ?? next.label)}` : 'Done', {
-          icon: next ? 'chevRight' : 'check',
-          small: true,
-          primary: true,
-          key: 'foot-next',
-          onOk: () => (next ? enter(next.id) : app.pop()),
-        }),
-      ),
-    );
-  }
-
   function rerender() {
-    replace(scroll, panes[current].render());
-    paintFoot();
+    const sec = sections.find((s) => s.id === current)!;
+    replace(scroll, isOff(sec) ? featureOffPane(sec.feature!, sec.label, () => turnOnHere(sec)) : panes[current].render());
     paintValues();
     if (inPane) app.refocus();
+  }
+
+  /** Turn on, in a switched-off section: the feature on, then straight into its setup (this section, once live). */
+  function turnOnHere(sec: Section) {
+    const first = turnOn(sec.feature!);
+    shown = null;
+    enter(SETUP_SECTION[first] ?? sec.id);
   }
 
   function show(id: SectionId) {
@@ -193,7 +199,6 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
   function enter(id: SectionId) {
     if (shown === id) current = id;
     show(id);
-    setup?.onVisit(id);
     const target = entryOf();
     if (target) app.focus(target);
   }
@@ -201,18 +206,18 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
   show(current);
 
   const el = h(
-    `div.screen.screen--base.settings${setup ? '.settings--setup' : ''}`,
+    'div.screen.screen--base.settings',
     h(
       'div.set-head',
-      h('h1.page-title', setup ? 'Set up your Home screen' : 'Launcher settings'),
-      h('span.set-hint', setup ? 'First run · Back returns to the checklist' : 'Back closes · changes save at once'),
+      h('h1.page-title', 'Launcher settings'),
+      h('span.set-hint', 'Back closes · changes save at once'),
     ),
     list,
     pane,
   );
 
   const screen: Screen = {
-    label: setup ? 'First run · Settings' : 'Launcher settings',
+    label: 'Launcher settings',
     pillAtTop: true,
     el,
     defaultFocus: () => (inPane ? entryOf() : null) ?? rowOf(current),
@@ -223,7 +228,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
       pane.classList.toggle('is-live', inPane);
       rows.forEach((r) => r.classList.toggle('is-active', inPane && r.dataset.section === current));
     },
-    onText: (ch) => !!panes[current].onText?.(ch),
+    onText: (ch) => live() && !!panes[current].onText?.(ch),
     onKey(key, f) {
       if (!f) return false;
       if (list.contains(f)) {
@@ -238,9 +243,11 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
         }
         return false;
       }
-      if (panes[current].onKey?.(key, f)) return true;
+      if (live() && panes[current].onKey?.(key, f)) return true;
       if (key === 'back') {
-        if (!panes[current].back?.()) app.focus(rowOf(current));
+        if (live() && panes[current].back?.()) return true;
+        if (opts.backCloses) app.pop();
+        else app.focus(rowOf(current));
         return true;
       }
       if (key === 'left') {

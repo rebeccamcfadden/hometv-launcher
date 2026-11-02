@@ -1230,6 +1230,15 @@
   gap: 16px;
   margin-top: 14px;
 }
+/* F14: Movies, TV Shows and Search with TMDB account off, where the page is this state alone. */
+.needs-tmdb {
+  padding-top: 120px;
+}
+.search > .needs-tmdb {
+  position: absolute;
+  top: 150px;
+  left: var(--safe-x);
+}
 .inline-err {
   display: flex;
   align-items: center;
@@ -2571,6 +2580,11 @@
   font-size: 18px;
   color: var(--text-2);
 }
+/* F14: a feature that needs another one that is off: no control, just why. */
+.feat-blocked {
+  font-size: 20px;
+  color: var(--text-3);
+}
 /* Every control starts at the same x, so ↑/↓ go row by row (controls of different widths made the D-pad skip one). */
 .perf-ctl {
   flex: none;
@@ -2682,6 +2696,79 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+/* F28: one page. The checklist starts wide; → opens a step's panel on the same page and the checklist shrinks to a
+   column of tabs on the left, as wide as Launcher settings' sections. */
+.setup-main {
+  transition: width var(--slow) ease;
+}
+.setup-title {
+  transition: font-size var(--slow) ease;
+}
+.setup--open .setup-main {
+  width: 470px;
+}
+.setup--open .setup-title {
+  font-size: 38px;
+}
+.setup--open :is(.setup-lead, .setup-help, .setup-start-note) {
+  display: none;
+}
+.setup--open .cl-rows {
+  gap: 8px;
+  margin-top: 30px;
+}
+.setup--open .cl-row {
+  min-height: 78px;
+  gap: 18px;
+  padding: 0 20px;
+}
+.setup--open .cl-row :is(.lr-value, .status, .lr-icon) {
+  display: none;
+}
+.setup--open .setup-start {
+  margin-top: 28px;
+}
+/* The tab whose panel shows: lit while focus is in the panel, as Launcher settings' section is. */
+.cl-row.is-active {
+  background: rgba(var(--tint-rgb), 0.1);
+  border-color: var(--line-strong);
+}
+/* A feature's setup under Features (F14): indented, smaller, no number. */
+.setup--open .cl-sub {
+  min-height: 62px;
+  margin-left: 40px;
+}
+.cl-sub .lr-title {
+  font-size: 22px;
+}
+.cl-sub-icon {
+  flex: none;
+  display: inline-flex;
+  width: 44px;
+  justify-content: center;
+  color: var(--text-2);
+}
+.cl-sub-icon.is-done {
+  color: var(--good);
+}
+.lrow.is-focused .cl-sub-icon.is-done {
+  color: var(--on-accent);
+}
+/* Start's help: the features First run switches off because they aren't set up. */
+.setup-help-off {
+  margin-top: 16px;
+  color: var(--star);
+}
+.setup-panel {
+  top: 100px;
+}
+/* Wide, there is no panel (.set-pane's display: flex would otherwise win). */
+.screen--setup:not(.setup--open) .setup-panel {
+  display: none;
+}
+.setup-panel.is-opening {
+  animation: fade-in var(--slow) ease-out;
 }
 .cl-user {
   display: flex;

@@ -1,4 +1,5 @@
 import { net } from './net';
+import { featureOn, settings } from './settings';
 
 // Phone notes (BACKLOG.md, Phone notes): each phone shares a note to a "Send to TV" Shortcut, which posts its text to
 // the TV over the home network with a pairing code. The TV looks each new line up on TMDB and adds it to that
@@ -69,12 +70,7 @@ export const notes = {
   setOn(v: boolean) {
     on = v;
     // Off: the TV stops listening, and a note being imported stops with it.
-    if (!v) {
-      clearInterval(timer);
-      clearTimeout(finishTimer);
-      importing = null;
-      finished = null;
-    }
+    if (!v) stop();
     emit();
   },
   code: () => code,
@@ -124,7 +120,8 @@ export const notes = {
    * the pill says so. One import at a time: in this mock, a send during an import is dropped (the TV queues it).
    */
   simulate(list: string, lines: number, misses: NoteAsk[]) {
-    if (!on || importing) return;
+    // F14: with Phone notes off in Features the TV isn't listening at all.
+    if (!on || importing || !featureOn('notes')) return;
     clearTimeout(finishTimer);
     finished = null;
     importing = { list, done: 0, total: lines };
@@ -160,3 +157,18 @@ function finish(f: Finished) {
     emit();
   }, FINISHED_MS);
 }
+
+/** Stops listening: a note being imported stops, and the pill goes. */
+function stop() {
+  clearInterval(timer);
+  clearTimeout(finishTimer);
+  importing = null;
+  finished = null;
+}
+
+// F14: Phone notes switched off in Features (or TMDB account, which it needs) stops it as its own switch does.
+settings.on(() => {
+  if (featureOn('notes') || (!importing && !finished)) return;
+  stop();
+  emit();
+});

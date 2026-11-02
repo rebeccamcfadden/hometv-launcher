@@ -2,7 +2,7 @@ import { app, type Screen } from '../core/app';
 import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { net, SAVED_AT } from '../core/net';
-import { deg, settings } from '../core/settings';
+import { deg, featureOn, settings } from '../core/settings';
 import { placeById } from '../data/places';
 import { attachWeather } from '../core/weatherfx';
 import { HOME_APPS, OTHER_APPS } from '../data/services';
@@ -87,6 +87,11 @@ export function homeScreen(): Screen {
   });
   const forecast = h('div.home-forecast');
   const paintWeather = () => {
+    // F14: Weather off, Home shows no weather at all and fetches none.
+    const on = featureOn('weather');
+    weather.style.display = on ? '' : 'none';
+    forecast.style.display = on ? '' : 'none';
+    if (!on) return;
     const p = placeById(settings.get().place);
     if (net.get() === 'offline-empty') {
       replace(weather, h('div.weather-none', h('span', { html: icon('wifiOff', 28) }), 'Weather unavailable offline'));

@@ -11,6 +11,8 @@ export type ThemeFont = 'theme' | 'system';
 export type CardShadows = 'on' | 'focus' | 'off';
 export type BackdropPicture = 'photo' | 'plain';
 export type TimeOfDay = 'sun' | 'day' | 'night';
+/** Launcher settings › Features (F14): what the launcher runs at all. */
+export type FeatureId = 'tmdb' | 'notes' | 'prices' | 'weather';
 
 interface Saved {
   motion: Motion;
@@ -39,6 +41,8 @@ interface Saved {
   focusGlow: boolean;
   backdropPicture: BackdropPicture;
   movingDetails: boolean;
+  /** Launcher settings › Features (F14): each feature on or off; off, it never starts. */
+  features: Record<FeatureId, boolean>;
 }
 
 const KEY = 'cleanyourtv-preview-settings-v2';
@@ -63,13 +67,20 @@ const defaults = (): Saved => ({
   focusGlow: true,
   backdropPicture: 'photo',
   movingDetails: false,
+  // F14 (the project lead, 2026-11-02): every feature starts on; First run switches off any whose setup isn't finished
+  // when it ends (setup.ts, featureSetUp).
+  features: { tmdb: true, notes: true, prices: true, weather: true },
 });
 
 function load(): Saved {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const saved = { ...defaults(), ...(JSON.parse(raw) as Partial<Saved>) };
+      const raw2 = JSON.parse(raw) as Partial<Saved>;
+      const d = defaults();
+      const features = { ...d.features };
+      for (const id of Object.keys(features) as FeatureId[]) if (typeof raw2.features?.[id] === 'boolean') features[id] = raw2.features[id];
+      const saved = { ...d, ...raw2, features };
       // Seasonal · Nature was removed (2026-11-01): a TV that had it shows Vector art, as the launcher's ThemeStore does.
       if ((saved.theme as string) === 'seasonal-nature') saved.theme = 'seasonal-vector';
       // Time of day (F29): anything but Day or Night, an older or odd value, follows the sun, as ThemeStore reads it.
@@ -128,6 +139,51 @@ export const FONT_LABELS: Record<ThemeFont, string> = { theme: 'Theme font', sys
 export const SHADOW_LABELS: Record<CardShadows, string> = { on: 'On', focus: 'Focused card only', off: 'Off' };
 export const BACKDROP_LABELS: Record<BackdropPicture, string> = { photo: 'Photo', plain: 'Plain colour' };
 export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = { sun: 'Follow the sun', day: 'Day', night: 'Night' };
+
+/**
+ * Launcher settings › Features (F14, the project lead 2026-11-01; four since her review of 2026-11-02: Pick for me goes\n * with TMDB account and the lists, Themes are always there): one build, with each feature switched on or off at
+ * run time; a feature switched off never starts (no network calls, no pages, no settings section). The TV build reads
+ * the same switches from household.json and a pushed config.json (`features`), as a family install sets them. A
+ * feature that needs another is off while that one is.
+ */
+export const FEATURES: { id: FeatureId; label: string; sub: string; off: string; needs?: FeatureId }[] = [
+  {
+    id: 'tmdb',
+    label: 'TMDB account',
+    sub: 'Movies, TV Shows and Search, your TMDB lists, and the Account section',
+    off: 'Movies, TV Shows and Search say they need a TMDB account',
+  },
+  {
+    id: 'notes',
+    label: 'Phone notes',
+    sub: 'Send a watch list from a phone to the TV',
+    off: 'The TV doesn’t listen for notes, and no import pill shows',
+    needs: 'tmdb',
+  },
+  {
+    // The project lead, 2026-11-02: "Price lookup" (was Prices). Off, the Stores and price keys pages say so.
+    id: 'prices',
+    label: 'Price lookup',
+    sub: 'Rent and buy prices for the stores you tick, from Watchmode and Movie of the Night',
+    off: 'Rent and Buy still show where, without a price; Stores and the price keys say it is off',
+  },
+  {
+    id: 'weather',
+    label: 'Weather',
+    sub: 'Today, tomorrow and the hourly strip on Home, from Open-Meteo',
+    off: 'No weather on Home or in quick settings',
+  },
+];
+
+/** Whether a feature runs: switched on, and so is the one it needs. */
+export function featureOn(id: FeatureId): boolean {
+  const f = FEATURES.find((x) => x.id === id)!;
+  return data.features[id] && (!f.needs || featureOn(f.needs));
+}
+
+export function setFeature(id: FeatureId, on: boolean) {
+  settings.set({ features: { ...data.features, [id]: on } });
+}
 
 /** A temperature kept in °C, shown in the chosen unit: "14°". */
 export function deg(c: number): string {

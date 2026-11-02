@@ -744,6 +744,9 @@ it is built.
 - Launcher settings in the new UI: the split (05-settings A) and every pane are built in the launcher (M9, see
   [From M1](#from-m1)). Home row apps (with reordering) has no design; the prototype's is a stand-in.
 - Removing a recent search.
+- Launcher settings › Features (F14, 2026-11-01): built in the prototype without a Figma frame, for the project lead's
+  approval. The launcher's Features page and its `features` keys in household.json and a pushed config.json come after
+  the package rename (F8); a feature switched off must not start (no receivers, jobs or network calls).
 - Voice search.
 - Progress on started titles.
 - The Sort chip on Movies and TV Shows (F4): built as a small button like Filters, with a dropdown; no Figma frame.

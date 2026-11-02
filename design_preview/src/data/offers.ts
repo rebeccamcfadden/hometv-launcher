@@ -1,5 +1,5 @@
 import type { Offer, OfferType, Quality, ServiceId, Title } from '../types';
-import { settings } from '../core/settings';
+import { featureOn, settings } from '../core/settings';
 import { DEFAULT_PRICE_SOURCE, HOME_APPS, PICK_SERVICES, PICK_STORES, PRICE_SOURCE, SERVICES } from './services';
 
 // Offer rules. Prices are Swedish kronor, as the launcher's real catalogue has them (V2 Phase 2): a rent or buy
@@ -51,10 +51,21 @@ export const subscribedCount = () => settings.get().services.length;
 
 /**
  * The title's offers the household can use: every one except those of stores unticked in Launcher settings, whose
- * prices are left out everywhere.
+ * prices are left out everywhere. With Prices off (F14) every offer comes without its prices: Rent and Buy still say
+ * where.
  */
 export const offersOf = (t: Title) =>
-  t.offers.filter((o) => !SERVICES[o.service].store || SERVICES[o.service].free || settings.get().stores.includes(o.service));
+  t.offers
+    .filter((o) => !SERVICES[o.service].store || SERVICES[o.service].free || settings.get().stores.includes(o.service))
+    .map((o) => (featureOn('prices') || !o.prices ? o : unpriced(o)));
+
+/** One price-less copy per offer, so an offer stays the same object between calls. */
+const unpricedCopies = new WeakMap<Offer, Offer>();
+function unpriced(o: Offer): Offer {
+  let c = unpricedCopies.get(o);
+  if (!c) unpricedCopies.set(o, (c = { ...o, prices: undefined }));
+  return c;
+}
 
 export const isIncludedOffer = (o: Offer) => o.type === 'free' || (o.type === 'sub' && isSubscribed(o.service));
 

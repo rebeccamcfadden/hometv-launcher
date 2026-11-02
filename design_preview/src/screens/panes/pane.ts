@@ -1,5 +1,6 @@
 import type { Key } from '../../core/app';
 import { h, type Child } from '../../core/dom';
+import type { FeatureId } from '../../core/settings';
 
 /**
  * One section's pane in the Launcher settings split (V2 design 05-settings A with the r2 panes). Made once per
@@ -22,8 +23,10 @@ export interface PaneHost {
   rerender(): void;
   /** Focuses the element with this key in the pane, after a rerender. */
   focusKey(key: string): void;
-  /** First run's cut-down split, where some wording differs. */
+  /** First run, where some wording differs. */
   setup: boolean;
+  /** First run's Features step: a feature was just turned on; its setup opens next (F14). */
+  openSetup?(id: FeatureId): void;
 }
 
 export const paneHead = (eyebrow: string, title: string, sub?: string) => [
