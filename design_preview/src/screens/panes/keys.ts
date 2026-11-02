@@ -104,7 +104,9 @@ function pane(host: PaneHost, mode: KeysMode): Pane {
         if (key === 'right') return true;
         if (key === 'down') host.focusKey(rowAt < list.length - 1 ? `key-${list[rowAt + 1]}` : below());
         else if (key === 'up') {
-          if (rowAt > 0) host.focusKey(`key-${list[rowAt - 1]}`);
+          // The first row: ↑ goes on to what is above it (the feature's switch, F34).
+          if (rowAt === 0) return false;
+          host.focusKey(`key-${list[rowAt - 1]}`);
         } else return false;
         return true;
       }

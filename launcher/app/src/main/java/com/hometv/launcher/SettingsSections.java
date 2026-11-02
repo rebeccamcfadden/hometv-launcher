@@ -24,7 +24,9 @@ final class SettingsSections {
         List<SettingsSection> out = new ArrayList<>();
         // A launcher built with a TMDB key (the TV's own, F16, or the build's) has Phone notes; Features can switch
         // Account and Phone notes off, and then they say so.
-        boolean tmdbKey = home != null && home.data().accounts.available();
+        // The TV's key, not the account: with TMDB account switched off the launcher runs without one, and Phone notes'
+        // section must still be there to say it is off (F34).
+        boolean tmdbKey = home != null && !ApiKeys.get(ctx).key(KeyRules.Id.TMDB).isEmpty();
         if (home != null) {
             out.add(new FeatureOffSection(new AccountKeyGate(new AccountSection(home), home), Features.Feature.TMDB));
         }

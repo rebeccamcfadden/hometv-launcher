@@ -112,6 +112,23 @@ final class FeaturePrefs {
         // The household chose: First run no longer switches it back on.
         if (firstRunOff.remove(f)) e.putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff));
         e.apply();
+        stopNotesIfOff(ctx);
+    }
+
+    /**
+     * Phone notes switched off, or TMDB account it needs (F34): the inbox closes at once, not at the next rebuild, so the
+     * TV stops taking notes as its pane says Off. Switching it on rebuilds the launcher, which opens it ({@link #runs}).
+     */
+    private static void stopNotesIfOff(Context ctx) {
+        if (!Features.inboxAllowed(live(ctx))) Notes.get(ctx).allow(false);
+    }
+
+    /**
+     * Whether a feature runs in the launcher now: as it was built, except Phone notes, which runs while its inbox is
+     * allowed (switched off since, it closed at once). What a Turn on's rebuild is judged by.
+     */
+    static boolean runs(Context ctx, Features.Feature f) {
+        return f == Features.Feature.NOTES ? Notes.get(ctx).on() : Features.isOn(f);
     }
 
     /**
@@ -126,6 +143,7 @@ final class FeaturePrefs {
                 .putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff))
                 .putLong(Config.SETTINGS_REVISION_KEY, p.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1)
                 .apply();
+        stopNotesIfOff(ctx);
     }
 
     /**

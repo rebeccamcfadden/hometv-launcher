@@ -951,7 +951,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             buildList();
             return;
         }
-        if (FirstRunRules.setupNeedsRebuild(f, Features.isOn(f))) {
+        if (FirstRunRules.setupNeedsRebuild(f, FeaturePrefs.runs(ctx, f))) {
             pendingPanel = id;
             activity.recreate();
             return;
@@ -1070,7 +1070,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         LauncherSettingsPage.changed(ctx);
         // Phone notes on with TMDB account, which already runs: its inbox still needs the rebuild (F34).
         String firstId = FirstRunRules.firstSetupOf(first, tmdbKeyTab);
-        if (first != f && FirstRunRules.turnOnNeedsRebuild(first, Features.isOn(first), f, Features.isOn(f))
+        if (first != f && FirstRunRules.turnOnNeedsRebuild(first, FeaturePrefs.runs(ctx, first), f, FeaturePrefs.runs(ctx, f))
                 && firstId != null && sections.containsKey(firstId)) {
             pendingPanel = firstId;
             activity.recreate();

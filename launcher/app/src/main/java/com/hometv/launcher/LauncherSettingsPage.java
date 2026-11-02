@@ -427,7 +427,7 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         // First run's Price keys tab is API keys here (F16).
         String setup = FirstRunRules.inSettings(FirstRunRules.setupOf(first));
         String target = setup != null && section(setup) != null ? setup : current;
-        if (FirstRunRules.turnOnNeedsRebuild(first, Features.isOn(first), f, Features.isOn(f))) {
+        if (FirstRunRules.turnOnNeedsRebuild(first, FeaturePrefs.runs(ctx, first), f, FeaturePrefs.runs(ctx, f))) {
             current = target;
             inPane = true;
             activity.recreate();

@@ -141,7 +141,8 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     setup: false,
     // Features' overview (F34): OK on a feature opens the section that sets it up, where its switch is.
     openSetup(id) {
-      const to = SETUP_SECTION[id];
+      // Price lookup's switch is on Stores (API keys holds the TMDB key too), as LauncherSettingsPage.openFeature.
+      const to = id === 'prices' ? 'stores' : SETUP_SECTION[id];
       if (!to) return;
       shown = null;
       enter(to);
