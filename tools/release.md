@@ -70,7 +70,6 @@ ends.
 | `hometv-launcher-v<versionName>.apk` | The public APK, signed with the release key |
 | `version.json` | `versionCode`, `versionName`, the APK's name and SHA-256, the certificate's SHA-256, `minSdk`, the commit |
 | `SHA256SUMS` | Each file's SHA-256, in `sha256sum` format |
-
-The family installer (Family install step 4) will be added to these files when it is written.
+| `family-install.ps1` | The family installer, stamped with this release's tag, APK name, APK SHA-256 and certificate SHA-256, so it installs exactly this APK ([family-install.md](family-install.md)) |
 
 The files are also kept in `%USERPROFILE%\.hometv\releases\v<versionName>\`.

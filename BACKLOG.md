@@ -759,6 +759,15 @@ In order, one PR each:
    - ends with them switching debugging off, and checks the port is closed.
 
    Tested against fake TVs, as the shell scripts are.
+   **Built (first part):** `tools/family-install.ps1` and [tools/family-install.md](tools/family-install.md), with
+   `tools/release.ps1` stamping each release's copy with its tag, APK name, APK SHA-256 and certificate SHA-256. In
+   it: the pinned downloads and the signer check, the walk-through, connect or pair, the model and SDK checks, the
+   backup and `undo.txt` (undone with `-Restore`, so no second script), the Google TV Wi-Fi owner check (no override)
+   and Cast warning, the CVTE path, the Home guard with a Home-press check, First run opened last after a fresh install,
+   and debugging off with the port check.
+   Changed: the last-resort command fetches the file with `irm -OutFile` and runs it, since `| iex` closes the window
+   at the end; keys go in on the TV (F16), so the installer keeps none. Still to come: key helpers by brand, the
+   updates grant (step 5), the debloat (step 6).
 5. **In-app updates.** The launcher reads the latest GitHub Release once a day while Home shows, downloads the APK,
    and Android asks to install it; shown in Launcher settings › About. Needs `REQUEST_INSTALL_PACKAGES` (justified in
    the PR) and "install unknown apps" for the launcher, which the installer grants with `appops` while ADB is on and
