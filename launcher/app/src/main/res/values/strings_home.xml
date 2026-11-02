@@ -20,6 +20,15 @@
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
+    <!-- F35: All Apps' folder for the apps the TV came with that aren't watch apps (TvUtilities). -->
+    <string name="tv_utilities">TV Utilities</string>
+    <!-- The folder tile's name under it: "TV Utilities · 13". -->
+    <string name="tv_utilities_tile">TV Utilities · %1$d</string>
+    <string name="tv_utilities_note">Apps that came with the TV. Hold OK on one to move it back to All Apps.</string>
+    <string name="tv_utilities_move_in">Move to TV Utilities</string>
+    <string name="tv_utilities_move_out">Move out of TV Utilities</string>
+    <string name="tv_utilities_moved_in">Moved %1$s to TV Utilities</string>
+    <string name="tv_utilities_moved_out">Moved %1$s out of TV Utilities</string>
     <string name="back">Back</string>
 
     <string name="weather">Weather</string>

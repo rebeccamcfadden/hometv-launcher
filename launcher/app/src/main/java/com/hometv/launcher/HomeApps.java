@@ -23,14 +23,19 @@ import java.util.Set;
 final class HomeApps {
     private static final String PREFS = "home_apps";
     private static final String KEY_ORDER = "order";
+    /** F35: apps moved into or out of All Apps' TV Utilities folder by hand (TvUtilities.encode). */
+    private static final String KEY_UTILITY_MOVES = "utility_moves";
 
     static final class App {
         final String pkg;
         final String label;
+        /** It came on the TV's system image (also when updated since). */
+        final boolean system;
 
-        App(String pkg, String label) {
+        App(String pkg, String label, boolean system) {
             this.pkg = pkg;
             this.label = label;
+            this.system = system;
         }
     }
 
@@ -38,6 +43,7 @@ final class HomeApps {
     private final List<String> dockApps;
     private final Set<String> hidden;
     private final Map<String, String> labels;
+    private Set<String> watchApps;
 
     HomeApps(Context ctx, Config cfg) {
         this.ctx = ctx;
@@ -73,23 +79,54 @@ final class HomeApps {
     /** Every app with a TV entry point, then the phone apps that have none, as one list sorted by name. */
     List<App> all() {
         PackageManager pm = ctx.getPackageManager();
-        Map<String, String> found = new LinkedHashMap<>();
+        Map<String, App> found = new LinkedHashMap<>();
         for (String category : new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER}) {
             Intent main = new Intent(Intent.ACTION_MAIN).addCategory(category);
             for (ResolveInfo ri : pm.queryIntentActivities(main, 0)) {
                 String pkg = ri.activityInfo.packageName;
                 if (found.containsKey(pkg) || hidden.contains(pkg) || pkg.equals(ctx.getPackageName())) continue;
-                found.put(pkg, label(pkg, ri.loadLabel(pm)));
+                boolean system = (ri.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+                found.put(pkg, new App(pkg, label(pkg, ri.loadLabel(pm)), system));
             }
         }
-        List<App> out = new ArrayList<>();
-        for (Map.Entry<String, String> e : found.entrySet()) out.add(new App(e.getKey(), e.getValue()));
+        List<App> out = new ArrayList<>(found.values());
         Collator collator = Collator.getInstance();
         Collections.sort(out, (a, b) -> {
             int c = collator.compare(a.label, b.label);
             return c != 0 ? c : a.pkg.compareTo(b.pkg);
         });
         return out;
+    }
+
+    /** The packages of these apps that are in All Apps' TV Utilities folder (TvUtilities). */
+    Set<String> utilities(List<App> list) {
+        Map<String, Boolean> moves = utilityMoves();
+        Set<String> out = new HashSet<>();
+        for (App a : list) {
+            if (TvUtilities.inFolder(a.pkg, a.system, moves.get(a.pkg), watchApps())) out.add(a.pkg);
+        }
+        return out;
+    }
+
+    /** Moves an app into the folder or out of it by hand; a move the rule would make anyway is forgotten. */
+    void moveUtility(App a, boolean in) {
+        boolean byRule = TvUtilities.byRule(a.pkg, a.system, watchApps());
+        String text = TvUtilities.encode(TvUtilities.move(utilityMoves(), a.pkg, in, byRule));
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_UTILITY_MOVES, text).apply();
+    }
+
+    private Map<String, Boolean> utilityMoves() {
+        return TvUtilities.decode(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getString(KEY_UTILITY_MOVES, null));
+    }
+
+    private Set<String> watchApps() {
+        if (watchApps == null) {
+            List<String> providers = new ArrayList<>();
+            for (WatchProviders.Entry e : new WatchProviders().all()) providers.addAll(e.packages);
+            watchApps = TvUtilities.watchApps(providers);
+        }
+        return watchApps;
     }
 
     /** The app's name, or the one app_labels gives it. */

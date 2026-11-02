@@ -1,0 +1,96 @@
+// F35 (b): the TV Utilities folder in All Apps (Rebecca, 2026-11-02: on for every TV, no switch). The rule is the same
+// on every brand, so no maker's app list is needed: an app goes in when it came with the TV and isn't a watch app; an
+// app the household installed goes in only when a TV maker made it. It is only about where an app came from, so an app
+// on Home's row stays in (Rebecca, F35 Q4). Hold OK moves an app in or out by hand, and that choice wins. On the TV:
+// TvUtilities (unit-tested).
+
+/**
+ * Apps people watch or shop in, which stay in All Apps even when the TV came with them: every package in the launcher's
+ * WatchProviders (the streaming services and stores of both regions), then Google's own that aren't providers.
+ */
+export const WATCH_APPS = new Set([
+  'com.netflix.ninja',
+  'com.amazon.amazonvideo.livingroom',
+  'com.disney.disneyplus',
+  'com.wbd.stream',
+  'com.hbo.hbonow',
+  'com.apple.atve.androidtv.appletv',
+  'com.hulu.livingroomplus',
+  'com.google.android.videos',
+  'com.google.android.youtube.tv',
+  'com.viaplay.android',
+  'com.skyshowtime.skyshowtime.google',
+  'se.svt.android.svtplay',
+  'se.tv4.tv4playtab',
+  'com.sfanytime.tv',
+  'tv.wuaki.apptv',
+  'com.tivo.android.comhem',
+  'com.teliasonera.telia.playplus',
+  'com.upst.hayu',
+  'com.mubi',
+  'com.crunchyroll.crunchyroid',
+  'com.britbox.tv',
+  'com.curiosity.curiositystream.androidtv',
+  'tv.pluto.android',
+  'com.plexapp.android',
+  'com.cineasterna.tv',
+  'com.peacocktv.peacockandroid',
+  'com.cbs.ott',
+  'com.tubitv',
+  'com.roku.web.trc',
+  'air.com.vudu.air.DownloaderTablet',
+  // Not providers: Home row's seed (AppRow.STREAMING) and Google's watch and shop apps.
+  'com.spotify.tv.android',
+  'com.netflix.mediaclient',
+  'com.google.android.youtube.tvkids',
+  'com.google.android.youtube.tvmusic',
+  'com.android.vending',
+  'com.google.android.play.games',
+]);
+
+/** Package prefixes of TV makers and their chip vendors: their apps are TV utilities even when not on the system image. */
+export const VENDOR_PREFIXES = [
+  'com.tcl.',
+  'com.sony.',
+  'com.philips.',
+  'org.droidtv.',
+  'com.tpvision.',
+  'com.hisense.',
+  'com.jamdeo.',
+  'com.vidaa.',
+  'com.cvte.',
+  'com.xiaomi.',
+  'com.mitv.',
+  'com.mediatek.',
+  'com.mstar.',
+  'com.realtek.',
+  'com.rtk.',
+  'com.amlogic.',
+  'com.droidlogic.',
+  'com.skyworth.',
+  'com.coocaa.',
+  'com.vestel.',
+  'com.toshiba.',
+  'com.sharp.',
+  'jp.co.sharp.',
+  'com.panasonic.',
+  'com.haier.',
+  'com.changhong.',
+  'com.konka.',
+];
+
+export type Moved = 'in' | 'out';
+
+export interface AppFacts {
+  pkg: string;
+  /** It came on the TV's system image (also when updated since). */
+  system: boolean;
+  /** Moved in or out by hand (hold OK). */
+  moved?: Moved;
+}
+
+export function isTvUtility(a: AppFacts): boolean {
+  if (a.moved) return a.moved === 'in';
+  if (WATCH_APPS.has(a.pkg)) return false;
+  return a.system || VENDOR_PREFIXES.some((p) => a.pkg.startsWith(p));
+}

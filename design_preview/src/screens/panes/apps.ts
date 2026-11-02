@@ -2,11 +2,11 @@ import { app, type Key } from '../../core/app';
 import { h } from '../../core/dom';
 import { focusable } from '../../core/focus';
 import { settings } from '../../core/settings';
-import { HOME_APPS, HOME_ROW_MAX, OTHER_APPS, type HomeApp } from '../../data/services';
+import { HOME_ROW_MAX } from '../../data/services';
+import { TV_APPS as ALL, type TvApp as HomeApp } from '../../data/apps';
 import { icon } from '../../ui/icons';
 import { paneHead, type Pane, type PaneHost } from './pane';
 
-const ALL = [...HOME_APPS, ...OTHER_APPS];
 const byId = (id: string) => ALL.find((a) => a.id === id)!;
 
 /**
@@ -62,7 +62,7 @@ export function appsPane(host: PaneHost): Pane {
   return {
     render() {
       const on = row();
-      const off = ALL.filter((a) => !on.includes(a.id));
+      const off = ALL.filter((a) => !on.includes(a.id)).sort((a, b) => a.name.localeCompare(b.name));
       return [
         ...paneHead('Home', 'Home row apps', `The apps on Home’s row, which holds ${HOME_ROW_MAX}. OK on one picks it up to move it.`),
         h('div.grp-h', `On Home · ${on.length} of ${HOME_ROW_MAX}`),
@@ -72,7 +72,7 @@ export function appsPane(host: PaneHost): Pane {
           moving ? '← → moves it · OK puts it down · ↓ takes it off Home · Back cancels' : 'OK picks an app up, as Hold OK → Move does on Home.',
         ),
         h('div.grp-h', 'Other apps'),
-        off.length ? h('div.ha-row', off.map((a, i) => tile(a, false, i))) : h('div.pane-note', 'Every app is on Home.'),
+        off.length ? h('div.ha-row.ha-row--wrap', off.map((a, i) => tile(a, false, i))) : h('div.pane-note', 'Every app is on Home.'),
         h('div.pane-note', 'OK on another app adds it at the end of the row, ready to place.'),
       ];
     },

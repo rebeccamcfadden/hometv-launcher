@@ -1,6 +1,7 @@
 import { HOME_APPS, SE_PICK_SERVICES, SE_PICK_STORES, US_PICK_SERVICES, US_PICK_STORES } from '../data/services';
 import type { ServiceId } from '../types';
 import type { ThemeId } from './theme';
+import type { Moved } from './tvUtilities';
 
 // Launcher settings that the prototype acts on, saved at once in localStorage as the TV saves them.
 
@@ -49,6 +50,8 @@ interface Saved {
   movingDetails: boolean;
   /** Launcher settings › Features (F14): each feature on or off; off, it never starts. */
   features: Record<FeatureId, boolean>;
+  /** F35: apps moved into or out of All Apps' TV Utilities folder by hand (hold OK), by app id. */
+  utilityMoves: Record<string, Moved>;
 }
 
 const KEY = 'cleanyourtv-preview-settings-v2';
@@ -90,6 +93,7 @@ const defaults = (): Saved => ({
   // F14 (the project lead, 2026-11-02): every feature starts on; First run switches off any whose setup isn't finished
   // when it ends (setup.ts, featureSetUp).
   features: { tmdb: true, notes: true, prices: true, weather: true },
+  utilityMoves: {},
 });
 
 function load(): Saved {
