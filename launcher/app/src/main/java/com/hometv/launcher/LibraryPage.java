@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -110,7 +111,16 @@ final class LibraryPage extends Screen {
     private static final long LOADING_MAX_MS = 8000;
     private long loadingSince;
     private final Runnable renderLater = this::renderIfShown;
-    private final Runnable artWindow = this::updateArtWindow;
+    private boolean artWindowQueued;
+    private final ViewTreeObserver.OnPreDrawListener artBeforeDraw = new ViewTreeObserver.OnPreDrawListener() {
+        @Override
+        public boolean onPreDraw() {
+            view.getViewTreeObserver().removeOnPreDrawListener(this);
+            artWindowQueued = false;
+            updateArtWindow();
+            return true;
+        }
+    };
     private CatalogState.Lists state = CatalogState.Lists.ONLINE;
     /** The lists have loaded once: later titles fill in where they are, without the skeletons. */
     private boolean settled;
@@ -224,20 +234,22 @@ final class LibraryPage extends Screen {
         grid.setOrientation(LinearLayout.VERTICAL);
         col.addView(grid, below(22));
         col.addView(new View(ctx), new LinearLayout.LayoutParams(1, Ui.px(PAGE_END)));
-        // F15 P1-2: the grid's art follows the screen. Scrolling moves the window; a new layout (a rebuilt grid,
-        // the page shown again) works it out after the layout pass; a page off screen lets go of all of it.
+        // F15 P1-2: the grid's art follows the screen. Scrolling moves the window at once; a new layout (a rebuilt
+        // grid, the page shown again) works it out just before that layout is drawn, so cached art is in its frame.
         box.setOnScrollChangeListener((v, x, y, oldX, oldY) -> updateArtWindow());
-        grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> postArtWindow());
+        grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> queueArtWindow());
         root.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
-                postArtWindow();
+                queueArtWindow();
             }
 
             @Override
             public void onViewDetachedFromWindow(View v) {
-                grid.removeCallbacks(artWindow);
-                for (int r = 0; r < grid.getChildCount(); r++) rowArt(grid.getChildAt(r), false);
+                if (!artWindowQueued) return;
+                artWindowQueued = false;
+                ViewTreeObserver o = v.getViewTreeObserver();
+                if (o.isAlive()) o.removeOnPreDrawListener(artBeforeDraw);
             }
         });
 
@@ -802,9 +814,11 @@ final class LibraryPage extends Screen {
         }
     }
 
-    private void postArtWindow() {
-        grid.removeCallbacks(artWindow);
-        grid.post(artWindow);
+    /** Works the window out once, just before the next frame is drawn (after its layout). */
+    private void queueArtWindow() {
+        if (artWindowQueued || !view.isAttachedToWindow()) return;
+        artWindowQueued = true;
+        view.getViewTreeObserver().addOnPreDrawListener(artBeforeDraw);
     }
 
     private static void rowArt(View row, boolean on) {
