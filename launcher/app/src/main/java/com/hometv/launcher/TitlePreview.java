@@ -1,6 +1,7 @@
 package com.hometv.launcher;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
 import android.graphics.drawable.PaintDrawable;
@@ -43,6 +44,13 @@ final class TitlePreview extends Screen {
     private static final float OVERHANG = 40;
 
     private enum Tab { OVERVIEW, EPISODES, WHERE, CAST, MORE }
+
+    private static final String STATE_ID = "id";
+    private static final String STATE_KIND = "kind";
+    private static final String STATE_NAME = "name";
+    private static final String STATE_YEAR = "year";
+    private static final String STATE_ART = "art";
+    private static final String STATE_MORE = "more";
 
     private final Context ctx;
     private final Router router;
@@ -107,6 +115,41 @@ final class TitlePreview extends Screen {
     static TitlePreview create(Context ctx, Router router, Title t, boolean moreLike) {
         router.data().household.pushViewed(t.id);
         return new TitlePreview(ctx, router, t, new FrameLayout(ctx), moreLike);
+    }
+
+    /**
+     * F26: the title, enough of it to open the preview again when the activity is made again (the catalogue may know
+     * it only from the search that found it), and whether it opened on More like this.
+     */
+    Bundle saved() {
+        Bundle b = new Bundle();
+        b.putString(STATE_ID, t.id);
+        b.putString(STATE_KIND, t.kind.name());
+        b.putString(STATE_NAME, t.name);
+        b.putInt(STATE_YEAR, t.year);
+        b.putString(STATE_ART, t.art);
+        b.putBoolean(STATE_MORE, startTab == Tab.MORE);
+        return b;
+    }
+
+    /**
+     * The preview {@link #saved} describes, as the catalogue knows the title now or else as a summary its details
+     * fill in; null when the Bundle doesn't name one. Not recorded as viewed again.
+     */
+    static TitlePreview reopen(Context ctx, Router router, Bundle b) {
+        String id = b.getString(STATE_ID);
+        String name = b.getString(STATE_NAME);
+        Kind kind = null;
+        for (Kind k : Kind.values()) if (k.name().equals(b.getString(STATE_KIND))) kind = k;
+        if (id == null || name == null || kind == null) return null;
+        Title t = router.data().catalog.get(id);
+        if (t == null) {
+            Title.Draft d = new Title.Draft(id, kind, name);
+            d.year = b.getInt(STATE_YEAR);
+            d.art = b.getString(STATE_ART);
+            t = d.build();
+        }
+        return new TitlePreview(ctx, router, t, new FrameLayout(ctx), b.getBoolean(STATE_MORE));
     }
 
     private TitlePreview(Context ctx, Router router, Title t, FrameLayout root, boolean moreLike) {

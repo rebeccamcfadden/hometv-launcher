@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.SoundEffectConstants;
@@ -43,6 +44,9 @@ final class LibraryPage extends Screen {
     private static final String KEY_FILTERS = "filters";
     private static final String KEY_SORT = "sort";
     private static final String KEY_CLEAR = "clear-filters";
+    private static final String STATE_FILTERS = "filters";
+    private static final String STATE_LIST = "list";
+    private static final String STATE_SORT = "sort";
     /** What each page keeps while it is left (F2): the process's, so a TV turned on starts with none. */
     private static final LibraryRecall RECALL = new LibraryRecall(SystemClock::elapsedRealtime);
     /** Whether the screen-off receiver that clears {@link #RECALL} is registered (once a process, on the app). */
@@ -406,6 +410,22 @@ final class LibraryPage extends Screen {
     /** The page is left (another tab, an app, standby): keep its choices, and when. */
     private void markLeft() {
         RECALL.left(kind, filters.save(), listKey, sort);
+    }
+
+    /** F26: the filters, the list chip and the sort, as {@link LibraryRecall} keeps them. */
+    @Override
+    void save(Bundle out) {
+        out.putString(STATE_FILTERS, filters.save());
+        out.putString(STATE_LIST, listKey);
+        out.putString(STATE_SORT, sort.name());
+    }
+
+    @Override
+    void restore(Bundle in) {
+        filters.restore(in.getString(STATE_FILTERS));
+        String list = in.getString(STATE_LIST);
+        if (list != null) listKey = list;
+        for (LibrarySort s : LibrarySort.values()) if (s.name().equals(in.getString(STATE_SORT))) sort = s;
     }
 
     /**

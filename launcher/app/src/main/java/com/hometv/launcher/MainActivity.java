@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
@@ -56,6 +57,17 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     /** Survive a rebuild with First run open: the checklist reopens with the same steps done. */
     private static final String KEY_FIRST_RUN = "first_run_opened";
     private FirstRunPage firstRun;
+    /**
+     * F26: where the household was (the nav's page, its focus and choices, the title previews over it), so Back from
+     * an app returns there even when Android ended the process meanwhile; Comeback says how long it holds.
+     */
+    private static final String KEY_PLACE = "place";
+    private static final String PLACE_AT = "at";
+    private static final String PLACE_SLEPT = "slept";
+    private static final String PLACE_TAB = "tab";
+    private static final String PLACE_FOCUS = "focus";
+    private static final String PLACE_PAGE = "page";
+    private static final String PLACE_OVER = "over";
     private static final String MENU_INPUTS = "Inputs";
     private static final String MENU_NETWORK = "Wi-Fi";
     private static final String MENU_QUICK = "Quick settings";
@@ -238,7 +250,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         // F3: holding OK on a title card, wherever one shows, opens the title menu.
         shell.setLongOk(v -> TitleMenu.open(this, v));
         refreshNav();
-        shell.goTab(Screen.Tab.HOME, false);
+        if (!restorePlace(savedInstanceState)) shell.goTab(Screen.Tab.HOME, false);
 
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         if (cm != null) cm.registerDefaultNetworkCallback(networkCallback);
@@ -365,8 +377,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         tries.add(new Intent(Intent.ACTION_SEARCH).setPackage(youtube).putExtra(SearchManager.QUERY, query));
         tries.add(new Intent(Intent.ACTION_VIEW,
                 Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(query))).setPackage(youtube));
-        // A link YouTube claims but refuses moves on to the next way in, as Watch does (tryStart).
+        // A link YouTube claims but refuses moves on to the next way in, as Watch does (tryStart). Each starts in a
+        // cleared task of its own, as title links do: a YouTube already running would otherwise come to the front and
+        // drop the trailer, and Back from the trailer would walk YouTube's own screens instead of coming back (F26).
         for (Intent i : tries) {
+            i.addFlags(Services.LINK_FLAGS);
             if (i.resolveActivity(getPackageManager()) != null && tryStart(i)) return;
         }
         shell.toast(getString(R.string.router_no_trailer));
@@ -614,11 +629,76 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
+        savePlace(out);
         if (firstRun != null && shell.has(firstRun)) out.putStringArrayList(KEY_FIRST_RUN, firstRun.opened());
         if (settingsPage != null && shell.has(settingsPage)) {
             out.putString(KEY_SETTINGS_SECTION, settingsPage.section());
             out.putBoolean(KEY_SETTINGS_IN_PANE, settingsPage.inPane());
         }
+    }
+
+    /** F26: the nav's page with its focus and choices, and the title previews straight over it (KEY_PLACE). */
+    private void savePlace(Bundle out) {
+        List<Screen> stack = shell.screens();
+        if (stack.isEmpty() || stack.get(0).tab == null) return;
+        Screen page = stack.get(0);
+        Bundle place = new Bundle();
+        place.putLong(PLACE_AT, SystemClock.elapsedRealtime());
+        place.putLong(PLACE_SLEPT, slept());
+        place.putString(PLACE_TAB, page.tab.name());
+        // A restored item still on its way (Comeback's pending focus) is where the household was, not the fallback.
+        place.putString(PLACE_FOCUS, page.pendingFocusKey != null ? page.pendingFocusKey : page.lastFocusKey);
+        Bundle state = new Bundle();
+        page.save(state);
+        place.putBundle(PLACE_PAGE, state);
+        ArrayList<Bundle> over = new ArrayList<>();
+        for (int i = 1; i < stack.size() && stack.get(i) instanceof TitlePreview; i++) {
+            over.add(((TitlePreview) stack.get(i)).saved());
+        }
+        place.putParcelableArrayList(PLACE_OVER, over);
+        out.putBundle(KEY_PLACE, place);
+        SavedPlace.write(this, place, getTaskId());
+    }
+
+    /**
+     * F26: the place savePlace kept, when it is still fresh (Comeback): its page with its choices and focus, and the
+     * previews over it. From the saved Bundle, else from disk (SavedPlace), since Android may bring Home back without
+     * its Bundle. False when there is none, and Home starts as usual. A Home press still starts Home again:
+     * onNewIntent comes after this.
+     */
+    private boolean restorePlace(Bundle saved) {
+        Bundle place = saved != null ? saved.getBundle(KEY_PLACE) : SavedPlace.read(this, getTaskId());
+        if (place == null || !Comeback.fresh(place.getLong(PLACE_AT), place.getLong(PLACE_SLEPT),
+                SystemClock.elapsedRealtime(), slept())) {
+            return false;
+        }
+        Screen.Tab tab = null;
+        for (Screen.Tab t : Screen.Tab.values()) if (t.name().equals(place.getString(PLACE_TAB))) tab = t;
+        if (tab == null) return false;
+        Screen page = shell.tab(tab);
+        Bundle state = place.getBundle(PLACE_PAGE);
+        if (state != null) page.restore(state);
+        String focus = place.getString(PLACE_FOCUS);
+        page.lastFocusKey = focus;
+        shell.goTab(tab, false);
+        if (focus != null && !focus.equals(Focus.key(shell.focused()))) page.pendingFocusKey = focus;
+        ArrayList<Bundle> over = place.getParcelableArrayList(PLACE_OVER);
+        if (over == null || over.isEmpty()) return true;
+        // The item focused may not be there yet (a search result TMDB sends again): Back from the preview looks for it
+        // once more, rather than staying on the page's first item.
+        page.lastFocus = null;
+        page.lastFocusKey = focus;
+        for (Bundle b : over) {
+            TitlePreview preview = TitlePreview.reopen(this, this, b);
+            if (preview == null) break;
+            shell.push(preview);
+        }
+        return true;
+    }
+
+    /** How long the TV has slept since it started: the elapsed clock counts sleep, the uptime clock doesn't. */
+    private static long slept() {
+        return SystemClock.elapsedRealtime() - SystemClock.uptimeMillis();
     }
 
     /** Runs r once the stage has been laid out, so dropdowns can hang from their buttons on a cold start. */
@@ -690,6 +770,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStart() {
         super.onStart();
         started = true;
+        // F26: in front again, so the place kept on disk for the trip away is out of date.
+        SavedPlace.forget(this);
         // V2 Phase 2: price lookups only while Home shows; V2 Phase 3: the TMDB account syncs only then too.
         if (data != null) {
             data.catalog.setVisible(true);

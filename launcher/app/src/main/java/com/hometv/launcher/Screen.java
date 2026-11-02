@@ -1,5 +1,6 @@
 package com.hometv.launcher;
 
+import android.os.Bundle;
 import android.view.View;
 
 import java.util.HashMap;
@@ -28,6 +29,11 @@ class Screen {
     final Map<String, View> memory = new HashMap<>();
     View lastFocus;
     String lastFocusKey;
+    /**
+     * F26: the item focused before the activity was made again, not there yet (a grid still loading); the Shell
+     * focuses it when a rebuild brings it, until the first key press.
+     */
+    String pendingFocusKey;
 
     Screen(String label, View view, Layer layer) {
         this.label = label;
@@ -78,5 +84,16 @@ class Screen {
     }
 
     void onFocus(View v) {
+    }
+
+    /**
+     * F26: what a top-level page keeps when the activity is made again, as after Android ended the process while
+     * another app played: its own choices (Search's query, a library page's filters). Nothing by default.
+     */
+    void save(Bundle out) {
+    }
+
+    /** Puts back what {@link #save} wrote, before the page first shows. */
+    void restore(Bundle in) {
     }
 }

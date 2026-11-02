@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.TextAppearanceSpan;
@@ -73,6 +74,9 @@ final class SearchPage extends Screen {
     private static final String GROUP_GRID = "grid";
     private static final String GROUP_FILTERS = "filters";
     private static final String GROUP_GENRES = "genres";
+    private static final String STATE_QUERY = "query";
+    private static final String STATE_FILTER = "filter";
+    private static final String STATE_EXPANDED = "expanded";
 
     private final Context ctx;
     private final Router router;
@@ -300,6 +304,23 @@ final class SearchPage extends Screen {
         memory.clear();
         lastFocus = null;
         lastFocusKey = null;
+    }
+
+    /** F26: the query, the filter chip and whether the full results showed. */
+    @Override
+    void save(Bundle out) {
+        out.putString(STATE_QUERY, query);
+        out.putString(STATE_FILTER, filter.name());
+        out.putBoolean(STATE_EXPANDED, expanded);
+    }
+
+    /** F26: as left, without the panel's slide; TMDB is asked again for the query (its answers are cached). */
+    @Override
+    void restore(Bundle in) {
+        for (SearchIndex.Filter f : FILTERS) if (f.name().equals(in.getString(STATE_FILTER))) filter = f;
+        expanded = in.getBoolean(STATE_EXPANDED);
+        snap = true;
+        setQuery(in.getString(STATE_QUERY, ""));
     }
 
     @Override

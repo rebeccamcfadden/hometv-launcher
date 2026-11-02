@@ -100,6 +100,11 @@ final class Shell {
         return stack.contains(s);
     }
 
+    /** The stack, bottom (the nav's page) first. */
+    List<Screen> screens() {
+        return java.util.Collections.unmodifiableList(stack);
+    }
+
     View focused() {
         return focused;
     }
@@ -154,6 +159,9 @@ final class Shell {
 
     /** The remote's Home on Home: everything over it closes and Home starts again from its first item. */
     void home() {
+        // A restored focus still on its way (F26) must not pull focus off Home, or onto a page left meanwhile.
+        for (Screen s : tabs.values()) s.pendingFocusKey = null;
+        for (Screen s : stack) s.pendingFocusKey = null;
         Screen home = tab(Screen.Tab.HOME);
         home.lastFocus = null;
         home.lastFocusKey = null;
@@ -241,6 +249,14 @@ final class Shell {
     void refocus() {
         Screen s = top();
         if (s == null) return;
+        if (s.pendingFocusKey != null) {
+            View back = Focus.byKey(s.view, s.pendingFocusKey);
+            if (back != null && back.isShown() && Focus.isFocusable(back)) {
+                s.pendingFocusKey = null;
+                focus(back);
+                return;
+            }
+        }
         if (focused != null && focused.isAttachedToWindow() && focused.isShown() && Focus.isInside(s.view, focused)) return;
         focus(restoreTarget(s));
     }
@@ -294,6 +310,8 @@ final class Shell {
     boolean dispatch(KeyEvent e) {
         int code = e.getKeyCode();
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
+        // F26: once the household presses a key, focus is theirs; a restored item turning up later no longer takes it.
+        if (down) for (Screen s : stack) s.pendingFocusKey = null;
         SpatialNav.Dir dir = dirOf(code);
         if (dir != null) {
             if (down) move(dir);

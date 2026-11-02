@@ -560,6 +560,18 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 
 ## From V1 follow-ups
 
+- **Back from an app (F26):** the launcher stays as it was while its process lives. When Android ends the process
+  while the other app plays (usual on a 1 GB TV), the activity comes back from its saved state with the nav's
+  page, its focused item, Search's query, filter and full results, a library page's filters, list chip and sort,
+  and the title previews over it. The saved state lasts an hour (the hour a library page keeps its choices) and
+  standby clears it. A Home press still starts Home again. Not restored: a person page, Pick for me, and the preview's
+  tab and season (it reopens on Overview, or on More like this if it opened there). The place also goes to disk
+  (`SavedPlace`), because Home keeps `stateNotNeeded` and Android may bring it back without its saved state; it is
+  dropped once the launcher is in front again and only read in the same boot, install and Home task, so after a force
+  stop or a crash Home starts on Home. The trailer and title links start in a
+  cleared task of their own, so Back from YouTube's player comes straight back here. Seen on the emulator with Settings
+  as the app and `am kill` as Android; the TV check is Back from a real trailer.
+
 - **Jank on Home's key moves:** the real TV measured 47% janky frames (337 of 712), movement p50 197 ms, response p50
   21 ms. The emulator can't show where that goes: every frame there spends 80–100 ms issuing draw commands,
   about 50 ms even with the backdrop, shades, hero, nav, lower rows, banners and labels all switched off, and
