@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>cleanyourtv · F40 cards side by side</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: #0b0d10;
+        color: #c9d1db;
+        font: 14px/1.4 system-ui, sans-serif;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 10px 16px;
+        border-bottom: 1px solid #1d222a;
+      }
+      header b {
+        color: #f4f5f7;
+      }
+      select {
+        padding: 4px 6px;
+        border: 1px solid #2a303a;
+        border-radius: 6px;
+        color: inherit;
+        background: #14181e;
+        font: inherit;
+      }
+      main {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+        min-height: 0;
+      }
+      figure {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        min-height: 0;
+      }
+      figcaption {
+        padding: 0 2px 6px;
+        color: #8a94a3;
+      }
+      iframe {
+        flex: 1;
+        width: 100%;
+        border: 1px solid #1d222a;
+        border-radius: 8px;
+        background: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <b>F40 · Movies and TV Shows cards</b>
+      <select id="page" title="Which page both sides show">
+        <option value="movies">Movies</option>
+        <option value="tv">TV Shows</option>
+      </select>
+      <select id="right" title="The poster card on the right">
+        <option value="poster">Poster</option>
+        <option value="poster-compact">Poster, name and service only</option>
+      </select>
+      <span>Click a side, then use the arrow keys, Enter and Esc as on the TV. Each side is its own copy of the prototype.</span>
+    </header>
+    <main>
+      <figure>
+        <figcaption>Today: landscape art</figcaption>
+        <iframe id="left" title="Today's cards"></iframe>
+      </figure>
+      <figure>
+        <figcaption id="right-label">Poster</figcaption>
+        <iframe id="right-frame" title="Poster cards"></iframe>
+      </figure>
+    </main>
+    <script type="module">
+      const page = document.getElementById('page');
+      const right = document.getElementById('right');
+      // features=on as well as account=in: a saved TMDB-account-off setting would show the empty state instead of cards.
+      const url = (cards) => `./index.html?devbar=off&features=on&account=in&jump=${page.value}&cards=${cards}`;
+      const load = () => {
+        document.getElementById('left').src = url('landscape');
+        document.getElementById('right-frame').src = url(right.value);
+        document.getElementById('right-label').textContent = right.selectedOptions[0].textContent;
+      };
+      page.addEventListener('change', load);
+      right.addEventListener('change', load);
+      load();
+    </script>
+  </body>
+</html>

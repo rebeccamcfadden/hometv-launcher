@@ -278,6 +278,30 @@
   gap: 50px 20px;
   margin-top: 22px;
 }
+/* F40: poster cards, six to a row across the same 1728 px. */
+.lib-grid--poster {
+  grid-template-columns: repeat(6, 268px);
+  gap: 40px 24px;
+}
+.card--poster .card-art {
+  aspect-ratio: 2 / 3;
+}
+/* No poster (or offline): the landscape art, cropped to the poster's shape around its middle. */
+.card--poster .card-art img.is-crop {
+  object-position: 50% 40%;
+}
+.card--poster .card-name {
+  margin-top: 12px;
+  font-size: 22px;
+}
+.card-service {
+  margin-top: 4px;
+  overflow: hidden;
+  font-size: var(--t-min);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-2);
+}
 .page-end {
   height: 180px;
 }
