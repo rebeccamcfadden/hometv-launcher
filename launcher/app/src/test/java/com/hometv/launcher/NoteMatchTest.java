@@ -151,8 +151,8 @@ public class NoteMatchTest {
     @Test
     public void aDismissedLineIsNeitherListedNorLookedUp() throws Exception {
         NoteMatch.Memory memory = new NoteMatch.Memory();
-        memory.put("Alex", NoteLines.parse("Zzyzx Qq").get(0).key, NoteMatch.DISMISSED);
-        NoteMatch.Plan p = match.plan("Alex", NoteLines.parse("Zzyzx Qq"), memory, new HashSet<String>(), null);
+        memory.put("Rebecca", NoteLines.parse("Zzyzx Qq").get(0).key, NoteMatch.DISMISSED);
+        NoteMatch.Plan p = match.plan("Rebecca", NoteLines.parse("Zzyzx Qq"), memory, new HashSet<String>(), null);
         assertTrue(p.unmatched.isEmpty());
         assertTrue(p.asks.isEmpty());
         assertTrue(asked.isEmpty());
@@ -227,7 +227,7 @@ public class NoteMatchTest {
         answer("movie:Arrival", movie(329865, "Arrival", "2016-11-10", 60));
         NoteMatch.Memory memory = new NoteMatch.Memory();
         List<int[]> steps = new ArrayList<>();
-        NoteMatch.Plan p = match.plan("Alex", NoteLines.parse("☐ Dune\n☐ Arrival\n☐ Zzyzx Qq"), memory,
+        NoteMatch.Plan p = match.plan("Rebecca", NoteLines.parse("☐ Dune\n☐ Arrival\n☐ Zzyzx Qq"), memory,
                 Collections.<String>emptySet(), (done, total) -> steps.add(new int[] {done, total}));
         assertEquals(Arrays.asList("movie:438631", "movie:329865"), p.add);
         assertEquals(Collections.singletonList("Zzyzx Qq"), p.unmatched);
@@ -238,7 +238,7 @@ public class NoteMatchTest {
 
         // The same note again: nothing looked up, nothing added (the household may have taken Dune off on the TV).
         asked.clear();
-        NoteMatch.Plan again = match.plan("alex", NoteLines.parse("☐ Dune\n☐ Arrival\n☐ Zzyzx Qq"), memory,
+        NoteMatch.Plan again = match.plan("rebecca", NoteLines.parse("☐ Dune\n☐ Arrival\n☐ Zzyzx Qq"), memory,
                 Collections.<String>emptySet(), null);
         assertTrue(asked.isEmpty());
         assertTrue(again.add.isEmpty());
@@ -280,12 +280,12 @@ public class NoteMatchTest {
     @Test
     public void memoryRoundTripsThroughJson() throws Exception {
         NoteMatch.Memory m = new NoteMatch.Memory();
-        m.put("Alex", "dune", "movie:438631");
-        m.put("Alex", "zzyzx", "");
+        m.put("Rebecca", "dune", "movie:438631");
+        m.put("Rebecca", "zzyzx", "");
         m.put("Partner", "fargo [tv]", "tv:60622");
         NoteMatch.Memory back = NoteMatch.Memory.fromJson(new JSONObject(m.toJson().toString()));
-        assertEquals("movie:438631", back.get("alex", "dune"));
-        assertEquals("", back.get("ALEX", "zzyzx"));
+        assertEquals("movie:438631", back.get("rebecca", "dune"));
+        assertEquals("", back.get("REBECCA", "zzyzx"));
         assertEquals("tv:60622", back.get("Partner", "fargo [tv]"));
         assertNull(back.get("Partner", "dune"));
     }

@@ -199,7 +199,7 @@ const jumps: [string, string, () => void][] = [
     'Phone notes · a phone sends a note (3 not matched)',
     () => {
       notes.setOn(true);
-      notes.simulate('Alex', 12, [
+      notes.simulate('Rebecca', 12, [
         {
           line: 'Inglorious basterds',
           top: [

@@ -221,8 +221,8 @@ milestones: [docs/rework.md](docs/rework.md).
   takes nothing off, and a title taken off on the TV isn't put back. The list then shows as a chip and is read again.
   Signed out, offline or refused by TMDB, the note waits and is tried after the next send or full sync. The import
   pill (`ImportPill`) sits at the bottom centre of every launcher screen, and on Launcher settings at the top centre
-  beside the title (its pane runs to the bottom edge): "Importing Alex · 6 of 12" with a thin bar, counting every
-  line of the note from the start, then for four seconds "Partner · 8 added" or, in amber, "Alex · 9 added · 3 not matched", "… waiting for the
+  beside the title (its pane runs to the bottom edge): "Importing Rebecca · 6 of 12" with a thin bar, counting every
+  line of the note from the start, then for four seconds "Partner · 8 added" or, in amber, "Rebecca · 9 added · 3 not matched", "… waiting for the
   internet", "… couldn't reach TMDB" or "… waiting for TMDB sign-in"; never focusable, and still with Motion Reduced or
   Off.
 - **Checked on the TV (2026-11-01):** a note sent from this PC and from two iPhones' Shortcuts (Apple Notes) made and

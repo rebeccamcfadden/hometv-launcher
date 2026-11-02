@@ -29,7 +29,7 @@ import java.util.Locale;
  * the Phone notes QR opens, which holds nothing secret) only, from a private, loopback or
  * link-local address only, at most {@link #MAX_BODY} bytes, all of it within {@link #REQUEST_DEADLINE_MS} (JSON at most
  * {@link #MAX_DEPTH} deep). The body is JSON,
- * {@code {"list": "Alex", "text": "…"}}, or the note's text itself with the list in {@code ?list=}. After
+ * {@code {"list": "Rebecca", "text": "…"}}, or the note's text itself with the list in {@code ?list=}. After
  * {@link #MAX_WRONG} wrong codes in a row the inbox refuses everything for {@link #LOCKOUT_MS}. The answer is JSON
  * with a {@code message} for the Shortcut to show. Plain Java over java.net, unit-tested over loopback
  * (NoteInboxTest); nothing is logged.

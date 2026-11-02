@@ -91,7 +91,7 @@ final class NoteWords {
         }
     }
 
-    /** "Importing Alex · 6 of 12", "Partner · 8 added", "Alex · 9 added · 3 not matched", … */
+    /** "Importing Rebecca · 6 of 12", "Partner · 8 added", "Rebecca · 9 added · 3 not matched", … */
     static String pill(Pill p, Texts t) {
         switch (p.kind) {
             case IMPORTING:

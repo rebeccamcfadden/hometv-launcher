@@ -51,9 +51,9 @@ public class NoteInboxTest {
 
     @Test
     public void jsonNoteGoesToItsList() throws IOException {
-        NoteInbox.Reply r = handle(post(CODE, "application/json", "{\"list\":\"Alex\",\"text\":\"☐ Dune\\n☑ Moon\"}"));
+        NoteInbox.Reply r = handle(post(CODE, "application/json", "{\"list\":\"Rebecca\",\"text\":\"☐ Dune\\n☑ Moon\"}"));
         assertEquals(200, r.status);
-        assertEquals(List.of("Alex|☐ Dune\n☑ Moon"), got);
+        assertEquals(List.of("Rebecca|☐ Dune\n☑ Moon"), got);
     }
 
     @Test

@@ -6,7 +6,7 @@ as a chip in Movies and TV Shows.
 
 What happens: you share the note to a **Send to TV** Shortcut. It posts the note's text to the TV over your home Wi-Fi.
 The TV looks each new line up on TMDB and adds the title to your list. If the account has no list with your name yet,
-the TV makes a private one. A small pill at the bottom of the TV says "Importing Alex · 3 of 12", then how many were
+the TV makes a private one. A small pill at the bottom of the TV says "Importing Rebecca · 3 of 12", then how many were
 added. A line that doesn't name a title exactly is asked about on the TV: **Launcher settings → Phone notes** lists
 it under Last sends, and OK on it shows TMDB's three best answers to pick from.
 
@@ -41,7 +41,7 @@ the shortcut changes.
    household's shortcut link (`note_shortcut_url` in `tv.properties`, below); without it, make the shortcut once (next section) or
    build a simple one by hand.
 3. Tap **Pair this phone**. Shortcuts opens and asks whose list this phone's notes go to: type your list's name as it
-   should show on the TV (`Alex`). It keeps the TV's address, the code and the name in a small file on the phone
+   should show on the TV (`Rebecca`). It keeps the TV's address, the code and the name in a small file on the phone
    (iCloud Drive › Shortcuts › `Send to TV.txt`) and says "Paired with the TV".
 
 After **New code** on the TV, or to send to another list, scan the QR and tap **Pair this phone** again. The first
@@ -154,7 +154,7 @@ It reads "Get text from *Shortcut Input*"; leave it.
    | Method | **POST** (tap GET to change it) |
    | Headers | **Add new header**: Key `Authorization`, Value `Bearer K7QM-4PXT`: the word `Bearer`, one space, then your TV's code |
    | Request Body | **JSON** |
-   | Field 1 | **Add new field → Text**: Key `list`, Value your list's name as it should show on the TV, typed: `Alex` |
+   | Field 1 | **Add new field → Text**: Key `list`, Value your list's name as it should show on the TV, typed: `Rebecca` |
    | Field 2 | **Add new field → Text**: Key `text`. For the value, tap the empty box, then tap the blue **Text** variable (from Get Text from Input) in the bar above the keyboard |
 
    Field 2 must show a blue variable chip, not the typed word "Text"; otherwise the TV gets the word instead of the
@@ -180,7 +180,7 @@ Android phone yet.
 
 Scan the QR in the TV's Phone notes pane with the phone's camera and open the link: on Android the page shows these
 settings first. Type whose list this phone's notes go to; the page fills in the **URL** (`http://192.168.1.50:8765/
-notes?list=Alex`), the **Authorization** value (`Bearer` and the TV's code) and a one-line **script** that shows
+notes?list=Rebecca`), the **Authorization** value (`Bearer` and the TV's code) and a one-line **script** that shows
 the TV's answer, each with a **Copy** button. Then, in HTTP Shortcuts:
 
 1. **⋮ → Global Variables → + → Static Variable**: name it `note`, tick **Allow Receiving Value from Share Dialog**,

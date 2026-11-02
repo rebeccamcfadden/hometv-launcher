@@ -14,9 +14,9 @@ import android.widget.TextView;
 /**
  * The import pill (design_preview/README.md, Import pill; src/ui/importPill.ts): while a phone's note is looked up, a
  * small pill at the bottom centre of whatever launcher screen shows, between the guide line's ends and inside
- * title-safe: an accent dot, "Importing Alex · 6 of 12" and a thin bar. Launcher settings' pane runs to the bottom
+ * title-safe: an accent dot, "Importing Rebecca · 6 of 12" and a thin bar. Launcher settings' pane runs to the bottom
  * edge, so there it sits at the top centre, on the title's line, between the title and the hint. At the end, for a few seconds, "Partner ·
- * 8 added" with a tick, or in amber "Alex · 9 added · 3 not matched" or "Alex · waiting for the internet". The
+ * 8 added" with a tick, or in amber "Rebecca · 9 added · 3 not matched" or "Rebecca · waiting for the internet". The
  * offline pill's shape (StateUi); amber only for a problem. Never focusable, never in the way: it sits over the stage
  * and takes no keys. Motion Reduced or Off drops its slide. What it says is {@link Notes#pill}'s; colours are read from
  * {@link Ui} each time it is drawn, so a theme restyles it.
