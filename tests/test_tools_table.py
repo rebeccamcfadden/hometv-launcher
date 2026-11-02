@@ -11,7 +11,7 @@ Two kinds of file are not expected in the table, and neither is a judgement call
   * README_STATS, README_FEATURED and README_CARD draw the README's card image in CI, not something
     a reader runs; the card's alt text is what points at them.
   * GEN_TABLES writes the README's TV tables and brand line after a merge, a maintainer's step; the
-    markers around those tables name it, and so do CONTRIBUTING.md and MAINTAINER.md.
+    markers around those tables name it, and so does CONTRIBUTING.md.
 
 A PowerShell twin (.ps1) is listed by the row of its .sh script, as the table's theme.sh row already
 serves theme.ps1. Its suffix is trimmed before the lookup, so a twin without its script is reported.
