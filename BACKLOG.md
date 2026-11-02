@@ -603,9 +603,9 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   - **Home's refresh after the first frame:** reading the apps and inputs back (PackageManager and TvInputManager
     binder calls) after the first frame on return to Home, not before it. Return to Home p50 79 ms against 97 ms, but
     main alone read 86 to 97 ms across runs: needs two runs or more of each before it counts.
-- **Benches compare noisily on memory:** `bench.py` reads PSS once, after the idle wait, so a garbage collection just
-  before or after moves it by up to 15 MB (25 to 40 MB on one build, settling at 23 MB on the emulator). Wanted: a GC
-  first, or the lowest of a few readings, before PSS is compared between builds.
+- **Memory in benches:** one PSS reading moves by up to 15 MB with garbage collection (25 to 40 MB on one build,
+  settling at 23 MB on the emulator), so the single readings of the 2026-11-02 benches above can't be compared.
+  `bench.py` now reports the median of three readings, 5 s apart (#96).
 - **Accessibility in the prototype:** the launcher now reports the current preview tab and nav section as selected
   and reads Pick for me's fields with their value; the prototype has no ARIA roles or states to match.
 
