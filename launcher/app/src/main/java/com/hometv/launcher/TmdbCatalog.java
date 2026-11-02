@@ -342,9 +342,12 @@ final class TmdbCatalog implements Catalog {
             Season result = s;
             main.post(() -> {
                 Title cur = known.get(id);
-                if (closed || result == null || cur == null || result.episodes.isEmpty()) return;
-                Title.Draft d = new Title.Draft(cur);
-                List<Season> seasons = new ArrayList<>(cur.seasons);
+                if (closed || result == null || result.episodes.isEmpty()) return;
+                // Forgotten since the screen got its copy (CatalogBound): the season still goes to that screen; the
+                // title loads again from the screen's own want.
+                Title base = cur != null ? cur : t;
+                Title.Draft d = new Title.Draft(base);
+                List<Season> seasons = new ArrayList<>(base.seasons);
                 boolean replaced = false;
                 for (int i = 0; i < seasons.size(); i++) {
                     if (seasons.get(i).n == n) {
@@ -354,10 +357,13 @@ final class TmdbCatalog implements Catalog {
                 }
                 if (!replaced) return;
                 d.seasons = seasons;
-                known.put(id, d.build());
-                stored(id);
-                changed();
-                done.accept(known.get(id));
+                Title next = d.build();
+                if (cur != null) {
+                    known.put(id, next);
+                    stored(id);
+                    changed();
+                }
+                done.accept(next);
             });
         });
     }
@@ -367,8 +373,19 @@ final class TmdbCatalog implements Catalog {
     /** Only a preview asks for one title: grids and search never do (the household's titles are kept fresh). */
     @Override
     public void prices(Title t, boolean preview, Consumer<Title> done) {
+        if (!preview) return;
         Title k = known.get(t.id);
-        if (preview && k != null) wantPrices(k, true, done);
+        if (k != null) {
+            touch(t.id);
+            wantPrices(k, true, done);
+            return;
+        }
+        // Forgotten since the preview got its copy (CatalogBound): load it again (its availability with it), then ask.
+        List<Consumer<Title>> list = waiting.get(t.id);
+        if (list == null) waiting.put(t.id, list = new ArrayList<>());
+        list.add(back -> wantPrices(back, true, done));
+        failedAt.remove(t.id);
+        load(t.id, true);
     }
 
     @Override
