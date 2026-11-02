@@ -77,10 +77,14 @@ final class TmdbApi {
         return "/person/" + personId + "?append_to_response=combined_credits&language=" + LANGUAGE;
     }
 
-    /** Movies, shows and people matching the query, the first page (20). */
+    /** Movies, shows and people matching the query, one page of 20 (TMDB counts pages from 1). */
     static String search(String query) {
+        return search(query, 1);
+    }
+
+    static String search(String query, int page) {
         return "/search/multi?query=" + encode(query.trim().toLowerCase(Locale.ROOT)) + "&include_adult=false&language="
-                + LANGUAGE + "&page=1";
+                + LANGUAGE + "&page=" + Math.max(1, page);
     }
 
     /** The most popular titles of one TMDB genre, with enough votes for the score to mean something. */

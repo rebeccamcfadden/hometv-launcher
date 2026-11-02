@@ -62,6 +62,8 @@ final class SearchPage extends Screen {
     private static final int ROW_REVEAL = 96;
     /** How long typing must pause before TMDB is asked, and how many letters it takes. */
     private static final int DEBOUNCE_MS = 300;
+    /** A later page of results that hasn't come in this long may be asked for again. */
+    private static final int RETRY_PAGE_MS = 10_000;
     private static final int REMOTE_MIN = 2;
     private static final int GENRE_MIN = 3;
 
@@ -114,6 +116,18 @@ final class SearchPage extends Screen {
     /** What TMDB found for {@link #foundFor}, merged into the results while the query is still that. */
     private Catalog.Found found;
     private String foundFor;
+    /** The later page of results on its way (SearchPages), 0 for none, and when it was asked. */
+    private int askingPage;
+    private long askedAt;
+    /**
+     * The card whose focus asked for the last page: a rebuild that puts focus back on it (the answer redrawing the
+     * grid) asks nothing, so only a move onto another last-row card asks for the next page.
+     */
+    private String askedFromKey;
+    /** The cards the results show for the query and filter (0 for none), or -1 with no query: SearchPages.askOnItsOwn. */
+    private int visibleCount = -1;
+    /** The full results' card keys in grid order, to tell when focus reaches the last row. */
+    private final List<String> gridKeys = new ArrayList<>();
     /** The popular titles of a genre typed in full, and the genre asked for last. */
     private List<Title> genreFound;
     private String genreFoundName, genreAsked;
@@ -292,6 +306,19 @@ final class SearchPage extends Screen {
         return expanded ? firstResult() : keyA;
     }
 
+    /**
+     * On the full results' last row, the next page of TMDB's results is asked for (SearchPages). Focus anywhere else
+     * (another row, a filter chip) clears the card that asked last, so coming back to it asks again; a redraw that puts
+     * focus back on that card does not.
+     */
+    @Override
+    void onFocus(View v) {
+        boolean inGrid = expanded && GROUP_GRID.equals(Focus.group(v)) && Focus.isInside(body, v);
+        boolean onLast = inGrid && SearchPages.onLastRow(gridKeys.indexOf(Focus.key(v)), gridKeys.size(), COLUMNS);
+        askedFromKey = SearchPages.guard(askedFromKey, onLast);
+        if (onLast) askMorePages(Focus.key(v));
+    }
+
     /** Coming back from a title or another tab: Recent searches, My list and the offers may have changed. */
     @Override
     void onShow() {
@@ -313,6 +340,8 @@ final class SearchPage extends Screen {
         view.removeCallbacks(askRemote);
         found = null;
         foundFor = null;
+        askingPage = 0;
+        askedFromKey = null;
         genreAsked = null;
         memory.clear();
         lastFocus = null;
@@ -396,6 +425,8 @@ final class SearchPage extends Screen {
             if (!q.equals(query)) return;
             found = f;
             foundFor = q;
+            askingPage = 0;
+            askedFromKey = null;
             if (shell.top() == this) render();
         });
         String genre = results == null ? null : SearchIndex.strongGenre(results);
@@ -413,6 +444,36 @@ final class SearchPage extends Screen {
         Catalog.Found f = query.equals(foundFor) ? found : null;
         if (f == null && genreFound == null) return null;
         return new SearchIndex.Remote(f, genreFoundName, genreFound);
+    }
+
+    /**
+     * Asks TMDB for the query's next page, merged in when it comes while the query is still the one asked. fromKey is
+     * the last-row card whose focus asked; null when the page is asked on its own (SearchPages.askOnItsOwn): nothing
+     * shows for the query and filter, or the page before showed no new card. A page that never came may be asked again
+     * after a while.
+     */
+    private void askMorePages(String fromKey) {
+        Catalog.Found f = query.equals(foundFor) ? found : null;
+        int page = SearchPages.next(f);
+        if (page == 0 || !StateUi.online(ctx) || TmdbGate.need(data.accounts) != TmdbGate.Need.NONE) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (askingPage == page && now - askedAt < RETRY_PAGE_MS) return;
+        if (fromKey != null && !SearchPages.asks(askedFromKey, fromKey, askingPage != 0)) return;
+        String q = query;
+        askingPage = page;
+        askedAt = now;
+        if (fromKey != null) askedFromKey = fromKey;
+        data.catalog.searchPage(q, page, more -> {
+            if (askingPage == page) askingPage = 0;
+            // Only the page after the ones merged: a late answer after the results went back to page one is dropped.
+            if (!q.equals(foundFor) || found == null || more.page != found.page + 1) return;
+            int before = visibleCount;
+            found = Catalog.Found.merge(found, more);
+            if (shell.top() != this) return;
+            render();
+            // A page that showed nothing new leaves no new card to reach: the next one is asked for at once.
+            if (SearchPages.askOnItsOwn(before, visibleCount, found)) view.post(() -> askMorePages(null));
+        });
     }
 
     private void expand() {
@@ -504,6 +565,7 @@ final class SearchPage extends Screen {
             results = OfflineSearch.filter(results, nothingSaved ? java.util.Collections.emptySet() : saved);
         }
         hasMatches = results != null && results.hasMatches();
+        visibleCount = query.isEmpty() ? -1 : 0;
 
         // The bar.
         if (query.isEmpty()) {
@@ -581,6 +643,7 @@ final class SearchPage extends Screen {
         } else {
             List<SearchIndex.Hit> items = index.items(results, filter, data.services.subscribed(),
                     data.services.installed());
+            visibleCount = items.size();
             body.addView(resultsHead(items.size(), offline), below(0));
             if (items.isEmpty()) {
                 TextView note = Ui.text(ctx, 22, Ui.TEXT_2, Ui.REGULAR);
@@ -602,6 +665,12 @@ final class SearchPage extends Screen {
         setInert(panel, expanded);
         setInert(viewport, !query.isEmpty() && hasMatches && !expanded);
         slide();
+
+        // Nothing shows for the query and filter, so no card can reach the last row: TMDB's later pages are asked for
+        // on their own, up to the cap (askMorePages keeps the offline and account guards and one request at a time).
+        if (visibleCount == 0 && SearchPages.askOnItsOwn(0, 0, query.equals(foundFor) ? found : null)) {
+            view.post(() -> askMorePages(null));
+        }
 
         if (!refocus || shell.top() != this) return;
         View f = shell.focused();
@@ -894,6 +963,7 @@ final class SearchPage extends Screen {
         LinearLayout grid = Kit.unclip(new LinearLayout(ctx));
         grid.setOrientation(LinearLayout.VERTICAL);
         int shown = expanded ? items.size() : Math.min(items.size(), PREVIEW_ROWS * COLUMNS);
+        gridKeys.clear();
         LinearLayout row = null;
         for (int i = 0; i < shown; i++) {
             if (i % COLUMNS == 0) {
@@ -902,6 +972,7 @@ final class SearchPage extends Screen {
                 grid.addView(row, below(i == 0 ? 0 : ROW_GAP));
             }
             View card = resultCard(items.get(i), i == 0);
+            gridKeys.add(Focus.key(card));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(CARD_W), ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.leftMargin = i % COLUMNS == 0 ? 0 : Ui.px(COLUMN_GAP);
             row.addView(card, lp);
