@@ -53,11 +53,20 @@ function HomeNow {
 function Claims([string]$p) { return @(@($s.claims) | Where-Object { (Pkg $_) -eq $p }).Count -gt 0 }
 function Shell([string]$c) {
     $s.shell = @($s.shell) + $c
-    if ($c -match '^getprop (\S+)$') { $v = $s.props.($Matches[1]); if ($null -eq $v) { return '' }; return "$v" }
+    # The installer's StrictMode reaches this script: a missing property must not throw.
+    if ($c -match '^getprop (\S+)$') { $v = $s.props.PSObject.Properties[$Matches[1]]; if ($null -eq $v) { return '' }; return "$($v.Value)" }
     if ($c -eq 'getprop') { return (($s.props.PSObject.Properties | ForEach-Object { "[$($_.Name)]: [$($_.Value)]" }) -join "`n") }
     if ($c -eq 'pm list packages' -or $c -eq 'pm list packages -f') { return ((@($s.packages) | ForEach-Object { "package:$_" }) -join "`n") }
     if ($c -eq 'pm list packages -d') { return ((@($s.disabled) | ForEach-Object { "package:$_" }) -join "`n") }
     if ($c -like 'settings list *') { return 'name=value' }
+    if ($c -like 'for p in *TV_INPUT_HARDWARE*') {
+        if ($s.hw_fails) { return '' }
+        $names = ($c -replace '^for p in (.*?); do.*$', '$1') -split ' '
+        return ((@($names | Where-Object { @($s.tv_hw) -contains $_ }) + 'hw-check-done') -join "`n")
+    }
+    if ($c -like 'cmd package query-activities --brief -a android.intent.action.VIEW*') {
+        return ((@(@($s.input_apps) | ForEach-Object { "$_/.Main" }) + '==' + @(@($s.settings_apps) | ForEach-Object { "$_/.Settings" }) + 'handlers-done') -join "`n")
+    }
     if ($c -like 'cmd package query-activities*') { return ((@($s.claims) | Where-Object { Enabled (Pkg $_) }) -join "`n") }
     if ($c -match '^cmd package resolve-activity .*category\.HOME (\S+)$') {
         $p = $Matches[1]; return "priority=0`n" + (@($s.claims) | Where-Object { (Pkg $_) -eq $p } | Select-Object -First 1)
@@ -182,6 +191,13 @@ class StaticTest(unittest.TestCase):
         self.assertEqual(url, f"https://dl.google.com/android/repository/platform-tools_r{version}-win.zip")
         self.assertRegex(sha, r"^[0-9a-f]{64}$")
 
+    def test_core_packages_match_disable_ps1(self):
+        disable = (ROOT / "tools" / "disable.ps1").read_text(encoding="utf-8")
+        for name in ("coreRe", "coreOk"):
+            theirs = re.search(r"\$" + name + r" = '([^']+)'", disable).group(1)
+            ours = re.search(r"\$" + name[0].upper() + name[1:] + r" = '([^']+)'", self.text).group(1)
+            self.assertEqual(theirs, ours, name)
+
     def test_never_uninstalls(self):
         self.assertNotRegex(self.text, r"pm uninstall|'uninstall'|\buninstall-")
 
@@ -218,6 +234,7 @@ class FamilyInstallTest(unittest.TestCase):
             "set_home_works": True,
             "wifi": "", "log": [], "shell": [], "reboots": 0, "pushed": False,
             "refuse_disable": [], "enable_fails": False,
+            "tv_hw": [], "input_apps": [], "settings_apps": [], "hw_fails": False,
         }
         state.update(overrides)
         return state
@@ -488,6 +505,90 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 2, proc.stdout)
         self.assertIn("debugging is still on", proc.stdout)
         self.assertEqual(end["preferred"], OURS)
+
+    # ---- Debloat from a list (step 6) ----
+
+    BLOAT = ["com.example.bloat1", "com.example.bloat2", "com.example.bloat3", "com.example.bloat4",
+             "com.example.bloat5", "com.example.bloat6"]
+
+    def debloat_tv(self, **overrides):
+        return self.tv(packages=self.tv()["packages"] + self.BLOAT + ["com.netflix.ninja", "com.example.hdmi",
+                                                                      "com.example.inputs", "com.example.setup"],
+                       **overrides)
+
+    def write_list(self, names):
+        path = self.base / "debloat.txt"
+        path.write_text("# Test TV\n" + "".join(f"{n}  # why\n" for n in names), encoding="utf-8")
+        return path
+
+    def disables(self, end):
+        return [c.split()[-1] for c in end["shell"] if c.startswith("pm disable-user")]
+
+    def test_list_is_applied_after_the_handover_in_batches(self):
+        names = self.BLOAT + ["com.example.not.installed"]
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(names)))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER] + self.BLOAT)
+        self.assertEqual(end["preferred"], OURS)
+        undo = (self.backup_dir() / "undo.txt").read_text()
+        for name in self.BLOAT:
+            self.assertIn(f"undo pm enable --user 0 {name}", undo)
+        # First run still opens last, after the debloat.
+        self.assertIn("action.FIRST_RUN", end["shell"][-1])
+
+    def test_a_list_with_a_core_package_changes_nothing(self):
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["com.android.shell"])))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("core packages", proc.stdout)
+        self.assert_tv_untouched(end)
+
+    def test_a_list_with_a_bad_line_changes_nothing(self):
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["pm uninstall x"])))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assert_tv_untouched(end)
+
+    def test_what_the_family_may_use_stays_by_default(self):
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["com.netflix.ninja", "com.example.bloat1"])))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertNotIn("com.netflix.ninja", self.disables(end))
+        self.assertIn("com.example.bloat1", self.disables(end))
+
+    def test_input_and_settings_apps_stay(self):
+        state = self.debloat_tv(tv_hw=["com.example.hdmi"], input_apps=["com.example.inputs"], settings_apps=["com.example.setup"])
+        names = ["com.example.hdmi", "com.example.inputs", "com.example.setup", "com.example.bloat1"]
+        proc, end = self.run_installer(state, "-List", str(self.write_list(names)))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER, "com.example.bloat1"])
+
+    def test_a_guard_that_cannot_run_switches_nothing_off(self):
+        proc, end = self.run_installer(self.debloat_tv(hw_fails=True), "-List", str(self.write_list(self.BLOAT)))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER])
+
+    def test_setup_that_owns_the_wifi_stays(self):
+        state = self.debloat_tv(wifi=f"cname={SETUPWRAITH}")
+        state["packages"] = state["packages"] + [SETUPWRAITH]
+        proc, end = self.run_installer(state, "-List", str(self.write_list([SETUPWRAITH, "com.example.bloat1"])))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertNotIn(SETUPWRAITH, self.disables(end))
+
+    def test_a_batch_that_moves_home_is_switched_back_on(self):
+        state = self.debloat_tv(hijacker="com.example.setup/.Recovery", hijack_when_disabled="com.example.bloat2")
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["disabled"], [TVLAUNCHER])
+        self.assertNotIn("com.example.bloat6", self.disables(end), "the batch after is not started")
+        self.assertIn("Home moved away", proc.stdout)
+
+    def test_the_report_has_no_serial(self):
+        state = self.tv()
+        state["props"]["ro.serialno"] = "SERIAL12345"
+        proc, end = self.run_installer(state)
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        report = (self.backup_dir() / "report.txt").read_text()
+        self.assertIn("ro.product.model=Test TV", report)
+        self.assertIn(TVLAUNCHER, report)
+        self.assertNotIn("SERIAL12345", report)
 
     def stamped_copy(self, apk_sha):
         text = INSTALLER.read_text(encoding="utf-8")
