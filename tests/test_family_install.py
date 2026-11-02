@@ -74,11 +74,15 @@ function Shell([string]$c) {
     }
     if ($c -like 'am start -W*') { return $s.start_result }
     if ($c -match '^pm disable-user --user 0 (\S+)$') {
-        $p = $Matches[1]; $s.disabled = @($s.disabled) + $p; if (Claims $p) { $s.preferred = $null }
+        $p = $Matches[1]
+        if (@($s.refuse_disable) -contains $p) { return "Error: java.lang.SecurityException: Shell cannot change component state for $p" }
+        $s.disabled = @($s.disabled) + $p; if (Claims $p) { $s.preferred = $null }
         return "Package $p new state: disabled-user"
     }
     if ($c -match '^pm enable --user 0 (\S+)$') {
-        $p = $Matches[1]; $s.disabled = @(@($s.disabled) | Where-Object { $_ -ne $p }); if (Claims $p) { $s.preferred = $null }
+        $p = $Matches[1]
+        if ($s.enable_fails) { return "Error: java.lang.SecurityException: Shell cannot change component state for $p" }
+        $s.disabled = @(@($s.disabled) | Where-Object { $_ -ne $p }); if (Claims $p) { $s.preferred = $null }
         return "Package $p new state: enabled"
     }
     if ($c -match '^cmd package set-home-activity --user 0 (\S+)$') { if ($s.set_home_works) { $s.preferred = $Matches[1] }; return 'Success' }
@@ -213,13 +217,14 @@ class FamilyInstallTest(unittest.TestCase):
             "start_result": "Starting: Intent { cmp=com.hometv.launcher/.MainActivity }\nStatus: ok\nActivity: x\nComplete",
             "set_home_works": True,
             "wifi": "", "log": [], "shell": [], "reboots": 0, "pushed": False,
+            "refuse_disable": [], "enable_fails": False,
         }
         state.update(overrides)
         return state
 
-    def run_installer(self, state, *extra, apk=True, cert=None):
+    def run_installer(self, state, *extra, apk=True, cert=None, host="127.0.0.1"):
         self.state_path.write_text(json.dumps(state), encoding="utf-8")
-        args = [PWSH, "-NoProfile", "-NonInteractive", "-File", str(INSTALLER), "-TvHost", "127.0.0.1",
+        args = [PWSH, "-NoProfile", "-NonInteractive", "-File", str(INSTALLER), "-TvHost", host,
                 "-AdbPort", str(self.port), "-WorkDir", str(self.work), "-AdbPath", str(self.adb), "-NoPrompt"]
         if apk:
             args += ["-ApkPath", str(self.apk), "-CertSha256", cert or self.cert_sha]
@@ -352,6 +357,37 @@ class FamilyInstallTest(unittest.TestCase):
         undo = (self.backup_dir() / "undo.txt").read_text()
         self.assertIn(f"undo pm enable --user 0 {SETUPWRAITH}", undo)
 
+    def test_refused_disable_rolls_back_and_stops(self):
+        proc, end = self.run_installer(self.tv(refuse_disable=[TVLAUNCHER]))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("refused to switch off", proc.stdout)
+        self.assertEqual(end["disabled"], [])
+        self.assertEqual(end["preferred"], f"{TVLAUNCHER}/.MainActivity")
+        self.assertFalse([c for c in end["shell"] if f"set-home-activity --user 0 {OURS}" in c])
+
+    def test_google_tv_that_refuses_the_setup_app_gets_launcherx_back(self):
+        state = self.google_tv("Saved network cname=android.uid.system x")
+        state["refuse_disable"] = [SETUPWRAITH]
+        proc, end = self.run_installer(state)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertEqual(end["disabled"], [])
+        self.assertEqual(end["preferred"], f"{LAUNCHERX}/.MainActivity")
+
+    def test_unreachable_port_is_not_reported_closed(self):
+        # 192.0.2.1 is TEST-NET-1: nothing answers, which proves nothing about the TV.
+        proc, end = self.run_installer(self.tv(), host="192.0.2.1")
+        self.assertEqual(proc.returncode, 2, proc.stdout)
+        self.assertIn("could not confirm", proc.stdout)
+        self.assertNotIn("Debugging is off", proc.stdout)
+
+    def test_incomplete_restore_exits_nonzero(self):
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        end["enable_fails"] = True
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("not complete", proc.stdout)
+        self.assertIn("keep debugging on", proc.stdout)
     def test_cvte_keeps_stock_launcher_and_reboots_once(self):
         state = self.tv(packages=[CVTE_LAUNCHER, "com.cvte.tv.setting", "com.android.settings", "com.android.vending",
                                   "com.google.android.gms"],
@@ -360,6 +396,9 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assert_nothing_disabled(end)
         self.assertEqual(end["reboots"], 1)
+        # No key helper in the pass that moves Home on a CVTE board (#741): a plain force stop only.
+        self.assertIn("am force-stop com.hometv.launcher", end["shell"])
+        self.assertFalse([c for c in end["shell"] if "enabled_accessibility_services" in c])
         self.assertEqual(end["preferred"], OURS)
         self.assertIn(f"undo cmd package set-home-activity --user 0 {CVTE_LAUNCHER}/.HomeActivity",
                       (self.backup_dir() / "undo.txt").read_text())

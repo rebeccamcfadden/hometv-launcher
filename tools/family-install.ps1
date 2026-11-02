@@ -157,21 +157,23 @@ function Get-PinnedAdb {
         Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
         Stop-Install "Google's platform-tools download is not the file this installer expects (its SHA-256 differs). Nothing was changed. Try again later, and tell the person helping you."
     }
-    # Unpacked from the checked zip each run, so a changed adb.exe on disk is never used. A server left by an earlier
-    # run that stopped half-way still holds adb.exe open: stop it first (it is this installer's own, on its own port).
+    # Unpacked from the checked zip each run, so a changed adb.exe on disk is never used, not even to stop a server: a
+    # fresh copy from the checked zip stops the one an earlier run left (it holds adb.exe open), then replaces the old.
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $stage = "$dir.new"
+    if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+    [IO.Compression.ZipFile]::ExtractToDirectory($zip, $stage)
+    if (-not (Test-Path -LiteralPath (Join-Path $stage 'platform-tools\adb.exe'))) { Stop-Install 'The platform-tools zip has no adb.exe.' }
     if (Test-Path -LiteralPath $dir) {
-        $old = Join-Path $dir 'platform-tools\adb.exe'
-        if ($script:OwnServer -and (Test-Path -LiteralPath $old)) {
+        if ($script:OwnServer) {
             $saved = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-            try { & $old kill-server 2>&1 | Out-Null } finally { $ErrorActionPreference = $saved }
+            try { & (Join-Path $stage 'platform-tools\adb.exe') kill-server 2>&1 | Out-Null } finally { $ErrorActionPreference = $saved }
             Start-Sleep -Seconds 1
         }
         try { Remove-Item -LiteralPath $dir -Recurse -Force }
         catch { Stop-Install "Could not replace the old copy of adb in $dir. Close any other window running this installer, or restart the laptop, then run it again. Nothing was changed on the TV." }
     }
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [IO.Compression.ZipFile]::ExtractToDirectory($zip, $dir)
-    if (-not (Test-Path -LiteralPath $adb)) { Stop-Install 'The platform-tools zip has no adb.exe.' }
+    Move-Item -LiteralPath $stage -Destination $dir
     return $adb
 }
 
@@ -357,14 +359,22 @@ function Wait-TvBack([string]$TvHostName, [bool]$Wireless) {
     return $false
 }
 
-function Test-PortOpen([string]$HostName, [int]$Port) {
+# 'open', 'closed' (the TV refused the connection: nothing listens) or 'unknown' (a timeout, no route, no network):
+# only a refusal proves debugging is off, since a TV that is off or unreachable doesn't answer either.
+function Get-PortState([string]$HostName, [int]$Port) {
     $client = New-Object Net.Sockets.TcpClient
     try {
         $task = $client.ConnectAsync($HostName, $Port)
-        if (-not $task.Wait(3000)) { return $false }
-        return $client.Connected
+        if (-not $task.Wait(3000)) { return 'unknown' }
+        if ($client.Connected) { return 'open' }
+        return 'unknown'
     } catch {
-        return $false
+        $e = $_.Exception
+        while ($e) {
+            if ($e -is [Net.Sockets.SocketException] -and $e.SocketErrorCode -eq [Net.Sockets.SocketError]::ConnectionRefused) { return 'closed' }
+            $e = $e.InnerException
+        }
+        return 'unknown'
     } finally { $client.Dispose() }
 }
 
@@ -377,6 +387,9 @@ function Invoke-Restore {
     $script:Serial = if ($TvHost) { "${TvHost}:$AdbPort" } elseif ($serialLine) { $serialLine.Substring(7).Trim() } else { $null }
     if (-not $script:Serial) { Stop-Install 'undo.txt names no TV: pass -TvHost.' }
     $undo = @($lines | Where-Object { $_.StartsWith('undo ') } | ForEach-Object { $_.Substring(5) })
+    # Where Home has to end up: the stock home screen the install recorded first (so it runs last).
+    $homeLine = @($undo | Where-Object { $_ -match '^cmd package set-home-activity --user 0 (\S+)$' } | Select-Object -First 1)
+    $target = if ($homeLine.Count -gt 0) { Get-PackageOf (($homeLine[0] -split ' ')[-1]) } else { $null }
     [array]::Reverse($undo)
     Step "Undoing the install on $($script:Serial)"
     [void](Invoke-Adb @('start-server'))
@@ -384,11 +397,21 @@ function Invoke-Restore {
     if (-not (Wait-Authorized $script:Serial)) {
         Stop-Install "The TV does not answer at $($script:Serial). Switch debugging on again (tools/family-install.md), or pass -TvHost and -AdbPort."
     }
+    $failed = @()
     foreach ($command in $undo) {
         Say "TV: $command"
-        Say (Invoke-TvShell $command)
+        $out = Invoke-TvShell $command
+        Say $out
+        $ok = $script:AdbExit -eq 0 -and $out -notmatch '(?i)error|exception|unknown package'
+        if ($ok -and $command -match '^pm enable --user 0 (\S+)$') { $ok = $out -match 'new state: enabled' }
+        if (-not $ok) { $failed += $command }
     }
-    Say "Home is now: $(Get-HomeNow)"
+    $homeNow = Get-HomeNow
+    Say "Home is now: $homeNow"
+    if ($target -and -not $homeNow.StartsWith("$target/")) { $failed += "Home is $homeNow, not $target" }
+    if ($failed.Count -gt 0) {
+        Stop-Install ("The undo is not complete, so keep debugging on and send this to the person helping you:`n  " + ($failed -join "`n  "))
+    }
     Say 'Done. Switch debugging off on the TV again (Developer options).'
 }
 
@@ -406,16 +429,23 @@ function Invoke-Install {
     Say 'The launcher and adb are the files this installer expects.'
 
     Step 'Getting the TV ready'
+    # Asked before debugging goes on: some boxes switch a USB network adapter off the moment USB debugging is on
+    # (docs/TROUBLESHOOTING.md), and then the laptop can't reach the TV at all.
+    Say 'Some TVs cut power to their USB ports while debugging is on, so a USB stick, speaker or adapter there stops working until the end.'
+    $usbThings = Ask-Text 'What is plugged into the TV''s USB ports? (Enter for nothing)'
+    $usbEthernet = Ask-YesNo 'Does the TV''s network cable go into a USB adapter, rather than straight into the TV?' $false
+    if ($usbEthernet) {
+        Say 'Some boxes switch that adapter off as soon as USB debugging is on, and then this laptop cannot reach the TV.'
+        Say 'So first connect the TV to Wi-Fi too: Settings > Network & Internet > your Wi-Fi network. Use the Wi-Fi address below.'
+        Wait-Done 'Connect the TV to Wi-Fi.'
+    }
     Say 'On the TV, with the remote:'
     Say '  1. Settings > Device Preferences (or System) > About: press OK on "Build" 7 times, until it says you are a developer.'
     Say '  2. Go back to Device Preferences (or System) > Developer options.'
     Say '  3. Turn on "USB debugging". If you also see "Network debugging" or "ADB debugging", turn that on too.'
     Wait-Done 'Do that now.'
-    Say 'Some TVs cut power to their USB ports while debugging is on, so a USB stick, speaker or adapter there stops working until the end.'
-    $usbThings = Ask-Text 'What is plugged into the TV''s USB ports? (Enter for nothing)'
-    $usbEthernet = Ask-YesNo 'Does the TV''s network cable go into a USB adapter, rather than straight into the TV?' $false
     if ($usbEthernet) {
-        Say 'Then do the whole install in one go: the adapter may only come back once debugging is off again at the end.'
+        Say 'Do the whole install in one go: the adapter may only come back once debugging is off again at the end.'
     }
 
     Step 'Connecting'
@@ -552,10 +582,15 @@ function Invoke-Install {
     }
 
     # Replacing a running Home lets Android restart it half-updated (#1101): stop it, and put back a key helper the
-    # force stop switched off (cleared first, so Android binds it again).
-    [void](Invoke-TvShell ('s=$(settings get secure enabled_accessibility_services); a=$(settings get secure accessibility_enabled); ' +
-        'am force-stop com.hometv.launcher; case $s in *com.hometv.launcher*) settings put secure enabled_accessibility_services ' +
-        '''''; settings put secure enabled_accessibility_services $s; settings put secure accessibility_enabled $a ;; esac'))
+    # force stop switched off (cleared first, so Android binds it again). Not on a CVTE board: there no helper goes on
+    # in the pass that moves Home, before its one reboot (#741).
+    if ($mode -eq 'cvte') {
+        [void](Invoke-TvShell 'am force-stop com.hometv.launcher')
+    } else {
+        [void](Invoke-TvShell ('s=$(settings get secure enabled_accessibility_services); a=$(settings get secure accessibility_enabled); ' +
+            'am force-stop com.hometv.launcher; case $s in *com.hometv.launcher*) settings put secure enabled_accessibility_services ' +
+            '''''; settings put secure enabled_accessibility_services $s; settings put secure accessibility_enabled $a ;; esac'))
+    }
     # Started on its own before Home is touched: "Status: ok" proves the activity came up (#239).
     $started = Invoke-TvShell "am start -W -a android.intent.action.MAIN -c android.intent.category.HOME -n $LauncherHome"
     if ($started -notmatch 'Status: ok' -or $started -match '(?m)^Error') {
@@ -569,11 +604,28 @@ function Invoke-Install {
     } else {
         Step 'Making it the home screen'
         if ($mode -eq 'replace')  { $toDisable = @($stock) + $alsoDisable }
+        # Puts the stock home screen back (everything this run switched off, and Home), checks it, and stops.
+        $rollback = {
+            param([string]$Why)
+            Say "$Why Putting the old home screen back..."
+            foreach ($pkg in $toDisable) { [void](Invoke-TvShell "pm enable --user 0 $pkg") }
+            if ($stockHome) { [void](Invoke-TvShell "cmd package set-home-activity --user 0 $stockHome") }
+            $back = Get-HomeNow
+            if ($stock -and $back.StartsWith("$stock/")) {
+                Stop-Install "$Why The TV's own home screen is back. The launcher stays installed but is not Home. Send this to the person helping you ($maker $model)."
+            }
+            Stop-Install "$Why The old home screen did not come back (Home is '$back'). Keep debugging on and run: powershell -ExecutionPolicy Bypass -File family-install.ps1 -Restore `"$backup`""
+        }
         if ($stockHome) { Add-Undo "cmd package set-home-activity --user 0 $stockHome" }
         foreach ($pkg in $toDisable) {
             Add-Undo "pm enable --user 0 $pkg"
             $out = Invoke-TvShell "pm disable-user --user 0 $pkg"
             Say $out
+            # Judged by the package's state too: some firmware prints nothing, or an error, and changes nothing.
+            $off = @((Invoke-TvShell 'pm list packages -d') -split "`n" | ForEach-Object { $_.Trim() -replace '^package:', '' })
+            if ($out -notmatch 'new state: disabled' -or $off -notcontains $pkg) {
+                & $rollback "The TV refused to switch off $pkg, which has to be off for the HomeTV Launcher to be Home."
+            }
         }
         [void](Invoke-TvShell "cmd package set-home-activity --user 0 $LauncherHome")
 
@@ -587,16 +639,7 @@ function Invoke-Install {
             $ok = (Get-HomeNow).StartsWith("$Launcher/")
         }
         if ($ok) { $ok = Test-HomeShowsOurs }
-        if (-not $ok) {
-            Say 'Home did not switch to the HomeTV Launcher. Putting the old home screen back...'
-            foreach ($pkg in $toDisable) { [void](Invoke-TvShell "pm enable --user 0 $pkg") }
-            if ($stockHome) { [void](Invoke-TvShell "cmd package set-home-activity --user 0 $stockHome") }
-            $back = Get-HomeNow
-            if ($stock -and $back.StartsWith("$stock/")) {
-                Stop-Install "The TV's own home screen is back. The launcher stays installed but is not Home. Send this to the person helping you: Home did not move to $Launcher on $maker $model."
-            }
-            Stop-Install "The old home screen did not come back (Home is '$back'). Keep debugging on and run: powershell -ExecutionPolicy Bypass -File family-install.ps1 -Restore `"$backup`""
-        }
+        if (-not $ok) { & $rollback 'Home did not switch to the HomeTV Launcher.' }
         Say 'The HomeTV Launcher is the home screen.'
     }
 
@@ -616,18 +659,25 @@ function Invoke-Install {
     Say '  2. Turn off "USB debugging", and "Network debugging" or "Wireless debugging" if they are there.'
     Say '  3. Restart the TV (hold the remote''s power button > Restart, or unplug it for 10 seconds).'
     [void](Invoke-Adb @('disconnect', $script:Serial))
-    [void](Invoke-Adb @('kill-server'))
+    if ($script:OwnServer) { [void](Invoke-Adb @('kill-server')) }
     Wait-Done 'Do that now, and wait until the TV shows the HomeTV home screen.'
     if ($usbEthernet) { Wait-Done 'Unplug the USB network adapter and plug it back in, then check the TV is on the cable again.' }
-    $ports = @($AdbPort)
-    if ($wireless) { $ports += [int](($script:Serial -split ':')[-1]) }
+    # Only a refused connection proves the port is closed; a TV that is off or out of reach doesn't answer either.
     while ($true) {
-        $open = @($ports | Where-Object { Test-PortOpen $tvHostName $_ })
-        if ($open.Count -eq 0) { Say 'Debugging is off: the TV no longer answers on its debugging port.'; break }
-        Say "The TV still answers on port $($open -join ', '): debugging is still on."
+        $state = Get-PortState $tvHostName $AdbPort
+        if ($state -eq 'closed') { Say "Debugging is off: the TV refuses connections on port $AdbPort."; break }
+        if ($state -eq 'open') { Say "The TV still answers on port ${AdbPort}: debugging is still on." }
+        else { Say "Could not check port $AdbPort on the TV (no answer): is it on, and on this network?" }
         if (-not (Ask-YesNo 'Check the steps above on the TV, then check again?' $false)) {
-            Stop-Install 'The launcher is installed, but debugging is still on. Switch it off in Developer options and restart the TV.' 2
+            if ($state -eq 'open') {
+                Stop-Install 'The launcher is installed, but debugging is still on. Switch it off in Developer options and restart the TV.' 2
+            }
+            Stop-Install 'The launcher is installed, but this laptop could not confirm debugging is off. On the TV, check Developer options: USB debugging and Network debugging must be off.' 2
         }
+    }
+    # Wireless debugging gets a new port after a restart, so the laptop cannot check it: the person reads it on the TV.
+    if ($wireless -and -not (Ask-YesNo 'On the TV, does Developer options > Wireless debugging say Off?' $false)) {
+        Stop-Install 'The launcher is installed, but Wireless debugging may still be on. On the TV: Developer options > Wireless debugging > Off.' 2
     }
 
     [IO.File]::WriteAllText((Join-Path $backup 'summary.txt'), (@(

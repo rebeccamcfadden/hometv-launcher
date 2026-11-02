@@ -40,9 +40,10 @@ In this order, and it stops at the first step that fails, saying what was and wa
    unless it has a v2 block, and every scheme block present (v2, which Android 8 reads; v3 and v3.1, which newer Android
    reads) names exactly one signer whose certificate is the release key's. The stamped SHA-256 is the trust anchor;
    this check catches an APK from anywhere else.
-2. **The TV.** It walks the person through Developer options and USB debugging, asks what is plugged into the TV's
-   USB ports and whether the network comes through a USB adapter (some TVs cut USB power while debugging is on). Then
-   it connects on port 5555, or pairs with Wireless debugging's code and connects to its port.
+2. **The TV.** It first asks what is plugged into the TV's USB ports and whether the network comes through a USB
+   adapter (some boxes switch that adapter off as soon as USB debugging is on, so then it has the TV join Wi-Fi
+   first). Then it walks the person through Developer options and USB debugging, and connects on port 5555, or pairs
+   with Wireless debugging's code and connects to its port.
 3. **Checks.** It reads the maker, model and Android version, and stops below Android 8 (`minSdk` 26) and on a Fire TV.
 4. **Backup, before any change.** The package list, the disabled list, `getprop`, the three settings tables and
    the Home candidates go to `%USERPROFILE%\HomeTV\backups\<model>-<time>\`, with `undo.txt`. Each change gets its
@@ -56,11 +57,13 @@ In this order, and it stops at the first step that fails, saying what was and wa
      no override. It also warns that phone casting usually stops (SHOWCASE.md, Cast Fix), and stops if they cast and
      don't want to lose it.
    - **CVTE boards** (any `com.cvte.*` package): the stock launcher stays enabled. HomeTV is set as Home, the TV
-     restarts once, and Home and ADB must come back (#741).
+     restarts once, and Home and ADB must come back (#741). No key helper goes on in that pass, not even one the
+     force stop below switched off.
 6. **The Home guard.** The order of `build-and-install.sh`: install on its own (`pm install -r`, after a push), so a
    failed install never reaches the Home steps. Then stop the launcher and put a key helper back, which the force
-   stop switched off (#1101). Then `am start -W` must answer `Status: ok` (#239). Only then does it disable the stock
-   launcher (one package per shell call) and set Home. It then checks that Home resolves to HomeTV and that a Home
+   stop switched off (#1101; not on CVTE). Then `am start -W` must answer `Status: ok` (#239). Only then does it
+   disable the stock launcher (one package per shell call, each checked in `pm list packages -d`) and set Home. A
+   refused disable puts everything back and stops. It then checks that Home resolves to HomeTV and that a Home
    press really shows it (`dumpsys activity activities`). Otherwise it re-enables what it disabled, gives Home back
    to the stock launcher and says so. If even that fails, it points at `-Restore`.
 7. **First run**, after a fresh install only: the last command it sends the TV opens First run
@@ -68,7 +71,9 @@ In this order, and it stops at the first step that fails, saying what was and wa
    run shows by itself on the first Home start after an install, and the guard's checks would end it. The person goes
    through it before debugging goes off.
 8. **Debugging off.** It walks them through revoking the authorisations, switching debugging off and restarting the
-   TV, then checks that the debugging port (and the Wireless debugging port, if used) no longer answers.
+   TV. Only a refused connection on the debugging port counts as off: no answer at all (a TV that is off, or out of
+   reach) is "not confirmed". Wireless debugging gets a new port after a restart, so for that the person reads it on
+   the TV and says it is Off.
 
 It runs its own adb server (port 5038), so another `adb` on the laptop is left alone, and stops it however the run
 ends.
@@ -86,7 +91,7 @@ Not in it yet: the remote-key helpers by brand, the in-app updates grant (Family
 |---|---|
 | 0 | Installed and Home, debugging off; or the person chose to stop before any change |
 | 1 | Stopped; the message says what was changed, usually nothing |
-| 2 | Installed and Home, but the TV still answers on its debugging port |
+| 2 | Installed and Home, but debugging is not confirmed off: the port still answers, or the laptop could not reach it, or Wireless debugging was not confirmed Off on the TV |
 
 ## Undoing it
 
@@ -97,8 +102,9 @@ powershell -ExecutionPolicy Bypass -File family-install.ps1 -Restore "$env:USERP
 ```
 
 It runs `undo.txt`'s lines from the bottom up: the stock launcher is enabled again and given Home back. The launcher
-itself stays installed. A TV on Wireless debugging gets a new port after a restart, so pass the current one with
-`-TvHost` and `-AdbPort`.
+itself stays installed. Then it checks that Home is on the stock launcher again; if an undo line failed or Home is
+elsewhere, it lists what is left and exits 1, and debugging stays on until that is sorted. A TV on Wireless debugging
+gets a new port after a restart, so pass the current one with `-TvHost` and `-AdbPort`.
 
 ## For the helper
 
