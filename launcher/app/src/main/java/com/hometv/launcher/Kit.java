@@ -265,27 +265,22 @@ final class Kit {
      * provenance line. Focused: the 4 px accent ring on the art and the art scaled 1.03; the text stays as it is.
      */
     static View libraryCard(Context ctx, Title t, Data data, String group, String key, boolean isDefault,
-                            View.OnClickListener onOk) {
+                            View.OnClickListener onOk, boolean withArt) {
         LinearLayout card = card(ctx, 417);
-        RingFrame art = art(ctx, t, 417, 172, Ui.RADIUS_L);
+        RingFrame art = frame(ctx, Ui.RADIUS_L);
         card.addView(art, new LinearLayout.LayoutParams(Ui.px(417), Ui.px(172)));
 
-        Offer o = data.cardOffer(t);
         LinearLayout top = new LinearLayout(ctx);
         top.setOrientation(LinearLayout.HORIZONTAL);
         TextView name = Ui.line(ctx, 25, Ui.TEXT_1, Ui.MEDIUM);
-        name.setText(t.name);
         name.setGravity(Gravity.TOP | Gravity.START);
         top.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         LinearLayout provider = new LinearLayout(ctx);
         provider.setOrientation(LinearLayout.VERTICAL);
         provider.setGravity(Gravity.END);
         TextView service = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_2, Ui.REGULAR);
-        service.setText(o == null ? "" : PriceCards.isPaid(o) ? data.table.storeName(o.service)
-                : data.table.name(o.service));
         provider.addView(service);
         TextView avail = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
-        avail.setText(Offers.availability(o, data.services.subscribed()));
         provider.addView(avail);
         LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -293,11 +288,69 @@ final class Kit {
         top.addView(provider, plp);
         card.addView(top, below(10));
 
-        card.addView(textLine(ctx, TitleText.meta(t), Ui.TEXT_2), below(4));
-        TextView lists = textLine(ctx, TitleText.provenance(t, data.household), Ui.TEXT_3);
+        TextView meta = textLine(ctx, "", Ui.TEXT_2);
+        card.addView(meta, below(4));
+        TextView lists = textLine(ctx, "", Ui.TEXT_3);
         card.addView(lists, below(2));
         card.setTag(R.id.kit_provenance, lists);
-        return titleCard(focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name), t);
+        LibraryParts parts = new LibraryParts((ImageView) art.content().getChildAt(0), name, service, avail, meta, lists);
+        card.setTag(R.id.kit_library_parts, parts);
+        View v = focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name);
+        fill(v, parts, t, data);
+        if (withArt) libraryArt(v, true);
+        return v;
+    }
+
+    /** A library card's views, so the grid can show a title's new state on the card it has (rebindLibraryCard). */
+    private static final class LibraryParts {
+        final ImageView art;
+        final TextView name, service, avail, meta, lists;
+        /** The art is bound (libraryArt): the grid binds it only near the screen. */
+        boolean artOn;
+
+        LibraryParts(ImageView art, TextView name, TextView service, TextView avail, TextView meta, TextView lists) {
+            this.art = art;
+            this.name = name;
+            this.service = service;
+            this.avail = avail;
+            this.meta = meta;
+            this.lists = lists;
+        }
+    }
+
+    private static void fill(View card, LibraryParts p, Title t, Data data) {
+        Offer o = data.cardOffer(t);
+        p.name.setText(t.name);
+        p.service.setText(o == null ? "" : PriceCards.isPaid(o) ? data.table.storeName(o.service)
+                : data.table.name(o.service));
+        p.avail.setText(Offers.availability(o, data.services.subscribed()));
+        p.meta.setText(TitleText.meta(t));
+        p.lists.setText(TitleText.provenance(t, data.household));
+        card.setContentDescription(t.name);
+        titleCard(card, t);
+    }
+
+    /**
+     * Shows t on a library card made for an earlier state of the same title (details, a price, a season arrived),
+     * without building it again; its art follows if it is bound, and is left alone when the picture is the same.
+     */
+    static void rebindLibraryCard(View card, Title t, Data data) {
+        Object tag = card.getTag(R.id.kit_library_parts);
+        if (!(tag instanceof LibraryParts)) return;
+        LibraryParts p = (LibraryParts) tag;
+        fill(card, p, t, data);
+        if (p.artOn) Art.into(p.art, t.art, Ui.px(417), Ui.px(172));
+    }
+
+    /** Binds a library card's art (near the screen) or lets go of it (far off: the bitmap stays in Art's cache). */
+    static void libraryArt(View card, boolean on) {
+        Object tag = card.getTag(R.id.kit_library_parts);
+        Title t = titleOf(card);
+        if (!(tag instanceof LibraryParts) || t == null || ((LibraryParts) tag).artOn == on) return;
+        LibraryParts p = (LibraryParts) tag;
+        p.artOn = on;
+        if (on) Art.into(p.art, t.art, Ui.px(417), Ui.px(172));
+        else Art.clear(p.art);
     }
 
     /**
@@ -395,11 +448,18 @@ final class Kit {
     }
 
     private static RingFrame art(Context ctx, Title t, float w, float h, float radius) {
+        RingFrame frame = frame(ctx, radius);
+        Art.into((ImageView) frame.content().getChildAt(0), t.art, Ui.px(w), Ui.px(h));
+        return frame;
+    }
+
+    /** A card's art frame with its ImageView, showing the placeholder until art is bound. */
+    private static RingFrame frame(Context ctx, float radius) {
         RingFrame frame = new RingFrame(ctx, radius, false, Ui.BG_RAISED);
         ImageView img = new ImageView(ctx);
+        img.setScaleType(ImageView.ScaleType.CENTER_CROP);
         frame.content().addView(img, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        Art.into(img, t.art, Ui.px(w), Ui.px(h));
         return frame;
     }
 
