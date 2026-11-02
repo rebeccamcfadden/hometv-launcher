@@ -279,15 +279,15 @@ the one beside it when the change took the card off the page (a title removed fr
   scrolls with focus, and back on All lists it returns to its start.
   A list hidden while chosen falls back to All lists. Up from any chip, and Right from the last one, goes to
   **Pick for me**, so it comes before the nav and instead of the grid.
-- A four-column grid of title cards: art, name, service and "Included", "Free" or a price ("Rent 39 kr", "Buy from
-  99 kr", or just "Rent" for a store with no known price), runtime or seasons · rating · score, and the first list
-  in chip order that holds it, and its genre.
-- **Poster cards (F40, for Rebecca to pick; not decided):** the dev bar's **Cards** menu (or `?cards=poster`,
-  `?cards=poster-compact`) swaps the grid for six columns of portrait cards with the title's TMDB poster
-  (`src/data/posters.ts`, loaded from image.tmdb.org; a title with none, or a poster that can't load, shows its
-  landscape art cropped): the name, then the service and availability on one line ("Netflix · Included"), then the runtime or seasons line
-  and the lists line, or, in *name and service only*, just the first two. `compare.html` shows today's cards and the
-  poster cards side by side, each a live prototype (Movies or TV Shows; click a side, then use the keys).
+- A six-column grid of poster cards (F40, Rebecca 2026-11-02, Figma "Library cards (F40)" option A): the title's TMDB
+  poster, 2:3 (`src/data/posters.ts`, loaded from image.tmdb.org; a title with none, or a poster that can't load,
+  shows its landscape art cropped), then the name; the service and "Included", "Free" or a price on one line
+  ("Netflix · Included", "Apple TV Store · Rent 39 kr", or just "Rent" for a store with no known price); runtime or
+  seasons · rating · score; and the first list in chip order that holds it, and its genre.
+- **Before F40, for comparison:** the dev bar's **Cards** menu (or `?cards=landscape`, `?cards=poster-compact`) shows
+  the four-column landscape cards the grid had, or the poster with just its name and service line. `compare.html`
+  shows the landscape cards and the poster cards side by side, each a live prototype (Movies or TV Shows; click a
+  side, then use the keys).
 - **Filters drawer** (from the right): Availability, Review score, Genre, Length (movies only), Watch state. ←/→
   changes a value, and the grid behind updates live. Clear all and Done. The default is no filters (F2; Figma's
   frame shows "Included only · Review 7.0+").
