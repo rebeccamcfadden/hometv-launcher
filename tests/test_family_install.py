@@ -109,6 +109,8 @@ function Shell([string]$c) {
         return "  mResumedActivity: ActivityRecord{1 u0 $front t1}"
     }
     if ($c -eq 'dumpsys wifi') { return $s.wifi }
+    if ($c -match '^appops set com\.hometv\.launcher REQUEST_INSTALL_PACKAGES (\w+)$') { if (-not $s.appops_refused) { $s.install_grant = $Matches[1] }; return '' }
+    if ($c -eq 'appops get com.hometv.launcher REQUEST_INSTALL_PACKAGES') { return "REQUEST_INSTALL_PACKAGES: $($s.install_grant)" }
     return ''
 }
 if ($a.Count -ge 2 -and $a[0] -eq '-s') { $a = @($a[2..($a.Count - 1)]) }
@@ -267,9 +269,9 @@ class FamilyInstallTest(unittest.TestCase):
             "start_result": "Starting: Intent { cmp=com.hometv.launcher/.MainActivity }\nStatus: ok\nActivity: x\nComplete",
             "set_home_works": True,
             "wifi": "", "log": [], "shell": [], "reboots": 0, "pushed": False,
-            "refuse_disable": [], "enable_fails": False, "set_home_once": False, "set_home_used": False,
             "tv_hw": [], "input_apps": [], "settings_apps": [], "hw_fails": False, "handlers_fail": False,
             "front_when_disabled": None,
+            "refuse_disable": [], "enable_fails": False, "install_grant": "default", "appops_refused": False, "set_home_once": False, "set_home_used": False,
         }
         state.update(overrides)
         return state
@@ -440,6 +442,24 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assertIn("not complete", proc.stdout)
         self.assertIn("keep debugging on", proc.stdout)
+    def test_updates_are_allowed_with_an_undo(self):
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "allow")
+        undo = (self.backup_dir() / "undo.txt").read_text()
+        self.assertIn("undo appops set com.hometv.launcher REQUEST_INSTALL_PACKAGES default", undo)
+        # Granted after the handover, before First run opens.
+        shell = end["shell"]
+        self.assertLess(self.index(shell, "cmd package set-home-activity"), self.index(shell, "appops set com.hometv.launcher"))
+        self.assertIn("action.FIRST_RUN", shell[-1])
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "default")
+
+    def test_a_refused_grant_only_says_so(self):
+        proc, end = self.run_installer(self.tv(appops_refused=True))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("did not let the launcher install its own updates", proc.stdout)
     def test_cvte_keeps_stock_launcher_and_reboots_once(self):
         state = self.tv(packages=[CVTE_LAUNCHER, "com.cvte.tv.setting", "com.android.settings", "com.android.vending",
                                   "com.google.android.gms"],

@@ -66,12 +66,13 @@ In this order, and it stops at the first step that fails, saying what was and wa
    refused disable puts everything back and stops. It then checks that Home resolves to HomeTV and that a Home
    press really shows it (`dumpsys activity activities`). Otherwise it re-enables what it disabled, gives Home back
    to the stock launcher and says so. If even that fails, it points at `-Restore`.
-7. **Debloat** (Family install step 6). A release carries `debloat-lists.zip`, the `examples/` lists of its own commit, checked against the SHA-256 stamped into the installer. After the backup, the installer lists the ones whose header names the TV's model as a word: a suggestion only, since one model often has lists from different countries and firmware. The person helping picks one by name on the call, or none (the project lead's choice, 2026-11-02); with none, or with `-NoPrompt`, nothing beyond the home screen is switched off, and `report.txt` is for making a list. `-List <file>` takes a list directly (one made from a report). The list is read before anything connects, and one naming a non-package or an Android core package stops the run with nothing changed (`tools/disable.ps1`'s check, in the same words). After the handover, PROMPT.md's checklist runs first: streaming apps, the voice assistant, casting, mirroring and firmware updates on the list stay on unless the person says no one uses them. A package counts as one by its name, or by what the list's own comments say it is (its heading and its line); a test holds every shipped list to that. Then `tools/disable.sh`'s guards, with no overrides: never the app that owns Home; setupwraith only when it doesn't own the Wi-Fi; never an app that asks for `TV_INPUT_HARDWARE` or that opens the inputs or Settings; each of those checks is judged on its own answer, and if one fails, nothing from the list is switched off. What is left is listed once, and switched off only on a yes (the default is no; `-SwitchOffList` answers yes for a helper who has read the list). On a CVTE board its own launcher (`com.cvte.tv.launcher.*`) is never switched off from here: only that exact board's list may, by hand (#741). Then five at a time, one package per call, each undo line written first (and on a reinstall a line that puts Home back on HomeTV, so `-Restore` ends there). After each batch Home must resolve to HomeTV and a Home press must show it; if not, that batch is switched back on (each checked), HomeTV is set as Home again and checked, and the rest is left, or the run stops with `-Restore` if Home doesn't come back.
-8. **First run**, after a fresh install only: the last command it sends the TV opens First run
+7. **Updates.** It allows the launcher to "install unknown apps" (`appops set com.hometv.launcher REQUEST_INSTALL_PACKAGES allow`, its undo line first) and reads it back, so a release's in-app update can ask the person to install it. A TV that refuses only gets a note: About shows how to allow it.
+8. **Debloat** (Family install step 6). A release carries `debloat-lists.zip`, the `examples/` lists of its own commit, checked against the SHA-256 stamped into the installer. After the backup, the installer lists the ones whose header names the TV's model as a word: a suggestion only, since one model often has lists from different countries and firmware. The person helping picks one by name on the call, or none (the project lead's choice, 2026-11-02); with none, or with `-NoPrompt`, nothing beyond the home screen is switched off, and `report.txt` is for making a list. `-List <file>` takes a list directly (one made from a report). The list is read before anything connects, and one naming a non-package or an Android core package stops the run with nothing changed (`tools/disable.ps1`'s check, in the same words). After the handover, PROMPT.md's checklist runs first: streaming apps, the voice assistant, casting, mirroring and firmware updates on the list stay on unless the person says no one uses them. A package counts as one by its name, or by what the list's own comments say it is (its heading and its line); a test holds every shipped list to that. Then `tools/disable.sh`'s guards, with no overrides: never the app that owns Home; setupwraith only when it doesn't own the Wi-Fi; never an app that asks for `TV_INPUT_HARDWARE` or that opens the inputs or Settings; each of those checks is judged on its own answer, and if one fails, nothing from the list is switched off. What is left is listed once, and switched off only on a yes (the default is no; `-SwitchOffList` answers yes for a helper who has read the list). On a CVTE board its own launcher (`com.cvte.tv.launcher.*`) is never switched off from here: only that exact board's list may, by hand (#741). Then five at a time, one package per call, each undo line written first (and on a reinstall a line that puts Home back on HomeTV, so `-Restore` ends there). After each batch Home must resolve to HomeTV and a Home press must show it; if not, that batch is switched back on (each checked), HomeTV is set as Home again and checked, and the rest is left, or the run stops with `-Restore` if Home doesn't come back.
+9. **First run**, after a fresh install only: the last command it sends the TV opens First run
    (`com.hometv.launcher.action.FIRST_RUN`), as `build-and-install` does, and nothing presses Home after it. First
    run shows by itself on the first Home start after an install, and the guard's checks would end it. The person goes
    through it before debugging goes off.
-9. **Debugging off.** It walks them through revoking the authorisations, switching debugging off and restarting the
+10. **Debugging off.** It walks them through revoking the authorisations, switching debugging off and restarting the
    TV. Only a refused connection on the debugging port counts as off: no answer at all (a TV that is off, or out of
    reach) is "not confirmed". Wireless debugging gets a new port after a restart, so for that the person reads it on
    the TV and says it is Off.
@@ -79,13 +80,13 @@ In this order, and it stops at the first step that fails, saying what was and wa
 It runs its own adb server (port 5038), so another `adb` on the laptop is left alone, and stops it however the run
 ends.
 
-It never uninstalls anything, disables nothing but the stock launcher (and setupwraith on Google TV) and what a `-List` names, asks for
+It never uninstalls anything, disables nothing but the stock launcher (and setupwraith on Google TV) and what a `-List` names, allows nothing but the launcher's own updates, asks for
 no API keys (they go in on the TV: Launcher settings > API keys, or First run), starts no transcript and sends nothing
 anywhere but the TV.
 
 Every run also writes `report.txt` in the backup folder: the TV's make, model, Android version and firmware build and its packages, and no serial, address, account or network name. The person helping makes a list from it.
 
-Not in it yet: the remote-key helpers by brand and the in-app updates grant (Family install step 5).
+Not in it yet: the remote-key helpers by brand.
 
 ## Exit codes
 
@@ -116,8 +117,12 @@ gets a new port after a restart, so pass the current one with `-TvHost` and `-Ad
 | `-WorkDir` | Where downloads, backups and undo files go (`%USERPROFILE%\HomeTV`) |
 | `-AdbPath` | An `adb` already on the laptop, instead of the pinned download |
 | `-DownloadFrom` | A folder (a USB stick) with the release's APK, instead of GitHub; the APK is still checked |
+<<<<<<< HEAD
 | `-List` | A debloat list to apply after the handover (step 7 above) |
 | `-SwitchOffList` | Answer yes to the debloat's "Switch these off?" (its default is no) |
+=======
+| `-List` | A debloat list to apply after the handover (step 8 above) |
+>>>>>>> fc95c916 (tools: the family installer allows the launcher's own updates (appops), reads it back, and -Restore undoes it (Family install step 5))
 | `-ListsFrom` | Testing, in the repository's copy only: a folder of lists (`examples`) to suggest from |
 | `-Restore` | Undo an install from its backup folder |
 | `-NoPrompt` | Every question takes its default, and the pauses are skipped |

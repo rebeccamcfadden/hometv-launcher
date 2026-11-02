@@ -903,6 +903,17 @@ function Invoke-Install {
         Say 'The HomeTV Launcher is the home screen.'
     }
 
+    # In-app updates (Family install step 5): Android asks before any update installs, but only an app allowed to "install
+    # unknown apps" may ask. Granted here while ADB is on, and read back; without it, Launcher settings > About opens
+    # Android's screen to allow it. Undone by -Restore.
+    Add-Undo "appops set $Launcher REQUEST_INSTALL_PACKAGES default"
+    [void](Invoke-TvShell "appops set $Launcher REQUEST_INSTALL_PACKAGES allow")
+    $grant = Invoke-TvShell "appops get $Launcher REQUEST_INSTALL_PACKAGES"
+    $updatesGranted = $grant -match 'REQUEST_INSTALL_PACKAGES: allow'
+    if (-not $updatesGranted) {
+        Say 'This TV did not let the launcher install its own updates. It still works; Launcher settings > About will show how to allow it, or run this installer again for an update.'
+    }
+
     $debloated = @()
     if ($script:ListNames.Count -gt 0) { $debloated = @(Invoke-Debloat $script:ListNames) }
 
@@ -946,7 +957,7 @@ function Invoke-Install {
     [IO.File]::WriteAllText((Join-Path $backup 'summary.txt'), (@(
         "HomeTV Launcher $ReleaseTag on $maker $model, Android $android (SDK $sdk).",
         "Mode: $mode. Stock home: $stock. Disabled: $($toDisable -join ', '). From the list: $($debloated -join ', ').",
-        "USB devices: $usbThings. USB network adapter: $usbEthernet.") -join "`n") + "`n")
+        "USB devices: $usbThings. USB network adapter: $usbEthernet. Updates allowed: $updatesGranted.") -join "`n") + "`n")
     Step 'Done'
     Say 'Press Home on the remote to see the HomeTV Launcher. Everything First run set up is in Launcher settings too.'
     Say "The backup and undo file are in $backup."
