@@ -280,11 +280,15 @@ milestones: [docs/rework.md](docs/rework.md).
   big shows, 2026-11-01); Netflix's `/watch/<show id>` (which may resume the next episode) is in the recheck. TV4 Play, Viaplay, SkyShowtime and the
   Swedish stores have no Wikidata property, so they open on their home screen.
 - **US (Family install step 2):** Netflix, Disney+, Apple TV, HBO Max and Prime Video open the title in the US too
-  (the same Wikidata ids). Hulu has `P6466`/`P6467` (about 1,650 movies and 1,600 series on Wikidata, 2026-11-01),
-  Peacock `P11815` (about 40), Paramount+ `P13147` (about 210), Tubi `P7760`/`P7761` (about 3,200 and 400) and
-  Fandango at Home `P7334` (about 6,600); The Roku Channel has only a channel id. Until those are added to
-  `WikidataIds` and `DeepLinks`, with each TV app's link format checked on a TV that has the app, these open on
-  their home screen.
+  (the same Wikidata ids). Hulu (`P6466`/`P6467`; on Wikidata items with a TMDB id, 2026-11-02: about 1,640 movies
+  and 1,560 series),
+  Peacock (`P11815`, about 40), Paramount+ (`P13147`, about 130, nearly all movies), Tubi (`P7760`/`P7761`, about
+  3,100 and 380) and Fandango at Home (`P7334`, about 4,500) are in `WikidataIds` and `DeepLinks` now, as each
+  service's web address for the title (Wikidata's formatter URL; Paramount+'s movies under `/movies/video/`; Peacock's
+  values with or without a leading `stream-`). Checked on paper only: peacocktv.com and athome.fandango.com verify
+  their TV apps for those links (`assetlinks.json`); hulu.com and tubitv.com publish none, and paramountplus.com
+  wouldn't serve it. **Wanted:** a TV with each app checks that it opens the title; an app that refuses the link opens
+  on its home screen, as before. The Roku Channel has only a channel id, so it opens on its home screen.
 ### Choosing the household's services
 - **V1:** subscribed services come from the installed apps, with an override: `subscribed_services` in
   `config.xml` or a pushed `config.json`, a list of lowercase ids (`["netflix", "prime"]`; an unknown id is

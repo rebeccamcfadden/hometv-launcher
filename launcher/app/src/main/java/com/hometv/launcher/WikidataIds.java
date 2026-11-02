@@ -39,12 +39,22 @@ final class WikidataIds {
     static final String SVT_PLAY = "P6817";
     static final String ITUNES_MOVIE = "P6398";
     static final String ITUNES_SEASON = "P6381";
+    // The US's (BACKLOG.md, Title deep links): Hulu, Peacock, Paramount+, Tubi and Fandango at Home.
+    static final String HULU_MOVIE = "P6466";
+    static final String HULU_SERIES = "P6467";
+    static final String PEACOCK = "P11815";
+    static final String PARAMOUNT = "P13147";
+    static final String TUBI_MOVIE = "P7760";
+    static final String TUBI_SERIES = "P7761";
+    static final String FANDANGO = "P7334";
 
     private static final String[] MOVIE = {
-        NETFLIX, DISNEY_MOVIE, DISNEY_BROWSE, APPLE_MOVIE, MAX, AMAZON_ASIN, PRIME_ID, PRIME_GTI, SVT_PLAY, ITUNES_MOVIE
+        NETFLIX, DISNEY_MOVIE, DISNEY_BROWSE, APPLE_MOVIE, MAX, AMAZON_ASIN, PRIME_ID, PRIME_GTI, SVT_PLAY, ITUNES_MOVIE,
+        HULU_MOVIE, PEACOCK, PARAMOUNT, TUBI_MOVIE, FANDANGO
     };
     private static final String[] SHOW = {
-        NETFLIX, DISNEY_SERIES, DISNEY_BROWSE, APPLE_SHOW, MAX, AMAZON_ASIN, PRIME_ID, PRIME_GTI, SVT_PLAY, ITUNES_SEASON
+        NETFLIX, DISNEY_SERIES, DISNEY_BROWSE, APPLE_SHOW, MAX, AMAZON_ASIN, PRIME_ID, PRIME_GTI, SVT_PLAY, ITUNES_SEASON,
+        HULU_SERIES, PEACOCK, PARAMOUNT, TUBI_SERIES, FANDANGO
     };
 
     /** The Wikidata item ("Q20382729"), or null when Wikidata has none for the TMDB id. */

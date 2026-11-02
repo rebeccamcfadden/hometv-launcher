@@ -27,15 +27,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Links that open a title inside a service's TV app rather than on its home screen (BACKLOG.md, Title deep links),
  * built from the ids {@link WikidataIds} found. Stage 2 sends each as an ACTION_VIEW intent limited to the service's
  * package (Netflix also wants the extra {@code source=30}) and falls back to opening the app when nothing takes it.
- * Wikidata has ids for Netflix, Disney+, Apple TV, HBO Max, Prime Video and SVT Play; TV4 Play, Viaplay, SkyShowtime
- * and the Swedish stores have no Wikidata property, so they open on their home screen. Every id is checked against
- * the shape Wikidata documents for it before it goes into a link. Pure Java, unit-tested (DeepLinksTest).
+ * Wikidata has ids for Netflix, Disney+, Apple TV, HBO Max, Prime Video and SVT Play, and in the US for Hulu, Peacock,
+ * Paramount+, Tubi and Fandango at Home; TV4 Play, Viaplay, SkyShowtime, the Swedish stores and The Roku Channel have
+ * no Wikidata property for a title, so they open on their home screen. Every id is checked against the shape Wikidata
+ * documents for it before it goes into a link. Pure Java, unit-tested (WikidataLinksTest).
  */
 final class DeepLinks {
     private DeepLinks() {}
@@ -54,6 +56,14 @@ final class DeepLinks {
     private static final Pattern ASIN = Pattern.compile("B[0-9A-Z]{9}");
     private static final Pattern PRIME_ID = Pattern.compile("[0-9A-Za-z][0-9A-Za-z.-]{5,63}");
     private static final Pattern SVT = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._/-]{0,127}");
+    private static final Pattern UUID = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+    /**
+     * Peacock: Wikidata holds "tv/name", "movies/name" and, for some, "stream-tv/name" (its formatter adds the
+     * "stream-" itself), so a leading "stream-" is dropped before it goes into the link.
+     */
+    private static final Pattern PEACOCK = Pattern.compile("(?:stream-)?((?:tv|movies)/[a-z0-9][a-z0-9-]{0,127})");
+    private static final Pattern PARAMOUNT = Pattern.compile("[A-Za-z0-9_-]{32}");
+    private static final Pattern NUMBER = Pattern.compile("\\d{1,10}");
     private static final Pattern MARKS = Pattern.compile("\\p{M}+");
 
     /** The link that opens the title in a service ({@link WatchProviders} key), or null when there is none. */
@@ -87,9 +97,35 @@ final class DeepLinks {
             case "svtplay":
                 v = ok(ids.first(WikidataIds.SVT_PLAY), SVT);
                 return v == null || v.contains("..") ? null : "https://www.svtplay.se/" + v;
+            // The US's: each the service's web address for the title, as Wikidata's formatter URL gives it
+            // (Paramount+'s movies under /movies/). Checked on paper only: a TV with each app checks them later.
+            case "hulu":
+                v = ok(ids.first(movie ? WikidataIds.HULU_MOVIE : WikidataIds.HULU_SERIES), UUID);
+                return v == null ? null : "https://www.hulu.com/" + (movie ? "movie/" : "series/") + v;
+            case "peacock":
+                v = peacock(ids.all(WikidataIds.PEACOCK));
+                return v == null ? null : "https://www.peacocktv.com/stream-" + v;
+            case "paramountplus":
+                v = ok(ids.first(WikidataIds.PARAMOUNT), PARAMOUNT);
+                return v == null ? null : "https://www.paramountplus.com/" + (movie ? "movies" : "shows") + "/video/" + v + "/";
+            case "tubi":
+                v = ok(ids.first(movie ? WikidataIds.TUBI_MOVIE : WikidataIds.TUBI_SERIES), NUMBER);
+                return v == null ? null : "https://tubitv.com/" + (movie ? "movies/" : "series/") + v;
+            case "fandango":
+                v = ok(ids.first(WikidataIds.FANDANGO), NUMBER);
+                return v == null ? null : "https://athome.fandango.com/content/browse/details/wd/" + v;
             default:
                 return null;
         }
+    }
+
+    /** Peacock's "tv/name" or "movies/name" from the first value that has that shape, without a leading "stream-". */
+    private static String peacock(List<String> values) {
+        for (String v : values) {
+            Matcher m = PEACOCK.matcher(v);
+            if (m.matches()) return m.group(1);
+        }
+        return null;
     }
 
     /** Every service with a link for the title, by {@link WatchProviders} key, in the table's order. */

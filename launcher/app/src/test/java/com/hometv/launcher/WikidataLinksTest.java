@@ -155,6 +155,69 @@ public class WikidataLinksTest {
     }
 
     @Test
+    public void theUsServicesAreAskedForByKind() {
+        String movie = WikidataIds.query(Kind.MOVIE, 1);
+        for (String p : Arrays.asList("P6466", "P11815", "P13147", "P7760", "P7334")) assertTrue(p, movie.contains("?" + p + ")"));
+        assertTrue(!movie.contains("?P6467") && !movie.contains("?P7761"));
+        String show = WikidataIds.query(Kind.SHOW, 1);
+        for (String p : Arrays.asList("P6467", "P11815", "P13147", "P7761", "P7334")) assertTrue(p, show.contains("?" + p + ")"));
+        assertTrue(!show.contains("?P6466") && !show.contains("?P7760"));
+    }
+
+    @Test
+    public void theUsServicesFormats() {
+        // Values as Wikidata holds them (2026-11-02).
+        Map<String, String> v = new LinkedHashMap<>();
+        v.put(WikidataIds.HULU_MOVIE, "e47078f3-1c0e-49a8-9da9-c571a7a20fec");
+        v.put(WikidataIds.HULU_SERIES, "6a787bf6-cc23-47a2-a2f3-747e22c30d1c");
+        v.put(WikidataIds.PEACOCK, "movies/the-super-mario-bros-movie");
+        v.put(WikidataIds.PARAMOUNT, "gUufhVPlJy5i5HLTbS8li1LruEeMH_3x");
+        v.put(WikidataIds.TUBI_MOVIE, "460606");
+        v.put(WikidataIds.TUBI_SERIES, "2370");
+        v.put(WikidataIds.FANDANGO, "1100922");
+        WikidataIds ids = ids(v);
+        assertEquals("https://www.hulu.com/movie/e47078f3-1c0e-49a8-9da9-c571a7a20fec", DeepLinks.link("hulu", Kind.MOVIE, ids, "X"));
+        assertEquals("https://www.hulu.com/series/6a787bf6-cc23-47a2-a2f3-747e22c30d1c", DeepLinks.link("hulu", Kind.SHOW, ids, "X"));
+        assertEquals("https://www.peacocktv.com/stream-movies/the-super-mario-bros-movie",
+                DeepLinks.link("peacock", Kind.MOVIE, ids, "X"));
+        assertEquals("https://www.paramountplus.com/movies/video/gUufhVPlJy5i5HLTbS8li1LruEeMH_3x/",
+                DeepLinks.link("paramountplus", Kind.MOVIE, ids, "X"));
+        assertEquals("https://www.paramountplus.com/shows/video/gUufhVPlJy5i5HLTbS8li1LruEeMH_3x/",
+                DeepLinks.link("paramountplus", Kind.SHOW, ids, "X"));
+        assertEquals("https://tubitv.com/movies/460606", DeepLinks.link("tubi", Kind.MOVIE, ids, "X"));
+        assertEquals("https://tubitv.com/series/2370", DeepLinks.link("tubi", Kind.SHOW, ids, "X"));
+        assertEquals("https://athome.fandango.com/content/browse/details/wd/1100922",
+                DeepLinks.link("fandango", Kind.MOVIE, ids, "X"));
+        // The Roku Channel has only a channel id on Wikidata: its app opens on its home screen.
+        assertNull(DeepLinks.link("rokuchannel", Kind.MOVIE, ids, "X"));
+    }
+
+    @Test
+    public void peacocksStreamPrefixIsNotDoubled() {
+        Map<String, List<String>> v = new HashMap<>();
+        v.put(WikidataIds.PEACOCK, Arrays.asList("stream-tv/poker-face"));
+        assertEquals("https://www.peacocktv.com/stream-tv/poker-face",
+                DeepLinks.link("peacock", Kind.SHOW, new WikidataIds("Q1", v), "Poker Face"));
+        v.put(WikidataIds.PEACOCK, Arrays.asList("news/x", "tv/brooklyn-nine-nine"));
+        assertEquals("https://www.peacocktv.com/stream-tv/brooklyn-nine-nine",
+                DeepLinks.link("peacock", Kind.SHOW, new WikidataIds("Q1", v), "X"));
+    }
+
+    @Test
+    public void malformedUsIdsNeverReachALink() {
+        Map<String, String> v = new LinkedHashMap<>();
+        v.put(WikidataIds.HULU_MOVIE, "not-a-uuid");
+        v.put(WikidataIds.PEACOCK, "tv/../../evil");
+        v.put(WikidataIds.PARAMOUNT, "short");
+        v.put(WikidataIds.TUBI_MOVIE, "12a");
+        v.put(WikidataIds.FANDANGO, "1/2");
+        WikidataIds ids = ids(v);
+        for (String s : Arrays.asList("hulu", "peacock", "paramountplus", "tubi", "fandango")) {
+            assertNull(s, DeepLinks.link(s, Kind.MOVIE, ids, "X"));
+        }
+    }
+
+    @Test
     public void slugs() {
         assertEquals("le-fabuleux-destin-d-amelie-poulain", DeepLinks.slug("Le Fabuleux Destin d'Amélie Poulain"));
         assertEquals("x", DeepLinks.slug("!!!"));
