@@ -306,12 +306,17 @@ final class Shell {
     }
 
     void toast(CharSequence text) {
+        toast(text, 2400);
+    }
+
+    /** A toast that stays {@code ms}: Home's update notice keeps its line up for 8 s (Updates). */
+    void toast(CharSequence text, long ms) {
         toast.setText(text);
         toast.removeCallbacks(hideToast);
         toast.bringToFront();
         toast.setTranslationY(Ui.px(20));
         toast.animate().alpha(1f).translationY(0f).setDuration(Ui.ms(Ui.SLOW_MS)).setInterpolator(Ui.EASE).start();
-        toast.postDelayed(hideToast, 2400);
+        toast.postDelayed(hideToast, ms);
     }
 
     // ---- Keys --------------------------------------------------------------------------------------------------

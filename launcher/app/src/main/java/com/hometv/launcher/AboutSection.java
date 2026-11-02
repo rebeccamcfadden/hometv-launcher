@@ -1,6 +1,7 @@
 package com.hometv.launcher;
 
 import android.content.Context;
+import android.text.format.DateUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,9 +14,14 @@ import android.widget.TextView;
  * Where to watch's sources (JustWatch through TMDB, Apple's prices, and any keyed price source). Open-Meteo's credit
  * for the weather always. Then Follow theme (Config.followTheme), which hands Motion and Open on start back to the
  * config.
+ *
+ * <p>Updates (Family install step 5; design_preview aboutPane): where an in-app update stands, Check for updates (on to
+ * start) and Install update, which downloads only then and hands the APK to Android's own prompt ({@link Updates}). A
+ * build from a computer says it updates from there, and has no check.
  */
 final class AboutSection implements SettingsSection {
     private View follow;
+    private View firstAction;
 
     @Override
     public String id() {
@@ -34,6 +40,8 @@ final class AboutSection implements SettingsSection {
 
     @Override
     public CharSequence value(Context ctx) {
+        UpdateRules.Release r = Updates.get(ctx).available();
+        if (r != null && Updates.get(ctx).checkOn() && Updates.enabled()) return ctx.getString(R.string.updates_value, r.versionName);
         return BuildConfig.VERSION_NAME;
     }
 
@@ -44,6 +52,8 @@ final class AboutSection implements SettingsSection {
         SettingsKit.add(pane, SettingsKit.title(ctx, ctx.getString(R.string.about_title), false), 10);
         SettingsKit.addWide(pane, kv(ctx, ctx.getString(R.string.about_version),
                 ctx.getString(R.string.about_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)), 18);
+        firstAction = null;
+        addUpdates(ctx, host, pane);
         if (!ApiKeys.get(ctx).key(KeyRules.Id.TMDB).isEmpty()) {
             TextView tmdb = Ui.text(ctx, Ui.T_BODY, Ui.TEXT_1, Ui.REGULAR);
             tmdb.setText(R.string.tmdb_notice);
@@ -71,7 +81,79 @@ final class AboutSection implements SettingsSection {
 
     @Override
     public View firstFocus() {
-        return follow;
+        return firstAction != null ? firstAction : follow;
+    }
+
+    /** The Updates block, rebuilt in place whenever Updates changes while the pane shows. */
+    private void addUpdates(Context ctx, Host host, LinearLayout pane) {
+        LinearLayout block = SettingsKit.column(ctx);
+        SettingsKit.addWide(pane, block, 26);
+        Updates updates = Updates.get(ctx);
+        Runnable render = () -> renderUpdates(ctx, host, block, updates);
+        block.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                updates.listen(render);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                updates.unlisten(render);
+            }
+        });
+        renderUpdates(ctx, host, block, updates);
+    }
+
+    private void renderUpdates(Context ctx, Host host, LinearLayout block, Updates updates) {
+        boolean hadFocus = block.hasFocus();
+        block.removeAllViews();
+        TextView head = Ui.text(ctx, Ui.T_BODY, Ui.TEXT_1, Ui.MEDIUM);
+        head.setText(R.string.updates_title);
+        block.addView(head);
+        UpdateRules.Status s = updates.status();
+        UpdateRules.Release r = updates.available();
+        String version = r != null ? r.versionName : "";
+        CharSequence line;
+        switch (s) {
+            case OWN: line = ctx.getString(R.string.updates_own); break;
+            case OFF: line = ctx.getString(R.string.updates_off); break;
+            case AVAILABLE: line = ctx.getString(R.string.updates_available, version); break;
+            case DOWNLOADING: line = ctx.getString(R.string.updates_downloading, version); break;
+            case NO_GRANT: line = ctx.getString(R.string.updates_no_grant, version); break;
+            case NO_SCREEN: line = ctx.getString(R.string.updates_no_screen, version); break;
+            case FAILED: line = ctx.getString(R.string.updates_failed); break;
+            default:
+                long last = updates.lastCheck();
+                line = updates.checking() ? ctx.getString(R.string.updates_checking) : last <= 0
+                        ? ctx.getString(R.string.updates_never)
+                        : ctx.getString(R.string.updates_current, DateUtils.getRelativeTimeSpanString(last));
+        }
+        TextView note = SettingsKit.note(ctx, line);
+        if (s == UpdateRules.Status.NO_GRANT || s == UpdateRules.Status.NO_SCREEN) note.setTextColor(Ui.STAR);
+        SettingsKit.add(block, note, 8);
+        if (s == UpdateRules.Status.OWN) return;
+        View toggle = SettingsKit.toggleRow(ctx, ctx.getString(R.string.updates_check), ctx.getString(R.string.updates_check_sub),
+                updates.checkOn(), "about", "update-check", false, on -> {
+                    updates.setCheckOn(on);
+                });
+        SettingsKit.addWide(block, toggle, 12);
+        View install = null, check = null;
+        if (s == UpdateRules.Status.AVAILABLE || s == UpdateRules.Status.NO_GRANT) {
+            install = SettingsKit.button(ctx, ctx.getString(R.string.updates_install), R.drawable.ic_ui_sync, true, "about",
+                    "update-install", false, v -> updates.install(ctx, ok -> {
+                        if (!ok) host.shell().toast(ctx.getString(R.string.updates_install_failed));
+                    }));
+        }
+        if ((s == UpdateRules.Status.CURRENT || s == UpdateRules.Status.FAILED) && !updates.checking()) {
+            check = SettingsKit.button(ctx, ctx.getString(R.string.updates_check_now), 0, false, "about", "update-check-now",
+                    false, v -> updates.checkNow());
+        }
+        if (install != null || check != null) {
+            View[] buttons = install != null ? (check != null ? new View[] {install, check} : new View[] {install}) : new View[] {check};
+            SettingsKit.add(block, SettingsKit.actions(ctx, buttons), 16);
+        }
+        firstAction = install;
+        if (hadFocus) (install != null ? install : check != null ? check : toggle).requestFocus();
     }
 
     /** {@code .kv}: a name and its value across the pane, over a line (22 px). */

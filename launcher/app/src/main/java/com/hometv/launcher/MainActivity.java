@@ -84,6 +84,14 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final NavModel nav = new NavModel();
     private Shell shell;
+    private boolean resumed;
+    /** In-app updates (Family install step 5): Home's notice, once per new version, while Home is in front. */
+    private final Runnable updateNotice = () -> {
+        if (!resumed || shell == null) return;
+        Updates u = Updates.get(this);
+        UpdateRules.Release r = u.available();
+        if (r != null && u.takeNotice()) shell.toast(getString(R.string.updates_notice, r.versionName), 8000);
+    };
     private Config config;
     /** M3: the catalogue, services and household every screen reads (Router.data). */
     private Data data;
@@ -902,6 +910,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         dates.addAction(Intent.ACTION_TIME_CHANGED);
         dates.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(dateReceiver, dates);
+        Updates.get(this).listen(updateNotice);
     }
 
     @Override
@@ -920,6 +929,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             ThemeFonts.apply(this, theme);
         }
         if (inputs.openOnStartIfDue()) return;
+        resumed = true;
+        // Once a day while Home shows; its own thread, and only a release build (or a debug build's test feed) checks.
+        Updates.get(this).maybeCheck();
+        stage.post(updateNotice);
         // Callbacks keep the nav current while Home is in the background; this catches anything missed, after the
         // first frame back on Home so its binder calls never hold that frame up.
         stage.post(refreshNav);
@@ -928,6 +941,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     protected void onPause() {
         super.onPause();
+        resumed = false;
         // Nothing of ours stays open over another app.
         shell.closeDialogs();
     }
@@ -940,6 +954,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         ApiKeys.get(this).setForeground(false);
         backdrops.setVisible(false);
         unregisterReceiver(dateReceiver);
+        Updates.get(this).unlisten(updateNotice);
         if (data != null) {
             data.catalog.setVisible(false);
             data.accounts.setVisible(false);
