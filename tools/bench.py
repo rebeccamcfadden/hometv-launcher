@@ -39,8 +39,18 @@ import statistics
 import sys
 import time
 
-# The sequence the key probe uses: moves inside a row and between rows, including the edges.
-DEFAULT_SEQUENCE = (22, 22, 22, 21, 21, 21, 20, 22, 22, 21, 21, 19)
+# The sequence the key probe uses: moves inside a row and between rows, including the edges. Every Left and Right
+# happens on the row Home's focus starts on (the app row): Down then Up again comes back to it, since a row below
+# may hold a single item where Left and Right move nothing, and a key that moves nothing is left out of the numbers
+# (12 of 36 keys per series were, on the TCL's Home). A cycle ends where it started, so every cycle moves the same.
+DEFAULT_SEQUENCE = (22, 22, 22, 21, 21, 21, 20, 19, 22, 22, 21, 21)
+
+
+def start_series(tv):
+    """Home, and nothing else: Home already puts the focus on its first app (HomePage.defaultFocus), where
+    DEFAULT_SEQUENCE starts. A Down here, from when Home started on the top bar, began every series a row lower."""
+    tv.shell("input keyevent 3")
+    time.sleep(5)
 
 # Android key codes: 19 is UP, 20 is DOWN, 21 is LEFT, 22 is RIGHT.
 KEYCODE_NAMES = {19: "KEYCODE_DPAD_UP", 20: "KEYCODE_DPAD_DOWN", 21: "KEYCODE_DPAD_LEFT",
@@ -567,12 +577,7 @@ def main():
     samples = []
     for series in range(1, args.series + 1):
         print(f"Series {series}/{args.series}")
-        tv.shell("input keyevent 3")
-        time.sleep(3)
-        # Start on the first grid row, not on the top bar: at the end of the top bar a Right
-        # moves nothing and renders no frame, and that key cannot be measured.
-        tv.shell("input keyevent 20")
-        time.sleep(2)
+        start_series(tv)
         if not tv.is_in_front(package):
             print("The launcher is not the focused window; the keys would measure nothing.")
             print(f"Focused: {tv.focused_window()}")
