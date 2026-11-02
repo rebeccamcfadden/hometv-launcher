@@ -59,6 +59,8 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
     static final String KEY_DONE = "done";
     /** Shown and not yet ended (markShown, switchOffUnfinished). */
     static final String KEY_IN_PROGRESS = "in_progress";
+    /** It switched features back on as it opened, until it ends (markRestored; F34). */
+    private static final String KEY_RESTORED = "restored";
     private static final String GROUP_STEPS = "steps";
     private static final String GROUP_FOOT = "first-run-foot";
     private static final String KEY_START = "start";
@@ -169,6 +171,30 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         return prefs(ctx).getBoolean(KEY_IN_PROGRESS, false);
     }
 
+    /**
+     * Whether ending First run now switches off what isn't set up (FirstRunRules.endSwitchesOff): by Start, once a step
+     * was opened (now or in an earlier First run; the steps opened are kept), or when it switched features back on as it
+     * opened (markRestored).
+     */
+    static boolean endSwitchesOff(Context ctx, boolean start) {
+        SharedPreferences p = prefs(ctx);
+        return FirstRunRules.endSwitchesOff(start, FirstRunRules.decode(p.getString(KEY_DONE, null)),
+                p.getBoolean(KEY_RESTORED, false));
+    }
+
+    /** This First run switched back on, as it opened, what an earlier one had switched off (F34). */
+    static void markRestored(Context ctx) {
+        prefs(ctx).edit().putBoolean(KEY_RESTORED, true).apply();
+    }
+
+    /**
+     * Left before any step was opened (F34): nothing is switched off, and it is as if it had never shown, so it shows
+     * itself again at the launcher's next start.
+     */
+    static void leftUntouched(Context ctx) {
+        prefs(ctx).edit().remove(KEY_IN_PROGRESS).remove(KEY_SHOWN).remove(KEY_RESTORED).apply();
+    }
+
     private FirstRunPage(MainActivity activity, FrameLayout root, Collection<String> done, boolean tmdbKeyTab) {
         super(activity.getString(R.string.first_run_eyebrow), root, Layer.PAGE);
         this.activity = activity;
@@ -210,7 +236,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         startLine.setOrientation(LinearLayout.HORIZONTAL);
         startLine.setGravity(Gravity.CENTER_VERTICAL);
         start = Kit.button(ctx, ctx.getString(R.string.first_run_start), R.drawable.ic_ui_home, Kit.PRIMARY, false,
-                KEY_START, KEY_START, false, v -> activity.closeFirstRun());
+                KEY_START, KEY_START, false, v -> activity.closeFirstRun(true));
         startLine.addView(start, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         startNote = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
@@ -830,7 +856,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         List<String> names = new ArrayList<>();
         Features on = FeaturePrefs.live(a);
         // Judged by what runs: Phone notes, off only because TMDB account is, keeps its own switch (FeaturesTest).
-        prefs(a).edit().remove(KEY_IN_PROGRESS).apply();
+        prefs(a).edit().remove(KEY_IN_PROGRESS).remove(KEY_RESTORED).apply();
         for (Features.Feature f : Features.Feature.values()) {
             if (!on.on(f) || setUp(a, f)) continue;
             FeaturePrefs.switchOffUnfinished(a, f);
@@ -1103,7 +1129,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             if (key == Key.LEFT || key == Key.RIGHT || (key == Key.DOWN && open != null)) return true;
             if (key == Key.BACK) {
                 if (open != null) close(null);
-                else activity.closeFirstRun();
+                else activity.closeFirstRun(false);
                 return true;
             }
             return false;
@@ -1119,7 +1145,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
                     return true;
                 case BACK:
                     if (open != null) close(id);
-                    else activity.closeFirstRun();
+                    else activity.closeFirstRun(false);
                     return true;
                 case UP:
                 case DOWN:

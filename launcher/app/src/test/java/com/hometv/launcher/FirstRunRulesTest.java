@@ -49,6 +49,17 @@ public class FirstRunRulesTest {
     }
 
     @Test
+    public void onlyStartOrAStepOpenedMakesTheEndSwitchFeaturesOff() {
+        // F34: an install script's Home check, or a glance, before any step was opened switches nothing off.
+        assertFalse(FirstRunRules.endSwitchesOff(false, opened(), false));
+        assertTrue(FirstRunRules.endSwitchesOff(true, opened(), false));
+        assertTrue(FirstRunRules.endSwitchesOff(false, opened("features"), false));
+        assertTrue(FirstRunRules.endSwitchesOff(true, opened("region", "stores"), false));
+        // Reopened after Start had switched features off, it switched them back on: leaving switches them off again.
+        assertTrue(FirstRunRules.endSwitchesOff(false, opened(), true));
+    }
+
+    @Test
     public void doneCountsOnlyTheStepsShown() {
         assertEquals(0, FirstRunRules.doneCount(TWO, opened()));
         assertEquals(1, FirstRunRules.doneCount(TWO, opened("features", "stores")));
