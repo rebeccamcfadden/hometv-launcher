@@ -2872,6 +2872,11 @@
   gap: 12px;
 }
 
+/* Home's update notice: where the toast sits, clear of the import pill (bottom 56) below it. */
+.import-pill.update-notice {
+  bottom: 110px;
+}
+
 /* ---- About › Updates (Family install step 5): the status line and the check switch ---- */
 .about-updates {
   display: flex;

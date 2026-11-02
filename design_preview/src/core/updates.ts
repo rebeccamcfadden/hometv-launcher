@@ -50,7 +50,10 @@ const DEFAULTS: Saved = { state: 'current', check: true, checkedAt: Date.now() -
 
 const load = (): Saved => {
   try {
-    return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE) || '{}') as Partial<Saved>) };
+    const s: Saved = { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(STORE) || '{}') as Partial<Saved>) };
+    // A download cut off by a reload has nothing driving it any more: it is available again, as on the TV.
+    if (s.state === 'downloading') return { ...s, state: 'available', progress: 0 };
+    return s;
   } catch {
     return { ...DEFAULTS };
   }
@@ -123,6 +126,11 @@ export const updates = {
         prompt();
       } else commit({ progress });
     }, 400);
+  },
+  /** The person allowed "install unknown apps" on Android's screen: the update is installable now. The notice marker
+   * stays, so Home doesn't show the same version again. */
+  granted() {
+    if (saved.state === 'nogrant') commit({ state: 'available' });
   },
   /** Android installed it: the launcher restarts as the new version (the prototype goes back to up to date). */
   installed() {

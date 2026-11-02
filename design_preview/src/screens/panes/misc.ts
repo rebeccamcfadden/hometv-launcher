@@ -208,7 +208,7 @@ export const aboutPane = (host: PaneHost): Pane => ({
           confirmDialog({
             title: 'Install unknown apps',
             body: 'Android’s own screen for HomeTV Launcher. Switch “Allow from this source” on, then press Back: the update installs from About.',
-            actions: [{ label: 'Allow from this source', primary: true, onOk: () => updates.devSet('available') }],
+            actions: [{ label: 'Allow from this source', primary: true, onOk: () => updates.granted() }],
           }),
         );
         return;
