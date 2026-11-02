@@ -37,7 +37,9 @@ param(
     # Testing, in an unstamped copy: a folder of <name>\debloat.txt lists (the repository's examples\) to suggest from.
     [string]$ListsFrom,
     # Take every question's default answer and skip the pauses (tests, or the project lead on a call).
-    [switch]$NoPrompt
+    [switch]$NoPrompt,
+    # Answer yes to the debloat's one "Switch these off?", whose default is no (tests, or the helper who has read the list).
+    [switch]$SwitchOffList
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2
@@ -82,7 +84,16 @@ $Checklist = [ordered]@{
     'screen mirroring (Miracast)' = '(miracast|wfd|multiscreen|screenshare|screencast|mirror|androidbox|eshare|airplay|dlna|dmr|bigscreen|cast\.sink)'
     'firmware updates' = '(ota|update|fota|upgrade)'
 }
+# The same questions, from what a list's own comments say a package is (its heading and its line).
+$ChecklistNotes = [ordered]@{
+    'streaming apps' = '(?i)(stream|music|video app|tv app|apps? not used|by choice|personal choice|owner|preloaded app|not watched|catch-?up|vod)'
+    'the voice assistant' = '(?i)(voice|assistant|alexa|gemini|hotword|ok google|mic)'
+    'casting from a phone (Chromecast)' = '(?i)(\bcast|chromecast|dial)'
+    'screen mirroring (Miracast)' = '(?i)(mirror|miracast|screen ?shar|multi-?screen|magiconnect)'
+    'firmware updates' = '(?i)(firmware|\bota\b|updater|system update)'
+}
 $script:ListNames = @()
+$script:ListNotes = @{}
 $script:BackupDir = $null
 # The folder the release's debloat lists were unpacked to (or -ListsFrom), when the person may pick one.
 $script:ListsDir = $null
@@ -509,7 +520,20 @@ function Select-DebloatList([string]$Model) {
 # Android's core packages, stops the run with nothing changed, as tools/disable.ps1 refuses it.
 function Read-DebloatList([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path)) { Stop-Install "There is no list at $Path. Nothing was changed." }
-    $names = @(Get-Content -LiteralPath $Path | ForEach-Object { ($_ -replace '#.*$', '').Trim() } | Where-Object { $_ } | Select-Object -Unique)
+    # What the list says about each package: the comment heading above it and its own comment. The checklist reads them,
+    # so a household app the list itself files under streaming, voice, casting and the like is asked about by name.
+    $script:ListNotes = @{}
+    $section = ''
+    $names = @()
+    foreach ($raw in Get-Content -LiteralPath $Path) {
+        $line = $raw.Trim()
+        if (-not $line) { continue }
+        $hash = $line.IndexOf('#')
+        $code = if ($hash -ge 0) { $line.Substring(0, $hash).Trim() } else { $line }
+        $comment = if ($hash -ge 0) { $line.Substring($hash + 1) } else { '' }
+        if (-not $code) { $section = $comment; continue }
+        if ($names -notcontains $code) { $names += $code; $script:ListNotes[$code] = "$section $comment" }
+    }
     $bad = @($names | Where-Object { $_ -cnotmatch $PkgRe })
     if ($bad.Count -gt 0) { Stop-Install "The list $Path has lines that are not package names: $($bad -join ', '). Nothing was changed." }
     $core = @($names | Where-Object { $_ -cmatch $CoreRe -and $_ -cnotmatch $CoreOk })
@@ -540,9 +564,16 @@ function Invoke-Debloat([string[]]$Names) {
     if ($homePkg -ne $Launcher) {
         foreach ($k in $KnownStockLaunchers) { if ($script:todoNow -contains $k) { & $skip $k 'Home is not on the HomeTV Launcher, so the old home screen stays.' } }
     }
+    # A CVTE board keeps its own launcher enabled (AGENTS.md, #741): only that exact board's examples/ list may switch it
+    # off, and a list suggested by a model word can be another CVTE board's. So never from here.
+    if (@($installedNow | Where-Object { $_ -like 'com.cvte.*' }).Count -gt 0) {
+        foreach ($p in @($script:todoNow | Where-Object { $_ -like 'com.cvte.tv.launcher*' })) {
+            & $skip $p 'on a CVTE board its own launcher stays on (only that exact board''s list may switch it off, by hand).'
+        }
+    }
     # PROMPT.md's checklist: what the family uses stays on.
     foreach ($what in $Checklist.Keys) {
-        $hits = @($script:todoNow | Where-Object { $_ -match $Checklist[$what] })
+        $hits = @($script:todoNow | Where-Object { $_ -match $Checklist[$what] -or ($script:ListNotes.ContainsKey($_) -and $script:ListNotes[$_] -match $ChecklistNotes[$what]) })
         if ($hits.Count -eq 0) { continue }
         if (Ask-YesNo "Does anyone use $what on this TV? ($($hits -join ', '))" $true) {
             foreach ($h in $hits) { & $skip $h "you use $what." }
@@ -584,7 +615,9 @@ function Invoke-Debloat([string[]]$Names) {
     # Everything left is listed once, and switched off only on a yes: a list is another household's choices.
     Say 'From the list, these would be switched off now (each can be switched back on with -Restore):'
     foreach ($p in $script:todoNow) { Say "  $p" }
-    if (-not (Ask-YesNo 'Switch these off?' $true)) { Say 'Nothing from the list was switched off.'; return @() }
+    # No unless someone says yes: Enter, or -NoPrompt alone, switches nothing off.
+    $yes = if ($SwitchOffList) { $true } else { Ask-YesNo 'Switch these off?' $false }
+    if (-not $yes) { Say 'Nothing from the list was switched off.'; return @() }
 
     # A reinstall wrote no Home line yet: -Restore must put Home back on HomeTV after it re-enables these.
     if (-not @(Get-Content -LiteralPath $script:UndoFile | Where-Object { $_ -like 'undo cmd package set-home-activity *' }).Count) {

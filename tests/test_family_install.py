@@ -207,6 +207,31 @@ class StaticTest(unittest.TestCase):
             ours = re.search(r"\$" + name[0].upper() + name[1:] + r" = '([^']+)'", self.text).group(1)
             self.assertEqual(theirs, ours, name)
 
+    def test_checklist_covers_every_shipped_household_app(self):
+        # Every package a shipped list files under streaming, music, voice, casting, mirroring or updates (its section
+        # heading or its own comment) must be one the checklist asks about, so a new list can't slip one past it.
+        names = re.search(r"\$Checklist = \[ordered\]@\{(.*?)\n\}", self.text, re.S).group(1)
+        notes = re.search(r"\$ChecklistNotes = \[ordered\]@\{(.*?)\n\}", self.text, re.S).group(1)
+        patterns = [re.compile(p, re.I) for p in re.findall(r"= '([^']+)'", names)]
+        note_patterns = [re.compile(p.replace("(?i)", ""), re.I) for p in re.findall(r"= '([^']+)'", notes)]
+        topic = re.compile(r"stream|music|voice|assistant|\bcast|chromecast|mirror|miracast|firmware|\bota\b|updater", re.I)
+        missed = {}
+        for path in sorted((ROOT / "examples").glob("*/debloat.txt")):
+            section = ""
+            for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+                line = raw.strip()
+                if not line:
+                    continue
+                code, _, comment = line.partition("#")
+                code = code.strip()
+                if not code:
+                    section = comment
+                    continue
+                if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+", code) and topic.search(section + " " + comment):
+                    note = section + " " + comment
+                    if not any(p.search(code) for p in patterns) and not any(p.search(note) for p in note_patterns):
+                        missed.setdefault(code, path.parent.name)
+        self.assertEqual(missed, {}, "household apps the checklist would not ask about")
     def test_never_uninstalls(self):
         self.assertNotRegex(self.text, r"pm uninstall|'uninstall'|\buninstall-")
 
@@ -536,7 +561,7 @@ class FamilyInstallTest(unittest.TestCase):
 
     def test_list_is_applied_after_the_handover_in_batches(self):
         names = self.BLOAT + ["com.example.not.installed"]
-        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(names)))
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(names)), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.disables(end), [TVLAUNCHER] + self.BLOAT)
         self.assertEqual(end["preferred"], OURS)
@@ -547,18 +572,18 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertIn("action.FIRST_RUN", end["shell"][-1])
 
     def test_a_list_with_a_core_package_changes_nothing(self):
-        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["com.android.shell"])))
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["com.android.shell"])), "-SwitchOffList")
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assertIn("core packages", proc.stdout)
         self.assert_tv_untouched(end)
 
     def test_a_list_with_a_bad_line_changes_nothing(self):
-        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["pm uninstall x"])))
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["pm uninstall x"])), "-SwitchOffList")
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assert_tv_untouched(end)
 
     def test_what_the_family_may_use_stays_by_default(self):
-        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["com.netflix.ninja", "com.example.bloat1"])))
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["com.netflix.ninja", "com.example.bloat1"])), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertNotIn("com.netflix.ninja", self.disables(end))
         self.assertIn("com.example.bloat1", self.disables(end))
@@ -566,17 +591,17 @@ class FamilyInstallTest(unittest.TestCase):
     def test_input_and_settings_apps_stay(self):
         state = self.debloat_tv(tv_hw=["com.example.hdmi"], input_apps=["com.example.inputs"], settings_apps=["com.example.setup"])
         names = ["com.example.hdmi", "com.example.inputs", "com.example.setup", "com.example.bloat1"]
-        proc, end = self.run_installer(state, "-List", str(self.write_list(names)))
+        proc, end = self.run_installer(state, "-List", str(self.write_list(names)), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.disables(end), [TVLAUNCHER, "com.example.bloat1"])
 
     def test_a_guard_that_cannot_run_switches_nothing_off(self):
-        proc, end = self.run_installer(self.debloat_tv(hw_fails=True), "-List", str(self.write_list(self.BLOAT)))
+        proc, end = self.run_installer(self.debloat_tv(hw_fails=True), "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.disables(end), [TVLAUNCHER])
 
     def test_a_handler_query_that_fails_switches_nothing_off(self):
-        proc, end = self.run_installer(self.debloat_tv(handlers_fail=True), "-List", str(self.write_list(self.BLOAT)))
+        proc, end = self.run_installer(self.debloat_tv(handlers_fail=True), "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.disables(end), [TVLAUNCHER])
         self.assertIn("Could not check", proc.stdout)
@@ -584,7 +609,7 @@ class FamilyInstallTest(unittest.TestCase):
     def test_a_home_press_that_shows_another_app_counts_as_home_moved(self):
         # Resolution stays on ours; only a Home press shows the recovery screen once bloat3 is off.
         state = self.debloat_tv(front_when_disabled="com.example.bloat3")
-        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)))
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
         self.assertNotIn("com.example.bloat3", end["disabled"])
         self.assertNotIn("com.example.bloat6", self.disables(end))
         self.assertIn("Home moved away", proc.stdout)
@@ -592,7 +617,7 @@ class FamilyInstallTest(unittest.TestCase):
     def test_paramount_and_mediatek_mirroring_stay_by_default(self):
         state = self.debloat_tv()
         state["packages"] = state["packages"] + ["com.cbs.ott", "com.mediatek.androidbox"]
-        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.cbs.ott", "com.mediatek.androidbox", "com.example.bloat1"])))
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.cbs.ott", "com.mediatek.androidbox", "com.example.bloat1"])), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.disables(end), [TVLAUNCHER, "com.example.bloat1"])
 
@@ -600,21 +625,38 @@ class FamilyInstallTest(unittest.TestCase):
         state = self.debloat_tv(disabled=[TVLAUNCHER], preferred=OURS)
         state["packages"] = state["packages"] + ["com.hometv.launcher"]
         state["claims"] = [f"{TVLAUNCHER}/.MainActivity", OURS]
-        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.example.bloat1"])))
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.example.bloat1"])), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         undo = (self.backup_dir() / "undo.txt").read_text().splitlines()
         home = undo.index(f"undo cmd package set-home-activity --user 0 {OURS}")
         self.assertLess(home, undo.index("undo pm enable --user 0 com.example.bloat1"), "Home runs last on -Restore")
+    def test_without_a_yes_nothing_from_the_list_is_switched_off(self):
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(self.BLOAT)))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER])
+        self.assertIn("Nothing from the list was switched off", proc.stdout)
+        for name in self.BLOAT:
+            self.assertIn(f"  {name}", proc.stdout, "the remaining apps are listed by name before the question")
+
+    def test_a_cvte_launcher_on_a_list_stays_on(self):
+        state = self.tv(packages=[CVTE_LAUNCHER, "com.cvte.tv.setting", "com.android.settings", "com.android.vending",
+                                  "com.google.android.gms", "com.example.bloat1"],
+                        claims=[f"{CVTE_LAUNCHER}/.HomeActivity"], preferred=f"{CVTE_LAUNCHER}/.HomeActivity")
+        proc, end = self.run_installer(state, "-List", str(self.write_list([CVTE_LAUNCHER, "com.example.bloat1"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertNotIn(CVTE_LAUNCHER, end["disabled"])
+        self.assertIn("com.example.bloat1", end["disabled"])
+        self.assertIn("CVTE board its own launcher stays on", proc.stdout)
     def test_setup_that_owns_the_wifi_stays(self):
         state = self.debloat_tv(wifi=f"cname={SETUPWRAITH}")
         state["packages"] = state["packages"] + [SETUPWRAITH]
-        proc, end = self.run_installer(state, "-List", str(self.write_list([SETUPWRAITH, "com.example.bloat1"])))
+        proc, end = self.run_installer(state, "-List", str(self.write_list([SETUPWRAITH, "com.example.bloat1"])), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertNotIn(SETUPWRAITH, self.disables(end))
 
     def test_a_batch_that_moves_home_is_switched_back_on(self):
         state = self.debloat_tv(hijacker="com.example.setup/.Recovery", hijack_when_disabled="com.example.bloat2")
-        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)))
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(end["disabled"], [TVLAUNCHER])
         self.assertNotIn("com.example.bloat6", self.disables(end), "the batch after is not started")
@@ -627,7 +669,7 @@ class FamilyInstallTest(unittest.TestCase):
         state = self.debloat_tv(set_home_once=True)
         state["claims"] = state["claims"] + ["com.example.alt1/.Main", "com.example.alt2/.Main"]
         state["packages"] = state["packages"] + ["com.example.alt1", "com.example.alt2"]
-        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.example.alt1"])))
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.example.alt1"])), "-SwitchOffList")
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assertNotIn("com.example.alt1", end["disabled"])
         self.assertIn("-Restore", proc.stdout)
@@ -636,7 +678,7 @@ class FamilyInstallTest(unittest.TestCase):
     def test_a_batch_that_cannot_be_undone_stops_with_restore(self):
         state = self.debloat_tv(hijacker="com.example.setup/.Recovery", hijack_when_disabled="com.example.bloat2",
                                 enable_fails=True)
-        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)))
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assertIn("Keep debugging on", proc.stdout)
         self.assertIn("-Restore", proc.stdout)
