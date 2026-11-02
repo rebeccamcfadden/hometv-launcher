@@ -46,6 +46,7 @@ enter, a feature switched off in Launcher settings › Features makes none of it
 | Google Fonts (Play services' font provider, else `fonts.googleapis.com` and `fonts.gstatic.com`) | A theme's fonts | Once per font, unless Typeface is System font |
 | jsDelivr (this repository's [`launcher/backdrops/`](launcher/backdrops/README.md)) | The pictures of themes that have one | Once per picture, unless Performance's picture is Plain colour |
 | TMDB, Watchmode, Movie of the Night | Checking an API key: one free request with it (`/authentication`, `/regions`, `/countries`) | When you enter or re-check a key, and when the TV couldn't reach the service last time; whatever Features says |
+| [GitHub Releases](https://github.com/rebeccamcfadden/hometv-launcher/releases) (`github.com` and its download host) | In-app updates: the latest release's `version.json`, and the new APK | Only in a release build from `tools/release.ps1`, with Launcher settings › About › Check for updates on: `version.json` once a day while Home shows; the APK only when you press Install update |
 
 Phone notes and the API key page are served on your home network by the TV itself; they don't go through the
 internet.
