@@ -88,7 +88,8 @@
     <script type="module">
       const page = document.getElementById('page');
       const right = document.getElementById('right');
-      const url = (cards) => `./index.html?devbar=off&account=in&jump=${page.value}&cards=${cards}`;
+      // features=on as well as account=in: a saved TMDB-account-off setting would show the empty state instead of cards.
+      const url = (cards) => `./index.html?devbar=off&features=on&account=in&jump=${page.value}&cards=${cards}`;
       const load = () => {
         document.getElementById('left').src = url('landscape');
         document.getElementById('right-frame').src = url(right.value);
