@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -49,6 +50,7 @@ import java.util.function.Consumer;
  */
 final class Updates {
 
+    private static final String TAG = "Updates";
     static final String ACTION_INSTALL_STATUS = "com.hometv.launcher.action.UPDATE_INSTALL_STATUS";
     /** A release APK is under 1 MB (CI's limit); anything far above that is not one. */
     private static final int MAX_APK_BYTES = 8 * 1024 * 1024;
@@ -177,6 +179,7 @@ final class Updates {
                 else e.remove(K_JSON);
                 e.apply();
             } catch (IOException | RuntimeException e) {
+                Log.w(TAG, "update check failed: " + e);
                 failed = true;
             } finally {
                 prefs.edit().putLong(K_LAST, System.currentTimeMillis()).putBoolean(K_FAILED, failed).apply();
@@ -206,6 +209,7 @@ final class Updates {
                 commit(download(r));
                 ok = true;
             } catch (IOException | RuntimeException e) {
+                Log.w(TAG, "update install failed: " + e);
                 ok = false;
             } finally {
                 downloading = false;
