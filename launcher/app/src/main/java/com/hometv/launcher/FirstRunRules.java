@@ -200,6 +200,15 @@ final class FirstRunRules {
     }
 
     /**
+     * Whether First run's end switches off what isn't set up (F34, Rebecca 2026-11-02): Start always does; Back, Home or
+     * a cold start mid-way only once a step was opened. Left before any was (an install script's Home check, a glance),
+     * nothing is switched off and it shows itself again at the launcher's next start.
+     */
+    static boolean endSwitchesOff(boolean start, Collection<String> opened) {
+        return start || !opened.isEmpty();
+    }
+
+    /**
      * Whether the package is still as first installed: Android gives a fresh install the same first-install and
      * last-update times, and moves the last-update time on every update after it.
      */

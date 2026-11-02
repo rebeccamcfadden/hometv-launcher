@@ -281,8 +281,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         registerReceiver(packageReceiver, packages);
 
         // First run cut short without ending (a power cut mid-setup, Home brought back cold): it ends now, switching off
-        // what isn't set up, and the launcher is rebuilt with that.
-        if (savedInstanceState == null && FirstRunPage.interrupted(this)) {
+        // what isn't set up, and the launcher is rebuilt with that. Cut short before any step was opened, it shows again.
+        if (savedInstanceState == null && FirstRunPage.interrupted(this)
+                && !FirstRunPage.endSwitchesOff(this, false)) {
+            FirstRunPage.leftUntouched(this);
+        } else if (savedInstanceState == null && FirstRunPage.interrupted(this)) {
             List<String> off = FirstRunPage.switchOffUnfinished(this);
             if (!off.isEmpty()) {
                 toastAfterRebuild = getString(R.string.first_run_switched_off, TextUtils.join(", ", off));
@@ -582,10 +585,13 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (restored && !FeaturePrefs.live(this).same(Features.current())) recreate();
     }
 
-    /** Start using Home, or Back: Home, rebuilt if a step changed a choice, as Launcher settings does on close. */
-    void closeFirstRun() {
+    /**
+     * Start using Home ({@code start}), or Back: Home, rebuilt if a step changed a choice, as Launcher settings does on
+     * close.
+     */
+    void closeFirstRun(boolean start) {
         shell.goTab(Screen.Tab.HOME, false);
-        firstRunEnded();
+        firstRunEnded(start);
         firstRunClosed();
         if (settingsPage != null && !shell.has(settingsPage)) settingsClosed();
         if (Config.settingsChanged(settingsRevision, settingsRevision())) recreate();
@@ -598,10 +604,15 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
     /**
      * First run has ended (Start, Back, the remote's Home; not a rebuild): every feature on whose setup isn't finished
-     * is switched off, so nothing shows half set up (the project lead, 2026-11-02), and a toast names them.
+     * is switched off, so nothing shows half set up (the project lead, 2026-11-02), and a toast names them. Left by Back
+     * or Home before any step was opened, nothing is, and it shows itself again at the next start (F34).
      */
-    private void firstRunEnded() {
+    private void firstRunEnded(boolean start) {
         if (firstRun == null) return;
+        if (!FirstRunPage.endSwitchesOff(this, start)) {
+            FirstRunPage.leftUntouched(this);
+            return;
+        }
         List<String> off = FirstRunPage.switchOffUnfinished(this);
         if (off.isEmpty()) return;
         String msg = getString(R.string.first_run_switched_off, TextUtils.join(", ", off));
@@ -834,7 +845,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         shell.home();
         if (settingsPage != null && !shell.has(settingsPage)) settingsClosed();
         if (firstRun != null && !shell.has(firstRun)) {
-            firstRunEnded();
+            firstRunEnded(false);
             firstRunClosed();
         }
         // Home closed Launcher settings: rebuild with what changed there, as Back would have.

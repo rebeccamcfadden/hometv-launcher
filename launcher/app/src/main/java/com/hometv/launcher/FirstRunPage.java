@@ -169,6 +169,22 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         return prefs(ctx).getBoolean(KEY_IN_PROGRESS, false);
     }
 
+    /**
+     * Whether ending First run now switches off what isn't set up (FirstRunRules.endSwitchesOff): by Start, or once a
+     * step was opened (now or in an earlier First run; the steps opened are kept).
+     */
+    static boolean endSwitchesOff(Context ctx, boolean start) {
+        return FirstRunRules.endSwitchesOff(start, FirstRunRules.decode(prefs(ctx).getString(KEY_DONE, null)));
+    }
+
+    /**
+     * Left before any step was opened (F34): nothing is switched off, and it is as if it had never shown, so it shows
+     * itself again at the launcher's next start.
+     */
+    static void leftUntouched(Context ctx) {
+        prefs(ctx).edit().remove(KEY_IN_PROGRESS).remove(KEY_SHOWN).apply();
+    }
+
     private FirstRunPage(MainActivity activity, FrameLayout root, Collection<String> done, boolean tmdbKeyTab) {
         super(activity.getString(R.string.first_run_eyebrow), root, Layer.PAGE);
         this.activity = activity;
@@ -210,7 +226,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         startLine.setOrientation(LinearLayout.HORIZONTAL);
         startLine.setGravity(Gravity.CENTER_VERTICAL);
         start = Kit.button(ctx, ctx.getString(R.string.first_run_start), R.drawable.ic_ui_home, Kit.PRIMARY, false,
-                KEY_START, KEY_START, false, v -> activity.closeFirstRun());
+                KEY_START, KEY_START, false, v -> activity.closeFirstRun(true));
         startLine.addView(start, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         startNote = Ui.line(ctx, Ui.T_SMALL, Ui.TEXT_3, Ui.REGULAR);
@@ -1103,7 +1119,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             if (key == Key.LEFT || key == Key.RIGHT || (key == Key.DOWN && open != null)) return true;
             if (key == Key.BACK) {
                 if (open != null) close(null);
-                else activity.closeFirstRun();
+                else activity.closeFirstRun(false);
                 return true;
             }
             return false;
@@ -1119,7 +1135,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
                     return true;
                 case BACK:
                     if (open != null) close(id);
-                    else activity.closeFirstRun();
+                    else activity.closeFirstRun(false);
                     return true;
                 case UP:
                 case DOWN:
