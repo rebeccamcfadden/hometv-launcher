@@ -119,6 +119,11 @@ final class SearchPage extends Screen {
     /** The later page of results on its way (SearchPages), 0 for none, and when it was asked. */
     private int askingPage;
     private long askedAt;
+    /**
+     * The card whose focus asked for the last page: a rebuild that puts focus back on it (the answer redrawing the
+     * grid) asks nothing, so only a move onto another last-row card asks for the next page.
+     */
+    private String askedFromKey;
     /** The full results' card keys in grid order, to tell when focus reaches the last row. */
     private final List<String> gridKeys = new ArrayList<>();
     /** The popular titles of a genre typed in full, and the genre asked for last. */
@@ -303,7 +308,7 @@ final class SearchPage extends Screen {
     @Override
     void onFocus(View v) {
         if (!expanded || !GROUP_GRID.equals(Focus.group(v)) || !Focus.isInside(body, v)) return;
-        if (SearchPages.onLastRow(gridKeys.indexOf(Focus.key(v)), gridKeys.size(), COLUMNS)) askMorePages();
+        if (SearchPages.onLastRow(gridKeys.indexOf(Focus.key(v)), gridKeys.size(), COLUMNS)) askMorePages(Focus.key(v));
     }
 
     /** Coming back from a title or another tab: Recent searches, My list and the offers may have changed. */
@@ -328,6 +333,7 @@ final class SearchPage extends Screen {
         found = null;
         foundFor = null;
         askingPage = 0;
+        askedFromKey = null;
         genreAsked = null;
         memory.clear();
         lastFocus = null;
@@ -412,6 +418,7 @@ final class SearchPage extends Screen {
             found = f;
             foundFor = q;
             askingPage = 0;
+            askedFromKey = null;
             if (shell.top() == this) render();
         });
         String genre = results == null ? null : SearchIndex.strongGenre(results);
@@ -435,18 +442,21 @@ final class SearchPage extends Screen {
      * Focus reached the last row of the full results: asks TMDB for the query's next page (SearchPages), merged in
      * when it comes while the query is still the one asked. A page that never came may be asked again after a while.
      */
-    private void askMorePages() {
+    private void askMorePages(String fromKey) {
         Catalog.Found f = query.equals(foundFor) ? found : null;
         int page = SearchPages.next(f);
         if (page == 0 || !StateUi.online(ctx) || TmdbGate.need(data.accounts) != TmdbGate.Need.NONE) return;
         long now = android.os.SystemClock.uptimeMillis();
         if (askingPage == page && now - askedAt < RETRY_PAGE_MS) return;
+        if (askingPage == 0 && fromKey.equals(askedFromKey)) return;
         String q = query;
         askingPage = page;
         askedAt = now;
+        askedFromKey = fromKey;
         data.catalog.searchPage(q, page, more -> {
             if (askingPage == page) askingPage = 0;
-            if (!q.equals(foundFor) || found == null || more.page <= found.page) return;
+            // Only the page after the ones merged: a late answer after the results went back to page one is dropped.
+            if (!q.equals(foundFor) || found == null || more.page != found.page + 1) return;
             found = Catalog.Found.merge(found, more);
             if (shell.top() == this) render();
         });
