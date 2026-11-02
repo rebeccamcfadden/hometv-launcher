@@ -34,6 +34,7 @@ const P = {
   home: 'M4 11l8-7 8 7v9h-5.5v-6h-5v6H4z',
   picture: 'M3.5 5h17v11.5h-17zM8 20h8M12 16.5V20',
   lock: 'M6.5 11h11v9h-11zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+  key: 'M15 3a6 6 0 1 1-5.66 8H3v4h3v3h3v-3h1.34A6 6 0 0 1 15 3zM16.5 7.5a1.5 1.5 0 1 0 0 .01',
   // V2 states, settings and setup (from the 06, 05 and 01 design files).
   wifiOff: 'M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01M3.5 3.5l17 17',
   retry: 'M20 11a8 8 0 1 0-2.3 5.7M20 4.5V11h-6.5',

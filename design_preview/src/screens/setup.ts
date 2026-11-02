@@ -17,6 +17,8 @@ import type { Pane, PaneHost } from './panes/pane';
 import { regionPane } from './panes/region';
 import { servicesPane, storesPane } from './panes/services';
 import { weatherPane } from './panes/weather';
+import { keys } from '../core/keys';
+import { priceKeysPane, tmdbKeyPane } from './panes/keys';
 import type { SectionId } from './settings';
 
 interface Step {
@@ -107,15 +109,19 @@ interface SubStep {
   title: string;
   icon: IconName;
   value: () => string;
+  /** Whether this tab's setup is done, when it isn't the feature's whole setup (featureSetUp): TMDB key's. */
+  done?: () => boolean;
 }
 
-/** F16's price keys page (Builder E) has no pane yet: a stub panel stands in for it. */
-type PanelId = SectionId | 'keys';
+/** A step, or a tab under Features; 'keys' is F16's Price keys tab and 'tmdbKey' its TMDB key tab. */
+type PanelId = SectionId | 'tmdbKey';
 
 const SUB_STEPS: SubStep[] = [
+  // F16: on a TV without a working TMDB key, the key comes first; Sign in needs it.
+  { id: 'tmdbKey', feature: 'tmdb', title: 'TMDB key', icon: 'key', value: () => keys.value(['tmdb']).text, done: () => keys.tmdbReady() },
   { id: 'account', feature: 'tmdb', title: 'Sign in to TMDB', icon: 'user', value: () => account.value().text },
   { id: 'notes', feature: 'notes', title: 'Phone notes', icon: 'phone', value: () => notes.value().text },
-  { id: 'keys', feature: 'prices', title: 'Price keys', icon: 'lock', value: () => 'Set' },
+  { id: 'keys', feature: 'prices', title: 'Price keys', icon: 'key', value: () => keys.value(['watchmode', 'motn']).text },
   { id: 'weather', feature: 'weather', title: 'Weather city', icon: 'cloud', value: () => placeById(settings.get().place).name },
 ];
 
@@ -150,7 +156,10 @@ export function setupScreen(): Screen {
 
   const start = button('Start using Home', { icon: 'home', primary: true, key: 'start', onOk: () => app.goTab('home') });
 
-  const subs = () => SUB_STEPS.filter((s) => featureOn(s.feature));
+  /** The TMDB key tab shows only on a TV that had no working TMDB key when First run opened. */
+  const keyAtStart = keys.tmdbReady();
+  const subs = () => SUB_STEPS.filter((s) => featureOn(s.feature) && (s.id !== 'tmdbKey' || !keyAtStart));
+  const subDone = (s: SubStep) => (s.done ? s.done() : featureSetUp(s.feature));
   const stepOf = (id: PanelId | null) => STEPS.find((s) => s.id === id);
   const subOf = (id: PanelId | null) => SUB_STEPS.find((s) => s.id === id);
   const tabOf = (id: PanelId) => rowsEl.querySelector<HTMLElement>(`[data-key="${id in SUB_KEYS ? 'sub' : 'step'}-${id}"]`);
@@ -166,13 +175,13 @@ export function setupScreen(): Screen {
     setup: true,
     // F14: a feature turned on in the Features step is set up next, on its own tab under Features.
     openSetup(id) {
-      const sub = SUB_STEPS.find((s) => s.feature === id);
+      const sub = subs().find((s) => s.feature === id);
       if (!sub) return;
       paint();
       enter(sub.id);
     },
   };
-  const panes: Record<Exclude<PanelId, 'keys'>, Pane> = {
+  const panes: Record<string, Pane> = {
     features: featuresPane(host),
     region: regionPane(),
     services: servicesPane(host),
@@ -180,8 +189,10 @@ export function setupScreen(): Screen {
     account: accountPane(host),
     notes: notesPane(host),
     weather: weatherPane(host),
-  } as Record<Exclude<PanelId, 'keys'>, Pane>;
-  const paneOf = (id: PanelId) => (id === 'keys' ? null : panes[id]);
+    keys: priceKeysPane(host),
+    tmdbKey: tmdbKeyPane(host),
+  };
+  const paneOf = (id: PanelId): Pane | null => panes[id] ?? null;
   /** The open step's pane while it shows (not Stores' off state with Price lookup off). */
   const livePane = () => (!open || (open === 'stores' && !featureOn('prices')) ? null : paneOf(open));
 
@@ -219,7 +230,7 @@ export function setupScreen(): Screen {
     );
   };
 
-  /** The panel for the open step: its pane, or F16's stub; and the footer to step on. */
+  /** The panel for the open step: its pane; and the footer to step on. */
   function paintPanel() {
     if (!open) return;
     const sub = subOf(open);
@@ -234,13 +245,7 @@ export function setupScreen(): Screen {
             paint();
             enter('keys');
           })
-        : pane
-        ? pane.render()
-        : [
-            h('div.eyebrow', 'Prices'),
-            h('div.pane-title', 'Price keys'),
-            h('div.pane-sub', 'Scan a QR with your phone to enter the Watchmode and Movie of the Night keys; each is checked with a test call. Builder E’s F16 page goes here.'),
-          ],
+        : (pane?.render() ?? null),
     );
     // Features leads through its setups, then on to the next step (the project lead, 2026-11-02).
     const order: PanelId[] = ['features', ...subs().map((s) => s.id), ...STEPS.slice(1).map((s) => s.id)];
@@ -249,7 +254,7 @@ export function setupScreen(): Screen {
     if (sub) {
       replace(
         foot,
-        h('span.pane-foot-note', `Set up with Features · ${featureSetUp(sub.feature) ? 'set up' : 'not set up yet'}`),
+        h('span.pane-foot-note', `Set up with Features · ${subDone(sub) ? 'set up' : 'not set up yet'}`),
         h(
           'div.pane-foot-actions',
           button('Back to Features', { icon: 'back', small: true, key: 'foot-features', onOk: () => backToFeatures() }),
@@ -309,10 +314,10 @@ export function setupScreen(): Screen {
               h(
                 `div.lrow.cl-row.cl-sub${open === sub.id ? '.is-shown' : ''}`,
                 // Set up: a green check in its icon's place, and its value; not yet: "Not set up yet".
-                featureSetUp(sub.feature)
+                subDone(sub)
                   ? h('span.cl-sub-icon.is-done', { html: icon('check', 24) })
                   : h('span.cl-sub-icon', { html: icon(sub.icon, 24) }),
-                h('div.lr-main', h('div.lr-title', sub.title), h('div.lr-sub', featureSetUp(sub.feature) ? sub.value() : 'Not set up yet')),
+                h('div.lr-main', h('div.lr-title', sub.title), h('div.lr-sub', subDone(sub) ? sub.value() : 'Not set up yet')),
               ),
               { group: 'steps', key: `sub-${sub.id}`, onFocus: () => focusTab(sub.id), onOk: () => enter(sub.id) },
             ),
@@ -452,6 +457,8 @@ export function setupScreen(): Screen {
   const offs = [
     settings.on(repaint),
     account.on(repaint),
+    // F16: a key sent from the phone or laptop page, and its check.
+    keys.on(repaint),
     net.on(repaint),
     theme.on(repaint),
     notes.listen(repaint),

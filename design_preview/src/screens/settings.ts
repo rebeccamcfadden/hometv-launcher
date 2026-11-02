@@ -18,6 +18,8 @@ import { regionPane } from './panes/region';
 import { servicesPane, storesPane } from './panes/services';
 import { themePane } from './panes/theme';
 import { weatherPane } from './panes/weather';
+import { keys } from '../core/keys';
+import { keysPane } from './panes/keys';
 
 /** "All on" while every Performance choice draws and moves everything, "Default" for the usual start (all on but
  * Animated details, F25), "Light mode" at the lightest, else "Custom". */
@@ -33,6 +35,7 @@ export type SectionId =
   | 'notes'
   | 'services'
   | 'stores'
+  | 'keys'
   | 'weather'
   | 'apps'
   | 'theme'
@@ -60,6 +63,14 @@ const SECTIONS: Section[] = [
   { id: 'services', label: 'Streaming services', icon: 'tv', value: () => ({ text: `${settings.get().services.length} ticked` }) },
   // The project lead, 2026-11-02: with Price lookup off, Stores says so (F16's price keys page will too).
   { id: 'stores', label: 'Stores for rent and buy', icon: 'cart', value: () => ({ text: `${settings.get().stores.length} ticked` }), feature: 'prices' },
+  // F16: the household's own keys, from a phone or a laptop. Not behind Price lookup as a whole: the TMDB key is the
+  // catalogue's; only the price keys wait behind an empty state while Price lookup is off.
+  {
+    id: 'keys',
+    label: 'API keys',
+    icon: 'key',
+    value: () => keys.value(featureOn('prices') ? undefined : ['tmdb']),
+  },
   {
     id: 'weather',
     label: 'Weather',
@@ -86,7 +97,7 @@ const SECTIONS: Section[] = [
  */
 const GROUPS: { title: string; items: SectionId[] }[] = [
   { title: 'Accounts', items: ['account', 'notes'] },
-  { title: 'What you watch', items: ['services', 'stores', 'features'] },
+  { title: 'What you watch', items: ['services', 'stores', 'keys', 'features'] },
   { title: 'Home & look', items: ['theme', 'performance', 'apps', 'weather'] },
   { title: 'This TV', items: ['start', 'home', 'region', 'tv', 'about'] },
 ];
@@ -134,6 +145,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     notes: notesPane(host),
     services: servicesPane(host),
     stores: storesPane(),
+    keys: keysPane(host),
     weather: weatherPane(host),
     apps: appsPane(host),
     theme: themePane(),
@@ -270,6 +282,8 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
   const offs = [
     settings.on(() => rerender()),
     account.on(() => rerender()),
+    // F16: a key sent from the phone or laptop page, and its check.
+    keys.on(() => rerender()),
     net.on(() => rerender()),
     // A new period (the dev bar's date, or midnight) changes Seasonal's label and swatches.
     theme.on(() => rerender()),

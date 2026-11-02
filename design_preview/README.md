@@ -438,10 +438,11 @@ on the right.
 - **Sections, in groups** (F23, the project lead's choice, 2026-11-01): the list is split by small grey headings into
   four groups, in this order. **Accounts:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing
   in…", "Code expired", or the username), Phone notes (Off, On, or amber "3 not matched"). **What you watch:**
-  Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"), Features ("4 of 4 on"). **Home & look:**
+  Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"), API keys ("3 working", amber "1 refused"),
+  Features ("4 of 4 on"). **Home & look:**
   Theme (Midnight, or "Nature · Halloween"), Performance (Default, All on, or Custom), Home row apps (7), Weather (the
   city). **This TV:** Open on start (Home), Default Home (On), Region (Sweden), TV settings, About (2.0.0). Values
-  update live. Headings aren't focusable; ↑/↓ step over them. API keys joins What you watch as it is built. A section's name doesn't change with its group, so a path such as Launcher settings ›
+  update live. Headings aren't focusable; ↑/↓ step over them. A section's name doesn't change with its group, so a path such as Launcher settings ›
   Phone notes stays as it is. The list stays inside title-safe and scrolls with focus when its sections don't fit,
   keeping a group's heading in view above its first section. A section whose feature is off in Features stays and
   reads Off (Account, Phone notes, Weather, Stores for rent and buy while Price lookup is off): its pane says the
@@ -513,6 +514,51 @@ offline pill's (06-states A), amber only for a problem. Motion Off drops its sli
   Apple TV Store, Amazon Video, Viaplay Store, SF Anytime and Rakuten TV, saying which app renting opens ("Opens in
   the Prime Video app") and Installed or No app. All start ticked. A note says prices are in kronor and Google Play
   isn't sold in Sweden.
+
+#### API keys
+
+F16 (the project lead, 2026-11-01 and -02; no Figma design yet, drafted from the Phone notes pane's parts). The
+household's own TMDB, Watchmode and Movie of the Night keys, so nobody shares a free plan's monthly limit and no key is
+ever inside an APK. Never typed on the TV.
+
+- **The pane**: "Keys for titles and prices". One row per key, focusable:
+  - What the row shows: the name, what the key is for, its free plan, and a status line.
+  - The statuses: **Not set** (Movie of the Night: "Not set · optional"), **Checking with TMDB…**, **Works · ends
+    Qx7w** (green; only the last four characters ever show), **Works · from this TV's build** (a `tv.properties`
+    key), **Kept, not checked yet** (amber: the TV couldn't reach the service, so the key doesn't count as working until
+    a check passes; it tries again later, and OK tries now; a key that once worked stays Works), or **refused** (red
+    border: "TMDB refused it. Copy the API Read Access Token (the long one), all of it.").
+  - OK on a key entered here checks it again; on a build's key it says one entered on the phone or laptop page replaces
+    it, and on a missing key where to enter it.
+- **Price lookup off**: the TMDB key stays (the catalogue needs it). In place of the two price rows, a dashed box says
+  "Price lookup is off, so the TV asks for no prices and needs no price keys", with **Turn on Price lookup**.
+- **Beside the rows**: a QR for a phone's camera, and for a laptop "Or on a laptop, open http://<tv>:8766/keys and type
+  the code K7M4P2". The page there says how to get each key and sends it to the TV, which checks it with one free
+  request (TMDB `/3/authentication`, Watchmode `/v1/regions/`, Movie of the Night `/v4/countries/us`).
+- **Buttons**: **Remove the TMDB key** / **Remove a key** (asks which). A removed key leaves none, the build's own
+  too: the TV has no key for that service until one is entered here (the project lead, 2026-11-02). **New code** asks
+  first: a page opened with the old code can't send keys any more.
+- **One note**: the page, the step-by-step help, and that the TV listens only while the pane is open, on the home
+  network, with the code.
+- The section value reads "3 working", "Not set", "1 of 3 set", "Checking…", "1 not checked" or "1 refused" (both
+  amber); with Price lookup
+  off, the TMDB key's alone.
+- D-pad: ↑/↓ step through the rows, Turn on Price lookup and the buttons' row; → on a row stays; ← at the left edge
+  returns to the section.
+- **In First run**: the **Price keys** tab (Price lookup) is this pane with the two price keys; the **TMDB key** tab
+  (TMDB account, on a TV without a working key) with the TMDB key. Price lookup counts as set up once the Watchmode key
+  works (checked, not just kept); Movie of the Night is optional.
+- **The phone and laptop page** (`keys.html`; the TV serves it, like Phone notes' setup page):
+  - The code comes from the QR link's `#fragment`, never sent over the network; a laptop types it.
+  - One card per key: its status, **How to get it** (TMDB open, the others folded), with sign-up links, which fields to
+    fill and Copy buttons for TMDB's app name, URL and summary, then a paste box and **Check and save on the TV**.
+  - A key leaves the box once sent; the page keeps nothing. In the prototype it updates the TV tab at once (Jump to
+    → API keys · open the phone page). A mock check passes a TMDB token shaped like a JWT ("eyJ…", 100+ characters)
+    and other keys of 20–64 letters and digits; "offline" in a key stands for an unreachable service. A check's answer
+    is kept with the key and shown by whichever tab is open when it's due, so closing the phone page doesn't leave the
+    TV on Checking, and a key replaced or removed meanwhile drops it. On the TV, the TV makes the check itself.
+- **Account without a TMDB key**: Sign in gives way to "This TV has no TMDB key yet…" and **Add a TMDB key** (in First
+  run: add it in the TMDB key step above).
 
 #### Weather
 
@@ -613,8 +659,8 @@ picks another theme.
     pill, and the TV doesn't listen.
   - **Price lookup** (Watchmode and Movie of the Night): off, every offer comes without its prices: cards and the title
     preview still say Rent or Buy and where ("Rent on Apple TV Store"), from TMDB's availability. Stores for rent and
-    buy reads Off and its pane is the off state ("Price lookup is off", **Turn on**), as F16's price keys page
-    will be.
+    buy reads Off and its pane is the off state ("Price lookup is off", **Turn on**); in [API keys](#api-keys) the price
+    keys wait behind the same off state while the TMDB key stays.
   - **Weather:** off, Home has no weather or forecast.
   - **Pick for me** is no switch: its button is there on Movies and TV Shows when TMDB account is on, the TV is signed
     in and the lists hold something to pick from. Otherwise it is hidden, and the page's own state says why ("needs
@@ -669,12 +715,12 @@ settings."; on the right a help pane for the focused row.
   Next. Turning a feature on again opens its tab at once; switching one off removes its tab. **What counts as set up**
   (`featureSetUp`): TMDB account, the TV is signed in; Phone notes, TMDB account set up and the TV listening (Phone
   notes' own switch on: the TV can't tell a phone has paired until it sends a note); Price lookup, the Watchmode and
-  Movie of the Night keys set (F16; never in this mock until #83, so it is always switched off here); Weather, a place
+  Watchmode key working (F16; Movie of the Night is optional); Weather, a place
   set (the TV's default counts). **When First run ends** (Start, Back, Home), every feature on but not set up is
   switched off, and a toast names them ("Not set up, so switched off: …"); Start's help pane lists them beforehand.
-  Price keys is Builder E's F16 page (a phone scans a QR to enter the Watchmode and Movie of the Night keys, each
-  checked; a stub here until it exists, and a TV without a TMDB key gets F16's key page before
-  Sign in). With Price lookup off, the Stores step's row reads "Price lookup off" (a muted pill, no names) and its panel
+  Price keys is F16's price keys pane ([API keys](#api-keys), Watchmode and Movie of the Night). On a TV that had no
+  working TMDB key when First run opened, TMDB account gets a **TMDB key** tab before Sign in to TMDB, done once the key
+  works. With Price lookup off, the Stores step's row reads "Price lookup off" (a muted pill, no names) and its panel
   is the off state, whose Turn on switches it on and opens Price keys. A setup tab stays while its feature is on, so it
   can be opened again; switched off, it goes. On the TV, TMDB account and Phone notes rebuild the launcher before their
   setup opens. There is no other on/off in First run: Sign in to TMDB and Weather city are no longer rows of their own.
@@ -725,6 +771,8 @@ width with 243 px art.
   fall back to opening Wi-Fi settings.
 - **Phone notes:** the address assumes the TV keeps its IP (a DHCP reservation in the router); what Apple Notes and
   Keep put in the shared text (checklist ticks, the note's title) is to be checked on the phones.
+- **API keys:** the checks and the phone page's sending are mocked (`src/core/keys.ts`); the TV makes one real
+  request per key. The port (8766, beside Phone notes' 8765) and the QR's address are the TV's own.
 - **Not designed yet:** hold-OK menus in Figma (the base uses them for tile Move / Remove / App info and a Settings
   menu; the title menu is built here without a design), the screensaver, removing recent searches, voice search,
   progress on started titles, the Sort chip, a
@@ -743,6 +791,8 @@ width with 243 px art.
 | `src/core/account.ts` | The mocked TMDB sign-in and lists, behind the Account pane and the dev bar's Account menu |
 | `src/core/lists.ts` | The lists Movies, TV Shows and Pick for me show: My list, then the account's shown TMDB lists (or the mock Household and Friends before a sign-in) |
 | `src/core/notes.ts` | Phone notes: on/off, the pairing code, each list's last send, and the simulated import behind the import pill |
+| `src/core/keys.ts` | API keys (F16): each key's state and last four characters, the code, the mock check; shared with the phone page through localStorage |
+| `keys.html`, `src/keysPage.ts` | The phone and laptop page the API keys QR opens (a second Vite page) |
 | `src/core/net.ts` | The simulated network and data state behind the dev bar's State menu |
 | `src/data/` | Mock catalogue, services (and the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |
 | `src/screens/` | One module per screen; `dropdown.ts` holds the top-bar menus, `quickSettings.ts` the Settings icon's, `rent.ts` the rent/buy dialog, `settings.ts` Launcher settings, `setup.ts` First run |

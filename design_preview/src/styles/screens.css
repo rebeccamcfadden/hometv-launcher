@@ -2984,3 +2984,117 @@
   pointer-events: none;
 }
 
+
+/* F16 API keys (no Figma design yet): the household's keys on the left, the QR and the laptop address on the right. */
+.keys-setup {
+  display: flex;
+  align-items: flex-start;
+  gap: 36px;
+  margin-top: 26px;
+}
+.keys-rows {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.apikey-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 96px;
+  padding: 14px 22px;
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  border: var(--line-w) solid transparent;
+}
+.apikey-row.is-focused {
+  box-shadow: var(--focus-ring);
+  background: var(--surface-2);
+}
+.apikey-text {
+  flex: 1;
+  min-width: 0;
+}
+.apikey-name {
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.apikey-use {
+  font-weight: 400;
+  color: var(--text-2);
+}
+.apikey-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: var(--t-small);
+  line-height: 1.35;
+  color: var(--text-3);
+}
+.apikey-mark {
+  display: flex;
+  flex: none;
+}
+.apikey-mark:empty {
+  display: none;
+}
+.apikey-row--good .apikey-status {
+  color: var(--good);
+}
+.apikey-row--warn .apikey-status {
+  color: var(--star);
+}
+.apikey-row--bad {
+  border-color: rgba(241, 154, 142, 0.5);
+}
+.apikey-row--bad .apikey-status {
+  color: #f19a8e;
+}
+.apikey-plan {
+  flex: none;
+  max-width: 220px;
+  font-size: var(--t-min);
+  color: var(--text-3);
+  text-align: right;
+}
+.keys-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 300px;
+  flex: none;
+}
+.keys-laptop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 18px;
+  font-size: var(--t-min);
+  color: var(--text-3);
+  text-align: center;
+}
+.keys-code-line {
+  margin-top: 6px;
+}
+.keys-laptop b {
+  color: var(--text-1);
+  font-weight: 500;
+}
+.keys-laptop .notes-code {
+  font-size: 26px;
+}
+
+.keys-off {
+  padding: 18px 22px 20px;
+  border-radius: var(--radius-l);
+  border: var(--line-w) dashed var(--line-strong);
+}
+.keys-off .pane-actions {
+  margin-top: 16px;
+}
+

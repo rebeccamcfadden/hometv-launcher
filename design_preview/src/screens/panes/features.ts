@@ -1,6 +1,7 @@
 import { account } from '../../core/account';
 import type { Key } from '../../core/app';
 import { h, type Child } from '../../core/dom';
+import { keys } from '../../core/keys';
 import { notes } from '../../core/notes';
 import { featureOn, FEATURES, setFeature, settings, type FeatureId } from '../../core/settings';
 import { placeById } from '../../data/places';
@@ -16,8 +17,8 @@ export const featuresValue = () => `${FEATURES.filter((f) => featureOn(f.id)).le
  * - TMDB account: the TV is signed in.
  * - Phone notes: TMDB account is set up and the TV is listening (Phone notes' own switch, in its pane, is on). The TV
  *   can't tell a phone has paired until that phone sends a note, so listening is what counts.
- * - Price lookup: the Watchmode and Movie of the Night keys are set (F16, Builder E's keys page; never in this mock
- *   until #83 lands, so Price lookup is switched off at the end of First run here).
+ * - Price lookup: the Watchmode key works (F16's keys page); Movie of the Night is optional (the project lead,
+ *   2026-11-02).
  * - Weather: a place is set (the TV's default counts).
  */
 export function featureSetUp(id: FeatureId): boolean {
@@ -27,14 +28,11 @@ export function featureSetUp(id: FeatureId): boolean {
     case 'notes':
       return featureSetUp('tmdb') && notes.on();
     case 'prices':
-      return priceKeysSet();
+      return keys.pricesReady();
     case 'weather':
       return !!placeById(settings.get().place);
   }
 }
-
-/** Builder E's F16 replaces this with keys.pricesReady(). */
-export const priceKeysSet = () => false;
 
 /**
  * Switches a feature on, and the one it needs (Phone notes needs TMDB account): an empty state's Turn on. Returns the
@@ -48,10 +46,11 @@ export function turnOn(id: FeatureId): FeatureId {
   return first;
 }
 
-/** The Launcher settings section that sets a feature up (Price lookup's keys page is F16's: none here yet). */
-export const SETUP_SECTION: Partial<Record<FeatureId, 'account' | 'notes' | 'weather'>> = {
+/** The Launcher settings section that sets a feature up (Price lookup: F16's API keys). */
+export const SETUP_SECTION: Partial<Record<FeatureId, 'account' | 'notes' | 'keys' | 'weather'>> = {
   tmdb: 'account',
   notes: 'notes',
+  prices: 'keys',
   weather: 'weather',
 };
 

@@ -22,6 +22,7 @@ import { launcherSettings } from './screens/settings';
 import { setupScreen } from './screens/setup';
 import { titleMenu } from './screens/titleMenu';
 import { notes } from './core/notes';
+import { keys, KEYS_PRESETS, type KeysPreset } from './core/keys';
 import { importPill } from './ui/importPill';
 
 // Launcher settings' Motion: the stage drops slides and scale-ups (Reduced) or every animation (Off).
@@ -90,6 +91,19 @@ accountSelect.addEventListener('change', () => {
 });
 const startAccount = params.get('account') as AccountState | null;
 if (startAccount && ACCOUNT_STATES.some(([id]) => id === startAccount)) account.devSet(startAccount);
+
+// F16, beside the sign-in: the API keys the TV has. The phone page (keys.html, "API keys · open the phone page" in
+// Jump to) sends keys to this tab as the TV would receive them.
+const keysSelect = document.getElementById('keys') as HTMLSelectElement;
+keysSelect.append(new Option('Keys: as they are', ''));
+for (const [id, label] of KEYS_PRESETS) keysSelect.append(new Option(`Keys: ${label}`, id));
+keysSelect.addEventListener('change', () => {
+  if (keysSelect.value) keys.devSet(keysSelect.value as KeysPreset);
+  keysSelect.value = '';
+  keysSelect.blur();
+});
+const startKeys = params.get('keys') as KeysPreset | null;
+if (startKeys && KEYS_PRESETS.some(([id]) => id === startKeys)) keys.devSet(startKeys);
 
 // Themes, beside them: switch the theme, and put the preview on a date in each Seasonal period.
 const themeSelect = document.getElementById('theme') as HTMLSelectElement;
@@ -169,16 +183,17 @@ const jumps: [string, string, () => void][] = [
       app.push(launcherSettings());
     },
   ],
-  ...(['account', 'notes', 'services', 'stores', 'weather', 'apps', 'theme', 'performance', 'features', 'region'] as const).map(
+  ...(['account', 'notes', 'services', 'stores', 'keys', 'weather', 'apps', 'theme', 'performance', 'features', 'region'] as const).map(
     (id): [string, string, () => void] => [
       `settings-${id}`,
-      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features', region: 'Region' }[id]}`,
+      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', keys: 'API keys', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features', region: 'Region' }[id]}`,
       () => {
         app.goTab('home');
         app.push(launcherSettings(id, { enter: true }));
       },
     ],
   ),
+  ['keys-page', 'API keys · open the phone page (new tab)', () => window.open(`./keys.html#${keys.code()}`, '_blank')],
   [
     'notes-send',
     'Phone notes · a phone sends a note (3 not matched)',

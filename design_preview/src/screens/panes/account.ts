@@ -1,12 +1,14 @@
 import { app } from '../../core/app';
 import { h } from '../../core/dom';
 import { account, USERNAME } from '../../core/account';
+import { keys } from '../../core/keys';
 import { CHIP_CAP, lists } from '../../core/lists';
 import { store } from '../../core/store';
 import { icon } from '../../ui/icons';
 import { qrSvg } from '../../ui/qr';
 import { button, segmented } from '../../ui/widgets';
 import { confirmDialog } from '../confirm';
+import { launcherSettings } from '../settings';
 import type { Pane, PaneHost } from './pane';
 
 const STEPS = ['Scan the code with your phone’s camera', 'Sign in to TMDB and press Approve', 'This TV carries on by itself'];
@@ -45,7 +47,18 @@ export function accountPane(host: PaneHost): Pane {
       benefit('list', 'All your TMDB lists', 'Pick which ones show in Movies and TV Shows, by name'),
       benefit('lock', 'Your password stays with TMDB', 'This TV only gets a sign-in key; sign out any time'),
     ),
-    h('div.pane-actions', entry(button('Sign in with your phone', { icon: 'phone', primary: true, key: 'acc-signin', onOk: account.signIn }))),
+    // F16: signing in asks TMDB, so it needs the household's TMDB key first. First run has a TMDB key tab above this.
+    keys.tmdbReady()
+      ? h('div.pane-actions', entry(button('Sign in with your phone', { icon: 'phone', primary: true, key: 'acc-signin', onOk: account.signIn })))
+      : host.setup
+        ? h('div.pane-note.notes-warn', 'This TV has no TMDB key yet: add it in the TMDB key step above, then sign in here.')
+        : [
+            h('div.pane-note.notes-warn', 'This TV has no TMDB key yet. Add one in API keys first; then sign in here.'),
+            h(
+              'div.pane-actions',
+              entry(button('Add a TMDB key', { icon: 'key', primary: true, key: 'acc-key', onOk: () => app.push(launcherSettings('keys', { enter: true })) })),
+            ),
+          ],
     h('div.pane-note', 'Not signed in, My list and Seen are kept on this TV only.'),
   ];
 
