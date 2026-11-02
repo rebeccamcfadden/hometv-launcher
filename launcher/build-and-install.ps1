@@ -63,10 +63,12 @@ Write-Host "Stock launcher: $StockLauncher"
 $disableStock = if ($StockLauncher -eq 'none') { 'echo stock launcher left alone' } else { "pm disable-user --user 0 $StockLauncher" }
 
 $apk = 'app\build\outputs\apk\release\app-release.apk'
-# A fresh install (the package was not on the TV) ends by opening First run; an update must not. A query that fails
-# counts as an update, so nothing is opened.
-$before = & $py -I ..\tools\tv.py 'pm list packages com.hometv.launcher'
-$freshInstall = ($LASTEXITCODE -eq 0) -and -not (@($before | ForEach-Object { "$_".Trim() }) -contains 'package:com.hometv.launcher')
+# A fresh install (the package was not on the TV) ends by opening First run; an update must not. Only an answer that
+# is plainly "not installed" counts as fresh: nothing, or package lines without this one. A query that fails or
+# answers anything else (tv.py passes the TV's error text on with exit 0) counts as an update, so nothing is opened.
+$before = @(& $py -I ..\tools\tv.py 'pm list packages com.hometv.launcher' | ForEach-Object { "$_".Trim() } | Where-Object { $_ })
+$freshInstall = ($LASTEXITCODE -eq 0) -and -not ($before -contains 'package:com.hometv.launcher') -and
+    -not ($before | Where-Object { $_ -notlike 'package:*' })
 & $py -I ..\tools\b64push.py $apk /data/local/tmp/tvhome.apk
 if ($LASTEXITCODE -ne 0) { throw 'APK upload failed' }
 $out = & $py -I ..\tools\tv.py 'pm install -r /data/local/tmp/tvhome.apk; rm -f /data/local/tmp/tvhome.apk'
@@ -121,8 +123,10 @@ if ($RestoreKeyServices) {
 # Last, after every Home check: First run shows by itself on the first Home start after an install, and the checks
 # above would end it (#98). Nothing presses Home after this.
 if ($freshInstall) {
-    & $py -I ..\tools\tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity' | Out-Null
-    Write-Host 'Installed. First run is open on the TV.'
+    # Optional, after the install has worked: a refused start only changes the message.
+    $firstRun = (& $py -I ..\tools\tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity') -join "`n"
+    if ($LASTEXITCODE -ne 0 -or $firstRun -match 'Error') { Write-Host "Installed. First run did not open; open it with: tools\venv\Scripts\python.exe tools\tv.py 'am start -a com.hometv.launcher.action.FIRST_RUN -n com.hometv.launcher/.MainActivity'" }
+    else { Write-Host 'Installed. First run is open on the TV.' }
 } else {
     Write-Host 'Installed. Press Home on the remote to see it.'
 }
