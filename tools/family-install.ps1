@@ -37,6 +37,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2
+# Windows PowerShell 5.1: GitHub and dl.google.com need TLS 1.2, and the progress bar makes downloads crawl.
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+$ProgressPreference = 'SilentlyContinue'
+# Its own adb server, so a developer's adb on this laptop (another version) is neither killed nor used.
+if (-not $env:ANDROID_ADB_SERVER_PORT) { $env:ANDROID_ADB_SERVER_PORT = '5038' }
 
 # ---- Pinned: the release this copy installs (stamped by tools/release.ps1) and Google's platform-tools ------------
 $ReleaseRepo = 'rebeccamcfadden/hometv-launcher'
@@ -128,7 +133,12 @@ function Test-HomeShowsOurs {
     return $front.Contains("$Launcher/")
 }
 
-function Get-FileSha256([string]$Path) { return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+function Get-FileSha256([string]$Path) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    $stream = [IO.File]::OpenRead($Path)
+    try { return (($sha.ComputeHash($stream) | ForEach-Object { $_.ToString('x2') }) -join '') }
+    finally { $stream.Dispose(); $sha.Dispose() }
+}
 
 function Get-PinnedAdb {
     if ($AdbPath) {
@@ -148,7 +158,8 @@ function Get-PinnedAdb {
     }
     # Unpacked from the checked zip each run, so a changed adb.exe on disk is never used.
     if (Test-Path -LiteralPath $dir) { Remove-Item -LiteralPath $dir -Recurse -Force }
-    Expand-Archive -LiteralPath $zip -DestinationPath $dir
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [IO.Compression.ZipFile]::ExtractToDirectory($zip, $dir)
     if (-not (Test-Path -LiteralPath $adb)) { Stop-Install 'The platform-tools zip has no adb.exe.' }
     return $adb
 }
