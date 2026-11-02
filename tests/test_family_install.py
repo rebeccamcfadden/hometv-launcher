@@ -59,13 +59,19 @@ function Shell([string]$c) {
     if ($c -eq 'pm list packages' -or $c -eq 'pm list packages -f') { return ((@($s.packages) | ForEach-Object { "package:$_" }) -join "`n") }
     if ($c -eq 'pm list packages -d') { return ((@($s.disabled) | ForEach-Object { "package:$_" }) -join "`n") }
     if ($c -like 'settings list *') { return 'name=value' }
-    if ($c -like 'for p in *TV_INPUT_HARDWARE*') {
-        if ($s.hw_fails) { return '' }
-        $names = ($c -replace '^for p in (.*?); do.*$', '$1') -split ' '
-        return ((@($names | Where-Object { @($s.tv_hw) -contains $_ }) + 'hw-check-done') -join "`n")
+    if ($c -match '^dumpsys package (\S+)$') {
+        $p = $Matches[1]
+        # A failing dump answers with an error and exit 0, as a busy package service does.
+        if ($s.hw_fails) { return "Error: Can't find service: package" }
+        $perm = if (@($s.tv_hw) -contains $p) { "      android.permission.TV_INPUT_HARDWARE`n" } else { '' }
+        return "Packages:`n  Package [$p] (1a2b3c):`n    requested permissions:`n      android.permission.INTERNET`n$perm    install permissions:`n"
     }
     if ($c -like 'cmd package query-activities --brief -a android.intent.action.VIEW*') {
-        return ((@(@($s.input_apps) | ForEach-Object { "$_/.Main" }) + '==' + @(@($s.settings_apps) | ForEach-Object { "$_/.Settings" }) + 'handlers-done') -join "`n")
+        if ($s.handlers_fail) { return 'Exception occurred while executing: java.lang.SecurityException' }
+        return ((@($s.input_apps) | ForEach-Object { "  $_/.Main" }) -join "`n")
+    }
+    if ($c -like 'cmd package query-activities --brief -a android.settings.SETTINGS*') {
+        return ((@($s.settings_apps) | ForEach-Object { "  $_/.Settings" }) -join "`n")
     }
     if ($c -like 'cmd package query-activities*') { return ((@($s.claims) | Where-Object { Enabled (Pkg $_) }) -join "`n") }
     if ($c -match '^cmd package resolve-activity .*category\.HOME (\S+)$') {
@@ -99,7 +105,7 @@ function Shell([string]$c) {
         return 'Success'
     }
     if ($c -like 'dumpsys activity activities*') {
-        $front = if ($s.front) { $s.front } else { HomeNow }
+        $front = if ($s.front) { $s.front } elseif ($s.front_when_disabled -and (@($s.disabled) -contains $s.front_when_disabled)) { "com.example.setup/.RecoveryActivity" } else { HomeNow }
         return "  mResumedActivity: ActivityRecord{1 u0 $front t1}"
     }
     if ($c -eq 'dumpsys wifi') { return $s.wifi }
@@ -237,7 +243,8 @@ class FamilyInstallTest(unittest.TestCase):
             "set_home_works": True,
             "wifi": "", "log": [], "shell": [], "reboots": 0, "pushed": False,
             "refuse_disable": [], "enable_fails": False, "set_home_once": False, "set_home_used": False,
-            "tv_hw": [], "input_apps": [], "settings_apps": [], "hw_fails": False,
+            "tv_hw": [], "input_apps": [], "settings_apps": [], "hw_fails": False, "handlers_fail": False,
+            "front_when_disabled": None,
         }
         state.update(overrides)
         return state
@@ -568,6 +575,36 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.disables(end), [TVLAUNCHER])
 
+    def test_a_handler_query_that_fails_switches_nothing_off(self):
+        proc, end = self.run_installer(self.debloat_tv(handlers_fail=True), "-List", str(self.write_list(self.BLOAT)))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER])
+        self.assertIn("Could not check", proc.stdout)
+
+    def test_a_home_press_that_shows_another_app_counts_as_home_moved(self):
+        # Resolution stays on ours; only a Home press shows the recovery screen once bloat3 is off.
+        state = self.debloat_tv(front_when_disabled="com.example.bloat3")
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)))
+        self.assertNotIn("com.example.bloat3", end["disabled"])
+        self.assertNotIn("com.example.bloat6", self.disables(end))
+        self.assertIn("Home moved away", proc.stdout)
+
+    def test_paramount_and_mediatek_mirroring_stay_by_default(self):
+        state = self.debloat_tv()
+        state["packages"] = state["packages"] + ["com.cbs.ott", "com.mediatek.androidbox"]
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.cbs.ott", "com.mediatek.androidbox", "com.example.bloat1"])))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER, "com.example.bloat1"])
+
+    def test_a_reinstall_with_a_list_records_home_for_restore(self):
+        state = self.debloat_tv(disabled=[TVLAUNCHER], preferred=OURS)
+        state["packages"] = state["packages"] + ["com.hometv.launcher"]
+        state["claims"] = [f"{TVLAUNCHER}/.MainActivity", OURS]
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.example.bloat1"])))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        undo = (self.backup_dir() / "undo.txt").read_text().splitlines()
+        home = undo.index(f"undo cmd package set-home-activity --user 0 {OURS}")
+        self.assertLess(home, undo.index("undo pm enable --user 0 com.example.bloat1"), "Home runs last on -Restore")
     def test_setup_that_owns_the_wifi_stays(self):
         state = self.debloat_tv(wifi=f"cname={SETUPWRAITH}")
         state["packages"] = state["packages"] + [SETUPWRAITH]

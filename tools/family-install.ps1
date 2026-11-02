@@ -76,10 +76,10 @@ $CoreOk = '^com\.android\.providers\.(calendar|contacts|userdictionary|blockednu
 $PkgRe = '^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$'
 # PROMPT.md's checklist question: what a family may use, kept unless they say it can go.
 $Checklist = [ordered]@{
-    'streaming apps' = '(netflix|amazonvideo|primevideo|youtube|disney|hbo|wbd\.stream|hulu|peacock|paramount|tubi|roku|spotify|plex|twitch|svt|viaplay|appletv|atve|crunchyroll|pluto)'
+    'streaming apps' = '(netflix|amazonvideo|primevideo|aiv|avod|imdb|youtube|disney|hbo|wbd\.stream|hulu|peacock|paramount|cbs|tubi|roku|spotify|deezer|tidal|music|plex|twitch|svt|viaplay|appletv|atve|crunchyroll|pluto|vudu|fandango|crackle|sling|fubo|philo|mubi|britbox|showtime|starz|discovery|dazn|espn|rakuten|itv|bbc|iplayer|all4|channel4|my5|stv|freeview|uktv|zee5|hotstar|jio|sonyliv|nrk|tv2|ruutu|yle|joyn|zattoo|waipu|canal|molotov|nowtv|stan|kayo|binge)'
     'the voice assistant' = '(katniss|assistant|alexa|voice|googlequicksearchbox)'
     'casting from a phone (Chromecast)' = '(mediashell|\.cast)'
-    'screen mirroring (Miracast)' = '(miracast|wfd|multiscreen|screenshare|mirror)'
+    'screen mirroring (Miracast)' = '(miracast|wfd|multiscreen|screenshare|screencast|mirror|androidbox|eshare|airplay|dlna|dmr|bigscreen|cast\.sink)'
     'firmware updates' = '(ota|update|fota|upgrade)'
 }
 $script:ListNames = @()
@@ -557,22 +557,38 @@ function Invoke-Debloat([string[]]$Names) {
     }
     if ($script:todoNow.Count -eq 0) { Say 'Nothing on the list is left to switch off.'; return @() }
 
-    # The software under HDMI, AV and the tuner (#321), and the apps that open the inputs and Settings.
-    $names = $script:todoNow -join ' '
-    $hw = Invoke-TvShell ("for p in $names; do dumpsys package `$p | sed -n -E '/requested permissions:/,/(install|runtime) permissions:|User [0-9]+:/p' | grep -q TV_INPUT_HARDWARE && echo `$p; done; echo hw-check-done")
-    $handlers = Invoke-TvShell ('cmd package query-activities --brief -a android.intent.action.VIEW -t vnd.android.cursor.item/channel 2>/dev/null; echo ==; ' +
-        'cmd package query-activities --brief -a android.settings.SETTINGS 2>/dev/null; echo handlers-done')
-    if (-not $hw.Contains('hw-check-done') -or -not $handlers.Contains('handlers-done')) {
+    # The software under HDMI, AV and the tuner (#321), and the apps that open the inputs and Settings. Each probe is
+    # judged on its own answer: a package's dump must name the package, and a query must answer without an error, or
+    # nothing more is switched off (the person can't test what these protect).
+    $probeFailed = $false
+    $hwPkgs = @()
+    foreach ($p in @($script:todoNow)) {
+        $dump = Invoke-TvShell "dumpsys package $p"
+        if ($script:AdbExit -ne 0 -or -not $dump.Contains("Package [$p]")) { $probeFailed = $true; break }
+        $m = [regex]::Match($dump, '(?s)requested permissions:(.*?)((install|runtime) permissions:|User [0-9]+:|$)')
+        if ($m.Success -and $m.Groups[1].Value -match 'android\.permission\.TV_INPUT_HARDWARE') { $hwPkgs += $p }
+    }
+    $inputs = Invoke-TvShell 'cmd package query-activities --brief -a android.intent.action.VIEW -t vnd.android.cursor.item/channel'
+    if ($script:AdbExit -ne 0 -or $inputs -match '(?i)exception|error|unknown') { $probeFailed = $true }
+    $settingsApps = Invoke-TvShell 'cmd package query-activities --brief -a android.settings.SETTINGS'
+    if ($script:AdbExit -ne 0 -or $settingsApps -match '(?i)exception|error|unknown') { $probeFailed = $true }
+    if ($probeFailed) {
         Say 'Could not check which apps run the TV''s inputs and Settings, so nothing more is switched off. Send the report to the person helping you.'
         return @()
     }
-    foreach ($p in @($hw -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -cmatch $PkgRe })) {
-        if ($script:todoNow -contains $p) { & $skip $p 'it runs the HDMI, AV or tuner inputs.' }
-    }
-    $parts = $handlers -split '(?m)^==\s*$'
-    foreach ($p in (Get-LinePackages ($parts[0] -split "`n"))) { if ($script:todoNow -contains $p) { & $skip $p 'the TV opens its inputs with it.' } }
-    if ($parts.Count -gt 1) {
-        foreach ($p in (Get-LinePackages ($parts[1] -split "`n"))) { if ($script:todoNow -contains $p) { & $skip $p 'the TV opens Settings with it.' } }
+    foreach ($p in $hwPkgs) { & $skip $p 'it runs the HDMI, AV or tuner inputs.' }
+    foreach ($p in (Get-LinePackages ($inputs -split "`n"))) { if ($script:todoNow -contains $p) { & $skip $p 'the TV opens its inputs with it.' } }
+    foreach ($p in (Get-LinePackages ($settingsApps -split "`n"))) { if ($script:todoNow -contains $p) { & $skip $p 'the TV opens Settings with it.' } }
+    if ($script:todoNow.Count -eq 0) { Say 'Nothing on the list is left to switch off.'; return @() }
+
+    # Everything left is listed once, and switched off only on a yes: a list is another household's choices.
+    Say 'From the list, these would be switched off now (each can be switched back on with -Restore):'
+    foreach ($p in $script:todoNow) { Say "  $p" }
+    if (-not (Ask-YesNo 'Switch these off?' $true)) { Say 'Nothing from the list was switched off.'; return @() }
+
+    # A reinstall wrote no Home line yet: -Restore must put Home back on HomeTV after it re-enables these.
+    if (-not @(Get-Content -LiteralPath $script:UndoFile | Where-Object { $_ -like 'undo cmd package set-home-activity *' }).Count) {
+        Add-Undo "cmd package set-home-activity --user 0 $LauncherHome"
     }
 
     # Small batches, one package per call, each undo line written first; Home is checked after each batch.
@@ -585,7 +601,8 @@ function Invoke-Debloat([string[]]$Names) {
             $out = Invoke-TvShell "pm disable-user --user 0 $p"
             if ($out -match 'new state: disabled') { $off += $p } else { Say "The TV did not switch off ${p}: $out" }
         }
-        if (-not (Get-HomeNow).StartsWith("$Launcher/")) {
+        # Resolving to ours is not enough: on some Google TV builds a Home press still opens setupwraith's RecoveryActivity.
+        if (-not ((Get-HomeNow).StartsWith("$Launcher/") -and (Test-HomeShowsOurs))) {
             # The whole batch back on (its undo lines are all written), Home set to ours again, and checked: on Android 9
             # and older, re-enabling a Home app doesn't bring the saved default back by itself.
             $notBack = @()
