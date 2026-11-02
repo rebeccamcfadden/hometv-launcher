@@ -100,18 +100,17 @@ final class HomeApps {
 
     /** The packages of these apps that are in All Apps' TV Utilities folder (TvUtilities). */
     Set<String> utilities(List<App> list) {
-        Set<String> row = new HashSet<>(visible());
         Map<String, Boolean> moves = utilityMoves();
         Set<String> out = new HashSet<>();
         for (App a : list) {
-            if (TvUtilities.inFolder(a.pkg, a.system, row.contains(a.pkg), moves.get(a.pkg), watchApps())) out.add(a.pkg);
+            if (TvUtilities.inFolder(a.pkg, a.system, moves.get(a.pkg), watchApps())) out.add(a.pkg);
         }
         return out;
     }
 
     /** Moves an app into the folder or out of it by hand; a move the rule would make anyway is forgotten. */
     void moveUtility(App a, boolean in) {
-        boolean byRule = TvUtilities.byRule(a.pkg, a.system, onRow(a.pkg), watchApps());
+        boolean byRule = TvUtilities.byRule(a.pkg, a.system, watchApps());
         String text = TvUtilities.encode(TvUtilities.move(utilityMoves(), a.pkg, in, byRule));
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_UTILITY_MOVES, text).apply();
     }

@@ -731,16 +731,17 @@ settings."; on the right a help pane for the focused row.
 
 - Home's All Apps shortcut opens every installed app (the mock TV's: the streaming apps, a few the household
   installed, and what a TCL TV comes with), six to a row, sorted by name, under a count. OK opens an app.
-- **TV Utilities**, a folder tile first in the grid, holds the apps the TV came with that aren't watch apps, on every
-  brand (Rebecca 2026-11-02: on for every TV, no switch). The rule (`src/core/tvUtilities.ts`; on the TV,
-  `TvUtilities`): an app goes in when it came on the system image, or comes from a TV maker's package (`com.tcl.`,
-  `com.sony.`, `org.droidtv.` and so on), unless it is a watch app the launcher knows (the streaming services, Play
-  Store, Google's YouTube and media apps) or is on Home's row. The tile shows its first four apps and how many it holds;
-  OK opens it as a page like All Apps, and Back returns to the tile. It hides when empty.
+- **TV Utilities**, a folder tile last in the grid (Rebecca, F35 Q2), holds the apps the TV came with that aren't watch
+  apps, on every brand (Rebecca 2026-11-02: on for every TV, no switch). The rule (`src/core/tvUtilities.ts`; on the
+  TV, `TvUtilities`): an app goes in when it came on the system image, or comes from a TV maker's package (`com.tcl.`,
+  `com.sony.`, `org.droidtv.` and so on), unless it is a watch app the launcher knows (the streaming services and
+  stores, Play Store, Google's YouTube and media apps). It is only about where an app came from, so an app on Home's
+  row stays in it (F35 Q4). The tile shows its first four apps and how many it holds; OK opens it as a page like All
+  Apps, and Back returns to the tile. It hides when empty.
 - Hold OK on an app: Add to Home or Remove from Home, Move to TV Utilities or Move out of TV Utilities, and App info.
   A move is kept on the TV (`utilityMoves`); one that matches the rule is forgotten, so the rule takes over again. An
-  app that leaves the page (moved, or put on Home from the folder) hands focus to the one that took its place; one
-  moved in focuses the folder tile. Eros Now starts in the folder (it came with the TV and the launcher doesn't know
+  app moved out of the folder hands focus to the one that took its place, and the folder page closes when it empties;
+  one moved in focuses the folder tile. Eros Now starts in the folder (it came with the TV and the launcher doesn't know
   it) to show the move out.
 - Dev bar: Jump to → All Apps, or All Apps › TV Utilities.
 

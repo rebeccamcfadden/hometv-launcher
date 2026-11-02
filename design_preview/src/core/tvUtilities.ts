@@ -1,7 +1,8 @@
 // F35 (b): the TV Utilities folder in All Apps (Rebecca, 2026-11-02: on for every TV, no switch). The rule is the same
-// on every brand, so no maker's app list is needed: an app goes in when it came with the TV and isn't a watch app,
-// unless it is on Home's row; an app the household installed goes in only when a TV maker made it. Hold OK moves an app
-// in or out by hand, and that choice wins. On the TV: TvUtilities (unit-tested).
+// on every brand, so no maker's app list is needed: an app goes in when it came with the TV and isn't a watch app; an
+// app the household installed goes in only when a TV maker made it. It is only about where an app came from, so an app
+// on Home's row stays in (Rebecca, F35 Q4). Hold OK moves an app in or out by hand, and that choice wins. On the TV:
+// TvUtilities (unit-tested).
 
 /**
  * Apps people watch or shop in, which stay in All Apps even when the TV came with them: every package in the launcher's
@@ -84,13 +85,12 @@ export interface AppFacts {
   pkg: string;
   /** It came on the TV's system image (also when updated since). */
   system: boolean;
-  onHome: boolean;
   /** Moved in or out by hand (hold OK). */
   moved?: Moved;
 }
 
 export function isTvUtility(a: AppFacts): boolean {
   if (a.moved) return a.moved === 'in';
-  if (a.onHome || WATCH_APPS.has(a.pkg)) return false;
+  if (WATCH_APPS.has(a.pkg)) return false;
   return a.system || VENDOR_PREFIXES.some((p) => a.pkg.startsWith(p));
 }

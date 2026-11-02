@@ -241,7 +241,7 @@ const jumps: [string, string, () => void][] = [
   ],
   [
     'all-apps',
-    'All Apps (TV Utilities folder first)',
+    'All Apps (TV Utilities folder last)',
     () => {
       app.goTab('home');
       app.push(allAppsScreen());

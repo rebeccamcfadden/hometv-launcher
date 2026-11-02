@@ -18,7 +18,7 @@ import java.util.Set;
  * takes it off, moves it into or out of TV Utilities, or opens App info. Styled from the tokens until it is designed
  * (BACKLOG.md, All Apps).
  *
- * F35 (b, Rebecca 2026-11-02: on for every TV, no switch): the grid starts with a TV Utilities folder tile holding the
+ * F35 (b, Rebecca 2026-11-02: on for every TV, no switch): the grid ends with a TV Utilities folder tile holding the
  * apps the TV came with that aren't watch apps (TvUtilities); OK opens it as this same page with only those apps, and
  * Back returns to the tile. It hides when it is empty (design_preview/src/screens/allApps.ts).
  *
@@ -57,8 +57,6 @@ final class AllAppsPage {
     private String built = "";
     /** AppArt's version the grid's tiles were built with: an app updated since has new art to show. */
     private int artBuilt;
-    /** The folder page is open over this one, so coming back may find apps moved. */
-    private boolean folderOpen;
 
     static Screen create(MainActivity activity, Shell shell, HomeApps apps) {
         return new AllAppsPage(activity, shell, apps, false).screen;
@@ -152,13 +150,6 @@ final class AllAppsPage {
             }
 
             @Override
-            void onShow() {
-                if (!folderOpen) return;
-                folderOpen = false;
-                refresh();
-            }
-
-            @Override
             void onFocus(View v) {
                 reveal(v);
             }
@@ -183,17 +174,18 @@ final class AllAppsPage {
         count.setText(activity.getResources().getQuantityString(R.plurals.all_apps_count, n, n));
         grid.removeAllViews();
         int at = 0;
-        if (!folder && !inside.isEmpty()) {
-            List<CharSequence> names = new ArrayList<>();
-            for (int i = 0; i < Math.min(4, inside.size()); i++) names.add(inside.get(i).label);
-            FolderTile t = new FolderTile(activity, names, inside.size(), TILE_W, TILE_H, 12);
-            Focus.make(t, GROUP, FOLDER_KEY, true, v -> openFolder());
-            place(t, at++);
-        }
         for (HomeApps.App app : shown) {
             AppTile t = new AppTile(activity, app.pkg, app.label, TILE_W, TILE_H, 12);
             Focus.make(t, GROUP, KEY_PREFIX + app.pkg, at == 0, v -> open(app.pkg));
             place(t, at++);
+        }
+        // Last, after the apps (Rebecca, F35 Q2).
+        if (!folder && !inside.isEmpty()) {
+            List<CharSequence> names = new ArrayList<>();
+            for (int i = 0; i < Math.min(4, inside.size()); i++) names.add(inside.get(i).label);
+            FolderTile t = new FolderTile(activity, names, inside.size(), TILE_W, TILE_H, 12);
+            Focus.make(t, GROUP, FOLDER_KEY, at == 0, v -> openFolder());
+            place(t, at);
         }
     }
 
@@ -226,7 +218,6 @@ final class AllAppsPage {
     }
 
     private void openFolder() {
-        folderOpen = true;
         shell.push(new AllAppsPage(activity, shell, apps, true).screen);
     }
 
@@ -298,7 +289,7 @@ final class AllAppsPage {
         if (apps.onRow(pkg)) {
             rows.add(new MenuPanel.Row(activity.getString(R.string.library_remove_shortcut), 0, () -> {
                 apps.save(AppRow.remove(apps.full(), pkg));
-                afterHomeChange(key, activity.getString(R.string.home_removed));
+                shell.toast(activity.getString(R.string.home_removed));
             }));
         } else {
             rows.add(new MenuPanel.Row(activity.getString(R.string.tile_add_to_home), 0, () -> {
@@ -307,7 +298,7 @@ final class AllAppsPage {
                     return;
                 }
                 apps.save(AppRow.add(apps.full(), pkg));
-                afterHomeChange(key, activity.getString(R.string.home_added));
+                shell.toast(activity.getString(R.string.home_added));
             }));
         }
         rows.add(new MenuPanel.Row(activity.getString(folder ? R.string.tv_utilities_move_out
@@ -323,21 +314,6 @@ final class AllAppsPage {
         }
         shell.push(TileMenu.create(shell, tile, rows));
         return true;
-    }
-
-    /**
-     * After an app was put on Home's row or taken off it: an app on the row is a favourite, so it may have left the
-     * folder or gone into it (TvUtilities). The toast then says where it is now.
-     */
-    private void afterHomeChange(String key, String done) {
-        rebuild(apps.all(), key, null);
-        if (Focus.byKey(grid, key) != null) {
-            shell.toast(done);
-            return;
-        }
-        String where = activity.getString(folder ? R.string.all_apps : R.string.tv_utilities);
-        shell.toast(activity.getString(R.string.tv_utilities_now_in, done, where));
-        if (!folder && shell.top() == screen) shell.focus(Focus.byKey(grid, FOLDER_KEY));
     }
 
     private void open(String pkg) {

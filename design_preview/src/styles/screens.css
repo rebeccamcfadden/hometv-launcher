@@ -2424,6 +2424,11 @@
   display: flex;
   gap: 14px;
 }
+/* Other apps: every installed app (as on the TV), so it wraps. */
+.ha-row--wrap {
+  flex-wrap: wrap;
+  row-gap: 22px;
+}
 .ha-tile {
   position: relative;
   width: 140px;

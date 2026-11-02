@@ -23,7 +23,7 @@ public class TvUtilitiesTest {
     }
 
     private static boolean in(String pkg, boolean system) {
-        return TvUtilities.byRule(pkg, system, false, watch());
+        return TvUtilities.byRule(pkg, system, watch());
     }
 
     @Test
@@ -73,17 +73,12 @@ public class TvUtilitiesTest {
     }
 
     @Test
-    public void anAppOnHomesRowStaysOut() {
-        assertFalse(TvUtilities.byRule("com.tcl.tv", true, true, watch()));
-    }
-
-    @Test
     public void aHandMoveWins() {
         Set<String> w = watch();
-        assertFalse(TvUtilities.inFolder("com.eros.now", true, false, false, w));
-        assertTrue(TvUtilities.inFolder("org.xbmc.kodi", false, false, true, w));
-        assertTrue(TvUtilities.inFolder("com.tcl.tv", true, true, true, w));
-        assertTrue(TvUtilities.inFolder("com.tcl.tv", true, false, null, w));
+        assertFalse(TvUtilities.inFolder("com.eros.now", true, false, w));
+        assertTrue(TvUtilities.inFolder("org.xbmc.kodi", false, true, w));
+        assertTrue(TvUtilities.inFolder("com.tcl.tv", true, null, w));
+        assertFalse(TvUtilities.inFolder("com.netflix.ninja", true, null, w));
     }
 
     @Test

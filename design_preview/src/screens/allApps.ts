@@ -9,8 +9,8 @@ import { button } from '../ui/widgets';
 import { dropdown, type MenuRow } from './dropdown';
 
 // All Apps (pushed from Home's Shortcuts) with the TV Utilities folder (F35 b, Rebecca 2026-11-02: on for every TV, no
-// switch). Every installed app sorted by name, after the folder tile, which holds the apps the TV came with that aren't
-// watch apps (core/tvUtilities). OK opens an app or the folder; hold OK adds an app to Home or takes it off, moves it
+// switch). Every installed app sorted by name, then the folder tile (last, F35 Q2), which holds the apps the TV came with
+// that aren't watch apps (core/tvUtilities). OK opens an app or the folder; hold OK adds an app to Home or takes it off, moves it
 // into or out of the folder, or opens App info. The folder is its own page with the same grid; Back returns to its tile.
 // On the TV: AllAppsPage and TvUtilities.
 
@@ -18,7 +18,7 @@ const byName = (a: TvApp, b: TvApp) => a.name.localeCompare(b.name);
 
 function inFolder(a: TvApp): boolean {
   const s = settings.get();
-  return isTvUtility({ pkg: a.pkg, system: a.system, onHome: s.homeApps.includes(a.id), moved: s.utilityMoves[a.id] });
+  return isTvUtility({ pkg: a.pkg, system: a.system, moved: s.utilityMoves[a.id] });
 }
 
 const utilities = () => TV_APPS.filter(inFolder).sort(byName);
@@ -47,14 +47,14 @@ export function allAppsScreen(folder = false): Screen {
       onOk: () => app.toast(`Opening ${a.name}…`),
     });
 
-  const folderTile = (inside: TvApp[]) =>
+  const folderTile = (inside: TvApp[], isFirst: boolean) =>
     focusable(
       h(
         'div.aa-app.aa-folder',
         h('div.aa-face', inside.slice(0, 4).map((a) => h('span.aa-mini', a.name))),
         h('div.aa-name', 'TV Utilities ', h('span.aa-folder-count', `· ${inside.length}`)),
       ),
-      { group: 'aa', key: 'aa-folder', isDefault: true, onOk: () => app.push(allAppsScreen(true)) },
+      { group: 'aa', key: 'aa-folder', isDefault: isFirst, onOk: () => app.push(allAppsScreen(true)) },
     );
 
   let shown: TvApp[] = [];
@@ -62,8 +62,8 @@ export function allAppsScreen(folder = false): Screen {
     const inside = utilities();
     shown = folder ? inside : plain();
     countEl.textContent = folder ? count(inside.length) : count(TV_APPS.length);
-    const tiles = shown.map((a, i) => appTile(a, folder || inside.length === 0 ? i : i + 1));
-    replace(grid, !folder && inside.length ? [folderTile(inside), ...tiles] : tiles);
+    const tiles = shown.map((a, i) => appTile(a, i));
+    replace(grid, !folder && inside.length ? [...tiles, folderTile(inside, !tiles.length)] : tiles);
   };
   paint();
 
@@ -81,7 +81,7 @@ export function allAppsScreen(folder = false): Screen {
     const s = settings.get();
     const moves = { ...s.utilityMoves };
     delete moves[a.id];
-    if (isTvUtility({ pkg: a.pkg, system: a.system, onHome: s.homeApps.includes(a.id) }) !== (to === 'in')) moves[a.id] = to;
+    if (isTvUtility({ pkg: a.pkg, system: a.system }) !== (to === 'in')) moves[a.id] = to;
     settings.set({ utilityMoves: moves });
     app.toast(to === 'in' ? `Moved ${a.name} to TV Utilities` : `Moved ${a.name} out of TV Utilities`);
     settle(a.id, to === 'in' ? 'aa-folder' : undefined);
@@ -98,13 +98,8 @@ export function allAppsScreen(folder = false): Screen {
         icon: onHome ? 'home' : 'plus',
         onOk: () => {
           if (!onHome && row.length >= HOME_ROW_MAX) return app.toast(`Home’s row holds ${HOME_ROW_MAX} apps. Take one off first.`);
-          const wasIn = inFolder(a);
           settings.set({ homeApps: onHome ? row.filter((x) => x !== a.id) : [...row, a.id] });
-          // An app on Home's row is a favourite, so it leaves the folder unless it was moved in by hand.
-          const left = wasIn !== inFolder(a);
-          const where = !left ? '' : folder ? ' · now in All Apps' : ' · now in TV Utilities';
-          app.toast((onHome ? 'Removed from Home' : 'Added to Home') + where);
-          if (left) settle(a.id, folder ? undefined : 'aa-folder');
+          app.toast(onHome ? 'Removed from Home' : 'Added to Home');
         },
       },
       folder

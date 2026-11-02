@@ -72,7 +72,7 @@ export function appsPane(host: PaneHost): Pane {
           moving ? '← → moves it · OK puts it down · ↓ takes it off Home · Back cancels' : 'OK picks an app up, as Hold OK → Move does on Home.',
         ),
         h('div.grp-h', 'Other apps'),
-        off.length ? h('div.ha-row', off.map((a, i) => tile(a, false, i))) : h('div.pane-note', 'Every app is on Home.'),
+        off.length ? h('div.ha-row.ha-row--wrap', off.map((a, i) => tile(a, false, i))) : h('div.pane-note', 'Every app is on Home.'),
         h('div.pane-note', 'OK on another app adds it at the end of the row, ready to place.'),
       ];
     },

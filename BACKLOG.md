@@ -488,7 +488,7 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
 
 - **All Apps:** V1 is a plain working grid styled from the tokens (Back, title and count, six columns of banner
   tiles sorted by name; OK opens, hold-OK adds to or removes from Home, moves into or out of TV Utilities, App info),
-  with the TV Utilities folder first (F35). Wanted: a proper design, which may add search, hiding apps and sorting
+  with the TV Utilities folder last (F35). Wanted: a proper design, which may add search, hiding apps and sorting
   (the prototype's stub said "with hide and reorder").
 - **Weather page:** OK on the weather strip opens a "Not designed yet" stub. Wanted: the hourly and 7-day forecast.
 - **Weather icons:** the prototype has three (sun, moon, cloud), so rain, snow, fog and storms all show the cloud;
