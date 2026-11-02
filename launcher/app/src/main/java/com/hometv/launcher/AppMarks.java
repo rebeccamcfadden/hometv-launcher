@@ -68,6 +68,14 @@ final class AppMarks {
         return new Mark(name.isEmpty() ? (pkg == null ? "" : pkg) : name, NAME_WEIGHT, NAME_SIZE);
     }
 
+    /** The Figma tile's height the sizes are for (Home's row), and the smallest a long name shrinks to there. */
+    static final float TILE_H = 136, MIN_SIZE = 18;
+
+    /** A size for Home's tile, in proportion on a tile {@code tileH} tall. */
+    static float scaled(float size, float tileH) {
+        return tileH <= 0 ? size : size * tileH / TILE_H;
+    }
+
     /** Roboto (or the theme's face) has Regular, Medium and Bold: 600 and over draw Bold, 500 Medium. */
     static int face(int weight) {
         return weight >= 600 ? 700 : weight >= 500 ? 500 : 400;

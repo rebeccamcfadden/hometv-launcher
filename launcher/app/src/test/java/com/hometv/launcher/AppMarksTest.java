@@ -41,6 +41,13 @@ public class AppMarksTest {
     }
 
     @Test
+    public void marksScaleWithTheTile() {
+        assertEquals(31f, AppMarks.scaled(31, 136), 0.001f);
+        assertEquals(15.5f, AppMarks.scaled(31, 68), 0.001f);
+        assertEquals(31f, AppMarks.scaled(31, 0), 0.001f);
+    }
+
+    @Test
     public void weightsFallOnTheFacesThereAre() {
         assertEquals(700, AppMarks.face(800));
         assertEquals(700, AppMarks.face(600));

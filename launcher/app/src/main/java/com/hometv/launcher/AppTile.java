@@ -112,7 +112,7 @@ final class AppTile extends LinearLayout {
         });
 
         if (minimal) {
-            tile.addView(wordmark(ctx, AppMarks.of(pkg, label)), new FrameLayout.LayoutParams(
+            tile.addView(wordmark(ctx, AppMarks.of(pkg, label), height), new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             return;
         }
@@ -128,10 +128,14 @@ final class AppTile extends LinearLayout {
         });
     }
 
-    /** The app's wordmark, centred, one line, shrinking to fit a long name (Figma's #f4f5f7 is TEXT_1). */
-    private static TextView wordmark(Context ctx, AppMarks.Mark m) {
+    /**
+     * The app's wordmark, centred, one line, shrinking to fit a long name and then ending in "…" (Figma's #f4f5f7 is
+     * TEXT_1). Sized for Home's 136 px tile, and in proportion on smaller ones (Home row apps' 84 px).
+     */
+    private static TextView wordmark(Context ctx, AppMarks.Mark m, float tileH) {
         int face = AppMarks.face(m.weight);
-        TextView t = Ui.text(ctx, m.size, Ui.TEXT_1, face >= 700 ? Ui.BOLD : face >= 500 ? Ui.MEDIUM : Ui.REGULAR);
+        float size = AppMarks.scaled(m.size, tileH);
+        TextView t = Ui.text(ctx, size, Ui.TEXT_1, face >= 700 ? Ui.BOLD : face >= 500 ? Ui.MEDIUM : Ui.REGULAR);
         // maxLines, not singleLine: a single-line TextView scrolls sideways and never auto-sizes.
         t.setMaxLines(1);
         t.setText(m.text);
@@ -140,7 +144,9 @@ final class AppTile extends LinearLayout {
         t.setDuplicateParentStateEnabled(true);
         int pad = Ui.px(14);
         t.setPadding(pad, 0, pad, 0);
-        t.setAutoSizeTextTypeUniformWithConfiguration(Ui.px(16), Ui.px(m.size), 1, android.util.TypedValue.COMPLEX_UNIT_PX);
+        t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        int min = Math.min(Ui.px(size), Ui.px(AppMarks.scaled(AppMarks.MIN_SIZE, tileH)));
+        t.setAutoSizeTextTypeUniformWithConfiguration(min, Ui.px(size), 1, android.util.TypedValue.COMPLEX_UNIT_PX);
         return t;
     }
 
