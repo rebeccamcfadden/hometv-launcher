@@ -1,6 +1,7 @@
 """Read PSS from the App Summary, whose label changed between Android 8 and 14."""
 from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 from tools import bench
 
@@ -32,6 +33,29 @@ class PssSummaryTest(unittest.TestCase):
                        "TOTAL PSS: unavailable", "TOTAL 65536 98304"):
             with self.subTest(output=output):
                 self.assertIsNone(self.read(output))
+
+
+class PssMedianTest(unittest.TestCase):
+    def run_with(self, outputs):
+        replies = iter(outputs)
+        tv = SimpleNamespace(shell=lambda command: next(replies))
+        with mock.patch.object(bench.time, "sleep") as sleep:
+            value = bench.pss_median(tv, "com.hometv.launcher", samples=len(outputs), gap=5)
+        return value, sleep
+
+    def test_the_median_of_three(self):
+        # One reading caught the Java heap before a collection (F33): the median ignores it.
+        value, sleep = self.run_with(["TOTAL PSS: 25600", "TOTAL PSS: 38400", "TOTAL PSS: 26624"])
+        self.assertEqual(value, 26)
+        self.assertEqual([c.args for c in sleep.call_args_list], [(5,), (5,)])
+
+    def test_unreadable_readings_are_left_out(self):
+        value, _ = self.run_with(["", "TOTAL PSS: 30720", "No process found"])
+        self.assertEqual(value, 30)
+
+    def test_nothing_readable_is_unknown(self):
+        value, _ = self.run_with(["", "", ""])
+        self.assertIsNone(value)
 
 
 if __name__ == "__main__":
