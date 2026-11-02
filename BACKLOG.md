@@ -67,7 +67,11 @@ milestones: [docs/rework.md](docs/rework.md).
 - **Rate limits:** TMDB has no published quota but caps around 40 requests a second and answers 429 past it. A first
   start fetches about 45 details pages (12 hours' cache), a search one page a pause in typing. A 429 or a failure
   is not retried for a minute (`TmdbCatalog`).
-- **Still to do:** paging past TMDB's first 20 search results; TMDB's language following the TV's; the full
+- **Search pages:** TMDB answers a search 20 results a page. When focus reaches the last row of Search's full results,
+  the next page is asked for and merged in (`SearchPages`, `Catalog.Found.merge`), up to five pages (100 results
+  before the art and photo filter), each cached an hour like the first. Checked with unit tests; a run on a signed-in
+  TV is wanted (the emulator has no TMDB sign-in).
+- **Still to do:** TMDB's language following the TV's; the full
   filmography and a person page design (see From M5).
 
 ### Streaming availability and prices
