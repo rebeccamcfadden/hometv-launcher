@@ -2,6 +2,16 @@
 
 Anything running **Android TV** or **Google TV**.
 
+The lists in [`examples/`](../examples/) and the notes in [`docs/devices/`](devices/) come from upstream
+[CleanYourTV](https://github.com/Gathin23/cleanyourtv)'s contributors, who ran upstream's launcher, package
+`com.gathin.tvhome`. They are kept as they were run. Where a list or note gives a command with that package
+(`set-home-activity`, `am force-stop`, an accessibility helper, the `config.json` path), use this launcher's
+`com.hometv.launcher` instead. Three things don't carry over: lines that make `.ClockDream` the screensaver (this
+launcher has no screensaver, so skip them), `wallpaper.jpg` pushes (it reads only `config.json`), and the scripts in
+`examples/tcl-43c645/`, `examples/anker-nebula-d2426/` and `examples/epson-ls800/`: don't run them, even with the package
+changed: they predate this launcher, and not all of them keep the Home guard and the setupwraith Wi-Fi check. Use `launcher/build-and-install.sh` (or `.ps1`)
+and `tools/disable.sh`, which keep both, and `tools/restore.sh` to undo.
+
 | Platform | What works |
 |---|---|
 | **Android TV, Google TV** | The debloat and the launcher. |
