@@ -109,21 +109,14 @@ def themes(root=ROOT):
 
 
 def switches(root=ROOT):
+    """The keys in themes/README.md's Keys table. Their screenshots went with docs/switches.md in R1 (upstream keeps it)."""
     text = (root / "themes" / "README.md").read_text(encoding="utf-8")
     keys_part = text[text.index("## Keys"):] if "## Keys" in text else text
-    shots = {}
-    sw = root / "docs" / "switches.md"
-    if sw.is_file():
-        for c in table_rows(sw.read_text(encoding="utf-8"), "| Key |"):
-            src = img_src(c[1]) if len(c) > 1 else None
-            if src:
-                for k in re.findall(r"`([a-z_]+)`", c[0]):
-                    shots[k] = str((sw.parent / src).resolve())
     out = []
     for c in table_rows(keys_part, "| Key |"):
         for k in re.findall(r"`([a-z_]+)`", c[0]):
             out.append({"kind": "switch", "name": k, "id": k, "type": plain(c[1]) if len(c) > 1 else "",
-                        "what": plain(c[2]) if len(c) > 2 else "", "screenshot": shots.get(k)})
+                        "what": plain(c[2]) if len(c) > 2 else "", "screenshot": None})
     return out
 
 
