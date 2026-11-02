@@ -42,7 +42,10 @@ public class UpdateRulesTest {
         assertEquals("v2.8", r.tag());
         assertEquals(26, r.minSdk);
         // The APK comes from the release's own tag, never "latest", so it can't change between the two reads.
-        assertEquals("https://github.com/rebeccamcfadden/hometv-launcher/releases/download/v2.8/hometv-launcher-v2.8.apk", r.apkUrl());
+        assertEquals("https://github.com/rebeccamcfadden/hometv-launcher/releases/download/v2.8/hometv-launcher-v2.8.apk", r.apkUrl(""));
+        assertEquals("http://10.0.2.2:8780/feed/hometv-launcher-v2.8.apk", r.apkUrl("http://10.0.2.2:8780/feed/"));
+        assertEquals(UpdateRules.LATEST_VERSION_JSON, UpdateRules.versionJsonUrl(""));
+        assertEquals("https://example.org/f/version.json", UpdateRules.versionJsonUrl("https://example.org/f"));
     }
 
     @Test
@@ -112,22 +115,37 @@ public class UpdateRulesTest {
 
     @Test
     public void aboutSaysWhereTheUpdateStands() {
+        // enabled, checkOn, downloading, available, lastFailed, canInstall, grantScreen
         assertEquals(UpdateRules.Status.OWN, UpdateRules.status(false, true, false, true, false, true, true));
         assertEquals(UpdateRules.Status.OFF, UpdateRules.status(true, false, false, true, false, true, true));
         assertEquals(UpdateRules.Status.CURRENT, UpdateRules.status(true, true, false, false, false, true, true));
         assertEquals(UpdateRules.Status.FAILED, UpdateRules.status(true, true, false, false, true, true, true));
-        assertEquals(UpdateRules.Status.DOWNLOADING, UpdateRules.status(true, true, true, false, false, true, true));
-        assertEquals(UpdateRules.Status.READY, UpdateRules.status(true, true, false, true, false, true, true));
+        assertEquals(UpdateRules.Status.AVAILABLE, UpdateRules.status(true, true, false, true, false, true, true));
+        assertEquals(UpdateRules.Status.DOWNLOADING, UpdateRules.status(true, true, true, true, false, true, true));
         assertEquals(UpdateRules.Status.NO_GRANT, UpdateRules.status(true, true, false, true, false, false, true));
         assertEquals(UpdateRules.Status.NO_SCREEN, UpdateRules.status(true, true, false, true, false, false, false));
     }
 
     @Test
     public void homeNoticesEachVersionOnce() {
-        assertTrue(UpdateRules.notice(UpdateRules.Status.READY, "2.8", ""));
+        assertTrue(UpdateRules.notice(UpdateRules.Status.AVAILABLE, "2.8", ""));
         assertTrue(UpdateRules.notice(UpdateRules.Status.NO_GRANT, "2.8", "2.7"));
-        assertFalse(UpdateRules.notice(UpdateRules.Status.READY, "2.8", "2.8"));
+        assertFalse(UpdateRules.notice(UpdateRules.Status.AVAILABLE, "2.8", "2.8"));
+        assertFalse(UpdateRules.notice(UpdateRules.Status.DOWNLOADING, "2.8", ""));
         assertFalse(UpdateRules.notice(UpdateRules.Status.CURRENT, "2.8", ""));
-        assertFalse(UpdateRules.notice(UpdateRules.Status.READY, null, ""));
+        assertFalse(UpdateRules.notice(UpdateRules.Status.AVAILABLE, null, ""));
+    }
+
+    @Test
+    public void aTestFeedIsHttpsOrThisMachineOnly() {
+        assertTrue(UpdateRules.feedAllowed("https://example.org/feed"));
+        assertTrue(UpdateRules.feedAllowed("http://10.0.2.2:8780"));
+        assertTrue(UpdateRules.feedAllowed("http://127.0.0.1:8780/feed/"));
+        assertFalse(UpdateRules.feedAllowed("http://192.168.1.50:8780"));
+        assertFalse(UpdateRules.feedAllowed("http://example.org"));
+        assertFalse(UpdateRules.feedAllowed("http://10.0.2.2.example.org"));
+        assertFalse(UpdateRules.feedAllowed("file:///sdcard/x"));
+        assertFalse(UpdateRules.feedAllowed(""));
+        assertFalse(UpdateRules.feedAllowed(null));
     }
 }

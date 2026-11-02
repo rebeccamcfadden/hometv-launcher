@@ -14,7 +14,8 @@ import org.json.JSONObject;
 /**
  * In-app updates (BACKLOG.md, Family install step 5), the rules without Android: which release a launcher from
  * tools/release.ps1 may take, where its files are, when to check, and what About says. Only a public release build
- * checks ({@code BuildConfig.PUBLIC_RELEASE}); every other build updates from the computer it was built on.
+ * checks ({@code BuildConfig.PUBLIC_RELEASE}), or a debug build given a test feed ({@code -PupdateFeed}); every other
+ * build updates from the computer it was built on. Nothing is downloaded until the person presses Install.
  *
  * <p>A release is read from its {@code version.json} ({@code tools/release.ps1}): the APK is fetched from the same tag,
  * never from "latest", so the file can't change between the two reads, and it is taken only when its SHA-256 is the one
@@ -56,8 +57,9 @@ final class UpdateRules {
             return "v" + versionName;
         }
 
-        /** The APK, from this release's own tag. */
-        String apkUrl() {
+        /** The APK, from this release's own tag; or beside version.json on a test feed. */
+        String apkUrl(String feed) {
+            if (feed != null && !feed.isEmpty()) return trimSlash(feed) + "/" + apk;
             return "https://github.com/" + REPO + "/releases/download/" + tag() + "/" + apk;
         }
     }
@@ -87,9 +89,26 @@ final class UpdateRules {
         return r != null && r.versionCode > installedCode && sdk >= r.minSdk;
     }
 
-    /** Whether to check now: the check is on, it is a release build, and the last check was a day ago or more. */
-    static boolean checkDue(boolean publicRelease, boolean checkOn, long lastCheckMs, long nowMs) {
-        if (!publicRelease || !checkOn) return false;
+    /** version.json: the latest GitHub Release's, or a test feed's (a debug build's -PupdateFeed). */
+    static String versionJsonUrl(String feed) {
+        return feed == null || feed.isEmpty() ? LATEST_VERSION_JSON : trimSlash(feed) + "/version.json";
+    }
+
+    private static String trimSlash(String s) {
+        return s.endsWith("/") ? s.substring(0, s.length() - 1) : s;
+    }
+
+    private static final Pattern TEST_FEED = Pattern.compile(
+            "(https://[A-Za-z0-9.-]+(:[0-9]{1,5})?|http://(127\\.0\\.0\\.1|10\\.0\\.2\\.2)(:[0-9]{1,5})?)(/[A-Za-z0-9._~/-]*)?");
+
+    /** A test feed the build accepts: https anywhere, or plain http only on this machine (127.0.0.1, the emulator's 10.0.2.2). */
+    static boolean feedAllowed(String url) {
+        return url != null && TEST_FEED.matcher(url).matches();
+    }
+
+    /** Whether to check now: the check is on, the build checks at all, and the last check was a day ago or more. */
+    static boolean checkDue(boolean enabled, boolean checkOn, long lastCheckMs, long nowMs) {
+        if (!enabled || !checkOn) return false;
         // A clock set back counts as due, so a TV whose clock jumped doesn't wait for months.
         return lastCheckMs <= 0 || nowMs < lastCheckMs || nowMs - lastCheckMs >= CHECK_EVERY_MS;
     }
@@ -142,34 +161,37 @@ final class UpdateRules {
         OFF,
         /** Not checked yet, or the newest release is this one. */
         CURRENT,
-        /** A newer release is downloading. */
+        /** A newer release is out; nothing is downloaded until Install (the project lead, 2026-11-02). */
+        AVAILABLE,
+        /** Install was pressed: downloading, then Android asks. */
         DOWNLOADING,
-        /** Downloaded and checked; Install hands it to Android. */
-        READY,
-        /** Downloaded, but the launcher may not install apps yet; Install opens Android's screen to allow it. */
+        /** A newer release is out, but the launcher may not install apps yet; Install opens Android's screen to allow it. */
         NO_GRANT,
-        /** Downloaded, and this TV has no screen to allow it: the laptop installer updates it. */
+        /** A newer release is out, and this TV has no screen to allow it: the laptop installer updates it. */
         NO_SCREEN,
         /** The last check couldn't reach GitHub. */
         FAILED
     }
 
     /**
-     * About's status. {@code ready} is a downloaded, accepted APK of a newer version; {@code canInstall} is
-     * PackageManager.canRequestPackageInstalls(); {@code grantScreen} whether ACTION_MANAGE_UNKNOWN_APP_SOURCES resolves.
+     * About's status. {@code enabled}: the build checks at all (a release, or a debug build's test feed); {@code available}:
+     * a newer release was found; {@code canInstall} is PackageManager.canRequestPackageInstalls(); {@code grantScreen}
+     * whether ACTION_MANAGE_UNKNOWN_APP_SOURCES resolves.
      */
-    static Status status(boolean publicRelease, boolean checkOn, boolean downloading, boolean ready, boolean lastFailed,
+    static Status status(boolean enabled, boolean checkOn, boolean downloading, boolean available, boolean lastFailed,
                          boolean canInstall, boolean grantScreen) {
-        if (!publicRelease) return Status.OWN;
+        if (!enabled) return Status.OWN;
         if (!checkOn) return Status.OFF;
-        if (ready) return canInstall ? Status.READY : grantScreen ? Status.NO_GRANT : Status.NO_SCREEN;
-        if (downloading) return Status.DOWNLOADING;
+        if (available) {
+            if (downloading) return Status.DOWNLOADING;
+            return canInstall ? Status.AVAILABLE : grantScreen ? Status.NO_GRANT : Status.NO_SCREEN;
+        }
         return lastFailed ? Status.FAILED : Status.CURRENT;
     }
 
-    /** Home's notice: once per version, while one waits to be installed. */
-    static boolean notice(Status s, String readyVersion, String noticedVersion) {
-        boolean waiting = s == Status.READY || s == Status.NO_GRANT || s == Status.NO_SCREEN;
-        return waiting && readyVersion != null && !readyVersion.equals(noticedVersion);
+    /** Home's notice: once per version, while a newer one is out and not installed. */
+    static boolean notice(Status s, String version, String noticedVersion) {
+        boolean waiting = s == Status.AVAILABLE || s == Status.NO_GRANT || s == Status.NO_SCREEN;
+        return waiting && version != null && !version.equals(noticedVersion);
     }
 }

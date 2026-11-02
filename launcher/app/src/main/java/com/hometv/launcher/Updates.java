@@ -27,19 +27,25 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
- * In-app updates on the TV (BACKLOG.md, Family install step 5; the rules are {@link UpdateRules}). Only a public
- * release build checks: once a day while Home shows, it reads the latest release's version.json, downloads a newer APK
- * into the app's cache, and keeps it only when its SHA-256 and its one signer are the release's and the signer is this
- * launcher's own. Install hands it to Android's PackageInstaller, and Android asks the person first ("Install this
- * update?"). Without the "install unknown apps" grant, About opens Android's screen to allow it. Nothing blocks Home:
- * the check and the download run on their own thread, and a failure only waits for tomorrow.
+ * In-app updates on the TV (BACKLOG.md, Family install step 5; the rules are {@link UpdateRules}). A public release
+ * build checks once a day while Home shows: it reads the latest release's version.json, and when a newer version is out
+ * About says so and Home shows one notice for it. Nothing is downloaded until the person presses Install (the project
+ * lead, 2026-11-02). Then the APK goes into the app's cache and is kept only when its SHA-256 and its one signer are the
+ * release's and the signer is this launcher's own; it goes to Android's PackageInstaller, and Android asks the person
+ * first. Without the "install unknown apps" grant, Install opens Android's screen to allow it. Nothing blocks Home: the
+ * network work runs on its own thread, and a failed check waits for tomorrow.
+ *
+ * <p>A debug build given {@code -PupdateFeed=<url>} checks that feed instead of GitHub, for testing on an emulator
+ * (build.gradle refuses it with a release key or a public release).
  */
 final class Updates {
 
@@ -51,12 +57,13 @@ final class Updates {
 
     private static final String PREFS = "updates";
     private static final String K_CHECK = "check_on", K_LAST = "last_check", K_FAILED = "last_failed",
-            K_CODE = "ready_code", K_NAME = "ready_name", K_FILE = "ready_file", K_NOTICED = "noticed";
+            K_JSON = "available_json", K_NOTICED = "noticed";
 
     private static Updates instance;
 
     private final Context app;
     private final SharedPreferences prefs;
+    private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "updates");
         t.setPriority(Thread.MIN_PRIORITY);
@@ -64,8 +71,8 @@ final class Updates {
         return t;
     });
     private final List<Runnable> listeners = new ArrayList<>();
-    private final Handler main = new Handler(Looper.getMainLooper());
-    private volatile boolean running;
+    private volatile boolean checking;
+    private volatile boolean downloading;
 
     static synchronized Updates get(Context ctx) {
         if (instance == null) instance = new Updates(ctx.getApplicationContext());
@@ -75,6 +82,11 @@ final class Updates {
     private Updates(Context app) {
         this.app = app;
         this.prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    /** Whether this build checks at all: a public release, or a debug build with a test feed. */
+    static boolean enabled() {
+        return BuildConfig.PUBLIC_RELEASE || !BuildConfig.UPDATE_FEED.isEmpty();
     }
 
     void listen(Runnable r) {
@@ -110,17 +122,14 @@ final class Updates {
         return prefs.getLong(K_LAST, 0);
     }
 
-    /** The downloaded, accepted update, or null: only while it is newer than what runs. */
-    String readyVersion() {
-        File f = readyFile();
-        return f != null ? prefs.getString(K_NAME, null) : null;
+    boolean checking() {
+        return checking;
     }
 
-    private File readyFile() {
-        String path = prefs.getString(K_FILE, null);
-        if (path == null || prefs.getInt(K_CODE, 0) <= BuildConfig.VERSION_CODE) return null;
-        File f = new File(path);
-        return f.isFile() ? f : null;
+    /** The newer release found by the last check, or null (also once it is installed). */
+    UpdateRules.Release available() {
+        UpdateRules.Release r = UpdateRules.parse(prefs.getString(K_JSON, null));
+        return UpdateRules.isUpdate(r, BuildConfig.VERSION_CODE, Build.VERSION.SDK_INT) ? r : null;
     }
 
     boolean canInstall() {
@@ -133,52 +142,82 @@ final class Updates {
     }
 
     UpdateRules.Status status() {
-        return UpdateRules.status(BuildConfig.PUBLIC_RELEASE, checkOn(), running, readyFile() != null,
+        return UpdateRules.status(enabled(), checkOn(), downloading, available() != null,
                 prefs.getBoolean(K_FAILED, false), canInstall(), hasGrantScreen());
     }
 
-    /** Home's notice for this version, once: true the first time it is asked while an update waits. */
+    /** Home's notice for this version, once: true the first time it is asked while a newer one is out. */
     boolean takeNotice() {
-        String ready = readyVersion();
-        if (!UpdateRules.notice(status(), ready, prefs.getString(K_NOTICED, ""))) return false;
-        prefs.edit().putString(K_NOTICED, ready).apply();
+        UpdateRules.Release r = available();
+        String version = r != null ? r.versionName : null;
+        if (!UpdateRules.notice(status(), version, prefs.getString(K_NOTICED, ""))) return false;
+        prefs.edit().putString(K_NOTICED, version).apply();
         return true;
     }
 
     /** Home showed: checks if a day has passed. Never blocks the caller. */
     void maybeCheck() {
-        if (running || !UpdateRules.checkDue(BuildConfig.PUBLIC_RELEASE, checkOn(), lastCheck(), System.currentTimeMillis())) return;
+        if (checking || !UpdateRules.checkDue(enabled(), checkOn(), lastCheck(), System.currentTimeMillis())) return;
         checkNow();
     }
 
-    /** About's Check now, and the daily check. */
+    /** About's Check now, and the daily check: reads version.json only; nothing is downloaded. */
     void checkNow() {
-        if (!BuildConfig.PUBLIC_RELEASE || running) return;
-        running = true;
+        if (!enabled() || checking) return;
+        checking = true;
         changed();
         worker.execute(() -> {
             boolean failed = false;
             try {
-                check();
+                String json = new String(fetch(UpdateRules.versionJsonUrl(BuildConfig.UPDATE_FEED)), StandardCharsets.UTF_8);
+                UpdateRules.Release r = UpdateRules.parse(json);
+                if (r == null) throw new IOException("version.json unreadable");
+                SharedPreferences.Editor e = prefs.edit();
+                if (UpdateRules.isUpdate(r, BuildConfig.VERSION_CODE, Build.VERSION.SDK_INT)) e.putString(K_JSON, json);
+                else e.remove(K_JSON);
+                e.apply();
             } catch (IOException | RuntimeException e) {
                 failed = true;
             } finally {
                 prefs.edit().putLong(K_LAST, System.currentTimeMillis()).putBoolean(K_FAILED, failed).apply();
-                running = false;
+                checking = false;
                 changed();
             }
         });
     }
 
-    private void check() throws IOException {
-        UpdateRules.Release r = UpdateRules.parse(new String(fetch(UpdateRules.LATEST_VERSION_JSON, MAX_JSON_BYTES, null),
-                StandardCharsets.UTF_8));
-        if (r == null) throw new IOException("version.json unreadable");
-        if (!UpdateRules.isUpdate(r, BuildConfig.VERSION_CODE, Build.VERSION.SDK_INT)) {
-            dropReady();
+    /**
+     * About's Install update. Without the grant it opens Android's screen to allow it (when the TV has one). With it,
+     * the APK is downloaded and checked, then handed to Android, which asks the person; {@code done} hears false on the
+     * main thread when the download or its checks fail.
+     */
+    void install(Context ui, Consumer<Boolean> done) {
+        UpdateRules.Release r = available();
+        if (r == null || downloading) return;
+        if (!canInstall()) {
+            if (hasGrantScreen()) ui.startActivity(grantIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             return;
         }
-        if (r.versionCode == prefs.getInt(K_CODE, 0) && readyFile() != null) return;
+        downloading = true;
+        changed();
+        worker.execute(() -> {
+            boolean ok = false;
+            try {
+                commit(download(r));
+                ok = true;
+            } catch (IOException | RuntimeException e) {
+                ok = false;
+            } finally {
+                downloading = false;
+                changed();
+                boolean result = ok;
+                main.post(() -> done.accept(result));
+            }
+        });
+    }
+
+    /** The release's APK in the cache, checked: its SHA-256, one signer, the release's certificate and our own signer. */
+    private File download(UpdateRules.Release r) throws IOException {
         File dir = new File(app.getCacheDir(), "updates");
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("no cache folder");
         File[] old = dir.listFiles();
@@ -186,25 +225,15 @@ final class Updates {
             for (File f : old) //noinspection ResultOfMethodCallIgnored
                 f.delete();
         }
-        File part = new File(dir, r.apk + ".part");
-        String sha = UpdateRules.hex(fetchToFile(r.apkUrl(), part));
-        List<String> apkSigners = signers(app.getPackageManager(), part.getPath());
-        List<String> own = signers(app.getPackageManager(), null);
-        if (!UpdateRules.acceptable(r, sha, apkSigners, own)) {
+        File apk = new File(dir, r.apk);
+        String sha = UpdateRules.hex(fetchToFile(r.apkUrl(BuildConfig.UPDATE_FEED), apk));
+        PackageManager pm = app.getPackageManager();
+        if (!UpdateRules.acceptable(r, sha, signers(pm, apk.getPath()), signers(pm, null))) {
             //noinspection ResultOfMethodCallIgnored
-            part.delete();
+            apk.delete();
             throw new IOException("update refused: hash or signer");
         }
-        File apk = new File(dir, r.apk);
-        if (!part.renameTo(apk)) throw new IOException("rename failed");
-        prefs.edit().putInt(K_CODE, r.versionCode).putString(K_NAME, r.versionName).putString(K_FILE, apk.getPath()).apply();
-    }
-
-    private void dropReady() {
-        String path = prefs.getString(K_FILE, null);
-        if (path != null) //noinspection ResultOfMethodCallIgnored
-            new File(path).delete();
-        prefs.edit().remove(K_CODE).remove(K_NAME).remove(K_FILE).apply();
+        return apk;
     }
 
     private static HttpURLConnection open(String url) throws IOException {
@@ -221,10 +250,10 @@ final class Updates {
         return c;
     }
 
-    private static byte[] fetch(String url, int max, MessageDigest md) throws IOException {
+    private static byte[] fetch(String url) throws IOException {
         HttpURLConnection c = open(url);
         try (InputStream in = c.getInputStream(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            copy(in, out, max, md);
+            copy(in, out, MAX_JSON_BYTES, null);
             return out.toByteArray();
         } finally {
             c.disconnect();
@@ -236,7 +265,7 @@ final class Updates {
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-256");
-        } catch (java.security.NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new IOException(e);
         }
         HttpURLConnection c = open(url);
@@ -294,18 +323,8 @@ final class Updates {
         return new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + BuildConfig.APPLICATION_ID));
     }
 
-    /** About's Install update without the grant: Android's own screen, where the person switches the launcher on. */
-    void openGrantScreen(Context ctx) {
-        ctx.startActivity(grantIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-    }
-
-    /**
-     * About's Install update: the downloaded APK goes into a PackageInstaller session, and Android answers on
-     * {@link StatusReceiver} with its own "Install this update?" screen. The launcher is replaced and starts again.
-     */
-    void install() throws IOException {
-        File apk = readyFile();
-        if (apk == null) throw new IOException("no update ready");
+    /** The checked APK goes into a PackageInstaller session; Android answers on {@link StatusReceiver}. */
+    private void commit(File apk) throws IOException {
         PackageInstaller installer = app.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(BuildConfig.APPLICATION_ID);
@@ -318,7 +337,7 @@ final class Updates {
             }
             int flags = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) flags |= PendingIntent.FLAG_MUTABLE;
-            Intent status = new Intent(ACTION_INSTALL_STATUS).setPackage(BuildConfig.APPLICATION_ID);
+            Intent status = new Intent(ACTION_INSTALL_STATUS).setClass(app, StatusReceiver.class);
             session.commit(PendingIntent.getBroadcast(app, id, status, flags).getIntentSender());
         } catch (IOException | RuntimeException e) {
             installer.abandonSession(id);

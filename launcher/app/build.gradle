@@ -115,6 +115,21 @@ if (releaseSigning) {
                   keyPassword: System.getenv('HOMETV_KEY_PASSWORD') ?: storePassword]
 }
 
+// In-app updates' test feed (Family install step 5): -PupdateFeed=<url> makes a debug-key build check that feed instead
+// of GitHub, to test an update end to end on an emulator before a release exists. Never in a public release or a
+// release-key build, and only https, or plain http to this machine (127.0.0.1, the emulator's 10.0.2.2); the same rule
+// is UpdateRules.feedAllowed. Plain http is allowed to the app only then (usesCleartextTraffic, false otherwise).
+def updateFeed = providers.gradleProperty('updateFeed').getOrElse('').trim()
+if (updateFeed) {
+    if (publicRelease || releaseSigning) {
+        throw new GradleException('updateFeed: a test feed is for debug-key builds only, never with -PpublicRelease or -PreleaseSigning')
+    }
+    if (!(updateFeed ==~ /(https:\/\/[A-Za-z0-9.-]+(:[0-9]{1,5})?|http:\/\/(127\.0\.0\.1|10\.0\.2\.2)(:[0-9]{1,5})?)(\/[A-Za-z0-9._~\/-]*)?/)) {
+        throw new GradleException('updateFeed: https, or http to 127.0.0.1 or 10.0.2.2 only')
+    }
+}
+def updateFeedCleartext = updateFeed.startsWith('http://')
+
 android {
     namespace 'com.hometv.launcher'
     compileSdk 34
@@ -140,6 +155,8 @@ android {
         // True only in a release build signed with the release key (below): the only APKs that can take an update from
         // a GitHub Release, so the only ones that may offer one. A public build without the key stays false.
         buildConfigField 'boolean', 'PUBLIC_RELEASE', 'false'
+        buildConfigField 'String', 'UPDATE_FEED', "\"${updateFeed}\""
+        manifestPlaceholders = [updateFeedCleartext: updateFeedCleartext.toString()]
     }
 
     signingConfigs {
