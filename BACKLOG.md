@@ -361,6 +361,19 @@ From the old launcher; not in V1 by decision.
   library dialog, reorder mode and dock editing. Their `config.xml` keys went in M1b; the theme keys are described,
   frozen, in `themes/README.md`.
 
+### Options to bring back
+
+F36 (the project lead, 2026-11-02, later). R1 removed `docs/switches.md`, the page of screenshots for each key a theme
+or `config.json` can set; upstream keeps it, with the screenshots, at
+[Gathin23/cleanyourtv › docs/switches.md](https://github.com/Gathin23/cleanyourtv/blob/eb0131a3/docs/switches.md). Three
+options from it to bring back properly:
+
+- **`consume_volume_keys`** and **`gamepad_passthrough`**: still in the launcher (`config.xml`, and a pushed
+  `config.json`; both need `key_filter` and are off by default), described in `themes/README.md`'s Keys table, but
+  with no switch in Launcher settings and no screenshot here any more.
+- **`screensaver`**: the clock screensaver went with the old Home in M1 (above). As an `app_keys` action,
+  `screensaver` starts the TV's own screensaver only where the firmware has the system's "start now" shortcut.
+
 ## Themes
 
 M9 (2026-10-30): Launcher settings › Theme, from the Figma file "CleanTV · Theme explorations"

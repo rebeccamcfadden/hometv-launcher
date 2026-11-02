@@ -78,8 +78,8 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 The table is the old launcher's full list, kept as a reference. Keys marked *Old launcher only* are ignored by
 this launcher (its look comes from the built-in themes); the rest still work.
 
-Each key has (or is waiting for) a screenshot of it on a real TV in [`docs/switches.md`](../docs/switches.md).
-A new key needs one there in the same pull request.
+Upstream keeps a screenshot of each key on a real TV in its
+[`docs/switches.md`](https://github.com/Gathin23/cleanyourtv/blob/eb0131a3/docs/switches.md).
 
 | Key | Type | Meaning |
 |---|---|---|
@@ -115,7 +115,7 @@ A new key needs one there in the same pull request.
 | `library_button` | bool | *Old launcher only; ignored now.* The app library as a round button in the top bar, beside Settings; needs `app_library`. Closing the library returns to it |
 | `always_show_names` | bool | *Old launcher only; ignored now.* Names under every tile, dimmed until focused, the dock included (its band grows to hold them); `false` by default shows only the focused tile's name |
 | `wallpaper_true_color` | bool | *Old launcher only; ignored now.* Decode wallpapers in 32-bit colour (8 MB at 1080p) instead of RGB_565 (4 MB), which bands dark gradients such as a night sky; for TVs with 2 GB or more (`false` by default) |
-| `app_library` | bool | An App library pill after the last Home row: every installed app, add one to Home or take it off (`false` by default). The choices stay on the TV when a theme is pushed or reset; see [docs/app-library.md](../docs/app-library.md) |
+| `app_library` | bool | An App library pill after the last Home row: every installed app, add one to Home or take it off (`false` by default). The choices stay on the TV when a theme is pushed or reset; see [upstream's docs/app-library.md](https://github.com/Gathin23/cleanyourtv/blob/eb0131a3/docs/app-library.md) |
 | `uniform_tiles` | bool | *Old launcher only; ignored now.* Each app tile is its icon on a card tinted from that icon, with the name only under the focused tile, instead of the app's own banner (`false` by default) |
 | `app_library_selection` | bool | *Old launcher only; ignored now.* OK toggles Home checkmarks in the library; checked apps first, both groups alphabetized. Hiding keeps focus on the adjacent next app (previous at the end). Requires `app_library`; `false` preserves the standard open/long-press behavior |
 | `library_apps` | list of package names | *Old launcher only; ignored now.* Packages pre-seeded into the App library's "added" set at startup (config.xml `library_apps`, or a theme's `config.json`). They show on Home as if the owner had added them in the App library UI, and stay removable there (a removed one stays hidden); empty (off) by default |
@@ -254,7 +254,8 @@ the plain background; the default is off (the reference launcher looks exactly a
 That evening peak is a fixed reference day, sunrise 07:30 and sunset 19:00 on the TV's clock. The
 launcher follows the real sun only when `latitude` and `longitude` are set in
 `launcher/app/src/main/res/values/config.xml`, which is a build setting a theme cannot carry: see
-[docs/sky.md](../docs/sky.md) for the two lines and what still falls back.
+[upstream's docs/sky.md](https://github.com/Gathin23/cleanyourtv/blob/eb0131a3/docs/sky.md) for the two lines and what
+still falls back.
 
 ## Adding a theme
 
