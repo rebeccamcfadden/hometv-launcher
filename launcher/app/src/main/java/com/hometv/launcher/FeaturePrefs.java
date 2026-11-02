@@ -16,6 +16,10 @@ final class FeaturePrefs {
 
     /** The features First run switched off as it ended, "tmdb,notes": they start on again when it opens (F34). */
     private static final String KEY_FIRST_RUN_OFF = "features_first_run_off";
+    /** Phone notes' own switch before F34, in Notes.PREFS. */
+    private static final String OLD_NOTES_ON = "on";
+    /** migrateNotesSwitch has run on this TV. */
+    private static final String KEY_NOTES_MIGRATED = "features_notes_migrated";
 
     /**
      * This TV's config as last read (config.xml with a pushed config.json): read once as the launcher is built, since
@@ -26,7 +30,27 @@ final class FeaturePrefs {
     /** The switches as the launcher is built with them: the config read again, and the household's choices. */
     static Features load(Context ctx) {
         configRead = config(ctx);
+        migrateNotesSwitch(ctx);
         return Features.resolve(saved(ctx), configRead);
+    }
+
+    /**
+     * Phone notes' own On/Off, saved apart until F34, is now its feature's switch: on a TV updated from before, a saved
+     * feature switch stays on only if the old switch was on too (it defaulted off), so an update never opens the port by
+     * itself. Once per TV.
+     */
+    private static void migrateNotesSwitch(Context ctx) {
+        SharedPreferences p = prefs(ctx);
+        if (p.getBoolean(KEY_NOTES_MIGRATED, false)) return;
+        SharedPreferences old = ctx.getSharedPreferences(Notes.PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor e = p.edit().putBoolean(KEY_NOTES_MIGRATED, true);
+        String key = Features.Feature.NOTES.key();
+        if (p.getBoolean(key, false) && !old.getBoolean(OLD_NOTES_ON, false)) e.putBoolean(key, false);
+        // Nor does a First run opened again: Phone notes now starts off (#98 would switch it back on).
+        Set<Features.Feature> firstRunOff = Features.decode(p.getString(KEY_FIRST_RUN_OFF, null));
+        if (firstRunOff.remove(Features.Feature.NOTES)) e.putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff));
+        e.commit();
+        if (old.contains(OLD_NOTES_ON)) old.edit().remove(OLD_NOTES_ON).apply();
     }
 
     /**

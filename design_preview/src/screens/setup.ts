@@ -52,7 +52,7 @@ const ALL_STEPS: Step[] = [
       eyebrow: 'Features',
       title: 'Choose what this TV does.',
       body: () =>
-        'Everything starts on: TMDB account (Movies, TV Shows, Search and Pick for me), Phone notes, Price lookup and Weather. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.',
+        'TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes starts off, since it opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.',
       note: 'Change them any time in Launcher settings › Features.',
     },
   },

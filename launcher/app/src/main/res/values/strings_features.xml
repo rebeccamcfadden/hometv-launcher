@@ -2,14 +2,18 @@
 <!-- Launcher settings › Features (F14, design_preview/src/screens/panes/features.ts). -->
 <resources>
     <string name="settings_features">Features</string>
-    <string name="features_sub">Turn on what this household uses. A feature that is off never starts: no page and nothing fetched for it.</string>
-    <!-- The same pane as First run's Features step (F14): every feature starts on. -->
-    <string name="features_sub_setup">Everything starts on, and each is set up next. Switch off what this household won’t use; one not set up when you finish is switched off.</string>
+    <!-- F34: Features is an overview; each feature is switched in its own section. -->
+    <string name="features_sub">What this TV runs. Each is switched on or off in its own section; a feature that is off never starts.</string>
+    <!-- The same pane as First run's Features step: all but Phone notes start on (Rebecca, 2026-11-02). -->
+    <string name="features_sub_setup">Everything but Phone notes starts on. Each is set up on its own row below, where you can also switch it on or off; one not set up when you finish is switched off.</string>
     <string name="features_note">A pushed config.json can set these too (\"features\").</string>
     <!-- The section's value: "5 of 6 on". -->
     <string name="features_value">%1$d of %2$d on</string>
-    <!-- A feature that needs another one that is off: no control, just why. -->
+    <!-- A feature's state, on Features' rows and First run's setup tabs (FirstRunRules.State). -->
     <string name="features_needs">Off · needs %1$s</string>
+    <string name="feature_state_off">Off</string>
+    <string name="feature_state_not_set_up">On · not set up yet</string>
+    <string name="feature_state_set_up">On · set up</string>
 
     <string name="feature_tmdb">TMDB account</string>
     <string name="feature_tmdb_sub">Movies, TV Shows and Search, your TMDB lists, and the Account section</string>
@@ -24,11 +28,11 @@
     <string name="feature_weather_sub">Today, tomorrow and the hourly strip on Home, from Open-Meteo</string>
     <string name="feature_weather_off">Off: no weather on Home or in quick settings</string>
 
-    <!-- A Launcher settings section whose feature is off: it stays, and its pane says so. -->
+    <!-- A section or setup whose feature is off: it stays, and its pane says so above the feature's On/Off (F34). -->
     <string name="feature_off_value">Off</string>
     <string name="feature_off_title">%1$s is off</string>
-    <string name="feature_off_sub">This household has %1$s switched off, so it doesn’t run. Turn on switches it on and sets it up.</string>
-    <string name="feature_off_needs">%1$s needs %2$s, which is off. Turn on switches on both, then sets up %2$s.</string>
+    <string name="feature_off_sub">It doesn’t run while it is off. Switch it on to set it up here.</string>
+    <string name="feature_off_needs">%1$s needs %2$s, which is off. Switch it on to turn on both, then set up %2$s.</string>
     <string name="feature_turn_on">Turn on</string>
 
     <!-- Movies, TV Shows and Search without TMDB (TmdbGate): switched off, or not signed in. -->

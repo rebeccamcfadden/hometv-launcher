@@ -64,18 +64,21 @@ interface SettingsSection {
         void enter(String id);
 
         /**
-         * A switched-off feature's Turn on (the project lead, 2026-11-02): the feature on (FeaturePrefs.turnOn), then
-         * straight into its setup.
+         * A switched-off feature's On (the project lead, 2026-11-02; F34 made it the feature's own switch): the feature
+         * on (FeaturePrefs.turnOn), then straight into its setup.
          */
         void turnOn(Features.Feature f);
+
+        /** A feature was just switched off on its own pane (F34): the section shows again, now saying it is off. */
+        void featureSwitchedOff(Features.Feature f);
+
+        /** Features' overview: OK on a feature opens the section that sets it up (F34). */
+        void openFeature(Features.Feature f);
 
         /** First run's cut-down split rather than Launcher settings: Features' lead says what turning one on does. */
         default boolean inSetup() {
             return false;
         }
-
-        /** A feature was just turned on in First run's Features step: First run opens its setup next. */
-        default void featureTurnedOn(Features.Feature f) {}
 
         /**
          * The launcher must be rebuilt before this section can work (Account, once a TMDB key is on the TV but the

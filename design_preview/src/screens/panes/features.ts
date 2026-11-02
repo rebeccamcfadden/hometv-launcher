@@ -128,7 +128,7 @@ export const featuresPane = (host: PaneHost): Pane => ({
     h(
       'div.pane-sub',
       host.setup
-        ? 'Everything starts on. Each is set up on its own row below, where you can also switch it off; one not set up when you finish is switched off.'
+        ? 'Everything but Phone notes starts on. Each is set up on its own row below, where you can also switch it on or off; one not set up when you finish is switched off.'
         : 'What this TV runs. Each is switched on or off in its own section; a feature that is off never starts.',
     ),
     h(

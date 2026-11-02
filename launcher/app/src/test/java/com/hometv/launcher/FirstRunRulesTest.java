@@ -105,14 +105,9 @@ public class FirstRunRulesTest {
         assertEquals("tmdbKey", FirstRunRules.firstSetupOf(Features.Feature.TMDB, true));
         assertEquals("account", FirstRunRules.firstSetupOf(Features.Feature.TMDB, false));
         assertEquals("priceKeys", FirstRunRules.firstSetupOf(Features.Feature.PRICES, true));
-        assertEquals(Arrays.asList("tmdbKey", "account", "notes", "priceKeys", "weather"),
-                FirstRunRules.setups(Features.ALL_ON, true));
+        assertEquals(Arrays.asList("tmdbKey", "account", "notes", "priceKeys", "weather"), FirstRunRules.setups(true));
         assertSame(Features.Feature.TMDB, FirstRunRules.featureOf("tmdbKey"));
         assertSame(Features.Feature.PRICES, FirstRunRules.featureOf("priceKeys"));
-        // TMDB account off: no TMDB key tab either.
-        java.util.Map<String, Object> saved = new java.util.HashMap<>();
-        saved.put("feature_tmdb", false);
-        assertEquals(Arrays.asList("priceKeys", "weather"), FirstRunRules.setups(Features.resolve(saved, null), true));
     }
 
     @Test
@@ -124,20 +119,36 @@ public class FirstRunRulesTest {
     }
 
     @Test
-    public void theSetupTabsFollowTheFeaturesOn() {
-        Features none = Features.ALL_OFF;
-        assertTrue(FirstRunRules.setups(none, true).isEmpty());
-        assertEquals(Arrays.asList("account", "notes", "priceKeys", "weather"),
-                FirstRunRules.setups(Features.ALL_ON, false));
-        // TMDB account and Phone notes off: Price lookup and Weather on.
-        java.util.Map<String, Object> saved = new java.util.HashMap<>();
-        saved.put("feature_tmdb", false);
-        saved.put("feature_notes", false);
-        assertEquals(Arrays.asList("priceKeys", "weather"), FirstRunRules.setups(Features.resolve(saved, null), false));
-        assertEquals(FirstRunRules.SETUPS, FirstRunRules.setups(Features.ALL_ON, true));
+    public void theSetupTabsStayWhateverTheFeaturesAre() {
+        // F34: a feature that is off keeps its tab; its pane says so, with its On/Off.
+        assertEquals(Arrays.asList("account", "notes", "priceKeys", "weather"), FirstRunRules.setups(false));
+        assertEquals(FirstRunRules.SETUPS, FirstRunRules.setups(true));
         assertSame(Features.Feature.NOTES, FirstRunRules.featureOf("notes"));
         assertNull(FirstRunRules.featureOf("services"));
         assertNull(FirstRunRules.featureOf(null));
+    }
+
+    @Test
+    public void turningOnRebuildsWhenEitherFeatureMustStart() {
+        // Phone notes with TMDB account off, while TMDB already runs: the inbox must still start.
+        assertTrue(FirstRunRules.turnOnNeedsRebuild(Features.Feature.TMDB, true, Features.Feature.NOTES, false));
+        assertTrue(FirstRunRules.turnOnNeedsRebuild(Features.Feature.TMDB, false, Features.Feature.NOTES, false));
+        assertFalse(FirstRunRules.turnOnNeedsRebuild(Features.Feature.TMDB, true, Features.Feature.NOTES, true));
+        assertFalse(FirstRunRules.turnOnNeedsRebuild(Features.Feature.PRICES, false, Features.Feature.PRICES, false));
+    }
+
+    @Test
+    public void aFeaturesStateIsItsSwitchThenWhatItNeedsThenItsSetup() {
+        java.util.Map<String, Object> saved = new java.util.HashMap<>();
+        saved.put("feature_tmdb", false);
+        Features tmdbOff = Features.resolve(saved, null);
+        assertSame(FirstRunRules.State.OFF, FirstRunRules.state(tmdbOff, Features.Feature.TMDB, true));
+        // Phone notes switched on, but TMDB account is off.
+        assertSame(FirstRunRules.State.NEEDS, FirstRunRules.state(tmdbOff, Features.Feature.NOTES, false));
+        saved.put("feature_notes", false);
+        assertSame(FirstRunRules.State.OFF, FirstRunRules.state(Features.resolve(saved, null), Features.Feature.NOTES, false));
+        assertSame(FirstRunRules.State.NOT_SET_UP, FirstRunRules.state(Features.ALL_ON, Features.Feature.TMDB, false));
+        assertSame(FirstRunRules.State.SET_UP, FirstRunRules.state(Features.ALL_ON, Features.Feature.WEATHER, true));
     }
 
     @Test

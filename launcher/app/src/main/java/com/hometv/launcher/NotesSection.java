@@ -17,7 +17,7 @@ import java.util.Locale;
 
 /**
  * Launcher settings' Phone notes (design_preview/README.md, Phone notes; src/screens/panes/notes.ts; no Figma design
- * yet): the On / Off switch, and while on the TV's address and pairing code to type into each phone's "Send to TV"
+ * yet): the On / Off switch, which is the Phone notes feature's own (F34: off, FeatureOffSection shows the pane that\n * says so, with the same switch), and while on the TV's address and pairing code to type into each phone's "Send to TV"
  * Shortcut, New code (asks first), How to set up a phone, and each list's last send with the lines not matched
  * exactly, each a button that opens {@link NotePicker}. Signed out, an amber note says the lists are on the TMDB account. The row reads Off, On, or in amber
  * "3 not matched". The state is {@link Notes}'s; this only draws it, and draws again when it changes.
@@ -100,14 +100,23 @@ final class NotesSection implements SettingsSection {
         boolean inPane = focused != null && Focus.isInside(root, focused);
         String focusKey = Focus.key(focused);
         column.removeAllViews();
-        boolean on = notes.on();
+        boolean on = FeaturePrefs.live(ctx).on(Features.Feature.NOTES);
 
         column.addView(PaneParts.eyebrow(ctx, ctx.getString(R.string.settings_notes)));
         column.addView(PaneParts.title(ctx, ctx.getString(R.string.notes_pane_title), 40), PaneParts.below(10));
         column.addView(PaneParts.sub(ctx, ctx.getString(R.string.notes_pane_sub)), PaneParts.below(8));
         CharSequence[] options = {ctx.getString(R.string.notes_on), ctx.getString(R.string.notes_off)};
         int selected = on ? 0 : 1;
-        View seg = PaneParts.segmented(ctx, options, selected, false, "notes-on", true, i -> notes.setOn(i == 0));
+        // The feature's switch (F34): handled after the pick returns, since it rebuilds this pane.
+        View seg = PaneParts.segmented(ctx, options, selected, false, "notes-on", true, i -> column.post(() -> {
+            if (i == 0) {
+                host.turnOn(Features.Feature.NOTES);
+                return;
+            }
+            FeaturePrefs.save(ctx, Features.Feature.NOTES, false);
+            host.valueChanged();
+            host.featureSwitchedOff(Features.Feature.NOTES);
+        }));
         column.addView(seg, PaneParts.below(28));
         first = Focus.byKey(seg, "notes-on-" + selected);
 

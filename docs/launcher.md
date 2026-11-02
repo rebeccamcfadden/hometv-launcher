@@ -66,7 +66,8 @@ closes. The sections, top to bottom:
 
 - **Account**: sign in to TMDB with a QR code on your phone, then see the lists, sync now, choose which TMDB lists show
   as chips, or sign out. On a launcher built without a TMDB key it says to add one in API keys first.
-- **Phone notes**, only once the launcher runs with a TMDB key, off unless turned on here (or by `note_inbox`): the address, pairing
+- **Phone notes**, only once the launcher runs with a TMDB key, off unless turned on here or in First run (its On/Off is
+  the Phone notes feature's; `feature_notes` in `config.xml` sets the default): the address, pairing
   code and a QR for a phone's "Send to TV" shortcut (on an iPhone, scan it to get the household's shared shortcut,
   `note_shortcut_url`, and pair the phone; on Android, to copy the settings into HTTP Shortcuts), and each list's last
   send with the lines that matched nothing. See [phone-notes.md](phone-notes.md).
@@ -78,10 +79,12 @@ closes. The sections, top to bottom:
   Remove leaves none. The page answers only while this pane shows. With Price lookup off, the price keys wait behind
   Turn on.
 - **Home row apps**: pick an app up with OK to move it, take it off Home, or add another app.
-- **Features**: TMDB account, Phone notes, Price lookup and Weather, each On or Off (`features` in a pushed
-  config.json). Every one starts on, and First run switches off any whose setup isn't finished when it ends. A feature
-  that is off never starts; its section stays and reads Off, and its pane, like Movies, TV Shows and Search's "needs a
-  TMDB account", has **Turn on**, which switches it on and goes straight into its setup.
+- **Features**: what runs: TMDB account, Phone notes, Price lookup and Weather, each with its state ("On · set up",
+  "Off · needs TMDB account"); OK opens the section that sets it up. Each feature is switched on or off there, by the
+  On/Off on top of its section (Account, Phone notes' own switch, Stores, Weather; `features` in a pushed config.json).
+  All but Phone notes start on, and First run switches off any whose setup isn't finished when it ends. A feature that
+  is off never starts; its section stays, reads Off, and says so above that switch, whose On goes straight into its
+  setup. Movies, TV Shows and Search's "needs a TMDB account" has **Turn on**, which does the same.
 - **Theme**: the look of every page. Typeface switches between the theme's own fonts (downloaded from Google Fonts and
   kept on the TV) and Roboto. The theme's pictures, except 8-bit's, are downloaded once from `theme_assets_url`.
 - **Weather**: the place Home's weather is for, with the weather there now. Change city searches Open-Meteo's places

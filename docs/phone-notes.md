@@ -21,8 +21,9 @@ it under Last sends, and OK on it shows TMDB's three best answers to pick from.
 
 1. Sign in to TMDB: **Launcher settings → Account**. The lists live on the account.
 2. **Launcher settings → Phone notes → On.** The pane shows the TV's **address** (`http://192.168.1.50:8765/notes`,
-   with your TV's own address) and a **pairing code** (`K7QM-4PXT`). Phone notes is off until it is turned on here
-   (or by `note_inbox` in the TV's `config.xml` or `config.json`). "Not on Wi-Fi" in place of the address means the
+   with your TV's own address) and a **pairing code** (`K7QM-4PXT`). Phone notes is off until it is turned on here or
+   in First run (or by `feature_notes` in the TV's `config.xml`, or `"features": {"notes": true}` in its
+   `config.json`); this switch is the Phone notes feature's own, and while it is off the section says so. "Not on Wi-Fi" in place of the address means the
    TV has no address on the home network yet; if another app on the TV holds port 8765, the pane says so.
    Beside them is a **QR code**: scan it with a phone's camera and a setup page opens on the phone: on an iPhone with
    **Get the shortcut** and **Pair this phone**, on an Android phone with the settings to copy into HTTP Shortcuts

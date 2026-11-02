@@ -61,18 +61,37 @@ final class FirstRunRules {
     }
 
     /**
-     * The setups' tabs under Features (F28): one per feature on that has a setup, in the features' order, with the
-     * TMDB key tab before Sign in when {@code tmdbKeyTab} (F16: the TV had no working TMDB key when First run opened).
+     * The setups' tabs under Features (F28): one per feature that has a setup, in the features' order, with the TMDB key
+     * tab before Sign in when {@code tmdbKeyTab} (F16: the TV had no working TMDB key when First run opened). A feature
+     * that is off keeps its tab, whose pane says so with its On/Off (F34, Rebecca 2026-11-02).
      */
-    static List<String> setups(Features on, boolean tmdbKeyTab) {
+    static List<String> setups(boolean tmdbKeyTab) {
         List<String> out = new ArrayList<>();
         for (Features.Feature f : Features.Feature.values()) {
             String id = setupOf(f);
-            if (id == null || !on.on(f)) continue;
+            if (id == null) continue;
             if (f == Features.Feature.TMDB && tmdbKeyTab) out.add(KeysSection.TMDB_ID);
             out.add(id);
         }
         return out;
+    }
+
+    /** A feature's state, for Features' overview and First run's setup tabs (F34). */
+    enum State {
+        /** Switched off. */
+        OFF,
+        /** Switched on, but what it needs is off (Phone notes without TMDB account). */
+        NEEDS,
+        /** On, its setup not finished ({@link #setUp}). */
+        NOT_SET_UP,
+        /** On and set up. */
+        SET_UP
+    }
+
+    static State state(Features now, Features.Feature f, boolean setUp) {
+        if (!now.switchedOn(f)) return State.OFF;
+        if (now.blockedBy(f) != null) return State.NEEDS;
+        return setUp ? State.SET_UP : State.NOT_SET_UP;
     }
 
     /** The feature whose setup that section is, or null. */
@@ -129,6 +148,15 @@ final class FirstRunRules {
      */
     static boolean setupNeedsRebuild(Features.Feature f, boolean runsNow) {
         return !runsNow && (f == Features.Feature.TMDB || f == Features.Feature.NOTES);
+    }
+
+    /**
+     * On switched on {@code f} and, when it was off too, what it needs ({@code first}, set up first): the launcher is
+     * rebuilt if either must start (F34: Phone notes switched on with TMDB account, which already runs, still needs its
+     * inbox opened).
+     */
+    static boolean turnOnNeedsRebuild(Features.Feature first, boolean firstRuns, Features.Feature f, boolean fRuns) {
+        return setupNeedsRebuild(first, firstRuns) || setupNeedsRebuild(f, fRuns);
     }
 
     /**

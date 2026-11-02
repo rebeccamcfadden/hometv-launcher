@@ -29,13 +29,14 @@ import java.util.concurrent.Executors;
  * rebuilt whenever Launcher settings change, and the inbox must not be opened twice. The imports themselves run on the
  * account's worker ({@link Accounts#runNotes}).
  *
- * <p>Off unless config.xml's note_inbox (or a pushed config.json) says on, or the household turned it on in Launcher
- * settings; the household's choice wins. The inbox is opened and closed on a thread of its own, never the main one.
+ * <p>The inbox listens while the launcher runs Phone notes: its switch is the feature's own (F34, Rebecca 2026-11-02;
+ * config.xml's feature_notes, off by default since it opens a port, then the household's choice in First run or Launcher
+ * settings). The inbox is opened and closed on a thread of its own, never the main one.
  * Nothing is logged: the notes are the household's, and the code is a secret.
  */
 final class Notes {
     static final String PREFS = "phone_notes";
-    private static final String ON = "on", CODE = "code", PENDING = "pending", SENDS = "sends";
+    private static final String CODE = "code", PENDING = "pending", SENDS = "sends";
     /** How long the pill shows how an import ended. */
     static final long FINISHED_MS = 4000;
 
@@ -60,7 +61,6 @@ final class Notes {
     private final Context app;
     private final SharedPreferences prefs;
     private final Handler main = new Handler(Looper.getMainLooper());
-    private final boolean byDefault;
     private final NoteBook book;
     private final List<Runnable> listeners = new ArrayList<>();
     private final List<Runnable> pillListeners = new ArrayList<>();
@@ -74,27 +74,17 @@ final class Notes {
     private volatile boolean portTaken;
     /** Main thread: what the pill shows, or null. */
     private NoteWords.Pill pill;
-    /**
-     * F14: Phone notes switched on in Features (and TMDB account with it). Off, the inbox never opens, whatever this
-     * TV's own switch says; main thread.
-     */
+    /** Phone notes runs (its switch on, and TMDB account with it, as the launcher was built): the inbox listens. */
     private boolean allowed;
 
     private Notes(Context app) {
         this.app = app;
         this.prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        this.byDefault = configDefault(app);
         this.book = NoteBook.restore(prefs.getString(PENDING, null), prefs.getString(SENDS, null));
         this.allowed = Features.isOn(Features.Feature.NOTES);
-        if (on() && allowed) open();
+        if (allowed) open();
     }
 
-    /** config.xml's note_inbox, overlaid by a pushed config.json like every other key. */
-    private static boolean configDefault(Context ctx) {
-        boolean on = ctx.getResources().getBoolean(R.bool.note_inbox);
-        JSONObject json = Config.overlay(ctx);
-        return json != null ? json.optBoolean("note_inbox", on) : on;
-    }
 
     /**
      * The shared "Send to TV" shortcut's link: a pushed config.json's note_shortcut_url wins, then tv.properties' (built
@@ -114,15 +104,13 @@ final class Notes {
     }
 
     /**
-     * Features' switch, as the launcher is built with it (MainActivity): off closes the inbox and clears the pill; back
-     * on opens it again if this TV's own switch is on. Main thread.
+     * Phone notes' switch, as the launcher is built with it (MainActivity): on opens the inbox; off closes it and clears
+     * the pill (an import may have been running). Main thread.
      */
     void allow(boolean on) {
         if (on == allowed) return;
         allowed = on;
-        // Off: the pill goes whatever this TV's own switch says (an import may have been running).
         if (!on) setPill(null);
-        if (!on()) return;
         if (on) open();
         else close();
         changed();
@@ -130,19 +118,9 @@ final class Notes {
 
     // ---- The switch and the code ---------------------------------------------------------------------------------
 
+    /** Whether the inbox listens: the launcher runs Phone notes (FeaturePrefs switches it, F34). Main thread. */
     boolean on() {
-        return prefs.contains(ON) ? prefs.getBoolean(ON, false) : byDefault;
-    }
-
-    /** Launcher settings' switch: saved, and the inbox opened or closed. Main thread. */
-    void setOn(boolean on) {
-        if (on == on() && prefs.contains(ON)) return;
-        SharedPreferences.Editor e = prefs.edit().putBoolean(ON, on);
-        if (on && prefs.getString(CODE, "").isEmpty()) e.putString(CODE, NoteInbox.newCode(new SecureRandom()));
-        e.apply();
-        if (on && allowed) open();
-        else if (!on) close();
-        changed();
+        return allowed;
     }
 
     /** The pairing code, or "" before Phone notes was first turned on. */
