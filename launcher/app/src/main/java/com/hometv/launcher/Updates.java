@@ -75,6 +75,8 @@ final class Updates {
     private final List<Runnable> listeners = new ArrayList<>();
     private volatile boolean checking;
     private volatile boolean downloading;
+    /** Android's reason for the last refused install, until Install is pressed again; null when there is none. */
+    private volatile String installError;
 
     static synchronized Updates get(Context ctx) {
         if (instance == null) instance = new Updates(ctx.getApplicationContext());
@@ -126,6 +128,10 @@ final class Updates {
 
     boolean checking() {
         return checking;
+    }
+
+    String installError() {
+        return installError;
     }
 
     /** The newer release found by the last check, or null (also once it is installed). */
@@ -206,6 +212,7 @@ final class Updates {
             return;
         }
         downloading = true;
+        installError = null;
         changed();
         worker.execute(() -> {
             boolean ok = false;
@@ -387,9 +394,16 @@ final class Updates {
             if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                 @SuppressWarnings("deprecation") Intent confirm = intent.getParcelableExtra(Intent.EXTRA_INTENT);
                 if (confirm != null) ctx.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            } else {
-                get(ctx).changed();
+                return;
             }
+            Updates u = get(ctx);
+            // Cancelled on Android's screen is the person's choice, not a failure; anything else says why in About.
+            if (status != PackageInstaller.STATUS_SUCCESS && status != PackageInstaller.STATUS_FAILURE_ABORTED) {
+                String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                Log.w(TAG, "update install refused: status " + status + ", " + message);
+                u.installError = message != null && !message.isEmpty() ? message : "status " + status;
+            }
+            u.changed();
         }
     }
 }

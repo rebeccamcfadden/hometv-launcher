@@ -90,15 +90,21 @@ final class AboutSection implements SettingsSection {
         SettingsKit.addWide(pane, block, 26);
         Updates updates = Updates.get(ctx);
         Runnable render = () -> renderUpdates(ctx, host, block, updates);
+        // Android's "install unknown apps" screen sends no event when it is switched on: back in front, read it again.
+        android.view.ViewTreeObserver.OnWindowFocusChangeListener back = hasFocus -> {
+            if (hasFocus) render.run();
+        };
         block.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
                 updates.listen(render);
+                v.getViewTreeObserver().addOnWindowFocusChangeListener(back);
             }
 
             @Override
             public void onViewDetachedFromWindow(View v) {
                 updates.unlisten(render);
+                v.getViewTreeObserver().removeOnWindowFocusChangeListener(back);
             }
         });
         renderUpdates(ctx, host, block, updates);
@@ -120,7 +126,11 @@ final class AboutSection implements SettingsSection {
         switch (s) {
             case OWN: line = ctx.getString(R.string.updates_own); break;
             case OFF: line = ctx.getString(R.string.updates_off); break;
-            case AVAILABLE: line = ctx.getString(R.string.updates_available, version); break;
+            case AVAILABLE:
+                String rejected = updates.installError();
+                line = rejected != null ? ctx.getString(R.string.updates_rejected, version, rejected)
+                        : ctx.getString(R.string.updates_available, version);
+                break;
             case DOWNLOADING: line = ctx.getString(R.string.updates_downloading, version); break;
             case NO_GRANT: line = ctx.getString(R.string.updates_no_grant, version); break;
             case NO_SCREEN: line = ctx.getString(R.string.updates_no_screen, version); break;

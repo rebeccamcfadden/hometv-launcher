@@ -17,6 +17,7 @@
     <string name="updates_install">Install update</string>
     <string name="updates_check_now">Check now</string>
     <string name="updates_install_failed">Couldn’t download the update. Try again later.</string>
+    <string name="updates_rejected">Android didn’t install version %1$s: %2$s. Install update tries again.</string>
     <string name="updates_value">%1$s available</string>
     <string name="updates_notice">HomeTV Launcher %1$s is available · Launcher settings › About</string>
 </resources>
