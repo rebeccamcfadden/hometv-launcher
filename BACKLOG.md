@@ -360,7 +360,7 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   8-bit's 40 scenes are in the APK, 68 KB), with seasonal sunrise and sunset colours and the sun or moon in the same
   place for each phase. The picture swaps once at each edge, crossfading by Motion; nothing is drawn in between, so it
   costs no frames. The colours stay the period's, so Home doesn't rebuild. Theme › Time of day: Follow the sun (the
-  default for a Seasonal theme) or Always day. The 40 pictures are levelled to one brightness curve, so dawn, day
+  default for a Seasonal theme), Day or Night (F29). The 40 pictures are levelled to one brightness curve, so dawn, day
   and sunset blend and the seasons step evenly (F24); 8-bit's generator applies the same curve to its scenes. Halloween's jack-o'-lanterns and its house glow less since F30 (2026-11-02, `vector-6`): the pumpkins' brightest pixels match the windows'. Plan and decisions: Figma page "Calendar · Time of day". Open: a TV
   bench of a phase change; stars or clouds that move belong to Animated details, later.
 - **Seasonal · Nature removed (2026-11-01):** the project lead's decision. A TV that had it shows Vector art; its photos

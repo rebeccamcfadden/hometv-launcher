@@ -21,6 +21,21 @@ enum DayPhase {
     DAWN, DAY, SUNSET, NIGHT;
 
     static final long DAWN_BEFORE_MIN = 40, DAWN_AFTER_MIN = 50, SUNSET_BEFORE_MIN = 50, SUNSET_AFTER_MIN = 40;
+
+    /** Theme › Time of day's saved values (F29): follow the sun, or fix the picture on its day or night. */
+    static final String FOLLOW_SUN = "sun", FIXED_DAY = "day", FIXED_NIGHT = "night";
+
+    /** The part of the day Time of day fixes the picture on, or null when it follows the sun (or isn't known). */
+    static DayPhase fixed(String timeOfDay) {
+        if (FIXED_DAY.equals(timeOfDay)) return DAY;
+        if (FIXED_NIGHT.equals(timeOfDay)) return NIGHT;
+        return null;
+    }
+
+    /** A saved Time of day as one of the three values: anything but "day" or "night", of any type, is "sun". */
+    static String timeOfDay(Object saved) {
+        return saved instanceof String && fixed((String) saved) != null ? (String) saved : FOLLOW_SUN;
+    }
     private static final LocalTime[] FIXED = {
             LocalTime.of(6, 20), LocalTime.of(7, 50), LocalTime.of(18, 10), LocalTime.of(19, 40)};
 

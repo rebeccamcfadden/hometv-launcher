@@ -10,7 +10,7 @@ export type Unit = 'c' | 'f' | 'tv';
 export type ThemeFont = 'theme' | 'system';
 export type CardShadows = 'on' | 'focus' | 'off';
 export type BackdropPicture = 'photo' | 'plain';
-export type TimeOfDay = 'sun' | 'day';
+export type TimeOfDay = 'sun' | 'day' | 'night';
 
 interface Saved {
   motion: Motion;
@@ -72,6 +72,8 @@ function load(): Saved {
       const saved = { ...defaults(), ...(JSON.parse(raw) as Partial<Saved>) };
       // Seasonal · Nature was removed (2026-11-01): a TV that had it shows Vector art, as the launcher's ThemeStore does.
       if ((saved.theme as string) === 'seasonal-nature') saved.theme = 'seasonal-vector';
+      // Time of day (F29): anything but Day or Night, an older or odd value, follows the sun, as ThemeStore reads it.
+      if (saved.timeOfDay !== 'day' && saved.timeOfDay !== 'night') saved.timeOfDay = 'sun';
       return saved;
     }
   } catch {
@@ -125,7 +127,7 @@ export const UNIT_LABELS: Record<Unit, string> = { c: '°C', f: '°F', tv: `TV d
 export const FONT_LABELS: Record<ThemeFont, string> = { theme: 'Theme font', system: 'System font' };
 export const SHADOW_LABELS: Record<CardShadows, string> = { on: 'On', focus: 'Focused card only', off: 'Off' };
 export const BACKDROP_LABELS: Record<BackdropPicture, string> = { photo: 'Photo', plain: 'Plain colour' };
-export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = { sun: 'Follow the sun', day: 'Always day' };
+export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = { sun: 'Follow the sun', day: 'Day', night: 'Night' };
 
 /** A temperature kept in °C, shown in the chosen unit: "14°". */
 export function deg(c: number): string {

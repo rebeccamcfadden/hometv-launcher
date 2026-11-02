@@ -535,7 +535,7 @@ picks another theme.
   groups of 156 × 100 swatches: **Classic** and **Seasonal · follows the date · today: Halloween** (today's period).
   Each swatch is drawn from that theme's own tokens: its sky, the horizon and a shelf of three mini tiles, the first
   focused with the accent ring, and "Aa" in its display face. Under them, a half-width row: **Typeface** (Theme
-  font / System font; "System font uses Roboto"), and **Time of day** (Follow the sun / Always day; "For Seasonal
+  font / System font; "System font uses Roboto"), and **Time of day** (Follow the sun / Day / Night, F29; "For Seasonal
   themes", F22). Moving details moved to Performance as Animated details. Moving highlights a swatch with the accent fill; OK selects it, it gets the accent ring, and the whole
   preview wears it at once. OK on a row switches its value. The pane enters on the selected theme.
 - **Themes** (ids for `?theme=`): Classic, which keep their look all year: Midnight `midnight`, Daylight `daylight`,
@@ -546,7 +546,7 @@ picks another theme.
 - **Time of day (F22):** a Seasonal picture follows the part of the day: dawn from 40 minutes before sunrise to 50
   after, sunset from 50 minutes before sunset to 40 after, day and night in between, from the sun at the mock's place
   (New York; on the TV, the Weather place). The picture changes when the sun moves on; the colours stay the period's.
-  Always day keeps the day picture. The dev bar's Time menu, or `?phase=dawn|day|sunset|night`, puts the preview on a
+  Day or Night keeps that picture all day (F29). The dev bar's Time menu, or `?phase=dawn|day|sunset|night`, puts the preview on a
   part of the day. `src/core/daylight.ts` is the launcher's `DayPhase`.
 - **Snow and rain (F25):** with Launcher settings › Performance › Animated details on (off by default), snow or rain
   falls over a Seasonal picture while Home is idle: it starts 3 s after the last key and stops on the next one, so

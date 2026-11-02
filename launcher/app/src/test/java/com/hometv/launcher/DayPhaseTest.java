@@ -218,4 +218,25 @@ public class DayPhaseTest {
         assertEquals("dawn", DayPhase.DAWN.slug());
         assertEquals("sunset", DayPhase.SUNSET.slug());
     }
+
+    @Test
+    public void timeOfDayFixesDayOrNightOrFollowsTheSun() {
+        assertEquals(DayPhase.DAY, DayPhase.fixed("day"));
+        assertEquals(DayPhase.NIGHT, DayPhase.fixed("night"));
+        assertNull(DayPhase.fixed("sun"));
+        // Older or odd values follow the sun, as before F29.
+        assertNull(DayPhase.fixed(null));
+        assertNull(DayPhase.fixed("dusk"));
+    }
+
+    @Test
+    public void anUnknownSavedTimeOfDayFollowsTheSun() {
+        assertEquals("day", DayPhase.timeOfDay("day"));
+        assertEquals("night", DayPhase.timeOfDay("night"));
+        assertEquals("sun", DayPhase.timeOfDay("sun"));
+        assertEquals("sun", DayPhase.timeOfDay(null));
+        assertEquals("sun", DayPhase.timeOfDay("dusk"));
+        // A value saved as another type (an old switch) never throws.
+        assertEquals("sun", DayPhase.timeOfDay(Boolean.TRUE));
+    }
 }

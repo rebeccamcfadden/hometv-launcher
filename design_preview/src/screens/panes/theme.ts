@@ -20,10 +20,12 @@ export function swatch(t: ThemeDef, period: Period): HTMLElement {
 
 /**
  * Launcher settings › Theme (Figma page "Settings · Theme picker", frame 18:10): Classic and Seasonal swatches, then
- * Typeface and Time of day (F22: a Seasonal picture follows the sun, or always shows the day; Moving details moved to
- * Performance as Animated details). Moving only highlights a swatch; OK selects it, and the whole preview wears it at
- * once.
+ * Typeface and Time of day (F22, F29: a Seasonal picture follows the sun, or stays on its Day or Night picture; OK steps
+ * through the three; Moving details moved to Performance as Animated details). Moving only highlights a swatch; OK
+ * selects it, and the whole preview wears it at once.
  */
+const NEXT_TIME_OF_DAY = { sun: 'day', day: 'night', night: 'sun' } as const;
+
 export const themePane = (): Pane => ({
   render: () => {
     loadSwatchFonts();
@@ -58,7 +60,7 @@ export const themePane = (): Pane => ({
           settings.set({ themeFont: s.themeFont === 'theme' ? 'system' : 'theme' }),
         ),
         row('theme-time', 'Time of day', 'For Seasonal themes', TIME_OF_DAY_LABELS[s.timeOfDay], false, () =>
-          settings.set({ timeOfDay: s.timeOfDay === 'sun' ? 'day' : 'sun' }),
+          settings.set({ timeOfDay: NEXT_TIME_OF_DAY[s.timeOfDay] }),
         ),
       ),
     ];

@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -127,20 +128,22 @@ final class ThemeSection implements SettingsSection {
         options.addView(optionRow(ctx, R.string.theme_typeface, R.string.theme_typeface_sub, typeface),
                 new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
-        boolean followSun = ThemeStore.followSun(ctx);
-        LinearLayout timeOfDay = segmented(ctx, "theme-time",
-                new String[]{"theme-time-sun", "theme-time-day"},
-                new CharSequence[]{ctx.getString(R.string.theme_time_sun), ctx.getString(R.string.theme_time_day)},
-                followSun ? 0 : 1, (seg, i) -> {
-                    boolean sun = i == 0;
-                    if (sun == ThemeStore.followSun(ctx)) return;
-                    ThemeStore.setFollowSun(ctx, sun);
+        String timeOfDay = ThemeStore.timeOfDay(ctx);
+        String[] times = {DayPhase.FOLLOW_SUN, DayPhase.FIXED_DAY, DayPhase.FIXED_NIGHT};
+        int current = Arrays.asList(times).indexOf(timeOfDay);
+        LinearLayout timeOfDayRow = segmented(ctx, "theme-time",
+                new String[]{"theme-time-sun", "theme-time-day", "theme-time-night"},
+                new CharSequence[]{ctx.getString(R.string.theme_time_sun), ctx.getString(R.string.theme_time_day),
+                        ctx.getString(R.string.theme_time_night)},
+                Math.max(0, current), (seg, i) -> {
+                    if (times[i].equals(ThemeStore.timeOfDay(ctx))) return;
+                    ThemeStore.setTimeOfDay(ctx, times[i]);
                     select(seg, i);
                     host.themeChanged();
                 });
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
         tlp.leftMargin = Ui.px(16);
-        options.addView(optionRow(ctx, R.string.theme_time_of_day, R.string.theme_time_of_day_sub, timeOfDay), tlp);
+        options.addView(optionRow(ctx, R.string.theme_time_of_day, R.string.theme_time_of_day_sub, timeOfDayRow), tlp);
 
         LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);

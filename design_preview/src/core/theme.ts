@@ -291,8 +291,11 @@ export const theme = {
     apply();
   },
   period: () => periodAt(theme.date()),
-  /** The part of the day a Seasonal picture shows: the dev bar's choice, Always day, or the sun now. */
-  phase: (): Phase => phaseOverride ?? (settings.get().timeOfDay === 'day' ? 'day' : phaseAt(new Date())),
+  /** The part of the day a Seasonal picture shows: the dev bar's choice, Time of day's Day or Night, or the sun now. */
+  phase: (): Phase => {
+    const t = settings.get().timeOfDay;
+    return phaseOverride ?? (t === 'sun' ? phaseAt(new Date()) : t);
+  },
   isPhaseOverridden: () => phaseOverride !== null,
   setPhase(p: Phase | null) {
     phaseOverride = p;

@@ -26,8 +26,8 @@ The screenshots are Home on a TCL TV (Android 9) at the end of October, so the S
 
 - **Typeface:** each theme's fonts come from Google Fonts, downloaded once and kept on the TV (Roboto until they
   arrive); Launcher settings › Theme › Typeface can put every theme in the TV's own Roboto instead.
-- **Time of day:** Launcher settings › Theme › Time of day keeps a Seasonal picture on the day (Always day) instead of
-  following the sun.
+- **Time of day:** Launcher settings › Theme › Time of day keeps a Seasonal picture on its day or its night (Day or Night)
+  instead of following the sun.
 - **Pictures:** Midnight's and 8-bit's are in the launcher; the others are downloaded once from
   `theme_assets_url` in `launcher/tv.properties` (by default [`launcher/backdrops/`](../launcher/backdrops/README.md)
   on this repository's `main`) and kept, with the theme's sky gradient while they load or offline.

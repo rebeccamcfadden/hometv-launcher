@@ -18,7 +18,8 @@
     <string name="theme_time_of_day">Time of day</string>
     <string name="theme_time_of_day_sub">For Seasonal themes</string>
     <string name="theme_time_sun">Follow the sun</string>
-    <string name="theme_time_day">Always day</string>
+    <string name="theme_time_day">Day</string>
+    <string name="theme_time_night">Night</string>
 
     <string name="theme_name_midnight">Midnight</string>
     <string name="theme_name_daylight">Daylight</string>
