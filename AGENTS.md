@@ -86,7 +86,7 @@ share their TV's list afterwards, follow [`docs/workflows/tv-list.md`](docs/work
 | `docs/` | `docs/TROUBLESHOOTING.md`, the module-card spec (`docs/specs/card.md`), `docs/devices/` for models with notes but no tested list, and the [workflows](#workflows). |
 | `launcher/` | The reference launcher, package `com.hometv.launcher`: plain Java, no libraries (Android views built in code), `minSdk` 26. In this fork it may use the network and new dependencies (see [This fork](#this-fork)). |
 | `design_preview/` | Web prototype of the reworked launcher UI (Vite, TypeScript, mock data); the keyboard stands in for the remote. Designs in Figma; see [its README](design_preview/README.md). |
-| `themes/` | One folder per theme: `config.json`, a required `screenshot.jpg`, optional wallpapers. Keys are documented in `themes/README.md`. |
+| `themes/` | `README.md`: the built-in themes, and the per-TV keys a `config.json` carries. |
 | `addons/` | Optional module-card apps, each its own Gradle project, never built into the launcher. |
 | `tools/` | The ADB client (`tv.py`) and the scripts, listed in `docs/tools.md`. Shell scripts have PowerShell twins. Each script's usage is in its first lines, and the larger ones have a guide beside them (`tools/*.md`): read it before running the script. |
 | `tests/` | Python `unittest` suite: list format, README tables, themes, add-ons, the Home guard and the tools against fake TVs. |
@@ -101,7 +101,7 @@ The core stays small on purpose. Pick the smallest home that fits (CONTRIBUTING,
 |---|---|
 | A TV list, a fix, a translation, docs, a tool fix | A pull request here |
 | A small launcher switch that is off by default | A pull request here, with its key in `config.xml` |
-| A new look: colours, wallpaper, dock, columns, that existing config keys can carry | `themes/<name>/` |
+| A new built-in theme | The launcher and `design_preview/`, as `themes/README.md` (Adding a theme) describes |
 | A widget or tile that can be its own small app | `addons/<name>/`, as a module card that never touches `launcher/` |
 | Network-backed launcher features, new launcher dependencies, the reworked launcher UI | This fork: prototype the flow in `design_preview/`, then build it in `launcher/` |
 | A port to another platform, a lower `minSdk`, Fire TV Home takeover | Your own repository |
