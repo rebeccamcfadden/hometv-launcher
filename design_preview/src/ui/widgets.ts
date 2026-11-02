@@ -4,6 +4,7 @@ import { focusable, type FocusOpts } from '../core/focus';
 import { lists } from '../core/lists';
 import { net } from '../core/net';
 import { availability, cardLine, cardOffer, runtimeLabel } from '../data/offers';
+import { posterImg } from '../data/posters';
 import { SERVICES } from '../data/services';
 import type { Title } from '../types';
 import { icon, type IconName } from './icons';
@@ -156,6 +157,38 @@ export const libraryCardSkeleton = () =>
     h('div.card-row', h('div.sk', { style: 'width:190px;height:26px' }), h('div.sk', { style: 'width:90px;height:20px' })),
     h('div.sk', { style: 'width:250px;height:18px;margin-top:10px' }),
     h('div.sk', { style: 'width:150px;height:18px;margin-top:8px' }),
+  );
+
+/**
+ * F40: the library card with the title's poster (portrait, 2:3) in place of the landscape art, six to a row. Under it
+ * the name, then the household's service and its availability on one line ("Netflix · Included"), then, unless
+ * `compact`, the runtime, rating and score and the lists line.
+ */
+export function posterCard(t: Title, opts: FocusOpts & { compact?: boolean }): HTMLElement {
+  const o = cardOffer(t);
+  const service = o ? `${SERVICES[o.service].name} · ${availability(o)}` : availability(o);
+  return focusable(
+    h(
+      `div.card.card--poster${opts.compact ? '.card--poster-compact' : ''}`,
+      { 'data-title': t.id },
+      h('div.card-art', posterImg(t)),
+      h('div.card-name', t.name),
+      h('div.card-service', service),
+      opts.compact ? null : h('div.card-meta', titleMeta(t)),
+      opts.compact ? null : h('div.card-sub', { 'data-lists': '' }, provenance(t)),
+    ),
+    opts,
+  );
+}
+
+/** A poster card's shape while it loads. */
+export const posterCardSkeleton = (compact = false) =>
+  h(
+    `div.card.card--poster.card--skeleton${compact ? '.card--poster-compact' : ''}`,
+    h('div.card-art.sk-art'),
+    h('div.sk', { style: 'width:190px;height:24px;margin-top:12px' }),
+    h('div.sk', { style: 'width:140px;height:18px;margin-top:8px' }),
+    compact ? null : h('div.sk', { style: 'width:210px;height:18px;margin-top:6px' }),
   );
 
 /** The smaller card used by Search and the title preview's rows. */

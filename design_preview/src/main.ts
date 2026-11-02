@@ -10,6 +10,7 @@ import { settingsMenu } from './screens/quickSettings';
 import { store } from './core/store';
 import { PHASE_LABELS, PHASES, type Phase } from './core/daylight';
 import { setFall, type FallChoice } from './core/weatherfx';
+import { CARD_STYLES, cards, isCardStyle, type CardStyle } from './core/cards';
 import { isThemeId, parseDate, PERIOD_DATES, PERIOD_LABELS, periodAt, theme, THEMES } from './core/theme';
 import { getTitle } from './data/catalog';
 import { homeScreen } from './screens/home';
@@ -124,6 +125,20 @@ if (startFall === 'snow' || startFall === 'rain' || startFall === 'leaves' || st
   setFall(startFall);
   fallSelect.value = startFall;
 }
+// F40: Movies and TV Shows' cards, landscape (today) or poster; compare.html shows two side by side.
+const cardsSelect = document.getElementById('cards') as HTMLSelectElement;
+for (const [id, label] of CARD_STYLES) cardsSelect.append(new Option(label, id));
+cardsSelect.addEventListener('change', () => {
+  cards.set(cardsSelect.value as CardStyle);
+  cardsSelect.blur();
+});
+const startCards = params.get('cards');
+if (isCardStyle(startCards)) {
+  cards.set(startCards);
+  cardsSelect.value = startCards;
+}
+// ?devbar=off hides the dev bar, for the frames of compare.html.
+if (params.get('devbar') === 'off') document.body.classList.add('no-devbar');
 phaseSelect.append(new Option('Time: now (follows the sun)', ''));
 for (const p of PHASES) phaseSelect.append(new Option(`Time: ${PHASE_LABELS[p]}`, p));
 const year = new Date().getFullYear();

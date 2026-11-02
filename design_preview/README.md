@@ -39,8 +39,8 @@ The 1920×1080 TV screen is scaled to fit the window. The keyboard stands in for
 
 The mouse works too: a click is focus + OK. The bar under
 the stage shows the screen stack (what Back returns through), a **State** menu, an **Account** menu, **Theme** and
-**Date** menus, a **Jump to** menu, and **Reset state**, which clears My list, Seen, Favorites, recent searches and Launcher settings (kept in
-`localStorage`).
+**Date** menus, a **Cards** menu (F40: landscape or poster cards in Movies and TV Shows), a **Jump to** menu, and **Reset state**, which clears My list, Seen, Favorites, recent searches and Launcher settings (kept in
+`localStorage`). `?devbar=off` hides the bar.
 
 The **State** menu simulates the network and the catalogue, so each loading, offline and error state can be
 reviewed (see [Loading, offline and errors](#loading-offline-and-errors)): Online; Loading (Movies and TV Shows);
@@ -282,6 +282,12 @@ the one beside it when the change took the card off the page (a title removed fr
 - A four-column grid of title cards: art, name, service and "Included", "Free" or a price ("Rent 39 kr", "Buy from
   99 kr", or just "Rent" for a store with no known price), runtime or seasons · rating · score, and the first list
   in chip order that holds it, and its genre.
+- **Poster cards (F40, for Rebecca to pick; not decided):** the dev bar's **Cards** menu (or `?cards=poster`,
+  `?cards=poster-compact`) swaps the grid for six columns of portrait cards with the title's TMDB poster
+  (`src/data/posters.ts`, loaded from image.tmdb.org; a title with none, or offline, shows its landscape art cropped):
+  the name, then the service and availability on one line ("Netflix · Included"), then the runtime or seasons line
+  and the lists line, or, in *name and service only*, just the first two. `compare.html` shows today's cards and the
+  poster cards side by side, each a live prototype (Movies or TV Shows; click a side, then use the keys).
 - **Filters drawer** (from the right): Availability, Review score, Genre, Length (movies only), Watch state. ←/→
   changes a value, and the grid behind updates live. Clear all and Done. The default is no filters (F2; Figma's
   frame shows "Included only · Review 7.0+").
@@ -811,6 +817,7 @@ width with 243 px art.
 | `src/core/notes.ts` | Phone notes: on/off, the pairing code, each list's last send, and the simulated import behind the import pill |
 | `src/core/keys.ts` | API keys (F16): each key's state and last four characters, the code, the mock check; shared with the phone page through localStorage |
 | `keys.html`, `src/keysPage.ts` | The phone and laptop page the API keys QR opens (a second Vite page) |
+| `compare.html` | F40: Movies or TV Shows with today's cards and with poster cards, side by side (a third Vite page) |
 | `src/core/net.ts` | The simulated network and data state behind the dev bar's State menu |
 | `src/data/` | Mock catalogue, services (and the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |
 | `src/screens/` | One module per screen; `dropdown.ts` holds the top-bar menus, `quickSettings.ts` the Settings icon's, `rent.ts` the rent/buy dialog, `settings.ts` Launcher settings, `setup.ts` First run |

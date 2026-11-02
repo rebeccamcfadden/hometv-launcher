@@ -35,6 +35,9 @@ body {
 }
 
 /* ---- Dev bar (outside the TV) ---- */
+body.no-devbar #devbar {
+  display: none;
+}
 #devbar {
   display: flex;
   align-items: center;
