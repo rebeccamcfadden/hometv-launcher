@@ -300,6 +300,16 @@ try {
     $version = [ordered]@{ versionCode = $versionCode; versionName = $versionName; apk = $apkName; sha256 = $apkSha;
                            certSha256 = $pinned; minSdk = 26; commit = $head }
     [IO.File]::WriteAllText((Join-Path $out 'version.json'), (($version | ConvertTo-Json) -replace "`r`n", "`n") + "`n")
+    # The family installer, stamped with this release, so a copy from it installs exactly this APK (tools/family-install.md).
+    $installer = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'family-install.ps1'))
+    $stamps = [ordered]@{ "'@RELEASE_TAG@'" = "'$tag'"; "'@RELEASE_APK@'" = "'$apkName'"
+                          "'@RELEASE_APK_SHA256@'" = "'$apkSha'"; "'@RELEASE_CERT_SHA256@'" = "'$pinned'" }
+    foreach ($placeholder in $stamps.Keys) {
+        if (-not $installer.Contains($placeholder)) { throw "tools\family-install.ps1 has no $placeholder to stamp." }
+        $installer = $installer.Replace($placeholder, $stamps[$placeholder])
+    }
+    if ($installer.Contains('@RELEASE_')) { throw 'tools\family-install.ps1 has a placeholder this script does not stamp.' }
+    [IO.File]::WriteAllText((Join-Path $out 'family-install.ps1'), $installer.Replace("`r`n", "`n"))
     $sums = Get-ChildItem $out -File | Where-Object Name -ne 'SHA256SUMS' | Sort-Object Name | ForEach-Object {
         "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant())  $($_.Name)"
     }
