@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private LauncherSettingsPage settingsPage;
     /** Opens First run's checklist over Home (FirstRunPage) at any time, for adb; by itself it shows once. */
     static final String ACTION_FIRST_RUN = "com.hometv.launcher.action.FIRST_RUN";
-    /** F25's test-only force for the TV bench (previewFallIfAsked), with EXTRA_FALL snow, rain or off. */
+    /** F25's test-only force for the TV bench (previewFallIfAsked), with EXTRA_FALL snow, rain, leaves or off. */
     static final String ACTION_FALL_PREVIEW = "com.hometv.launcher.action.FALL_PREVIEW";
     static final String EXTRA_FALL = "fall";
     /** Survive a rebuild with First run open: the checklist reopens with the same steps done. */
@@ -617,7 +617,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     /**
      * F25's test-only force for the TV bench, ignored in public release builds (BuildConfig.PUBLIC_RELEASE):
      * {@code adb shell am start -a com.hometv.launcher.action.FALL_PREVIEW --es fall snow -n com.hometv.launcher/.MainActivity}
-     * ({@code snow}, {@code rain} or {@code off}). Until the launcher restarts; nothing is saved.
+     * ({@code snow}, {@code rain}, {@code leaves} or {@code off}). Until the launcher restarts; nothing is saved.
      */
     private boolean previewFallIfAsked(Intent intent) {
         if (intent == null || !ACTION_FALL_PREVIEW.equals(intent.getAction())) return false;

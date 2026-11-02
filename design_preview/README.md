@@ -553,8 +553,10 @@ picks another theme.
   moving around Home never draws it. It falls by the real weather at the Weather place (the mock place's description;
   snow only in Snow, Thaw, Autumn, Halloween and Christmas) and by the season when offline (Snow and Christmas snow,
   Spring rain rains). It needs Motion Full and Backdrop picture = Photo. Vector art runs at 12 fps; 8-bit at 10 fps,
-  one scene pixel per flake. The colour follows the part of the day. The dev bar's Weather menu, or
-  `?fall=snow|rain|off`, forces it. `src/core/weatherfx.ts`; the launcher's `WeatherLayer` follows the same rules.
+  one scene pixel per flake. The colour follows the part of the day. **Leaves (F31)** fall in Autumn and Halloween
+  while it's dry (rain or snow at the place wins; offline they fall): tumbling ovals in rust, amber, brick and ochre,
+  dimmer at dawn, sunset and night; in 8-bit, two scene pixels that turn over. The dev bar's Weather menu, or
+  `?fall=snow|rain|leaves|off`, forces it. `src/core/weatherfx.ts`; the launcher's `WeatherLayer` follows the same rules.
 - **Periods:** Snow 1 Jan – 28/29 Feb, Thaw March, Spring rain April, Bloom May, Pride June, Midsummer July, Late
   summer August, Autumn 1 Sep – 14 Oct and 3 – 30 Nov, Halloween 15 Oct – 2 Nov, Christmas December. The period is
   looked at again on the hour, so it turns over at midnight.
@@ -585,7 +587,7 @@ picks another theme.
   Off; Reduced drops slides, rises and focus scale-ups and keeps the fades, Home's scroll jumps and its dimming fades;
   Off stops every animation), **Card shadows** (On / Focused card only / Off), **Focus glow** (On / Off), **Backdrop
   picture** (Photo / Plain colour: the theme's sky without the picture) and **Animated details** (On / Off, off to start; the old
-  Moving details: snow and rain over Seasonal pictures while Home is idle, F25). A low-RAM TV starts at the light
+  Moving details: snow, rain and falling leaves over Seasonal pictures while Home is idle, F25, F31). A low-RAM TV starts at the light
   end (no card shadows, Motion Reduced, no animated details; glow and picture on) until the household chooses, and the
   pane says so; config.xml or config.json `light_defaults` can set or stop that per TV. The prototype starts with
   everything on but animated details; it applies Motion and the backdrop, and saves the card shadows and glow, which it doesn't draw.

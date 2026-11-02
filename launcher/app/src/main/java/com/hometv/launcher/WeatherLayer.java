@@ -3,6 +3,7 @@ package com.hometv.launcher;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.os.SystemClock;
 import android.view.View;
 import android.view.animation.AnimationUtils;
@@ -19,10 +20,15 @@ import java.util.Random;
  * only while Home is on screen, with Performance › Animated details on (off by default for every TV), motion at Full
  * and the backdrop picture on, in a Seasonal theme, when {@link WeatherFall} says something falls. Vector art runs at
  * 12 fps; 8-bit at 10 fps, one scene pixel per flake. Nothing is allocated per frame.
+ *
+ * <p>F31: leaves fall in Autumn and Halloween while it is dry ({@link WeatherFall}): tumbling ovals in four autumn
+ * colours, lit by the part of the day; in 8-bit, two scene pixels that turn over as they fall.
  */
 final class WeatherLayer extends View {
     static final long IDLE_MS = 3000;
-    private static final int SNOW = 80, RAIN = 70;
+    private static final int SNOW = 80, RAIN = 70, LEAVES = 26;
+    /** Leaves: rust, amber, brick and ochre, as in the prototype. */
+    private static final int[] LEAF = {0xC8551C, 0xE08A2C, 0x9C3B1E, 0xD9A441};
     /** About half a vsync: a frame posted this early lands on the vsync it is due at. */
     private static final long VSYNC_SLACK_MS = 8;
 
@@ -42,7 +48,10 @@ final class WeatherLayer extends View {
     private WeatherFall.Fall fall = WeatherFall.Fall.NONE;
     private long last;
     private int tint = tint(DayPhase.DAY);
-    private float[] x, y, vx, vy, size, alpha, sway;
+    /** The leaf colours lit for the part of the day; worked out when it changes, not per frame. */
+    private final int[] leafColor = LEAF.clone();
+    private final RectF oval = new RectF();
+    private float[] x, y, vx, vy, size, alpha, sway, angle, spin;
 
     WeatherLayer(Context ctx) {
         super(ctx);
@@ -74,6 +83,8 @@ final class WeatherLayer extends View {
     /** The part of the day the backdrop shows (Backdrops): the particles take its tint, even mid-fall. */
     void setPhase(DayPhase phase) {
         tint = tint(phase);
+        float light = leafLight(phase);
+        for (int i = 0; i < LEAF.length; i++) leafColor[i] = scale(LEAF[i], light);
     }
 
     /** The test-only force (MainActivity's FALL_PREVIEW, WeatherFall.preview): what falls instead of the weather. */
@@ -133,7 +144,7 @@ final class WeatherLayer extends View {
     }
 
     private void seed(WeatherFall.Fall f, boolean px) {
-        int n = f == WeatherFall.Fall.SNOW ? SNOW : RAIN;
+        int n = f == WeatherFall.Fall.SNOW ? SNOW : f == WeatherFall.Fall.LEAVES ? LEAVES : RAIN;
         x = new float[n];
         y = new float[n];
         vx = new float[n];
@@ -141,13 +152,22 @@ final class WeatherLayer extends View {
         size = new float[n];
         alpha = new float[n];
         sway = new float[n];
+        angle = new float[n];
+        spin = new float[n];
         float w = Math.max(1, getWidth()), h = Math.max(1, getHeight()), k = h / 1080f;
         for (int i = 0; i < n; i++) {
             float layer = random.nextFloat();
             x[i] = random.nextFloat() * w;
             y[i] = random.nextFloat() * h;
             sway[i] = random.nextFloat() * 6.283f;
-            if (f == WeatherFall.Fall.SNOW) {
+            angle[i] = random.nextFloat() * 6.283f;
+            spin[i] = (random.nextBoolean() ? 1 : -1) * (1 + random.nextFloat() * 2);
+            if (f == WeatherFall.Fall.LEAVES) {
+                vy[i] = (55 + layer * 65) * k;
+                vx[i] = (-30 + random.nextFloat() * 20) * k;
+                size[i] = (9 + layer * 9) * k;
+                alpha[i] = 0.75f + layer * 0.25f;
+            } else if (f == WeatherFall.Fall.SNOW) {
                 vy[i] = (40 + layer * 70) * k;
                 vx[i] = 0;
                 size[i] = (2 + layer * 4) * k;
@@ -159,6 +179,26 @@ final class WeatherLayer extends View {
                 alpha[i] = 0.18f + layer * 0.17f;
             }
         }
+    }
+
+    /** How lit the leaves are for the part of the day, as in the prototype: they are lit, not glowing. */
+    static float leafLight(DayPhase phase) {
+        switch (phase) {
+            case DAWN:
+                return 0.8f;
+            case SUNSET:
+                return 0.85f;
+            case NIGHT:
+                return 0.42f;
+            default:
+                return 1f;
+        }
+    }
+
+    /** An RGB colour with each channel scaled by k. */
+    static int scale(int rgb, float k) {
+        int r = Math.round(((rgb >> 16) & 0xFF) * k), g = Math.round(((rgb >> 8) & 0xFF) * k);
+        return (r << 16) | (g << 8) | Math.round((rgb & 0xFF) * k);
     }
 
     /** The particles' colour for the part of the day, as in the prototype. */
@@ -182,11 +222,13 @@ final class WeatherLayer extends View {
         float dt = Math.min(0.2f, (vsync - last) / 1000f);
         last = vsync;
         float w = getWidth(), h = getHeight(), margin = 40 * h / 1080f;
-        boolean snow = fall == WeatherFall.Fall.SNOW;
+        boolean snow = fall == WeatherFall.Fall.SNOW, leaves = fall == WeatherFall.Fall.LEAVES;
+        float drift = (snow ? 18 : leaves ? 60 : 0) * h / 1080f;
         for (int i = 0; i < x.length; i++) {
-            sway[i] += dt * 1.3f;
+            sway[i] += dt * (leaves ? 1.1f : 1.3f);
+            angle[i] += spin[i] * dt;
             y[i] += vy[i] * dt;
-            x[i] += (vx[i] + (snow ? (float) Math.sin(sway[i]) * 18 * h / 1080f : 0)) * dt;
+            x[i] += (vx[i] + (float) Math.sin(sway[i]) * drift) * dt;
             if (y[i] > h + margin) {
                 y[i] = -margin;
                 x[i] = random.nextFloat() * w;
@@ -206,15 +248,30 @@ final class WeatherLayer extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         if (!running || x == null) return;
-        boolean snow = fall == WeatherFall.Fall.SNOW;
+        boolean snow = fall == WeatherFall.Fall.SNOW, leaves = fall == WeatherFall.Fall.LEAVES;
         float cell = getHeight() / 90f;
         paint.setStrokeWidth(2 * getHeight() / 1080f);
         for (int i = 0; i < x.length; i++) {
-            paint.setColor(((int) (alpha[i] * 255) << 24) | tint);
+            paint.setColor(((int) (alpha[i] * 255) << 24) | (leaves ? leafColor[i % LEAF.length] : tint));
             if (pixel) {
-                // 8-bit: one scene pixel per flake, two tall per drop, on the scene's grid.
+                // 8-bit: one scene pixel per flake, two tall per drop, on the scene's grid; a leaf is two pixels that
+                // turn over as it tumbles.
                 float gx = Math.round(x[i] / cell) * cell, gy = Math.round(y[i] / cell) * cell;
-                canvas.drawRect(gx, gy, gx + cell, gy + (snow ? cell : 2 * cell), paint);
+                if (leaves) {
+                    boolean flat = Math.cos(angle[i]) > 0;
+                    canvas.drawRect(gx, gy, gx + (flat ? 2 * cell : cell), gy + (flat ? cell : 2 * cell), paint);
+                } else {
+                    canvas.drawRect(gx, gy, gx + cell, gy + (snow ? cell : 2 * cell), paint);
+                }
+            } else if (leaves) {
+                // A tumbling oval: its width follows the turn, so it seems to flip over.
+                float s = size[i], r = s * (0.25f + 0.2f * Math.abs((float) Math.cos(sway[i] * 1.7f)));
+                canvas.save();
+                canvas.translate(x[i], y[i]);
+                canvas.rotate((float) Math.toDegrees(angle[i]));
+                oval.set(-s, -r, s, r);
+                canvas.drawOval(oval, paint);
+                canvas.restore();
             } else if (snow) {
                 canvas.drawCircle(x[i], y[i], size[i], paint);
             } else {

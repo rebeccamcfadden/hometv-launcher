@@ -39,7 +39,22 @@ public class WeatherFallTest {
         assertEquals(WeatherFall.Fall.SNOW, of(null, SeasonCalendar.Period.CHRISTMAS));
         assertEquals(WeatherFall.Fall.RAIN, of(null, SeasonCalendar.Period.SPRING_RAIN));
         assertEquals(WeatherFall.Fall.NONE, of(null, SeasonCalendar.Period.LATE_SUMMER));
-        assertEquals(WeatherFall.Fall.NONE, of(null, SeasonCalendar.Period.HALLOWEEN));
+        assertEquals(WeatherFall.Fall.LEAVES, of(null, SeasonCalendar.Period.HALLOWEEN));
+    }
+
+    @Test
+    public void leavesFallInAutumnWhileItIsDry() {
+        assertEquals(WeatherFall.Fall.LEAVES, of(Weather.Condition.CLEAR, SeasonCalendar.Period.AUTUMN));
+        assertEquals(WeatherFall.Fall.LEAVES, of(Weather.Condition.OVERCAST, SeasonCalendar.Period.HALLOWEEN));
+        assertEquals(WeatherFall.Fall.LEAVES, of(null, SeasonCalendar.Period.AUTUMN));
+        // Rain or snow at the place wins.
+        assertEquals(WeatherFall.Fall.RAIN, of(Weather.Condition.DRIZZLE, SeasonCalendar.Period.AUTUMN));
+        assertEquals(WeatherFall.Fall.SNOW, of(Weather.Condition.SNOW, SeasonCalendar.Period.HALLOWEEN));
+        // Only those two periods shed leaves.
+        assertEquals(WeatherFall.Fall.NONE, of(Weather.Condition.CLEAR, SeasonCalendar.Period.LATE_SUMMER));
+        assertEquals(WeatherFall.Fall.NONE, of(Weather.Condition.CLEAR, SeasonCalendar.Period.CHRISTMAS));
+        // Rain clearing in autumn turns the fall to leaves.
+        assertTrue(WeatherFall.changes(Weather.Condition.RAIN, Weather.Condition.CLEAR, SeasonCalendar.Period.AUTUMN));
     }
 
     @Test
@@ -59,9 +74,10 @@ public class WeatherFallTest {
     }
 
     @Test
-    public void aPreviewIsSnowOrRainOnly() {
+    public void aPreviewIsSnowRainOrLeaves() {
         assertEquals(WeatherFall.Fall.SNOW, WeatherFall.preview("snow"));
         assertEquals(WeatherFall.Fall.RAIN, WeatherFall.preview(" Rain "));
+        assertEquals(WeatherFall.Fall.LEAVES, WeatherFall.preview("leaves"));
         assertNull(WeatherFall.preview(null));
         assertNull(WeatherFall.preview(""));
         assertNull(WeatherFall.preview("none"));

@@ -91,14 +91,14 @@ const dateSelect = document.getElementById('date') as HTMLSelectElement;
 const phaseSelect = document.getElementById('phase') as HTMLSelectElement;
 // F25: what falls while Home is idle: the real weather at the place (the season offline), or forced.
 const fallSelect = document.getElementById('fall') as HTMLSelectElement;
-for (const [v, l] of [['auto', 'Weather: the real weather'], ['off', 'Weather: none'], ['snow', 'Weather: snow'], ['rain', 'Weather: rain']] as const)
+for (const [v, l] of [['auto', 'Weather: the real weather'], ['off', 'Weather: none'], ['snow', 'Weather: snow'], ['rain', 'Weather: rain'], ['leaves', 'Weather: leaves']] as const)
   fallSelect.append(new Option(l, v));
 fallSelect.addEventListener('change', () => {
   setFall(fallSelect.value as FallChoice);
   fallSelect.blur();
 });
 const startFall = params.get('fall');
-if (startFall === 'snow' || startFall === 'rain' || startFall === 'off') {
+if (startFall === 'snow' || startFall === 'rain' || startFall === 'leaves' || startFall === 'off') {
   setFall(startFall);
   fallSelect.value = startFall;
 }
