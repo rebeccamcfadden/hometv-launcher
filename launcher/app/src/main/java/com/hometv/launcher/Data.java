@@ -6,8 +6,8 @@ import java.util.Set;
 
 /**
  * The data every screen reads, made once in MainActivity.onCreate and handed out through {@link Router#data()}: the
- * catalogue (TMDB with a token in the build, else the mock one), the services on this TV, the household's lists
- * stored on the TV, and the service table.
+ * catalogue (TMDB with this TV's TMDB key, from its keys page or the build (ApiKeys), else the mock one), the services
+ * on this TV, the household's lists stored on the TV, and the service table.
  */
 final class Data {
     final Catalog catalog;
@@ -47,7 +47,7 @@ final class Data {
     static Data create(Context ctx, Config cfg) {
         // F14: TMDB account switched off in Features makes this a build without a token: the mock catalogue and no
         // account, so nothing reaches TMDB (Movies, TV Shows and Search say they need it, TmdbGate).
-        String token = Features.isOn(Features.Feature.TMDB) ? BuildConfig.TMDB_TOKEN : "";
+        String token = Features.isOn(Features.Feature.TMDB) ? ApiKeys.get(ctx).key(KeyRules.Id.TMDB) : "";
         Region region = RegionChoice.get(ctx);
         Catalog catalog = token.isEmpty() ? new MockCatalog() : new TmdbCatalog(ctx, token, region);
         catalog.setPriceStores(ServiceChoices.stores(ctx, region));

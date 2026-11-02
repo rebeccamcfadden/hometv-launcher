@@ -646,10 +646,12 @@ lead decided its open questions on 2026-10-31.
   them, then on (`FirstRunRules.panels`). A setup tab reads "Not set up yet" until it is. **When First run ends**
   (Start, Back, the remote's Home; not a rebuild) every feature on whose setup isn't finished is switched off and a
   toast names them (`FirstRunPage.switchOffUnfinished`); Start's help pane lists them first. What counts as set up
-  (`FirstRunRules.setUp`): TMDB account, signed in; Phone notes, signed in and the TV listening; Price lookup, both
-  keys set (`PriceKeys.ready`, F16's keys page later); Weather, always (the TV's default place counts). Price lookup
-  opens nothing until Builder E's F16 key page exists; with it off the Stores row's pill reads "Price lookup off" and
-  its panel is the off state, with Turn on.
+  (`FirstRunRules.setUp`): TMDB account, signed in; Phone notes, signed in and the TV listening; Price lookup, the
+  Watchmode key works (`PriceKeys.ready`; Movie of the Night is optional); Weather, always (the TV's default place
+  counts). Price lookup's setup is the Price keys tab (F16), and TMDB account's starts with a TMDB key tab when the TV
+  had no working TMDB key as First run opened (`FirstRunRules.setups`); Sign in after it rebuilds the launcher with the
+  key first (`FirstRunRules.signInNeedsRebuild`). With Price lookup off the Stores row's pill reads "Price lookup off"
+  and its panel is the off state, with Turn on.
 - **Turn on (2026-11-02):** every off state has Turn on, which switches the feature on (and the one it needs) and goes
   straight into its setup (`SettingsSection.Host#turnOn`, `FeaturePrefs.turnOn`): a Launcher settings section, First
   run's Stores, and Movies, TV Shows and Search's "needs a TMDB account" (`MainActivity#signInFromPage`, where Back
@@ -677,6 +679,13 @@ In order, one PR each:
    (F14; today config.xml's `feature_<id>` and a pushed config.json's `features`). The launcher moves it
    into private storage and deletes the file. The `tv.properties` keys stay as the fallback for our own builds. This
    lets one public APK carry no secrets.
+   **Changed:** no `household.json` (the project lead, 2026-11-01, Q2). **Built (F16):** the keys go in on the TV
+   itself, in Launcher settings › API keys and First run's TMDB key and Price keys tabs. A phone scans the QR, or a
+   laptop opens the address and types the code, to a page the TV serves on port 8766 only while that pane shows
+   (`KeyInbox`, `res/raw/keys_setup.html`). Each key is checked with one free request, kept in the launcher's private
+   storage (`ApiKeys`) and shown again only by its last four characters. A key entered there replaces the build's;
+   Remove leaves none, the build's included. The region is a Launcher settings choice (F12). Sharing one key's quota
+   between TVs was dropped (2026-11-02).
 2. **US region.** The region as a setting, SE by default, US from `household.json`: TMDB's region and watch
    providers, the US services with their TV apps and ServiceIds, prices in dollars, Watchmode `regions=US`, Movie of
    the Night `country=us`, iTunes `us`. Today SE is a constant (`TmdbApi.REGION`, `WatchProviders.REGION`), with

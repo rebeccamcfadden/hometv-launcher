@@ -18,7 +18,8 @@ temperature_unit=C
 
 # Optional: your TMDB "API Read Access Token" (the long v4 token from themoviedb.org, Settings, API), for the real
 # catalogue: titles, artwork, cast, episodes and search. Leave it out and the launcher builds with the mock
-# catalogue instead, which works offline. Never commit a token: keep it in tv.properties only.
+# catalogue instead, which works offline. Never commit a token: keep it in tv.properties only. A key entered on the TV
+# (Launcher settings › API keys) replaces this one, as it does the price keys below.
 #tmdb_api_key=
 
 # Optional rent and buy prices (BACKLOG.md, Streaming availability and prices). Without a key the launcher shows where

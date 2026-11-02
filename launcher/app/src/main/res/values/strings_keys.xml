@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Launcher settings › API keys and First run's TMDB key and Price keys tabs (F16; design_preview/src/screens/panes/keys.ts).
+  The keys page on the phone or laptop is res/raw/keys_setup.html.
+-->
+<resources>
+    <string name="settings_keys">API keys</string>
+    <string name="keys_tab_tmdb">TMDB key</string>
+    <string name="keys_tab_prices">Price keys</string>
+
+    <string name="keys_title_all">Keys for titles and prices</string>
+    <string name="keys_sub_all">Each household makes its own free keys, so no one\u2019s monthly limit is shared.</string>
+    <string name="keys_title_tmdb">A key for titles</string>
+    <string name="keys_sub_tmdb">Movies, TV Shows and Search come from TMDB, which needs a free key from this household.</string>
+    <string name="keys_title_prices">Keys for rent and buy prices</string>
+    <string name="keys_sub_prices">Prices come from Watchmode, and from Movie of the Night when Watchmode has none. Both are free; Movie of the Night is optional.</string>
+
+    <!-- Each key's row: its name and use, the line under it, and its free plan on the right. -->
+    <string name="keys_use_tmdb">Movies, TV Shows and Search</string>
+    <string name="keys_use_watchmode">Rent and buy prices</string>
+    <string name="keys_use_motn">More prices, when Watchmode has none</string>
+    <string name="keys_plan_tmdb">Free for personal use</string>
+    <string name="keys_plan_watchmode">Free: 2,500 credits a month</string>
+    <string name="keys_plan_motn">Free: 1,000 requests a month</string>
+    <string name="keys_status_ok">Works \u00b7 ends %1$s</string>
+    <string name="keys_status_built">Works \u00b7 from this TV\u2019s build</string>
+    <string name="keys_status_checking">Checking with %1$s\u2026</string>
+    <string name="keys_status_unreachable">Kept, not checked yet: the TV couldn\u2019t reach %1$s. It tries again later, or OK tries now.</string>
+    <string name="keys_status_bad_tmdb">TMDB refused it. Copy the API Read Access Token (the long one), all of it.</string>
+    <string name="keys_status_bad">%1$s refused it. Copy the key again, all of it.</string>
+    <string name="keys_status_unset">Not set</string>
+    <string name="keys_status_unset_optional">Not set \u00b7 optional</string>
+    <string name="keys_toast_built">This %1$s key is from the TV\u2019s build; one entered on the phone or laptop page replaces it</string>
+    <string name="keys_toast_unset">Enter the %1$s key on the phone or laptop page: scan the code, or open the address</string>
+
+    <!-- Price lookup off (Launcher settings only): the price keys behind an empty state, the TMDB key still shown. -->
+    <string name="keys_prices_off_title">Price keys \u00b7 Watchmode and Movie of the Night</string>
+    <string name="keys_prices_off_sub">Price lookup is off, so the TV asks for no prices and needs no price keys. Turn it on to add them here.</string>
+    <string name="keys_prices_turn_on">Turn on Price lookup</string>
+
+    <!-- The QR, and the address and code for a laptop. -->
+    <string name="keys_qr_caption">Scan with a phone\u2019s camera</string>
+    <string name="keys_qr_description">QR code that opens this TV\u2019s keys page on a phone</string>
+    <string name="keys_laptop">Or on a laptop, open</string>
+    <string name="keys_laptop_code">and type the code</string>
+    <string name="keys_no_wifi">The TV isn\u2019t on Wi-Fi or Ethernet, so a phone or laptop can\u2019t reach it. Connect it, then come back here.</string>
+    <string name="keys_port_taken">Another app on this TV uses port %1$d, so phones and laptops can\u2019t reach this page.</string>
+    <string name="keys_note">The page that opens shows how to get each key, step by step, and sends it here to be checked. The TV listens only while this page is open, on your home network, with the code. Keys stay on the TV, shown only by their last four characters.</string>
+
+    <string name="keys_remove_one">Remove the %1$s key</string>
+    <string name="keys_remove_some">Remove a key</string>
+    <string name="keys_remove_title_one">Remove the %1$s key?</string>
+    <string name="keys_remove_title_some">Remove which key?</string>
+    <string name="keys_remove_body">This TV forgets it, the build\u2019s own key too, and has none for that service until one is entered here.</string>
+    <string name="keys_remove_action">Remove %1$s</string>
+    <string name="keys_new_code">New code</string>
+    <string name="keys_new_code_title">Make a new code?</string>
+    <string name="keys_new_code_body">A page opened with the old code can\u2019t send keys any more. Scan the new QR, or type the new code.</string>
+    <string name="keys_cancel">Cancel</string>
+
+    <!-- The row's value (KeyRules.summary). -->
+    <plurals name="keys_value_refused">
+        <item quantity="one">%1$d refused</item>
+        <item quantity="other">%1$d refused</item>
+    </plurals>
+    <string name="keys_value_checking">Checking\u2026</string>
+    <string name="keys_value_not_set">Not set</string>
+    <plurals name="keys_value_some">
+        <item quantity="one">%1$d of %2$d set</item>
+        <item quantity="other">%1$d of %2$d set</item>
+    </plurals>
+    <plurals name="keys_value_working">
+        <item quantity="one">%1$d working</item>
+        <item quantity="other">%1$d working</item>
+    </plurals>
+    <plurals name="keys_value_unchecked">
+        <item quantity="one">%1$d not checked</item>
+        <item quantity="other">%1$d not checked</item>
+    </plurals>
+
+    <!-- Account on a TV without a TMDB key (TmdbKeyGate). -->
+    <string name="account_no_key_title">Sign in to TMDB</string>
+    <string name="account_no_key_sub">Signing in keeps My list and Favorites in step with TMDB. Signing in asks TMDB, so it needs this TV\u2019s TMDB key first.</string>
+    <string name="account_no_key_settings">This TV has no TMDB key yet. Add one in API keys first; then sign in here.</string>
+    <string name="account_no_key_setup">This TV has no TMDB key yet: add it in the TMDB key step above, then sign in here.</string>
+    <string name="account_add_key">Add a TMDB key</string>
+    <string name="account_key_added">This TV has its TMDB key now. Sign in rebuilds Home with it first, then opens the sign-in.</string>
+    <string name="account_key_sign_in">Sign in with your phone</string>
+</resources>

@@ -337,6 +337,16 @@ final class PaneParts {
      */
     static Screen confirm(Context ctx, Shell shell, CharSequence title, CharSequence body, CharSequence action,
                           CharSequence cancel, Runnable onConfirm) {
+        return choose(ctx, shell, title, body, java.util.Collections.singletonList(action),
+                java.util.Collections.singletonList(onConfirm), cancel);
+    }
+
+    /**
+     * The confirm dialog with one or more actions (API keys' "Remove which key?"), the first primary and focused,
+     * then Cancel. Each action closes the dialog and runs its own.
+     */
+    static Screen choose(Context ctx, Shell shell, CharSequence title, CharSequence body,
+                         List<? extends CharSequence> labels, List<Runnable> runs, CharSequence cancel) {
         FrameLayout root = new FrameLayout(ctx);
         View scrim = new View(ctx);
         scrim.setBackgroundColor(Ui.SCRIM);
@@ -353,12 +363,25 @@ final class PaneParts {
         b.setText(body);
         b.setLineSpacing(0f, 1.45f);
         box.addView(b, wide(16));
-        View yes = Kit.button(ctx, action, 0, Kit.PRIMARY, false, "confirm", "confirm-yes", true, v -> {
-            shell.pop();
-            onConfirm.run();
-        });
-        View no = Kit.button(ctx, cancel, 0, Kit.NORMAL, false, "confirm", "confirm-no", false, v -> shell.pop());
-        box.addView(actions(ctx, java.util.Arrays.asList(yes, no)), below(40));
+        List<View> buttons = new java.util.ArrayList<>();
+        for (int i = 0; i < labels.size(); i++) {
+            Runnable run = runs.get(i);
+            buttons.add(Kit.button(ctx, labels.get(i), 0, i == 0 ? Kit.PRIMARY : Kit.NORMAL, false, "confirm",
+                    i == 0 ? "confirm-yes" : "confirm-yes-" + i, i == 0, v -> {
+                        shell.pop();
+                        run.run();
+                    }));
+        }
+        View yes = buttons.get(0);
+        buttons.add(Kit.button(ctx, cancel, 0, Kit.NORMAL, false, "confirm", "confirm-no", false, v -> shell.pop()));
+        if (labels.size() == 1) {
+            box.addView(actions(ctx, buttons), below(40));
+        } else {
+            // Several actions don't fit one row of the dialog: one under another, Cancel last.
+            LinearLayout column = column(ctx);
+            for (View button : buttons) column.addView(button, column.getChildCount() == 0 ? below(0) : below(12));
+            box.addView(column, below(36));
+        }
         root.addView(box, new FrameLayout.LayoutParams(Ui.px(860), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         return new Screen(title.toString(), root, Screen.Layer.DIALOG) {
             @Override

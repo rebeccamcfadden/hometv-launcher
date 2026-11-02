@@ -53,7 +53,7 @@ public class SettingsNavTest {
 
     @Test
     public void theSectionsAreInGroupingAsOrder() {
-        assertEquals(Arrays.asList("account", "notes", "services", "stores", "features", "keys", "theme",
+        assertEquals(Arrays.asList("account", "notes", "services", "stores", "keys", "features", "theme",
                 "performance", "apps", "weather", "start", "home", "region", "tv", "about"), SettingsNav.ORDER);
         List<String> groups = new ArrayList<>();
         for (SettingsNav.Group g : SettingsNav.GROUPS) groups.add(g.key);
@@ -87,7 +87,7 @@ public class SettingsNavTest {
 
     @Test
     public void sectionsStillToComeTakeTheirPlaces() {
-        assertEquals("#watch services stores features keys #tv start region tv",
+        assertEquals("#watch services stores keys features #tv start region tv",
                 lines(Arrays.asList("keys", "region", "features", "services", "stores", "start", "tv")));
     }
 

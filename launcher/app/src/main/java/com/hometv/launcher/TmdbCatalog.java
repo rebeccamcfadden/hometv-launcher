@@ -107,7 +107,7 @@ final class TmdbCatalog implements Catalog {
         priceStores = EnumSet.copyOf(ServicePicks.stores(region));
         client = new TmdbClient(token, ctx.getApplicationContext().getCacheDir());
         overlay = new MockOverlay(new MockCatalog());
-        book = new PriceBook(ctx, PriceKeys.watchmode(), PriceKeys.movieOfTheNight(), region, this::repriced,
+        book = new PriceBook(ctx, PriceKeys.watchmode(ctx), PriceKeys.movieOfTheNight(ctx), region, this::repriced,
                 this::refreshKept);
         pool = new ThreadPoolExecutor(THREADS, THREADS, 10, TimeUnit.SECONDS, new PriorityBlockingQueue<>(), r -> {
             Thread t = new Thread(() -> {

@@ -109,6 +109,15 @@ final class PriceBook {
                 new ItunesPrices(region), itunesHttp);
     }
 
+    /**
+     * A source's quota ledger forgotten: its key was replaced or removed (F16), and the new key's quota is its own, read
+     * again from the service's answers. The launcher is rebuilt with the new key before it asks again.
+     */
+    static void forgetQuota(Context ctx, String sourceId) {
+        ctx.getApplicationContext().getSharedPreferences("prices", Context.MODE_PRIVATE).edit()
+                .remove("quota_" + sourceId).apply();
+    }
+
     private static CachedHttp http(String id, DiskCache disk, long ttl, CachedHttp.LedgerStore ledgers, ZoneId zone) {
         return new CachedHttp(id, disk, ttl, PriceCachePolicy.minIntervalMs(id), CachedHttp.NET, ledgers,
                 System::currentTimeMillis, zone);

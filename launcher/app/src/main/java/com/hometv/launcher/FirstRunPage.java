@@ -102,10 +102,25 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
     private boolean entered;
     /** The list is being rebuilt: focus moving back onto a tab doesn't show that tab's panel. */
     private boolean rebuilding;
+    /**
+     * Whether TMDB account's TMDB key tab shows (F16): the TV had no working TMDB key when First run opened. Decided as
+     * it opens, and kept over its rebuilds, process death included (MainActivity saves it), so a key added there
+     * doesn't make the tab vanish.
+     */
+    private final boolean tmdbKeyTab;
 
-    /** The checklist, with the steps kept done and those in opened (after a rebuild) done; opened may be null. */
-    static FirstRunPage create(MainActivity activity, Collection<String> opened) {
-        return new FirstRunPage(activity, Kit.unclip(StubPage.frame(activity)), opened);
+    /**
+     * The checklist, with the steps kept done and those in opened (after a rebuild) done; opened may be null. keyTab is
+     * the TMDB key tab's decision kept over a rebuild, or null to decide it now.
+     */
+    static FirstRunPage create(MainActivity activity, Collection<String> opened, Boolean keyTab) {
+        boolean tab = keyTab != null ? keyTab : !ApiKeys.get(activity).tmdbReady();
+        return new FirstRunPage(activity, Kit.unclip(StubPage.frame(activity)), opened, tab);
+    }
+
+    /** The TMDB key tab's decision, for MainActivity to keep over a rebuild. */
+    boolean tmdbKeyTab() {
+        return tmdbKeyTab;
     }
 
     /**
@@ -154,9 +169,10 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         return prefs(ctx).getBoolean(KEY_IN_PROGRESS, false);
     }
 
-    private FirstRunPage(MainActivity activity, FrameLayout root, Collection<String> done) {
+    private FirstRunPage(MainActivity activity, FrameLayout root, Collection<String> done, boolean tmdbKeyTab) {
         super(activity.getString(R.string.first_run_eyebrow), root, Layer.PAGE);
         this.activity = activity;
+        this.tmdbKeyTab = tmdbKeyTab;
         this.ctx = activity;
         List<SettingsSection> all = new ArrayList<>(SettingsSections.all(activity));
         all.sort(Comparator.comparingInt(s -> FirstRunRules.STEPS.indexOf(s.id())));
@@ -165,6 +181,8 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             if (FirstRunRules.STEPS.contains(s.id()) || FirstRunRules.SETUPS.contains(s.id())) sections.put(s.id(), s);
             if (FirstRunRules.STEPS.contains(s.id())) ids.add(s.id());
         }
+        // The TMDB key and Price keys tabs (F16), which Launcher settings has in API keys.
+        for (SettingsSection s : SettingsSections.setupOnly()) sections.put(s.id(), s);
         this.steps = FirstRunRules.steps(ids);
         opened.addAll(FirstRunRules.decode(prefs(ctx).getString(KEY_DONE, null)));
         if (done != null) opened.addAll(done);
@@ -697,8 +715,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             Object id = row.getTag(R.id.settings_section);
             if (!(id instanceof String) || rows.containsKey(id)) continue;
             SettingsSection s = sections.get(id);
-            Features.Feature f = FirstRunRules.featureOf((String) id);
-            CharSequence v = f != null && !setUp(f) ? ctx.getString(R.string.first_run_not_set_up)
+            CharSequence v = !subDone((String) id) ? ctx.getString(R.string.first_run_not_set_up)
                     : s == null ? null : s.value(ctx);
             ((TextView) row.getTag(R.id.settings_row_sub)).setText(v == null ? "" : v);
             row.setContentDescription(((TextView) row.getTag(R.id.settings_row_title)).getText()
@@ -742,10 +759,8 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         FrameLayout row = Kit.unclip(new FrameLayout(ctx));
         TextView note = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
         boolean isStep = steps.contains(id);
-        Features.Feature feature = FirstRunRules.featureOf(id);
         note.setText(isStep ? ctx.getString(R.string.first_run_step, FirstRunRules.stepNumber(steps, id), steps.size())
-                : ctx.getString(feature != null && setUp(feature) ? R.string.first_run_setup_note_done
-                        : R.string.first_run_setup_note));
+                : ctx.getString(subDone(id) ? R.string.first_run_setup_note_done : R.string.first_run_setup_note));
         row.addView(note, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL));
         // Next steps from Features through each setup, then on (FirstRunRules.panels; the project lead, 2026-11-02).
@@ -771,8 +786,20 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
     /** The setup tabs under Features: one per feature on with a setup this build has (FirstRunRules.setups). */
     private List<String> setupsShown() {
         List<String> subs = new ArrayList<>();
-        for (String id : FirstRunRules.setups(FeaturePrefs.live(ctx))) if (sections.containsKey(id)) subs.add(id);
+        for (String id : FirstRunRules.setups(FeaturePrefs.live(ctx), tmdbKeyTab)) {
+            if (sections.containsKey(id)) subs.add(id);
+        }
         return subs;
+    }
+
+    /**
+     * Whether a setup tab is set up: the TMDB key tab once the TV has a working TMDB key (F16), any other its feature's
+     * setup (or a tab with no feature).
+     */
+    private boolean subDone(String id) {
+        if (KeysSection.TMDB_ID.equals(id)) return ApiKeys.get(ctx).tmdbReady();
+        Features.Feature f = FirstRunRules.featureOf(id);
+        return f == null || setUp(f);
     }
 
     /** Whether a feature's setup is finished (FirstRunRules.setUp), from the TV as it is now. */
@@ -782,7 +809,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
 
     private static boolean setUp(MainActivity a, Features.Feature f) {
         return FirstRunRules.setUp(f, a.data().accounts.available(), a.data().accounts.signedIn(), Notes.get(a).on(),
-                PriceKeys.ready());
+                PriceKeys.ready(a));
     }
 
     /** The features on whose setup isn't finished, by name: First run switches them off when it ends. */
@@ -838,6 +865,13 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
     @Override
     public void enter(String id) {
         if (!sections.containsKey(id)) return;
+        // Sign in after the TMDB key tab: the launcher was built without the key, so it is rebuilt with it first (F16).
+        // Only while it runs with TMDB account on, so a launcher built with it off can't rebuild again and again.
+        if ("account".equals(id) && Features.isOn(Features.Feature.TMDB) && FirstRunRules.signInNeedsRebuild(
+                ApiKeys.get(ctx).tmdbReady(), activity.data().accounts.available())) {
+            rebuildInto(id);
+            return;
+        }
         if (steps.contains(id)) markDone(id);
         boolean wasOpen = open != null;
         open = id;
@@ -900,7 +934,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
      * (FirstRunRules.setupNeedsRebuild).
      */
     private void openSetup(Features.Feature f) {
-        String id = FirstRunRules.setupOf(f);
+        String id = FirstRunRules.firstSetupOf(f, tmdbKeyTab);
         if (id == null || !sections.containsKey(id)) {
             buildList();
             return;
@@ -992,6 +1026,13 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
     @Override
     public void featureTurnedOn(Features.Feature f) {
         openSetup(f);
+    }
+
+    /** Rebuilt with the TMDB key (Account's Sign in, F16), First run comes back with that panel entered. */
+    @Override
+    public void rebuildInto(String id) {
+        pendingPanel = id;
+        activity.recreate();
     }
 
     /** Turn on in a switched-off panel (Stores, while Price lookup is off): the feature on, then its setup. */

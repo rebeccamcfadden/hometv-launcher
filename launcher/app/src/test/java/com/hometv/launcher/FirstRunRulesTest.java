@@ -88,25 +88,53 @@ public class FirstRunRulesTest {
         assertEquals("account", FirstRunRules.setupOf(Features.Feature.TMDB));
         assertEquals("notes", FirstRunRules.setupOf(Features.Feature.NOTES));
         assertEquals("weather", FirstRunRules.setupOf(Features.Feature.WEATHER));
-        // Prices' keys page is F16's; nothing until it exists.
-        assertNull(FirstRunRules.setupOf(Features.Feature.PRICES));
+        // Price lookup takes its keys (F16), in First run's Price keys tab; Launcher settings has them in API keys.
+        assertEquals("priceKeys", FirstRunRules.setupOf(Features.Feature.PRICES));
+        assertEquals("keys", FirstRunRules.inSettings("priceKeys"));
+        assertEquals("keys", FirstRunRules.inSettings("tmdbKey"));
+        assertEquals("account", FirstRunRules.inSettings("account"));
+        assertNull(FirstRunRules.inSettings(null));
         for (Features.Feature f : Features.Feature.values()) {
             String id = FirstRunRules.setupOf(f);
-            if (id != null) assertTrue(id, SettingsNav.ORDER.contains(id));
+            if (id != null) assertTrue(id, SettingsNav.ORDER.contains(FirstRunRules.inSettings(id)));
         }
+    }
+
+    @Test
+    public void tmdbAccountOpensTheTmdbKeyTabFirstOnATvWithoutAKey() {
+        assertEquals("tmdbKey", FirstRunRules.firstSetupOf(Features.Feature.TMDB, true));
+        assertEquals("account", FirstRunRules.firstSetupOf(Features.Feature.TMDB, false));
+        assertEquals("priceKeys", FirstRunRules.firstSetupOf(Features.Feature.PRICES, true));
+        assertEquals(Arrays.asList("tmdbKey", "account", "notes", "priceKeys", "weather"),
+                FirstRunRules.setups(Features.ALL_ON, true));
+        assertSame(Features.Feature.TMDB, FirstRunRules.featureOf("tmdbKey"));
+        assertSame(Features.Feature.PRICES, FirstRunRules.featureOf("priceKeys"));
+        // TMDB account off: no TMDB key tab either.
+        java.util.Map<String, Object> saved = new java.util.HashMap<>();
+        saved.put("feature_tmdb", false);
+        assertEquals(Arrays.asList("priceKeys", "weather"), FirstRunRules.setups(Features.resolve(saved, null), true));
+    }
+
+    @Test
+    public void signInRebuildsFirstOnlyWhenTheKeyCameAfterTheLauncherWasBuilt() {
+        assertTrue(FirstRunRules.signInNeedsRebuild(true, false));
+        assertFalse(FirstRunRules.signInNeedsRebuild(true, true));
+        assertFalse(FirstRunRules.signInNeedsRebuild(false, false));
+        assertFalse(FirstRunRules.signInNeedsRebuild(false, true));
     }
 
     @Test
     public void theSetupTabsFollowTheFeaturesOn() {
         Features none = Features.ALL_OFF;
-        assertTrue(FirstRunRules.setups(none).isEmpty());
-        assertEquals(Arrays.asList("account", "notes", "weather"), FirstRunRules.setups(Features.ALL_ON));
-        // TMDB account and Phone notes off: Weather and Price lookup on, and Price lookup has no setup here yet (F16).
+        assertTrue(FirstRunRules.setups(none, true).isEmpty());
+        assertEquals(Arrays.asList("account", "notes", "priceKeys", "weather"),
+                FirstRunRules.setups(Features.ALL_ON, false));
+        // TMDB account and Phone notes off: Price lookup and Weather on.
         java.util.Map<String, Object> saved = new java.util.HashMap<>();
         saved.put("feature_tmdb", false);
         saved.put("feature_notes", false);
-        assertEquals(Collections.singletonList("weather"), FirstRunRules.setups(Features.resolve(saved, null)));
-        assertEquals(FirstRunRules.SETUPS, FirstRunRules.setups(Features.ALL_ON));
+        assertEquals(Arrays.asList("priceKeys", "weather"), FirstRunRules.setups(Features.resolve(saved, null), false));
+        assertEquals(FirstRunRules.SETUPS, FirstRunRules.setups(Features.ALL_ON, true));
         assertSame(Features.Feature.NOTES, FirstRunRules.featureOf("notes"));
         assertNull(FirstRunRules.featureOf("services"));
         assertNull(FirstRunRules.featureOf(null));

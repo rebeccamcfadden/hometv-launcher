@@ -424,7 +424,8 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
     @Override
     public void turnOn(Features.Feature f) {
         Features.Feature first = FeaturePrefs.turnOn(ctx, f);
-        String setup = FirstRunRules.setupOf(first);
+        // First run's Price keys tab is API keys here (F16).
+        String setup = FirstRunRules.inSettings(FirstRunRules.setupOf(first));
         String target = setup != null && section(setup) != null ? setup : current;
         if (FirstRunRules.setupNeedsRebuild(first, Features.isOn(first))) {
             current = target;
@@ -440,6 +441,14 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
     /** Whether Back in the pane closes the page (kept over a rebuild). */
     boolean backCloses() {
         return backCloses;
+    }
+
+    /** Account's Sign in once a TMDB key is on the TV (F16): rebuilt with it, the page comes back in that pane. */
+    @Override
+    public void rebuildInto(String id) {
+        current = id;
+        inPane = true;
+        activity.recreate();
     }
 
 

@@ -1,24 +1,27 @@
 package com.hometv.launcher;
 
+import android.content.Context;
+
 /**
- * The price sources' keys from the build (launcher/tv.properties, BuildConfig). Movie of the Night's key is
+ * The price sources' keys: the ones entered on this TV's keys page (F16, {@link ApiKeys}), else the build's
+ * (launcher/tv.properties, BuildConfig), unless removed. Movie of the Night's build key is
  * {@code movie_of_the_night_api_key}, as the project lead named it; {@code streaming_availability_api_key}, its API's
- * other name, is read too, the first one winning. Pure apart from the BuildConfig reads (PriceKeysTest).
+ * other name, is read too, the first one winning ({@link #pick}, PriceKeysTest).
  */
 final class PriceKeys {
     private PriceKeys() {}
 
-    static String watchmode() {
-        return BuildConfig.WATCHMODE_KEY;
+    static String watchmode(Context ctx) {
+        return ApiKeys.get(ctx).key(KeyRules.Id.WATCHMODE);
     }
 
-    static String movieOfTheNight() {
-        return pick(BuildConfig.MOVIE_OF_THE_NIGHT_KEY, BuildConfig.STREAMING_AVAILABILITY_KEY);
+    static String movieOfTheNight(Context ctx) {
+        return ApiKeys.get(ctx).key(KeyRules.Id.MOTN);
     }
 
-    /** Price lookup is set up (First run): both keys are set. F16's keys page (Builder E) adds its own keys. */
-    static boolean ready() {
-        return !watchmode().trim().isEmpty() && !movieOfTheNight().isEmpty();
+    /** Price lookup is set up (First run): the Watchmode key works; Movie of the Night only backs it up (F16). */
+    static boolean ready(Context ctx) {
+        return ApiKeys.get(ctx).pricesReady();
     }
 
     /** The first key that is set, trimmed; "" for none. */

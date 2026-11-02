@@ -33,33 +33,51 @@ final class FirstRunRules {
 
     /**
      * The setup a feature turned on in the Features step opens, as a SettingsSection id (F14, design_preview's
-     * features.ts): TMDB account signs in, Weather picks the city, Phone notes pairs a phone. Price lookup's keys page is
-     * Builder E's F16 and opens nothing until it exists.
+     * features.ts): TMDB account signs in, Weather picks the city, Phone notes pairs a phone, Price lookup takes its
+     * keys (F16's Price keys tab). TMDB account's TMDB key tab, when it shows, comes first ({@link #firstSetupOf}).
      */
     static String setupOf(Features.Feature f) {
         switch (f) {
             case TMDB: return "account";
             case NOTES: return "notes";
+            case PRICES: return KeysSection.PRICES_ID;
             case WEATHER: return "weather";
             default: return null;
         }
     }
 
-    /** Every setup the Features step can open, as SettingsSection ids. */
-    static final List<String> SETUPS = Collections.unmodifiableList(Arrays.asList("account", "notes", "weather"));
+    /** The first tab a feature's setup opens: TMDB account's TMDB key tab when it shows, else {@link #setupOf}. */
+    static String firstSetupOf(Features.Feature f, boolean tmdbKeyTab) {
+        return f == Features.Feature.TMDB && tmdbKeyTab ? KeysSection.TMDB_ID : setupOf(f);
+    }
 
-    /** The setups' tabs under Features (F28): one per feature on that has a setup, in the features' order. */
-    static List<String> setups(Features on) {
+    /** Every setup the Features step can open, as SettingsSection ids. */
+    static final List<String> SETUPS = Collections.unmodifiableList(Arrays.asList(
+            KeysSection.TMDB_ID, "account", "notes", KeysSection.PRICES_ID, "weather"));
+
+    /** The Launcher settings section that stands for a setup: API keys for First run's two key tabs (F16). */
+    static String inSettings(String setupId) {
+        return KeysSection.TMDB_ID.equals(setupId) || KeysSection.PRICES_ID.equals(setupId) ? KeysSection.ID : setupId;
+    }
+
+    /**
+     * The setups' tabs under Features (F28): one per feature on that has a setup, in the features' order, with the
+     * TMDB key tab before Sign in when {@code tmdbKeyTab} (F16: the TV had no working TMDB key when First run opened).
+     */
+    static List<String> setups(Features on, boolean tmdbKeyTab) {
         List<String> out = new ArrayList<>();
         for (Features.Feature f : Features.Feature.values()) {
             String id = setupOf(f);
-            if (id != null && on.on(f)) out.add(id);
+            if (id == null || !on.on(f)) continue;
+            if (f == Features.Feature.TMDB && tmdbKeyTab) out.add(KeysSection.TMDB_ID);
+            out.add(id);
         }
         return out;
     }
 
     /** The feature whose setup that section is, or null. */
     static Features.Feature featureOf(String setupId) {
+        if (KeysSection.TMDB_ID.equals(setupId)) return Features.Feature.TMDB;
         for (Features.Feature f : Features.Feature.values()) {
             if (setupId != null && setupId.equals(setupOf(f))) return f;
         }
@@ -70,9 +88,10 @@ final class FirstRunRules {
      * Whether a feature's setup is finished (the project lead, 2026-11-02): when First run ends, a feature on without it
      * is switched off, so nothing shows half set up. TMDB account: the TV is signed in. Phone notes: TMDB account is set
      * up and the TV is listening (Phone notes' own switch; the TV can't tell a phone paired until it sends a note).
-     * Price lookup: the Watchmode and Movie of the Night keys are set (F16's keys page, or the build's). Weather: a
-     * place is set, which the TV's default always is. A build without a TMDB token ({@code tmdbBuild} false: the
-     * emulator, CI) has no sign-in to finish, so TMDB account and Phone notes count as set up there and stay on.
+     * Price lookup: the Watchmode key works (F16's keys page, or the build's; Movie of the Night is optional). Weather: a
+     * place is set, which the TV's default always is. A launcher running without a TMDB key ({@code tmdbBuild} false:
+     * the emulator, CI, a TV whose key isn't in yet) has no sign-in to finish, so TMDB account and Phone notes count as
+     * set up there and stay on.
      */
     static boolean setUp(Features.Feature f, boolean tmdbBuild, boolean signedIn, boolean notesListening,
                          boolean priceKeys) {
@@ -110,6 +129,14 @@ final class FirstRunRules {
      */
     static boolean setupNeedsRebuild(Features.Feature f, boolean runsNow) {
         return !runsNow && (f == Features.Feature.TMDB || f == Features.Feature.NOTES);
+    }
+
+    /**
+     * Whether Sign in needs the launcher rebuilt first (F16): a TMDB key is on the TV now, but the launcher runs without
+     * one (it makes the account with the key it is built with).
+     */
+    static boolean signInNeedsRebuild(boolean keyNow, boolean runsWithKey) {
+        return keyNow && !runsWithKey;
     }
 
     /**

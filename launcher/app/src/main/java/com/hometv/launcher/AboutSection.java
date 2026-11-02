@@ -44,7 +44,7 @@ final class AboutSection implements SettingsSection {
         SettingsKit.add(pane, SettingsKit.title(ctx, ctx.getString(R.string.about_title), false), 10);
         SettingsKit.addWide(pane, kv(ctx, ctx.getString(R.string.about_version),
                 ctx.getString(R.string.about_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)), 18);
-        if (!BuildConfig.TMDB_TOKEN.isEmpty()) {
+        if (!ApiKeys.get(ctx).key(KeyRules.Id.TMDB).isEmpty()) {
             TextView tmdb = Ui.text(ctx, Ui.T_BODY, Ui.TEXT_1, Ui.REGULAR);
             tmdb.setText(R.string.tmdb_notice);
             tmdb.setLineSpacing(0f, 1.5f);
@@ -53,8 +53,8 @@ final class AboutSection implements SettingsSection {
             SettingsKit.addWide(pane, tmdb, 32);
             StringBuilder prices = new StringBuilder(ctx.getString(R.string.prices_notice_justwatch))
                     .append('\n').append(ctx.getString(R.string.prices_notice_itunes));
-            if (!PriceKeys.watchmode().isEmpty()) prices.append('\n').append(ctx.getString(R.string.prices_notice_watchmode));
-            if (!PriceKeys.movieOfTheNight().isEmpty()) prices.append('\n').append(ctx.getString(R.string.prices_notice_motn));
+            if (!PriceKeys.watchmode(ctx).isEmpty()) prices.append('\n').append(ctx.getString(R.string.prices_notice_watchmode));
+            if (!PriceKeys.movieOfTheNight(ctx).isEmpty()) prices.append('\n').append(ctx.getString(R.string.prices_notice_motn));
             SettingsKit.add(pane, SettingsKit.note(ctx, prices), 22);
         }
         SettingsKit.add(pane, SettingsKit.note(ctx, ctx.getString(R.string.about_open_meteo)), 22);

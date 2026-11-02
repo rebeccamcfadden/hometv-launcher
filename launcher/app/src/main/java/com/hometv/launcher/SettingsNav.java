@@ -25,12 +25,12 @@ final class SettingsNav {
 
     /**
      * The section list's groups, in order (F23, grouping A, the project lead, 2026-11-01; design_preview settings.ts
-     * GROUPS). Features (F14), API keys (F16) and Region (F12) have their places already: a group with none of its
-     * sections on this TV isn't shown.
+     * GROUPS). API keys (F16) comes right after Stores (the project lead, 2026-11-02). A group with none of its sections
+     * on this TV isn't shown.
      */
     static final List<Group> GROUPS = Collections.unmodifiableList(Arrays.asList(
             new Group("accounts", "account", "notes"),
-            new Group("watch", "services", "stores", "features", "keys"),
+            new Group("watch", "services", "stores", "keys", "features"),
             new Group("look", "theme", "performance", "apps", "weather"),
             new Group("tv", "start", "home", "region", "tv", "about")));
 

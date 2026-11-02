@@ -44,17 +44,34 @@ def row_label(name, strings):
     return value.strip().rstrip(":").strip() or None
 
 
+#: Sections that only wrap another (a Features switch's off state, Account without a TMDB key): the wrapped class counts.
+WRAPPERS = ("FeatureOffSection", "AccountKeyGate")
+
+
 def section_classes(registry_text):
-    """The section classes `SettingsSections.all` adds, in the order it adds them. A section a Features switch can turn
-    off is wrapped (`new FeatureOffSection(new AccountSection(home), ...)`): the wrapped class is the one listed."""
-    return re.findall(r"\bout\.add\(new (?:FeatureOffSection\(new )?(\w+)\(", registry_text)
+    """The section classes `SettingsSections.all` adds, in the order it adds them. A wrapped section
+    (`new FeatureOffSection(new AccountSection(home), ...)`) is listed as the class it wraps, and one made by a factory
+    (`KeysSection.all()`) as that class."""
+    out = []
+    # Only `all`: the sections after its `return out;` (First run's own, `setupOnly`) aren't Launcher settings rows.
+    registry_text = registry_text.split("return out;", 1)[0]
+    for call in re.findall(r"\bout\.add\(([^;]*)\);", registry_text):
+        names = [a or b for a, b in re.findall(r"\bnew (\w+)\(|\b([A-Z]\w*Section)\.\w+\(", call)]
+        names = [n for n in names if n not in WRAPPERS]
+        if names:
+            out.append(names[0])
+    return out
 
 
 def label_name(class_text):
-    """The string resource a section class shows as its label, or None."""
+    """The string resource a section class shows as its label, or None. A label that depends on where the section
+    shows (API keys' First run tabs) counts by its Launcher settings name, `settings_*`."""
     found = re.search(r"\bint label\(\)\s*\{\s*return R\.string\.([a-z_0-9]+);", class_text)
     if not found:
         found = re.search(r"\bsuper\(\s*\"[a-z]+\",\s*R\.string\.([a-z_0-9]+)", class_text)
+    if not found:
+        body = re.search(r"\bint label\(\)\s*\{(.*?)\n    \}", class_text, re.S)
+        found = re.search(r"R\.string\.(settings_[a-z_0-9]+)", body.group(1)) if body else None
     return found.group(1) if found else None
 
 
@@ -127,6 +144,14 @@ class PageSections(unittest.TestCase):
                    "MotionSection": "int label() { return R.string.settings_motion; }"}
         self.assertEqual(section_labels(registry, classes.get, strings),
                          [("WeatherSection", "Weather"), ("MotionSection", "Motion")])
+
+    def test_wrapped_and_factory_sections_count_as_the_section_inside(self):
+        registry = ("out.add(new FeatureOffSection(new AccountKeyGate(new AccountSection(home), home),\n"
+                    "        Features.Feature.TMDB));\nout.add(KeysSection.all());\n")
+        self.assertEqual(section_classes(registry), ["AccountSection", "KeysSection"])
+        keys = ("    public int label() {\n        return mode == Mode.TMDB ? R.string.keys_tab_tmdb\n"
+                "                : R.string.settings_keys;\n    }\n")
+        self.assertEqual(label_name(keys), "settings_keys")
 
     def test_a_section_the_readme_leaves_out_is_reported(self):
         rows = [("WeatherSection", "Weather"), ("AboutSection", "About")]

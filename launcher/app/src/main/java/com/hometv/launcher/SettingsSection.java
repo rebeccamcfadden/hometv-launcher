@@ -10,8 +10,8 @@ import android.view.View;
  */
 interface SettingsSection {
     /**
-     * The settings.ts section id: account, notes, services, stores, weather, apps, theme, performance, features, start,
-     * home, tv, about.
+     * The settings.ts section id: account, notes, services, stores, keys, weather, apps, theme, performance, features,
+     * start, home, region, tv, about; and First run's own tabs tmdbKey and priceKeys (F16).
      */
     String id();
 
@@ -76,6 +76,14 @@ interface SettingsSection {
 
         /** A feature was just turned on in First run's Features step: First run opens its setup next. */
         default void featureTurnedOn(Features.Feature f) {}
+
+        /**
+         * The launcher must be rebuilt before this section can work (Account, once a TMDB key is on the TV but the
+         * launcher was built without one, F16): rebuilt, it comes back to this page with that section entered.
+         */
+        default void rebuildInto(String id) {
+            enter(id);
+        }
 
         Shell shell();
     }

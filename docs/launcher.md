@@ -38,7 +38,9 @@ changed on the TV too, in Launcher settings. The optional `weather_city` names t
 settings' Weather row ("New York · °C"); without it the row says Default. For the real catalogue, add your TMDB "API
 Read Access Token" there as `tmdb_api_key` (free for non-commercial use, from your account's API settings at
 themoviedb.org). Without it the launcher builds with the mock catalogue, which needs no network. The token ends up
-inside the APK you build, so keep that APK to yourself.
+inside the APK you build, so keep that APK to yourself. Or leave the keys out and enter them on the TV: Launcher
+settings › API keys shows a QR that opens a page on a phone (or an address and a code for a laptop). The page says how
+to get each key, and the TV checks each one and keeps it in its own storage.
 
 This product uses the TMDB API but is not endorsed or certified by TMDB.
 
@@ -61,14 +63,19 @@ page: the sections on the left with their current values, and the focused sectio
 enters the pane, Left returns to the list, Back closes. Choices save at once; Home is rebuilt with them when the page
 closes. The sections, top to bottom:
 
-- **Account**, only in builds with a TMDB token: sign in to TMDB with a QR code on your phone, then see the lists,
-  sync now, choose which TMDB lists show as chips, or sign out.
-- **Phone notes**, also only with a TMDB token, off unless turned on here (or by `note_inbox`): the address, pairing
+- **Account**: sign in to TMDB with a QR code on your phone, then see the lists, sync now, choose which TMDB lists show
+  as chips, or sign out. On a launcher built without a TMDB key it says to add one in API keys first.
+- **Phone notes**, only once the launcher runs with a TMDB key, off unless turned on here (or by `note_inbox`): the address, pairing
   code and a QR for a phone's "Send to TV" shortcut (on an iPhone, scan it to get the household's shared shortcut,
   `note_shortcut_url`, and pair the phone; on Android, to copy the settings into HTTP Shortcuts), and each list's last
   send with the lines that matched nothing. See [phone-notes.md](phone-notes.md).
 - **Streaming services**: tick the services the household pays for; titles on them show as Included.
 - **Stores for rent and buy**: tick the stores whose rent and buy prices show.
+- **API keys**: the TMDB, Watchmode and Movie of the Night keys. A QR opens a page on a phone (or a laptop opens the
+  address and types the code) that explains how to get each key and sends it to the TV, which checks it with one free
+  request and keeps it, showing only its last four characters. A key entered here replaces the one in `tv.properties`;
+  Remove leaves none. The page answers only while this pane shows. With Price lookup off, the price keys wait behind
+  Turn on.
 - **Home row apps**: pick an app up with OK to move it, take it off Home, or add another app.
 - **Features**: TMDB account, Phone notes, Price lookup and Weather, each On or Off (`features` in a pushed
   config.json). Every one starts on, and First run switches off any whose setup isn't finished when it ends. A feature

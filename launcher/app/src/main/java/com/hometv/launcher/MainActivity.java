@@ -63,6 +63,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private static final String KEY_FIRST_RUN = "first_run_opened";
     /** And the panel it had open (F28), which opens again. */
     private static final String KEY_FIRST_RUN_SETUP = "first_run_setup";
+    /** First run's TMDB key tab (F16), decided as it first opened. */
+    private static final String KEY_FIRST_RUN_KEY_TAB = "first_run_key_tab";
     private FirstRunPage firstRun;
     /**
      * F26: where the household was (the nav's page, its focus and choices, the title previews over it), so Back from
@@ -230,6 +232,9 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         vpnApp = cfg.vpnApp;
         inputs = new TvInputs(this, cfg, message -> shell.toast(getString(message)));
         data = Data.create(this, cfg);
+        // F16: a key the TV couldn't reach when it was entered is checked again, once a start.
+        ApiKeys.get(this).recheckUnreached(true);
+        ApiKeys.get(this).addKeyListener(keyRefused);
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Ui.BG);
@@ -294,7 +299,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         // Rebuilt with First run open: it reopens with the same steps done (under Launcher settings, if that was).
         ArrayList<String> firstRunDone = savedInstanceState == null ? null
                 : savedInstanceState.getStringArrayList(KEY_FIRST_RUN);
-        if (firstRunDone != null) openFirstRun(firstRunDone);
+        if (firstRunDone != null) {
+            openFirstRun(firstRunDone, savedInstanceState.containsKey(KEY_FIRST_RUN_KEY_TAB)
+                    ? savedInstanceState.getBoolean(KEY_FIRST_RUN_KEY_TAB) : null);
+        }
         String firstRunSetup = savedInstanceState == null ? null : savedInstanceState.getString(KEY_FIRST_RUN_SETUP);
         if (firstRunDone != null && firstRunSetup != null && firstRun != null) firstRun.reopen(firstRunSetup);
         // Rebuilt with Launcher settings open (a theme change, or a choice made before a trip to another app).
@@ -512,6 +520,25 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (turnOn && !Features.isOn(Features.Feature.TMDB)) recreate();
     }
 
+    /**
+     * Movies, TV Shows or Search's "needs a TMDB key" on a release build without one (TmdbGate, F16): straight into
+     * Launcher settings › API keys; Back returns to the page, rebuilt with the key once one was added.
+     */
+    void addKeyFromPage() {
+        openLauncherSettings(KeysSection.ID, true, true);
+    }
+
+    /**
+     * F16: a check again refused a key this launcher was built with (at start, a key the TV couldn't reach before). In
+     * front with Home, it is rebuilt at once without it; with Launcher settings or First run open, when that closes
+     * (the key moved the settings revision); in the background, when it comes back (onResume).
+     */
+    private final Runnable keyRefused = () -> {
+        if (!started || isFinishing() || isDestroyed()) return;
+        if ((settingsPage != null && shell.has(settingsPage)) || (firstRun != null && shell.has(firstRun))) return;
+        recreate();
+    };
+
     void openLauncherSettings() {
         openLauncherSettings(null, false);
     }
@@ -534,6 +561,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
      * rebuild); null for none. Already open, it stays as it is.
      */
     void openFirstRun(Collection<String> done) {
+        openFirstRun(done, null);
+    }
+
+    /** As {@link #openFirstRun(Collection)}, with First run's TMDB key tab decision kept over a rebuild (or null). */
+    void openFirstRun(Collection<String> done, Boolean keyTab) {
         shell.closeDialogs();
         if (firstRun != null && shell.has(firstRun)) return;
         // Never over Launcher settings: the two would restore in the wrong order after a rebuild.
@@ -541,7 +573,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             shell.goTab(Screen.Tab.HOME, false);
             settingsClosed();
         }
-        firstRun = FirstRunPage.create(this, done);
+        firstRun = FirstRunPage.create(this, done, keyTab);
         FirstRunPage.markShown(this);
         shell.push(firstRun);
     }
@@ -693,6 +725,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (firstRun != null && shell.has(firstRun)) {
             out.putStringArrayList(KEY_FIRST_RUN, firstRun.opened());
             out.putString(KEY_FIRST_RUN_SETUP, firstRun.panelShowing());
+            out.putBoolean(KEY_FIRST_RUN_KEY_TAB, firstRun.tmdbKeyTab());
         }
         if (settingsPage != null && shell.has(settingsPage)) {
             out.putString(KEY_SETTINGS_SECTION, settingsPage.section());
@@ -838,6 +871,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStart() {
         super.onStart();
         started = true;
+        // F16: a keys pane left showing opens its page's server again.
+        ApiKeys.get(this).setForeground(true);
         // F26: in front again, so the place kept on disk for the trip away is out of date.
         SavedPlace.forget(this);
         // V2 Phase 2: price lookups only while Home shows; V2 Phase 3: the TMDB account syncs only then too.
@@ -885,6 +920,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStop() {
         super.onStop();
         started = false;
+        // F16: the keys page's server runs only while its pane is on screen, not with the launcher in the background.
+        ApiKeys.get(this).setForeground(false);
         backdrops.setVisible(false);
         unregisterReceiver(dateReceiver);
         if (data != null) {
@@ -915,6 +952,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        ApiKeys.get(this).removeKeyListener(keyRefused);
         settingsClosed();
         firstRunClosed();
         handler.removeCallbacksAndMessages(null);
