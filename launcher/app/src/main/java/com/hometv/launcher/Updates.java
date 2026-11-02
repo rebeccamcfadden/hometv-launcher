@@ -179,7 +179,7 @@ final class Updates {
                 else e.remove(K_JSON);
                 e.apply();
             } catch (IOException | RuntimeException e) {
-                Log.w(TAG, "update check failed: " + e);
+                Log.w(TAG, "update check failed", e);
                 failed = true;
             } finally {
                 prefs.edit().putLong(K_LAST, System.currentTimeMillis()).putBoolean(K_FAILED, failed).apply();
@@ -196,8 +196,12 @@ final class Updates {
      */
     void install(Context ui, Consumer<Boolean> done) {
         UpdateRules.Release r = available();
-        if (r == null || downloading) return;
+        if (r == null || downloading) {
+            Log.i(TAG, "install ignored: " + (r == null ? "no update" : "already downloading"));
+            return;
+        }
         if (!canInstall()) {
+            Log.i(TAG, "install: no grant, " + (hasGrantScreen() ? "opening the grant screen" : "no grant screen"));
             if (hasGrantScreen()) ui.startActivity(grantIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             return;
         }
@@ -209,7 +213,7 @@ final class Updates {
                 commit(download(r));
                 ok = true;
             } catch (IOException | RuntimeException e) {
-                Log.w(TAG, "update install failed: " + e);
+                Log.w(TAG, "update install failed", e);
                 ok = false;
             } finally {
                 downloading = false;
@@ -230,7 +234,15 @@ final class Updates {
                 f.delete();
         }
         File apk = new File(dir, r.apk);
-        String sha = UpdateRules.hex(fetchToFile(r.apkUrl(BuildConfig.UPDATE_FEED), apk));
+        String sha;
+        try {
+            sha = UpdateRules.hex(fetchToFile(r.apkUrl(BuildConfig.UPDATE_FEED), apk));
+        } catch (HttpStatus e) {
+            throw e;
+        } catch (IOException e) {
+            // A dropped or stale connection: once more, on a fresh one.
+            sha = UpdateRules.hex(fetchToFile(r.apkUrl(BuildConfig.UPDATE_FEED), apk));
+        }
         PackageManager pm = app.getPackageManager();
         if (!UpdateRules.acceptable(r, sha, signers(pm, apk.getPath()), signers(pm, null))) {
             //noinspection ResultOfMethodCallIgnored
@@ -246,12 +258,22 @@ final class Updates {
         c.setReadTimeout(READ_MS);
         c.setInstanceFollowRedirects(true);
         c.setRequestProperty("User-Agent", "HomeTV-Launcher/" + BuildConfig.VERSION_NAME);
+        // One request a day: nothing to gain from a pooled connection, and reusing one the server has since closed is
+        // what failed an Install on the emulator ("unexpected end of stream" before the request left).
+        c.setRequestProperty("Connection", "close");
         int code = c.getResponseCode();
         if (code != HttpURLConnection.HTTP_OK) {
             c.disconnect();
-            throw new IOException("HTTP " + code);
+            throw new HttpStatus(code);
         }
         return c;
+    }
+
+    /** The server answered, with something other than 200: no point asking again. */
+    private static final class HttpStatus extends IOException {
+        HttpStatus(int code) {
+            super("HTTP " + code);
+        }
     }
 
     private static byte[] fetch(String url) throws IOException {
@@ -330,6 +352,14 @@ final class Updates {
     /** The checked APK goes into a PackageInstaller session; Android answers on {@link StatusReceiver}. */
     private void commit(File apk) throws IOException {
         PackageInstaller installer = app.getPackageManager().getPackageInstaller();
+        // A prompt lost earlier (the person left, or Android dropped it) leaves its session open: one session at a time.
+        for (PackageInstaller.SessionInfo old : installer.getMySessions()) {
+            try {
+                installer.abandonSession(old.getSessionId());
+            } catch (SecurityException ignored) {
+                // Already finished or not ours any more.
+            }
+        }
         PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         params.setAppPackageName(BuildConfig.APPLICATION_ID);
         params.setSize(apk.length());

@@ -105,13 +105,10 @@ final class AboutSection implements SettingsSection {
     }
 
     private void renderUpdates(Context ctx, Host host, LinearLayout block, Updates updates) {
-        boolean hadFocus = block.hasFocus();
-        View was = hadFocus ? block.findFocus() : null;
-        String wasKey = null;
-        for (View v = was; v != null && v != block; v = v.getParent() instanceof View ? (View) v.getParent() : null) {
-            wasKey = Focus.key(v);
-            if (wasKey != null) break;
-        }
+        // Focus lives in the launcher's own focus layer (Shell), not Android's: read it and hand it back there.
+        View was = host.shell().focused();
+        boolean hadFocus = was != null && Focus.isInside(block, was);
+        String wasKey = hadFocus ? Focus.key(was) : null;
         block.removeAllViews();
         TextView head = Ui.text(ctx, Ui.T_BODY, Ui.TEXT_1, Ui.MEDIUM);
         head.setText(R.string.updates_title);
@@ -144,7 +141,8 @@ final class AboutSection implements SettingsSection {
                 });
         SettingsKit.addWide(block, toggle, 12);
         View install = null, check = null;
-        if (s == UpdateRules.Status.AVAILABLE || s == UpdateRules.Status.NO_GRANT) {
+        if (s == UpdateRules.Status.AVAILABLE || s == UpdateRules.Status.NO_GRANT || s == UpdateRules.Status.DOWNLOADING) {
+            // Kept while downloading (it does nothing then), so focus stays on it and a second OK can't land elsewhere.
             install = SettingsKit.button(ctx, ctx.getString(R.string.updates_install), R.drawable.ic_ui_sync, true, "about",
                     "update-install", false, v -> updates.install(ctx, ok -> {
                         if (!ok) host.shell().toast(ctx.getString(R.string.updates_install_failed));
@@ -167,7 +165,7 @@ final class AboutSection implements SettingsSection {
             else if ("update-check-now".equals(wasKey)) back = check;
             else if ("update-check".equals(wasKey)) back = toggle;
             if (back == null) back = install != null ? install : check != null ? check : toggle;
-            back.requestFocus();
+            host.shell().focus(back);
         }
     }
 
