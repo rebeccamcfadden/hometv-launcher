@@ -58,6 +58,7 @@ Settled with the project lead on 2026-10-28.
 | Launcher settings | The old `LauncherSettingsActivity` stayed, without its grid, dock and wallpaper rows, until M9 replaced it with the split page of V2 design 05-settings A (`LauncherSettingsPage`), a page in Home's Shell. |
 | Pull requests | GitHub Actions runs only after a merge to `main`, to keep its usage low (Actions was disabled once for usage; the project lead, 2026-11-01). Open a PR as a draft and push in batches, not commit by commit. When it is ready: run `tools/ci-local.ps1 -Pr <n>` (its `local-ci/*` statuses are required to merge), mark it ready, then request the Copilot reviewer once; it no longer reviews every push. After fixing its threads, rerun local CI before asking again. |
 | Settings key over apps | `QuickSettingsActivity` draws the same dropdown as Home (`MenuPanel`), so the remote's Settings key looks the same everywhere. |
+| The remote's Settings key on the TCL | Keep TCL's own settings panel (the project lead, 2026-11-02). The key reaches TCL's panel, not the launcher's dropdown (checked on the TV, 2026-10-30); taking it over would need the Home key helper (`HOME_KEY_SERVICE=1` and `settings_key_scancodes`, from `getevent -lt`), with the key-helper costs PROMPT.md describes. `settings_key_panel` stays for TVs where the key reaches the launcher. |
 | Dropdowns and the D-pad | Decided after the first run on the TV (2026-10-29): a D-pad move past a dropdown's edge closes it and returns focus to its button; past the left, right or bottom edge it carries on one step, so → in the Wi-Fi menu lands on Inputs. Closing with Back alone felt clunky. The prototype and its README changed with it. |
 | All Apps | A plain working grid of the installed apps, styled from the tokens: OK opens an app, hold-OK adds it to or removes it from Home. The spec's stub would leave apps that aren't on the Home row with no way to open, and an app removed with hold-OK with no way back. A proper design is in the backlog. (2026-10-29) |
 | Build settings file | `launcher/tv.properties`, gitignored; `launcher/tv.properties.example` is the committed template, and the build reads the example while `tv.properties` is missing. It holds the weather location (New York by default), the temperature unit and, later, the TMDB key. (2026-10-29) Keys since M2: `latitude` and `longitude` in decimal degrees and `temperature_unit` (`C` or `F`), checked at build time and passed to the app as `BuildConfig` fields. Since V2 Phase 1: the optional `tmdb_api_key`, TMDB's v4 read access token, as `BuildConfig.TMDB_TOKEN` (empty without it, which builds the mock catalogue; the example has the key commented out, with no value). Since M9: the optional `theme_assets_url`, https only, where the themes' photos and drawings in `launcher/backdrops/` are downloaded from, as `BuildConfig.THEME_ASSETS_URL` (default: that folder on `main` of `rebeccamcfadden/hometv-launcher` through jsDelivr). Since V2 quick settings (2026-10-31): the optional `weather_city`, the default location's name for the quick settings' Weather row and Launcher settings' Weather pane, as `BuildConfig.WEATHER_CITY` (empty without it, and they say Default; the file is read as UTF-8, and a quote, a backslash or a control character fails the build). `temperature_unit` is optional since M9. |
@@ -81,10 +82,7 @@ Settled with the project lead on 2026-10-28.
 
 Raise these when they become relevant; don't settle them alone.
 
-- **The remote's Settings key** on the TCL opens TCL's own settings panel, not the launcher's quick-settings dropdown
-  (checked on the TV, 2026-10-30). The launcher can take it over with the Home key helper (`HOME_KEY_SERVICE=1` and
-  `settings_key_scancodes`, read from `getevent -lt` on the TV), at the cost the PROMPT.md notes describe for key
-  helpers. Keep TCL's panel, or map the key?
+None open.
 
 ## Real-TV run
 
@@ -144,7 +142,7 @@ scripted part ran the next night on the same build:
 
 - **Screenshots:** `shots/v1/` (gitignored); Home, Movies and Search are now in README.md and Home is the README
   card's "after".
-- **Settings key:** TCL's own settings panel (Open questions).
+- **Settings key:** TCL's own settings panel, kept (Decisions, 2026-11-02).
 - **Not checked on the TV:** Wi-Fi off (it takes ADB with it; checked on the emulator in the integration pass).
 - **ADB:** the project lead chose to close it. The TV was off before the port could be checked, so
   `tools/adb-closed.py <tv ip>` still needs a run with the TV on and debugging off.
