@@ -22,6 +22,8 @@ final class FeatureOffSection implements SettingsSection {
     /** The feature's On/Off, or null when the section's own pane has it. */
     private View seg;
     private View bar;
+    /** Turn on, while the feature is switched on but what it needs is off: switches that on (Host#turnOn). */
+    private View turnOn;
 
     FeatureOffSection(SettingsSection inner, Features.Feature feature) {
         this(inner, feature, false);
@@ -64,6 +66,7 @@ final class FeatureOffSection implements SettingsSection {
         offPane = !now.on(feature);
         seg = null;
         bar = null;
+        turnOn = null;
         if (!offPane) {
             View own = inner.pane(ctx, host);
             if (ownSwitch) return own;
@@ -78,12 +81,21 @@ final class FeatureOffSection implements SettingsSection {
         LinearLayout pane = SettingsKit.column(ctx);
         pane.addView(SettingsKit.eyebrow(ctx, ctx.getString(inner.label())));
         SettingsKit.add(pane, SettingsKit.title(ctx, ctx.getString(R.string.feature_off_title, name), false), 10);
-        String why = needs != null
-                ? ctx.getString(R.string.feature_off_needs, name, ctx.getString(FeaturesSection.label(needs)))
-                : ctx.getString(R.string.feature_off_sub);
+        // Its own switch on, what it needs off (Phone notes without TMDB account): the switch reads On, so Off still
+        // works, and Turn on switches on what it needs.
+        boolean own = now.switchedOn(feature);
+        String needsName = needs == null ? null : ctx.getString(FeaturesSection.label(needs));
+        String why = needs == null ? ctx.getString(R.string.feature_off_sub)
+                : own ? ctx.getString(R.string.feature_off_blocked, name, needsName)
+                : ctx.getString(R.string.feature_off_needs, name, needsName);
         SettingsKit.add(pane, SettingsKit.sub(ctx, why), 8);
-        bar = bar(ctx, host, false);
+        bar = bar(ctx, host, own);
         SettingsKit.addWide(pane, bar, 22);
+        if (needs != null && own) {
+            turnOn = SettingsKit.button(ctx, ctx.getString(R.string.feature_turn_on_needs, needsName),
+                    R.drawable.ic_ui_power, true, null, "turn-on", true, v -> host.turnOn(feature));
+            SettingsKit.add(pane, turnOn, 22);
+        }
         return pane;
     }
 
@@ -114,7 +126,7 @@ final class FeatureOffSection implements SettingsSection {
 
     @Override
     public View firstFocus() {
-        if (offPane) return SettingsKit.selectedOption(seg);
+        if (offPane) return turnOn != null ? turnOn : SettingsKit.selectedOption(seg);
         View own = inner.firstFocus();
         return own != null || seg == null ? own : SettingsKit.selectedOption(seg);
     }

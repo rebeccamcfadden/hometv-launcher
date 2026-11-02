@@ -34,6 +34,9 @@
     <string name="feature_off_sub">It doesn’t run while it is off. Switch it on to set it up here.</string>
     <string name="feature_off_needs">%1$s needs %2$s, which is off. Switch it on to turn on both, then set up %2$s.</string>
     <string name="feature_turn_on">Turn on</string>
+    <!-- Switched on, but what it needs is off (Phone notes without TMDB account). -->
+    <string name="feature_off_blocked">%1$s is on, but needs %2$s, which is off. Turn on %2$s to use it, or switch %1$s off.</string>
+    <string name="feature_turn_on_needs">Turn on %1$s</string>
 
     <!-- Movies, TV Shows and Search without TMDB (TmdbGate): switched off, or not signed in. -->
     <string name="needs_tmdb_title">%1$s needs a TMDB account</string>

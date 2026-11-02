@@ -6,7 +6,7 @@ import { featureOn, FEATURES, setFeature, settings, type FeatureId } from '../..
 import { placeById } from '../../data/places';
 import { focusable } from '../../core/focus';
 import { icon } from '../../ui/icons';
-import { segmented } from '../../ui/widgets';
+import { button, segmented } from '../../ui/widgets';
 import type { Pane, PaneHost } from './pane';
 
 /** "6 of 6 on": the section's value. */
@@ -62,7 +62,8 @@ export const SETUP_SECTION: Partial<Record<FeatureId, 'account' | 'notes' | 'key
  */
 export function featureBar(id: FeatureId, after: (first: FeatureId | null) => void, entry = false): HTMLElement {
   const f = FEATURES.find((x) => x.id === id)!;
-  const on = featureOn(id);
+  // Its own switch, so one that is on but blocked (Phone notes without TMDB account) reads On and Off still works.
+  const on = settings.get().features[id];
   return h(
     'div.perf-row.feat-bar',
     h('div.perf-text', h('div.perf-title', f.label), h('div.perf-sub', on ? f.sub : `Off: ${f.off}`)),
@@ -73,7 +74,7 @@ export function featureBar(id: FeatureId, after: (first: FeatureId | null) => vo
           ['on', 'On'],
           ['off', 'Off'],
         ],
-        get: () => (featureOn(id) ? 'on' : 'off'),
+        get: () => (settings.get().features[id] ? 'on' : 'off'),
         set: (v) => {
           if (v === 'on') after(featureOn(id) ? null : turnOn(id));
           else {
@@ -96,16 +97,23 @@ export function featureBar(id: FeatureId, after: (first: FeatureId | null) => vo
 export function featureOffPane(id: FeatureId, section: string, after: (first: FeatureId | null) => void): Child {
   const f = FEATURES.find((x) => x.id === id)!;
   const needs = f.needs && !featureOn(f.needs) ? FEATURES.find((x) => x.id === f.needs)! : null;
+  const own = settings.get().features[id];
+  const turnOnNeeds =
+    needs && own ? button(`Turn on ${needs.label}`, { icon: 'power', primary: true, key: 'turn-on', onOk: () => after(turnOn(id)) }) : null;
+  if (turnOnNeeds) turnOnNeeds.dataset.entry = '';
   return [
     h('div.eyebrow', section),
     h('div.pane-title', `${f.label} is off`),
     h(
       'div.pane-sub',
-      needs
-        ? `${f.label} needs ${needs.label}, which is off. Switch it on to turn on both, then sign in.`
-        : `It doesn’t run while it is off. Switch it on to set it up here.`,
+      !needs
+        ? `It doesn’t run while it is off. Switch it on to set it up here.`
+        : own
+          ? `${f.label} is on, but needs ${needs.label}, which is off. Turn on ${needs.label} to use it, or switch ${f.label} off.`
+          : `${f.label} needs ${needs.label}, which is off. Switch it on to turn on both, then set up ${needs.label}.`,
     ),
-    h('div.feat-bars', featureBar(id, after, true)),
+    h('div.feat-bars', featureBar(id, after, !turnOnNeeds)),
+    turnOnNeeds ? h('div.pane-actions', turnOnNeeds) : null,
   ];
 }
 

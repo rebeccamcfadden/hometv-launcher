@@ -35,17 +35,27 @@ final class FeaturePrefs {
     }
 
     /**
-     * Phone notes' own On/Off, saved apart until F34, is now its feature's switch: on a TV updated from before, a saved
-     * feature switch stays on only if the old switch was on too (it defaulted off), so an update never opens the port by
-     * itself. Once per TV.
+     * Phone notes' own On/Off, saved apart until F34, is now its feature's switch. On a TV updated from before, the
+     * feature is saved as what ran then: its feature switch (saved, else a pushed config.json's, else on, the old
+     * default) and its own switch (saved, else a pushed config.json's note_inbox, else off). So an update neither stops a
+     * working inbox nor opens the port by itself. A fresh install has nothing to carry over. Once per TV.
      */
     private static void migrateNotesSwitch(Context ctx) {
         SharedPreferences p = prefs(ctx);
         if (p.getBoolean(KEY_NOTES_MIGRATED, false)) return;
-        SharedPreferences old = ctx.getSharedPreferences(Notes.PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor e = p.edit().putBoolean(KEY_NOTES_MIGRATED, true);
-        String key = Features.Feature.NOTES.key();
-        if (p.getBoolean(key, false) && !old.getBoolean(OLD_NOTES_ON, false)) e.putBoolean(key, false);
+        SharedPreferences old = ctx.getSharedPreferences(Notes.PREFS, Context.MODE_PRIVATE);
+        if (!FirstRunPage.freshInstall(ctx)) {
+            JSONObject json = Config.overlay(ctx);
+            JSONObject pushed = json == null ? null : json.optJSONObject("features");
+            String key = Features.Feature.NOTES.key();
+            boolean feature = p.contains(key) ? p.getBoolean(key, true)
+                    : pushed == null || !(pushed.opt(Features.Feature.NOTES.id) instanceof Boolean)
+                    || pushed.optBoolean(Features.Feature.NOTES.id);
+            boolean own = old.contains(OLD_NOTES_ON) ? old.getBoolean(OLD_NOTES_ON, false)
+                    : json != null && json.optBoolean("note_inbox", false);
+            e.putBoolean(key, feature && own);
+        }
         // Nor does a First run opened again: Phone notes now starts off (#98 would switch it back on).
         Set<Features.Feature> firstRunOff = Features.decode(p.getString(KEY_FIRST_RUN_OFF, null));
         if (firstRunOff.remove(Features.Feature.NOTES)) e.putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff));
