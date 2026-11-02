@@ -20,6 +20,7 @@ import { titlePreview } from './screens/preview';
 import { searchScreen } from './screens/search';
 import { launcherSettings } from './screens/settings';
 import { setupScreen } from './screens/setup';
+import { allAppsScreen } from './screens/allApps';
 import { titleMenu } from './screens/titleMenu';
 import { notes } from './core/notes';
 import { keys, KEYS_PRESETS, type KeysPreset } from './core/keys';
@@ -236,6 +237,23 @@ const jumps: [string, string, () => void][] = [
     () => {
       app.goTab('home');
       app.push(setupScreen());
+    },
+  ],
+  [
+    'all-apps',
+    'All Apps (TV Utilities folder first)',
+    () => {
+      app.goTab('home');
+      app.push(allAppsScreen());
+    },
+  ],
+  [
+    'tv-utilities',
+    'All Apps › TV Utilities',
+    () => {
+      app.goTab('home');
+      app.push(allAppsScreen());
+      app.push(allAppsScreen(true));
     },
   ],
 ];

@@ -5,9 +5,10 @@ import { net, SAVED_AT } from '../core/net';
 import { deg, featureOn, settings } from '../core/settings';
 import { placeById } from '../data/places';
 import { attachWeather } from '../core/weatherfx';
-import { HOME_APPS, OTHER_APPS } from '../data/services';
+import { TV_APPS } from '../data/apps';
 import { icon, type IconName } from '../ui/icons';
 import { navBar } from '../ui/widgets';
+import { allAppsScreen } from './allApps';
 import { placeholder } from './placeholder';
 import { launcherSettings } from './settings';
 
@@ -45,8 +46,7 @@ export function homeScreen(): Screen {
     // Only when the row changed, so other settings don't reset focus on it.
     if (painted === settings.get().homeApps.join()) return;
     painted = settings.get().homeApps.join();
-    const all = [...HOME_APPS, ...OTHER_APPS];
-    const shown = settings.get().homeApps.map((id) => all.find((a) => a.id === id)).filter((a) => !!a);
+    const shown = settings.get().homeApps.map((id) => TV_APPS.find((a) => a.id === id)).filter((a) => !!a);
     replace(
       appsRow,
       shown.map((a, i) =>
@@ -73,7 +73,7 @@ export function homeScreen(): Screen {
   ).map(([label, key]) => tile(label, 'tv', key, () => app.toast(`Switching to ${label}…`), 'inputs'));
 
   const shortcuts = [
-    tile('All Apps', 'grid', 'sc-apps', () => app.push(placeholder('All Apps', 'Every installed app, with hide and reorder.')), 'shortcuts'),
+    tile('All Apps', 'grid', 'sc-apps', () => app.push(allAppsScreen()), 'shortcuts'),
     tile('Launcher settings', 'home', 'sc-launcher', () => app.push(launcherSettings()), 'shortcuts'),
     tile('TV Settings', 'settings', 'sc-settings', () => app.toast('Opening Android TV Settings…'), 'shortcuts'),
   ];
