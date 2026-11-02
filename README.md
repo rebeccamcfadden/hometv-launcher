@@ -28,6 +28,27 @@ work](themes/README.md).
 | ![Landscapes theme](docs/themes/landscapes.jpg) | ![Seasonal Vector art theme](docs/themes/seasonal-vector.jpg) | ![Seasonal 8-bit theme](docs/themes/seasonal-8bit.jpg) |
 | *Landscapes* | *Vector art (Seasonal)* | *8-bit (Seasonal)* |
 
+## What it connects to
+
+Only the services below, and only for what the table says. Nothing else leaves the TV: no analytics, telemetry or
+ads, and no accounts except the free ones whose API keys you choose to enter (TMDB, and Watchmode or Movie of the
+Night for prices). What it downloads (catalogue, artwork, forecast, ids, prices, fonts, pictures) is kept on the TV,
+so what was seen once still shows offline, and Home never waits for the network. Apart from checking a key you
+enter, a feature switched off in Launcher settings › Features makes none of its calls.
+
+| Service | What for | When |
+|---|---|---|
+| [TMDB](https://www.themoviedb.org) (`api.themoviedb.org`, `image.tmdb.org`) | Movies, TV Shows, Search, title previews, artwork, signing in, your TMDB lists (Phone notes included) | With a TMDB key and the TMDB account feature on |
+| [Open-Meteo](https://open-meteo.com) (forecast and geocoding) | The weather; finding a place in Launcher settings › Weather | With Weather on: when Home or Launcher settings › Weather shows and the forecast is over 30 minutes old; a place search as you search |
+| [Wikidata](https://www.wikidata.org) (`query.wikidata.org`) | The services' own ids for a title, so Watch opens it in the app, and Apple's store ids | When a title preview opens; with Price lookup on and an account signed in, also in the background for titles on your lists that are for rent or sale. Kept a month |
+| Apple's iTunes Search API | Apple TV Store rent and buy prices | With Price lookup on, for a title that is for rent or sale, when the keyed sources below didn't price Apple's store |
+| [Watchmode](https://www.watchmode.com), [Movie of the Night](https://www.movieofthenight.com) | Other stores' rent and buy prices (Movie of the Night only when Watchmode had none); Watchmode's free quota check and Movie of the Night's list of changed titles, each at most once a day | With your own key for each and Price lookup on: prices for a title that is for rent or sale, the change list when Home shows |
+| Google Fonts (Play services' font provider, else `fonts.googleapis.com` and `fonts.gstatic.com`) | A theme's fonts | Once per font, unless Typeface is System font |
+| jsDelivr (this repository's [`launcher/backdrops/`](launcher/backdrops/README.md)) | The pictures of themes that have one | Once per picture, unless Performance's picture is Plain colour |
+| TMDB, Watchmode, Movie of the Night | Checking an API key: one free request with it (`/authentication`, `/regions`, `/countries`) | When you enter or re-check a key, and when the TV couldn't reach the service last time; whatever Features says |
+
+Phone notes and the API key page are served on your home network by the TV itself; they don't go through the
+internet.
 ## Install
 
 On a computer on the same Wi-Fi as an Android TV or Google TV, with this repo cloned, paste [PROMPT.md](PROMPT.md) into
