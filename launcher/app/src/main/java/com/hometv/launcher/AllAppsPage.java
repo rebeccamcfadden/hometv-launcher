@@ -181,9 +181,7 @@ final class AllAppsPage {
         }
         // Last, after the apps (Rebecca, F35 Q2).
         if (!folder && !inside.isEmpty()) {
-            List<CharSequence> names = new ArrayList<>();
-            for (int i = 0; i < Math.min(4, inside.size()); i++) names.add(inside.get(i).label);
-            FolderTile t = new FolderTile(activity, names, inside.size(), TILE_W, TILE_H, 12);
+            FolderTile t = new FolderTile(activity, inside.size(), TILE_W, TILE_H, 12);
             Focus.make(t, GROUP, FOLDER_KEY, at == 0, v -> openFolder());
             place(t, at);
         }

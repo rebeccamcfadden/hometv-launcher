@@ -6,6 +6,7 @@ import { isTvUtility, type Moved } from '../core/tvUtilities';
 import { TV_APPS, type TvApp } from '../data/apps';
 import { HOME_ROW_MAX } from '../data/services';
 import { button } from '../ui/widgets';
+import { folderFace } from '../ui/folderArt';
 import { dropdown, type MenuRow } from './dropdown';
 
 // All Apps (pushed from Home's Shortcuts) with the TV Utilities folder (F35 b, Rebecca 2026-11-02: on for every TV, no
@@ -51,7 +52,7 @@ export function allAppsScreen(folder = false): Screen {
     focusable(
       h(
         'div.aa-app.aa-folder',
-        h('div.aa-face', inside.slice(0, 4).map((a) => h('span.aa-mini', a.name))),
+        h('div.aa-folder-face', folderFace(264, 148, 6)),
         h('div.aa-name', 'TV Utilities ', h('span.aa-folder-count', `· ${inside.length}`)),
       ),
       { group: 'aa', key: 'aa-folder', isDefault: isFirst, onOk: () => app.push(allAppsScreen(true)) },
