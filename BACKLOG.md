@@ -254,10 +254,11 @@ milestones: [docs/rework.md](docs/rework.md).
   despite `NEW_TASK | CLEAR_TASK`) and keeps its page history in that activity's saved state, which outlives its
   process. So Back first steps through what the household browsed in YouTube before. Ending YouTube's background
   process before the trailer (`killBackgroundProcesses`) was tried: Back was unchanged and the start took about 0.5 s
-  longer, so it was dropped (and Android 14 ignores that call for another app anyway). Untried: a separate task for
-  the trailer (`FLAG_ACTIVITY_MULTIPLE_TASK`), which depends on YouTube's activity launch mode
-  (`dumpsys package com.google.android.youtube.tv`), and the `vnd.youtube:<id>` link, whose start was also brought
-  to the front.
+  longer, so it was dropped (and Android 14 ignores that call for another app anyway). A task of its own for the
+  trailer (`FLAG_ACTIVITY_MULTIPLE_TASK` with `NEW_TASK | CLEAR_TASK`, on the TCL, 2026-11-02) was tried too: the same
+  "brought to the front", still one YouTube task, and one Back stayed in YouTube, as with a `singleTask` or
+  `singleInstance` activity. The `vnd.youtube:<id>` link's start was also brought to the front. No flag the launcher
+  can set changes it: it stays open as YouTube's own behaviour.
 
 ### Title deep links
 - **V1:** "Watch on …", episode rows and Where to watch open the service's app on its home screen. Still so with the
