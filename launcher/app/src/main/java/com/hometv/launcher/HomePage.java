@@ -470,9 +470,11 @@ final class HomePage extends Screen {
             lp.topMargin = Ui.px(AppTile.RING);
             appRow.addView(add, lp);
         }
+        // Theme › App logos (F43): banners, or wordmarks on the glass tile.
+        boolean minimal = ThemeStore.minimalLogos(activity);
         for (int i = 0; i < next.size(); i++) {
             String pkg = next.get(i);
-            AppTile t = new AppTile(activity, pkg, apps.label(pkg), APP_W, APP_H, 14);
+            AppTile t = new AppTile(activity, pkg, apps.label(pkg), APP_W, APP_H, 14, minimal);
             Focus.make(t, GROUP_APPS, "app-" + pkg, i == 0, v -> open(pkg));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);

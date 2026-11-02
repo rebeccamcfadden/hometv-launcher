@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * Launcher settings' Theme section (Figma lwShqRaciMpDUDW5dYljNw, "Settings · Theme picker", frame 18:10): the
- * Classic and Seasonal swatches, then Typeface and Time of day side by side (Moving details moved to Performance as
+ * Classic and Seasonal swatches, then Typeface and Time of day side by side, and App logos under them (F43) (Moving details moved to Performance as
  * Animated details, the project lead's decision of 2026-11-01; Time of day is F22: a Seasonal picture follows the sun
  * or always shows the day). Every swatch is drawn from its own
  * theme (a Seasonal one in today's period), and the pane's chrome from Ui's tokens, so it is themed too.
@@ -149,6 +149,32 @@ final class ThemeSection implements SettingsSection {
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         olp.topMargin = Ui.px(26);
         pane.addView(options, olp);
+
+        // F43: App logos, under Typeface, half the width like the rows above.
+        LinearLayout more = Kit.unclip(new LinearLayout(ctx));
+        more.setOrientation(LinearLayout.HORIZONTAL);
+        more.setBaselineAligned(false);
+        boolean minimal = ThemeStore.minimalLogos(ctx);
+        LinearLayout logos = segmented(ctx, "theme-logos",
+                new String[]{"theme-logos-full", "theme-logos-minimal"},
+                new CharSequence[]{ctx.getString(R.string.theme_app_logos_full),
+                        ctx.getString(R.string.theme_app_logos_minimal)},
+                minimal ? 1 : 0, (seg, i) -> {
+                    boolean on = i == 1;
+                    if (on == ThemeStore.minimalLogos(ctx)) return;
+                    ThemeStore.setMinimalLogos(ctx, on);
+                    select(seg, i);
+                    host.themeChanged();
+                });
+        more.addView(optionRow(ctx, R.string.theme_app_logos, R.string.theme_app_logos_sub, logos),
+                new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        LinearLayout.LayoutParams spacer = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        spacer.leftMargin = Ui.px(16);
+        more.addView(new View(ctx), spacer);
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        mlp.topMargin = Ui.px(16);
+        pane.addView(more, mlp);
         return pane;
     }
 

@@ -55,6 +55,21 @@ final class ThemeStore {
         prefs(ctx).edit().putString(KEY_TIME_OF_DAY, value).apply();
     }
 
+    /** "full" or "minimal" (F43, Theme › App logos); absent: this TV's config, else full colour. */
+    static final String KEY_APP_LOGOS = "app_logos";
+
+    /** Theme › App logos is Minimal: Home row apps as wordmarks on the glass tile (AppMarks). */
+    static boolean minimalLogos(Context ctx) {
+        String configured = ctx.getResources().getString(R.string.app_logos);
+        org.json.JSONObject json = Config.overlay(ctx);
+        if (json != null) configured = json.optString(KEY_APP_LOGOS, configured);
+        return AppMarks.minimal(prefs(ctx).getAll().get(KEY_APP_LOGOS), configured);
+    }
+
+    static void setMinimalLogos(Context ctx, boolean minimal) {
+        prefs(ctx).edit().putString(KEY_APP_LOGOS, minimal ? AppMarks.MINIMAL : AppMarks.FULL).apply();
+    }
+
     /** The part of the day a phased backdrop shows now: from the sun at the Weather place, or the fixed Day or Night. */
     static DayPhase phase(Context ctx, ZonedDateTime now) {
         DayPhase fixed = DayPhase.fixed(timeOfDay(ctx));

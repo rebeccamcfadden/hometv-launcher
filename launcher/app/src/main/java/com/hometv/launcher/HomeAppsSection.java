@@ -173,7 +173,7 @@ final class HomeAppsSection implements SettingsSection {
     }
 
     private View tile(String pkg, boolean onHome, boolean isDefault) {
-        AppTile t = new AppTile(ctx, pkg, apps.label(pkg), TILE_W, TILE_H, 8);
+        AppTile t = new AppTile(ctx, pkg, apps.label(pkg), TILE_W, TILE_H, 8, ThemeStore.minimalLogos(ctx));
         Focus.make(t, onHome ? GROUP_HOME : GROUP_OTHER, key(pkg), isDefault, v -> {
             // OK reaches onKey first while an app is picked up; this is for a page that sends it here instead.
             if (edit.moving() != null) {

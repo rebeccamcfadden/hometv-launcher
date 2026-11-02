@@ -226,6 +226,10 @@
          (most 1 GB TVs report it). Choices made on the TV win over it. Set it here or with "light_defaults" in a
          pushed config.json. -->
     <string name="light_defaults" translatable="false">auto</string>
+    <!-- Theme › App logos (F43): "full" draws each Home row app's own full-colour banner; "minimal" its name as an
+         off-white wordmark on the glass tile, the V2 Figma Home frames' look. The household's choice in Theme wins.
+         Also "app_logos" in a pushed config.json or a theme's config.json. -->
+    <string name="app_logos" translatable="false">full</string>
     <!-- Which features run on this TV (F14). Off, a feature never starts: no page, no network call, no server; its
          Launcher settings section and First run row stay, say it is off, and have its On/Off (F34). All but Phone notes
          start on (Rebecca, 2026-11-02): First run sets each up and switches off, when it ends, any whose setup isn't
