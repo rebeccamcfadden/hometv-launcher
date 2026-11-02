@@ -16,6 +16,10 @@ final class FeaturePrefs {
 
     /** The features First run switched off as it ended, "tmdb,notes": they start on again when it opens (F34). */
     private static final String KEY_FIRST_RUN_OFF = "features_first_run_off";
+    /** Phone notes' own switch before F34, in Notes.PREFS. */
+    private static final String OLD_NOTES_ON = "on";
+    /** migrateNotesSwitch has run on this TV. */
+    private static final String KEY_NOTES_MIGRATED = "features_notes_migrated";
 
     /**
      * This TV's config as last read (config.xml with a pushed config.json): read once as the launcher is built, since
@@ -26,7 +30,37 @@ final class FeaturePrefs {
     /** The switches as the launcher is built with them: the config read again, and the household's choices. */
     static Features load(Context ctx) {
         configRead = config(ctx);
+        migrateNotesSwitch(ctx);
         return Features.resolve(saved(ctx), configRead);
+    }
+
+    /**
+     * Phone notes' own On/Off, saved apart until F34, is now its feature's switch. On a TV updated from before, the
+     * feature is saved as what ran then: its feature switch (saved, else a pushed config.json's, else on, the old
+     * default) and its own switch (saved, else a pushed config.json's note_inbox, else off). So an update neither stops a
+     * working inbox nor opens the port by itself. A fresh install has nothing to carry over. Once per TV.
+     */
+    private static void migrateNotesSwitch(Context ctx) {
+        SharedPreferences p = prefs(ctx);
+        if (p.getBoolean(KEY_NOTES_MIGRATED, false)) return;
+        SharedPreferences.Editor e = p.edit().putBoolean(KEY_NOTES_MIGRATED, true);
+        SharedPreferences old = ctx.getSharedPreferences(Notes.PREFS, Context.MODE_PRIVATE);
+        if (!FirstRunPage.freshInstall(ctx)) {
+            JSONObject json = Config.overlay(ctx);
+            JSONObject pushed = json == null ? null : json.optJSONObject("features");
+            String key = Features.Feature.NOTES.key();
+            boolean feature = p.contains(key) ? p.getBoolean(key, true)
+                    : pushed == null || !(pushed.opt(Features.Feature.NOTES.id) instanceof Boolean)
+                    || pushed.optBoolean(Features.Feature.NOTES.id);
+            boolean own = old.contains(OLD_NOTES_ON) ? old.getBoolean(OLD_NOTES_ON, false)
+                    : json != null && json.optBoolean("note_inbox", false);
+            e.putBoolean(key, feature && own);
+        }
+        // Nor does a First run opened again: Phone notes now starts off (#98 would switch it back on).
+        Set<Features.Feature> firstRunOff = Features.decode(p.getString(KEY_FIRST_RUN_OFF, null));
+        if (firstRunOff.remove(Features.Feature.NOTES)) e.putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff));
+        e.commit();
+        if (old.contains(OLD_NOTES_ON)) old.edit().remove(OLD_NOTES_ON).apply();
     }
 
     /**
@@ -78,6 +112,23 @@ final class FeaturePrefs {
         // The household chose: First run no longer switches it back on.
         if (firstRunOff.remove(f)) e.putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff));
         e.apply();
+        stopNotesIfOff(ctx);
+    }
+
+    /**
+     * Phone notes switched off, or TMDB account it needs (F34): the inbox closes at once, not at the next rebuild, so the
+     * TV stops taking notes as its pane says Off. Switching it on rebuilds the launcher, which opens it ({@link #runs}).
+     */
+    private static void stopNotesIfOff(Context ctx) {
+        if (!Features.inboxAllowed(live(ctx))) Notes.get(ctx).allow(false);
+    }
+
+    /**
+     * Whether a feature runs in the launcher now: as it was built, except Phone notes, which runs while its inbox is
+     * allowed (switched off since, it closed at once). What a Turn on's rebuild is judged by.
+     */
+    static boolean runs(Context ctx, Features.Feature f) {
+        return f == Features.Feature.NOTES ? Notes.get(ctx).on() : Features.isOn(f);
     }
 
     /**
@@ -92,6 +143,7 @@ final class FeaturePrefs {
                 .putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff))
                 .putLong(Config.SETTINGS_REVISION_KEY, p.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1)
                 .apply();
+        stopNotesIfOff(ctx);
     }
 
     /**

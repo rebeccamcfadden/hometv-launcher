@@ -199,8 +199,9 @@ milestones: [docs/rework.md](docs/rework.md).
   [docs/phone-notes.md](docs/phone-notes.md)): each person keeps a watch list in a note on their iPhone (Apple Notes
   or Google Keep) and shares it to a "Send to TV" Shortcut, which posts the text and their list's name to
   `http://<tv>:8765/notes` with the pairing code. Launcher settings' **Phone notes** section, after Account, has the On /
-  Off switch (`note_inbox` in `config.xml` or a pushed `config.json` is the default, off; the household's choice is
-  saved on the TV and wins), the TV's Wi-Fi address (Ethernet when there is no Wi-Fi; "Not on Wi-Fi" without either),
+  Off switch (F34, 2026-11-02: it is the Phone notes feature's own switch; `feature_notes` in `config.xml` or
+  `"features": {"notes": …}` in a pushed `config.json` is the default, off; the household's choice is saved on the TV
+  and wins), the TV's Wi-Fi address (Ethernet when there is no Wi-Fi; "Not on Wi-Fi" without either),
   the pairing code (8 characters without 0/O or 1/I/L, made when it is first turned on), a QR beside them (the project
   lead, 2026-10-31) that opens `http://<tv>:8765/setup#<code>` on the iPhone (the code stays in the link's fragment,
   never sent to the TV): a fixed page with **Get the shortcut** (the household's shared iCloud link, `note_shortcut_url`
@@ -708,8 +709,11 @@ lead decided its open questions on 2026-10-31.
   with their names (`FirstRunRules.names`). The line under Streaming services is the count ("8 ticked"), as in the
   prototype. Features shows the features on, the same way, or "All off", which is left out while it repeats the All
   off pill; its line is the count ("2 of 4 on").
-- **Features step (F14, the project lead 2026-11-01, 2026-11-02):** the steps are Features, Region (F12, before the
-  two it decides), Streaming services and Stores. Every feature starts on, and each has its setup as a tab under Features (`FirstRunRules.setupOf`, `setups`:
+- **Features step (F14, the project lead 2026-11-01, 2026-11-02; F34, Rebecca 2026-11-02):** the steps are Features,
+  Region (F12, before the two it decides), Streaming services and Stores. Every feature but Phone notes starts on
+  (Phone notes opens a port), and each has its setup as a tab under Features, on or off. Features itself is an
+  overview with no switches; each setup's pane has its feature's On/Off on top, and off, says so above that switch
+  (`FeatureOffSection`). The tabs (`FirstRunRules.setupOf`, `setups`:
   TMDB account → Sign in to TMDB, Phone notes → its pane, Weather → Weather city); Next leads from Features through
   them, then on (`FirstRunRules.panels`). A setup tab reads "Not set up yet" until it is. **When First run ends**
   (Start, Back, the remote's Home; not a rebuild) every feature on whose setup isn't finished is switched off and a

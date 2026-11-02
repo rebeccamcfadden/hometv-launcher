@@ -25,7 +25,7 @@
 
     <!-- The help pane for the focused row. -->
     <string name="first_run_features_help_title">Choose what this TV does.</string>
-    <string name="first_run_features_help_body">Everything starts on: TMDB account (Movies, TV Shows, Search and Pick for me), Phone notes, Price lookup and Weather. Each is set up next; switch off what the household won’t use. One not set up when you finish is switched off.</string>
+    <string name="first_run_features_help_body">TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes starts off, since it opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.</string>
     <string name="first_run_features_help_note">Change them any time in Launcher settings › Features.</string>
     <string name="first_run_services_help_title">What does the household pay for?</string>
     <string name="first_run_services_help_body">Titles on these services show as Included in Movies and TV Shows. The ones with an app on this TV were ticked to start with.</string>
@@ -56,6 +56,7 @@
     <!-- A feature's setup, a tab under Features once it is turned on (F14). -->
     <string name="first_run_setup_note">Set up with Features · not set up yet</string>
     <string name="first_run_setup_note_done">Set up with Features · set up</string>
+    <string name="first_run_setup_note_off">Set up with Features · off</string>
     <string name="first_run_not_set_up">Not set up yet</string>
     <!-- First run switches off what isn't set up when it ends (the project lead, 2026-11-02). -->
     <string name="first_run_will_switch_off">Not set up, so switched off when you start: %1$s.</string>

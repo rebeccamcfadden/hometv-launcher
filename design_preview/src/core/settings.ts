@@ -92,7 +92,8 @@ const defaults = (): Saved => ({
   movingDetails: false,
   // F14 (the project lead, 2026-11-02): every feature starts on; First run switches off any whose setup isn't finished
   // when it ends (setup.ts, featureSetUp).
-  features: { tmdb: true, notes: true, prices: true, weather: true },
+  // F34 (Rebecca, 2026-11-02): Phone notes alone starts off, since on it opens a port; it is its listening switch.
+  features: { tmdb: true, notes: false, prices: true, weather: true },
   utilityMoves: {},
 });
 

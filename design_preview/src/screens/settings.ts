@@ -12,7 +12,7 @@ import { notesPane } from './panes/notes';
 import { notes } from '../core/notes';
 import { appsPane } from './panes/apps';
 import { aboutPane, homePane, performancePane, startPane, tvPane } from './panes/misc';
-import { featureOffPane, featuresPane, featuresValue, SETUP_SECTION, turnOn } from './panes/features';
+import { featureBar, featureOffPane, featuresPane, featuresValue, SETUP_SECTION } from './panes/features';
 import type { Pane, PaneHost } from './panes/pane';
 import { regionPane } from './panes/region';
 import { servicesPane, storesPane } from './panes/services';
@@ -140,6 +140,14 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
       if (target) app.focus(target);
     },
     setup: false,
+    // Features' overview (F34): OK on a feature opens the section that sets it up, where its switch is.
+    openSetup(id) {
+      // Price lookup's switch is on Stores (API keys holds the TMDB key too), as LauncherSettingsPage.openFeature.
+      const to = id === 'prices' ? 'stores' : SETUP_SECTION[id];
+      if (!to) return;
+      shown = null;
+      enter(to);
+    },
   };
   const panes: Record<SectionId, Pane> = {
     account: accountPane(host),
@@ -193,16 +201,28 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
 
   function rerender() {
     const sec = sections.find((s) => s.id === current)!;
-    replace(scroll, isOff(sec) ? featureOffPane(sec.feature!, sec.label, () => turnOnHere(sec)) : panes[current].render());
+    // F34: a feature's section has the feature's own switch on top; off, the pane says so around that switch.
+    replace(
+      scroll,
+      !sec.feature
+        ? panes[current].render()
+        : isOff(sec)
+          ? featureOffPane(sec.feature, sec.label, (first) => switched(sec, first))
+          : [featureBar(sec.feature, (first) => switched(sec, first)), panes[current].render()],
+    );
     paintValues();
     if (inPane) app.refocus();
   }
 
-  /** Turn on, in a switched-off section: the feature on, then straight into its setup (this section, once live). */
-  function turnOnHere(sec: Section) {
-    const first = turnOn(sec.feature!);
+  /**
+   * A section's feature switched: on, straight into the setup of the one it turned on first (Phone notes' needs TMDB
+   * account's sign-in; Stores' Price lookup its keys), else this section again, now live or off.
+   */
+  function switched(sec: Section, first: FeatureId | null) {
+    const to = first ? (SETUP_SECTION[first] ?? sec.id) : sec.id;
+    if (to === sec.id) return rerender();
     shown = null;
-    enter(SETUP_SECTION[first] ?? sec.id);
+    enter(to);
   }
 
   function show(id: SectionId) {

@@ -427,7 +427,7 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         // First run's Price keys tab is API keys here (F16).
         String setup = FirstRunRules.inSettings(FirstRunRules.setupOf(first));
         String target = setup != null && section(setup) != null ? setup : current;
-        if (FirstRunRules.setupNeedsRebuild(first, Features.isOn(first))) {
+        if (FirstRunRules.turnOnNeedsRebuild(first, FeaturePrefs.runs(ctx, first), f, FeaturePrefs.runs(ctx, f))) {
             current = target;
             inPane = true;
             activity.recreate();
@@ -436,6 +436,26 @@ final class LauncherSettingsPage extends Screen implements SettingsSection.Host 
         paintValues();
         show(target, true);
         enter(target);
+    }
+
+    /** A feature switched off on its own pane (F34): the section again, now its off pane, focus on its switch. */
+    @Override
+    public void featureSwitchedOff(Features.Feature f) {
+        paintValues();
+        show(current, true);
+        SettingsSection s = section(current);
+        View first = s == null ? null : s.firstFocus();
+        if (first != null) shell().focus(first);
+    }
+
+    /**
+     * Features' overview (F34): the section with the feature's On/Off. Price lookup's is Stores, since API keys holds the
+     * TMDB key as well.
+     */
+    @Override
+    public void openFeature(Features.Feature f) {
+        String id = f == Features.Feature.PRICES ? "stores" : FirstRunRules.setupOf(f);
+        if (id != null && section(id) != null) enter(id);
     }
 
     /** Whether Back in the pane closes the page (kept over a rebuild). */

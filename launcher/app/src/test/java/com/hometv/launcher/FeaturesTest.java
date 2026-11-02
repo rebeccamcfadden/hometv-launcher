@@ -114,6 +114,16 @@ public class FeaturesTest {
     }
 
     @Test
+    public void theInboxClosesWithPhoneNotesOrTheTmdbAccountItNeeds() {
+        // F34: Off on either closes port 8765 at once.
+        assertTrue(Features.inboxAllowed(Features.resolve(saved("feature_notes", true), null)));
+        assertFalse(Features.inboxAllowed(Features.resolve(saved("feature_notes", false), null)));
+        assertFalse(Features.inboxAllowed(Features.resolve(saved("feature_notes", true, "feature_tmdb", false), null)));
+        // Phone notes starts off on a new TV (config.xml feature_notes false).
+        assertFalse(Features.inboxAllowed(Features.resolve(null, config("notes", false))));
+    }
+
+    @Test
     public void currentIsWhatWasApplied() {
         assertTrue(Features.isOn(Features.Feature.WEATHER));
         Features.apply(Features.resolve(saved("feature_weather", false), null));

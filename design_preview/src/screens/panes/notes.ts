@@ -4,7 +4,7 @@ import { account } from '../../core/account';
 import { INBOX_URL, notes } from '../../core/notes';
 import { icon } from '../../ui/icons';
 import { qrSvg } from '../../ui/qr';
-import { button, segmented } from '../../ui/widgets';
+import { button } from '../../ui/widgets';
 import { confirmDialog } from '../confirm';
 import { notePicker } from '../notePicker';
 import type { Pane, PaneHost } from './pane';
@@ -12,20 +12,10 @@ import type { Pane, PaneHost } from './pane';
 /**
  * Phone notes (no Figma design yet; drafted here from the Account pane's parts): turn the inbox on, read the
  * address and pairing code to type into the "Send to TV" Shortcut, and see each list's last send with the lines not
- * matched exactly, each a button that opens the picker (notePicker; focusable, so the pane scrolls down to them). Off
- * by default.
+ * matched exactly, each a button that opens the picker (notePicker; focusable, so the pane scrolls down to them). Its
+ * On/Off is the feature's own switch, above the pane (featureBar; F34): while it is off the pane says so instead.
  */
 export function notesPane(_host: PaneHost): Pane {
-  const onOff = segmented<'on' | 'off'>({
-    options: [
-      ['on', 'On'],
-      ['off', 'Off'],
-    ],
-    get: () => (notes.on() ? 'on' : 'off'),
-    set: (v) => notes.setOn(v === 'on'),
-    group: 'notes-on',
-    entry: true,
-  });
 
   const sendRow = (s: ReturnType<typeof notes.sends>[number]) =>
     h(
@@ -61,7 +51,6 @@ export function notesPane(_host: PaneHost): Pane {
           'div.pane-sub',
           'Share a watch-list note to “Send to TV” on a phone. New lines are looked up and added to that person’s TMDB list; deleting a line on the phone takes nothing off.',
         ),
-        h('div.pane-seg', onOff),
         on && !signedIn
           ? h('div.pane-note.notes-warn', 'Sign in to TMDB in Account first: the lists are on the account. Notes sent before then wait.')
           : null,

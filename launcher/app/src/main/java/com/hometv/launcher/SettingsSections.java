@@ -12,8 +12,8 @@ import java.util.List;
  * Every section of Launcher settings, in {@link SettingsNav#ORDER}: the one registry the page reads. A section whose
  * feature this build leaves out is not listed: Phone notes while the launcher runs without a TMDB key, Open on start
  * unless open_on_start_choice is on. Account is listed either way, and without a key says how to add one
- * (AccountKeyGate, F16). A feature switched off in Features (F14) keeps its section, which says so
- * (FeatureOffSection). First run's TMDB key and Price keys tabs are {@link #setupOnly}.
+ * (AccountKeyGate, F16). A feature's section has its On/Off, and switched off (F14) it stays and says so
+ * (FeatureOffSection, F34). First run's TMDB key and Price keys tabs are {@link #setupOnly}.
  */
 final class SettingsSections {
     private SettingsSections() {}
@@ -24,11 +24,14 @@ final class SettingsSections {
         List<SettingsSection> out = new ArrayList<>();
         // A launcher built with a TMDB key (the TV's own, F16, or the build's) has Phone notes; Features can switch
         // Account and Phone notes off, and then they say so.
-        boolean tmdbKey = home != null && home.data().accounts.available();
+        // The TV's key, not the account: with TMDB account switched off the launcher runs without one, and Phone notes'
+        // section must still be there to say it is off (F34).
+        boolean tmdbKey = home != null && !ApiKeys.get(ctx).key(KeyRules.Id.TMDB).isEmpty();
         if (home != null) {
             out.add(new FeatureOffSection(new AccountKeyGate(new AccountSection(home), home), Features.Feature.TMDB));
         }
-        if (tmdbKey) out.add(new FeatureOffSection(new NotesSection(home), Features.Feature.NOTES));
+        // Phone notes' own On/Off is the feature's switch (F34).
+        if (tmdbKey) out.add(new FeatureOffSection(new NotesSection(home), Features.Feature.NOTES, true));
         if (home != null) out.add(new ServicesSection(home));
         // Price lookup off: Stores says so (the project lead, 2026-11-02), as API keys' price part does.
         if (home != null) out.add(new FeatureOffSection(new StoresSection(home), Features.Feature.PRICES));
@@ -50,12 +53,13 @@ final class SettingsSections {
 
     /**
      * First run's sections that Launcher settings doesn't list (F16): the TMDB key tab, before Sign in on a TV
-     * without a working key, and the Price keys tab, Price lookup's setup. Launcher settings has both in API keys.
+     * without a working key, and the Price keys tab, Price lookup's setup, each with its feature's On/Off (F34).
+     * Launcher settings has both in API keys.
      */
     static List<SettingsSection> setupOnly() {
         List<SettingsSection> out = new ArrayList<>();
-        out.add(KeysSection.tmdb());
-        out.add(KeysSection.prices());
+        out.add(new FeatureOffSection(KeysSection.tmdb(), Features.Feature.TMDB));
+        out.add(new FeatureOffSection(KeysSection.prices(), Features.Feature.PRICES));
         return out;
     }
 

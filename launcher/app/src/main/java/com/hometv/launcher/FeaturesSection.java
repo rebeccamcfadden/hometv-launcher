@@ -4,28 +4,26 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 /**
- * Launcher settings › Features (F14, the project lead 2026-11-01; design_preview/src/screens/panes/features.ts, no
- * Figma frame): a row per feature, laid out as Performance's, each On or Off. A feature that is off never starts; the
- * launcher is rebuilt with the new switches as the page closes (Host#valueChanged moves the change count). A row whose
- * feature needs another that is off (Phone notes without TMDB account) says so instead of offering a control, and ↑/↓
- * pass it by. The switches are read from FeaturePrefs each time, so the page shows what was just chosen.
+ * Launcher settings › Features (F14; F34, Rebecca 2026-11-02; design_preview/src/screens/panes/features.ts, no Figma
+ * frame): an overview with no switches. A row per feature, its line saying what it does (or what is off without it) and
+ * its state on the right ("On · not set up yet", "Off · needs TMDB account"); OK opens the section that sets it up,
+ * where its On/Off is (FeatureOffSection; Phone notes' is its own pane's). A feature that is off never starts; the
+ * launcher is rebuilt with the switches as the page closes.
  *
- * <p>It is also First run's Features step (the project lead, 2026-11-01): every feature starts off, and turning one on
- * there opens its setup at once (Host#featureTurnedOn; FirstRunPage decides what that is).
+ * <p>It is also First run's Features step, whose setups are tabs under it (Host#openFeature opens one).
  */
 final class FeaturesSection implements SettingsSection {
     static final String ID = "features";
+    private static final String GROUP = "feat-links";
 
     private LinearLayout rows;
-    private Host host;
     private View first;
-    /** The row to focus first instead of the first control: the feature whose setup First run just came back from. */
+    /** The row to focus first: the feature whose setup First run just came back from. */
     private Features.Feature focusOn;
 
-    /** Focus starts on this feature's switch (back from its setup, after a rebuild). */
+    /** Focus starts on this feature's row (back from its setup, after a rebuild). */
     void focusOn(Features.Feature f) {
         focusOn = f;
     }
@@ -52,103 +50,40 @@ final class FeaturesSection implements SettingsSection {
 
     @Override
     public View pane(Context ctx, Host host) {
-        this.host = host;
         LinearLayout pane = SettingsKit.column(ctx);
         pane.addView(SettingsKit.eyebrow(ctx, ctx.getString(R.string.settings_features)));
         SettingsKit.add(pane, SettingsKit.title(ctx, ctx.getString(R.string.settings_features), false), 10);
         SettingsKit.add(pane, SettingsKit.sub(ctx, ctx.getString(host.inSetup() ? R.string.features_sub_setup : R.string.features_sub)), 8);
-        rows = SettingsKit.column(ctx);
+        LinearLayout rows = SettingsKit.column(ctx);
         SettingsKit.addWide(pane, rows, 22);
-        paintRows(ctx);
-        SettingsKit.add(pane, SettingsKit.note(ctx, ctx.getString(R.string.features_note)), 16);
-        return pane;
-    }
-
-    /** The rows from the saved switches; after a change, built again with focus kept on the same row. */
-    private void paintRows(Context ctx) {
-        rows.removeAllViews();
         Features now = FeaturePrefs.live(ctx);
         first = null;
+        View top = null;
         for (Features.Feature f : Features.Feature.values()) {
-            Features.Feature blocked = now.blockedBy(f);
-            View control;
-            if (blocked != null) {
-                TextView why = Ui.line(ctx, 20, Ui.TEXT_3, Ui.REGULAR);
-                why.setText(ctx.getString(R.string.features_needs, ctx.getString(label(blocked))));
-                control = why;
-            } else {
-                boolean on = now.switchedOn(f);
-                control = SettingsKit.segmented(ctx, group(f), new String[]{"on", "off"},
-                        new CharSequence[]{ctx.getString(R.string.perf_on), ctx.getString(R.string.perf_off)},
-                        on ? "on" : "off", true, value -> changed(ctx, f, "on".equals(value)));
-                if (first == null || f == focusOn) first = SettingsKit.selectedOption(control);
-            }
-            int sub = blocked == null && now.switchedOn(f) ? sub(f) : off(f);
-            View row = PerformanceSection.row(ctx, label(f), sub, control);
+            boolean runs = now.on(f);
+            View row = SettingsKit.listRow(ctx, 0, ctx.getString(label(f)), ctx.getString(runs ? sub(f) : off(f)),
+                    stateText(ctx, now, f), GROUP, GROUP + "-" + f.id, top == null, v -> host.openFeature(f));
+            if (top == null) top = row;
+            if (f == focusOn) first = row;
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             if (rows.getChildCount() > 0) lp.topMargin = Ui.px(12);
             rows.addView(row, lp);
         }
+        if (first == null) first = top;
+        SettingsKit.add(pane, SettingsKit.note(ctx, ctx.getString(R.string.features_note)), 16);
+        return pane;
     }
 
-    private void changed(Context ctx, Features.Feature f, boolean on) {
-        boolean was = FeaturePrefs.live(ctx).switchedOn(f);
-        FeaturePrefs.save(ctx, f, on);
-        host.valueChanged();
-        // Rebuilt after the pick returns: Phone notes' row changes with TMDB account, and every row's line with it.
-        rows.post(() -> {
-            paintRows(ctx);
-            View seg = segOf(f);
-            View again = seg == null ? null : SettingsKit.selectedOption(seg);
-            if (again != null) host.shell().focus(again);
-            if (on && !was) host.featureTurnedOn(f);
-        });
-    }
-
-    /**
-     * ↓ and ↑ go to the next row's control on its selected option, passing a row with no control; → stays within its
-     * control, as in Performance.
-     */
-    @Override
-    public boolean onKey(Screen.Key key, View focused) {
-        if (focused == null) return false;
-        Features.Feature at = featureOf(Focus.group(focused));
-        if (at == null) return false;
-        if (key == Screen.Key.RIGHT) {
-            ViewGroup seg = (ViewGroup) focused.getParent();
-            int i = seg.indexOfChild(focused);
-            if (i >= 0 && i + 1 < seg.getChildCount()) host.shell().focus(seg.getChildAt(i + 1));
-            return true;
+    /** "On · set up", "On · not set up yet", "Off", or "Off · needs TMDB account": the feature as it is now. */
+    static String stateText(Context ctx, Features now, Features.Feature f) {
+        boolean setUp = !(ctx instanceof MainActivity) || FirstRunPage.setUp((MainActivity) ctx, f);
+        switch (FirstRunRules.state(now, f, setUp)) {
+            case OFF: return ctx.getString(R.string.feature_state_off);
+            case NEEDS: return ctx.getString(R.string.features_needs, ctx.getString(label(f.needs)));
+            case NOT_SET_UP: return ctx.getString(R.string.feature_state_not_set_up);
+            default: return ctx.getString(R.string.feature_state_set_up);
         }
-        if (key != Screen.Key.DOWN && key != Screen.Key.UP) return false;
-        Features.Feature[] all = Features.Feature.values();
-        int step = key == Screen.Key.DOWN ? 1 : -1;
-        for (int i = at.ordinal() + step; i >= 0 && i < all.length; i += step) {
-            View seg = segOf(all[i]);
-            if (seg == null) continue;
-            host.shell().focus(SettingsKit.selectedOption(seg));
-            return true;
-        }
-        // Past the last row ↓ stays (the note has nothing to focus), except in First run, where it goes on to the footer's
-        // Next; past the first ↑ leaves for the page.
-        return key == Screen.Key.DOWN && !host.inSetup();
-    }
-
-
-    private View segOf(Features.Feature f) {
-        if (rows == null) return null;
-        View option = Focus.byKey(rows, group(f) + "-on");
-        return option == null ? null : (View) option.getParent();
-    }
-
-    private static Features.Feature featureOf(String group) {
-        if (group == null || !group.startsWith("feat-")) return null;
-        return Features.Feature.parse(group.substring(5));
-    }
-
-    private static String group(Features.Feature f) {
-        return "feat-" + f.id;
     }
 
     @Override
@@ -165,7 +100,7 @@ final class FeaturesSection implements SettingsSection {
         }
     }
 
-    private static int sub(Features.Feature f) {
+    static int sub(Features.Feature f) {
         switch (f) {
             case TMDB: return R.string.feature_tmdb_sub;
             case NOTES: return R.string.feature_notes_sub;
@@ -174,7 +109,7 @@ final class FeaturesSection implements SettingsSection {
         }
     }
 
-    private static int off(Features.Feature f) {
+    static int off(Features.Feature f) {
         switch (f) {
             case TMDB: return R.string.feature_tmdb_off;
             case NOTES: return R.string.feature_notes_off;

@@ -218,7 +218,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         Features.apply(FeaturePrefs.load(this));
         // The Phone notes inbox lives as long as the process: it opens or closes with the switches the launcher is
         // built with now.
-        Notes.get(this).allow(Features.isOn(Features.Feature.NOTES));
+        Notes.get(this).allow(Features.inboxAllowed(Features.current()));
         if (!ThemeFonts.apply(this, theme)) ThemeFonts.fetch(this, theme, fontsArrived);
         // restore_key_services: after a force stop, put back the remote's accessibility helpers that Android took
         // off the list (needs WRITE_SECURE_SETTINGS, granted by build-and-install with RESTORE_KEY_SERVICES=1).

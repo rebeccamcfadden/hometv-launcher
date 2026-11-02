@@ -149,6 +149,14 @@ final class Features {
         current = f == null ? ALL_ON : f;
     }
 
+    /**
+     * Whether Phone notes' inbox may listen with these switches: Phone notes on, and TMDB account it needs. Switched off
+     * (either), the inbox closes at once, not at the next rebuild (F34; FeaturePrefs.save, MainActivity).
+     */
+    static boolean inboxAllowed(Features f) {
+        return f.on(Feature.NOTES);
+    }
+
     /** Shorthand for {@code current().on(f)}. */
     static boolean isOn(Feature f) {
         return current.on(f);

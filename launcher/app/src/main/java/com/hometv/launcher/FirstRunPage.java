@@ -741,7 +741,11 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             Object id = row.getTag(R.id.settings_section);
             if (!(id instanceof String) || rows.containsKey(id)) continue;
             SettingsSection s = sections.get(id);
-            CharSequence v = !subDone((String) id) ? ctx.getString(R.string.first_run_not_set_up)
+            Features.Feature f = FirstRunRules.featureOf((String) id);
+            // Its feature off (F34): "Off", or what it needs; else its value once set up.
+            CharSequence v = f != null && !FeaturePrefs.live(ctx).on(f)
+                    ? FeaturesSection.stateText(ctx, FeaturePrefs.live(ctx), f)
+                    : !subDone((String) id) ? ctx.getString(R.string.first_run_not_set_up)
                     : s == null ? null : s.value(ctx);
             ((TextView) row.getTag(R.id.settings_row_sub)).setText(v == null ? "" : v);
             row.setContentDescription(((TextView) row.getTag(R.id.settings_row_title)).getText()
@@ -786,7 +790,8 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         TextView note = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
         boolean isStep = steps.contains(id);
         note.setText(isStep ? ctx.getString(R.string.first_run_step, FirstRunRules.stepNumber(steps, id), steps.size())
-                : ctx.getString(subDone(id) ? R.string.first_run_setup_note_done : R.string.first_run_setup_note));
+                : ctx.getString(subOff(id) ? R.string.first_run_setup_note_off
+                        : subDone(id) ? R.string.first_run_setup_note_done : R.string.first_run_setup_note));
         row.addView(note, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL));
         // Next steps from Features through each setup, then on (FirstRunRules.panels; the project lead, 2026-11-02).
@@ -809,10 +814,10 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         return row;
     }
 
-    /** The setup tabs under Features: one per feature on with a setup this build has (FirstRunRules.setups). */
+    /** The setup tabs under Features: one per feature with a setup this build has, on or off (FirstRunRules.setups). */
     private List<String> setupsShown() {
         List<String> subs = new ArrayList<>();
-        for (String id : FirstRunRules.setups(FeaturePrefs.live(ctx), tmdbKeyTab)) {
+        for (String id : FirstRunRules.setups(tmdbKeyTab)) {
             if (sections.containsKey(id)) subs.add(id);
         }
         return subs;
@@ -833,7 +838,14 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         return setUp(activity, f);
     }
 
-    private static boolean setUp(MainActivity a, Features.Feature f) {
+    /** A setup tab whose feature is off (F34): its pane says so, with the feature's On/Off. */
+    private boolean subOff(String id) {
+        Features.Feature f = FirstRunRules.featureOf(id);
+        return f != null && !FeaturePrefs.live(ctx).on(f);
+    }
+
+    /** Whether a feature's setup is finished (FirstRunRules.setUp), from the TV as it is now; also Features' rows. */
+    static boolean setUp(MainActivity a, Features.Feature f) {
         return FirstRunRules.setUp(f, a.data().accounts.available(), a.data().accounts.signedIn(), Notes.get(a).on(),
                 PriceKeys.ready(a));
     }
@@ -965,7 +977,7 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
             buildList();
             return;
         }
-        if (FirstRunRules.setupNeedsRebuild(f, Features.isOn(f))) {
+        if (FirstRunRules.setupNeedsRebuild(f, FeaturePrefs.runs(ctx, f))) {
             pendingPanel = id;
             activity.recreate();
             return;
@@ -1049,9 +1061,25 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
         return true;
     }
 
+    /** Features' overview (F34): the feature's first setup tab; one on but not running yet rebuilds first (openSetup). */
     @Override
-    public void featureTurnedOn(Features.Feature f) {
-        openSetup(f);
+    public void openFeature(Features.Feature f) {
+        if (FeaturePrefs.live(ctx).on(f)) {
+            openSetup(f);
+            return;
+        }
+        String id = FirstRunRules.firstSetupOf(f, tmdbKeyTab);
+        if (id != null && sections.containsKey(id)) enter(id);
+    }
+
+    /** A feature switched off on its own tab (F34): the tab's pane again, now saying it is off, focus on its switch. */
+    @Override
+    public void featureSwitchedOff(Features.Feature f) {
+        if (open == null) return;
+        show(open, true);
+        SettingsSection s = sections.get(open);
+        View first = s == null ? null : s.firstFocus();
+        if (first != null) shell().focus(first);
     }
 
     /** Rebuilt with the TMDB key (Account's Sign in, F16), First run comes back with that panel entered. */
@@ -1066,6 +1094,14 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
     public void turnOn(Features.Feature f) {
         Features.Feature first = FeaturePrefs.turnOn(ctx, f);
         LauncherSettingsPage.changed(ctx);
+        // Phone notes on with TMDB account, which already runs: its inbox still needs the rebuild (F34).
+        String firstId = FirstRunRules.firstSetupOf(first, tmdbKeyTab);
+        if (first != f && FirstRunRules.turnOnNeedsRebuild(first, FeaturePrefs.runs(ctx, first), f, FeaturePrefs.runs(ctx, f))
+                && firstId != null && sections.containsKey(firstId)) {
+            pendingPanel = firstId;
+            activity.recreate();
+            return;
+        }
         buildList();
         paint();
         if (FirstRunRules.setupOf(first) != null) {

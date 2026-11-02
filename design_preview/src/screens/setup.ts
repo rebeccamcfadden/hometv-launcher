@@ -11,7 +11,7 @@ import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
 import { button } from '../ui/widgets';
 import { accountPane } from './panes/account';
-import { featureOffPane, featureSetUp, featuresPane, turnOn } from './panes/features';
+import { featureBar, featureOffPane, featureSetUp, featureState, featuresPane } from './panes/features';
 import { notesPane } from './panes/notes';
 import type { Pane, PaneHost } from './panes/pane';
 import { regionPane } from './panes/region';
@@ -52,7 +52,7 @@ const ALL_STEPS: Step[] = [
       eyebrow: 'Features',
       title: 'Choose what this TV does.',
       body: () =>
-        'Everything starts on: TMDB account (Movies, TV Shows, Search and Pick for me), Phone notes, Price lookup and Weather. Each is set up next; switch off what the household won’t use. One not set up when you finish is switched off.',
+        'TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes starts off, since it opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.',
       note: 'Change them any time in Launcher settings › Features.',
     },
   },
@@ -158,7 +158,8 @@ export function setupScreen(): Screen {
 
   /** The TMDB key tab shows only on a TV that had no working TMDB key when First run opened. */
   const keyAtStart = keys.tmdbReady();
-  const subs = () => SUB_STEPS.filter((s) => featureOn(s.feature) && (s.id !== 'tmdbKey' || !keyAtStart));
+  // F34 (Rebecca, 2026-11-02): a setup's tab stays when its feature is off; its pane says so, with the feature's switch.
+  const subs = () => SUB_STEPS.filter((s) => s.id !== 'tmdbKey' || !keyAtStart);
   const subDone = (s: SubStep) => (s.done ? s.done() : featureSetUp(s.feature));
   const stepOf = (id: PanelId | null) => STEPS.find((s) => s.id === id);
   const subOf = (id: PanelId | null) => SUB_STEPS.find((s) => s.id === id);
@@ -235,17 +236,27 @@ export function setupScreen(): Screen {
     if (!open) return;
     const sub = subOf(open);
     const pane = paneOf(open);
-    // Stores with Price lookup off: it says so, and Turn on switches it on and opens Price keys.
+    // Stores with Price lookup off: it says so, and its switch turns it on and opens Price keys.
     const off = open === 'stores' && !featureOn('prices');
+    // A setup's pane (F34): the feature's own switch on top; off, the pane says so around that switch.
+    const switched = (first: FeatureId | null) => {
+      const to = first ? subs().find((s) => s.feature === first) : null;
+      paint();
+      if (to && to.id !== open) enter(to.id);
+      else paintPanel();
+    };
     replace(
       scroll,
       off
         ? featureOffPane('prices', 'Stores for rent and buy', () => {
-            turnOn('prices');
             paint();
             enter('keys');
           })
-        : (pane?.render() ?? null),
+        : sub && !featureOn(sub.feature)
+          ? featureOffPane(sub.feature, sub.title, switched)
+          : sub
+            ? [featureBar(sub.feature, switched), pane?.render() ?? null]
+            : (pane?.render() ?? null),
     );
     // Features leads through its setups, then on to the next step (the project lead, 2026-11-02).
     const order: PanelId[] = ['features', ...subs().map((s) => s.id), ...STEPS.slice(1).map((s) => s.id)];
@@ -254,7 +265,7 @@ export function setupScreen(): Screen {
     if (sub) {
       replace(
         foot,
-        h('span.pane-foot-note', `Set up with Features · ${subDone(sub) ? 'set up' : 'not set up yet'}`),
+        h('span.pane-foot-note', `Set up with Features · ${!featureOn(sub.feature) ? 'off' : subDone(sub) ? 'set up' : 'not set up yet'}`),
         h(
           'div.pane-foot-actions',
           button('Back to Features', { icon: 'back', small: true, key: 'foot-features', onOk: () => backToFeatures() }),
@@ -285,8 +296,6 @@ export function setupScreen(): Screen {
   /** The tabs (wide: the checklist rows; open: the same rows, cut down, with the feature setups under Features). */
   function paint() {
     const all = done.size === STEPS.length;
-    // A setup tab whose feature was just switched off goes; its panel falls back to Features.
-    if (open && subOf(open) && !featureOn(subOf(open)!.feature)) open = 'features';
     el.classList.toggle('setup--open', !!open);
     replace(titleEl, all ? 'You’re all set' : 'Set up your Home screen');
     replace(leadEl, all ? 'Every row is done. Change any of them now, or start.' : 'Everything has a sensible default. Move right to open a row, or start right away.');
@@ -314,10 +323,15 @@ export function setupScreen(): Screen {
               h(
                 `div.lrow.cl-row.cl-sub${open === sub.id ? '.is-shown' : ''}`,
                 // Set up: a green check in its icon's place, and its value; not yet: "Not set up yet".
-                subDone(sub)
+                featureOn(sub.feature) && subDone(sub)
                   ? h('span.cl-sub-icon.is-done', { html: icon('check', 24) })
                   : h('span.cl-sub-icon', { html: icon(sub.icon, 24) }),
-                h('div.lr-main', h('div.lr-title', sub.title), h('div.lr-sub', subDone(sub) ? sub.value() : 'Not set up yet')),
+                h(
+                  'div.lr-main',
+                  h('div.lr-title', sub.title),
+                  // Off: "Off" (or what it needs), from the feature; on: its value once set up.
+                  h('div.lr-sub', !featureOn(sub.feature) ? featureState(sub.feature).text : subDone(sub) ? sub.value() : 'Not set up yet'),
+                ),
               ),
               { group: 'steps', key: `sub-${sub.id}`, onFocus: () => focusTab(sub.id), onOk: () => enter(sub.id) },
             ),
@@ -386,11 +400,11 @@ export function setupScreen(): Screen {
     app.focus(next ? tabOf(next.id) : start);
   }
 
-  /** A feature's setup closes: the Features panel again, on that feature's switch. */
+  /** A feature's setup closes: the Features panel again, on that feature's row. */
   function backToFeatures() {
     const sub = subOf(open);
     enter('features');
-    if (sub) host.focusKey(`seg-feat-${sub.feature}-on`);
+    if (sub) host.focusKey(`feat-link-${sub.feature}`);
   }
 
   const el = h(

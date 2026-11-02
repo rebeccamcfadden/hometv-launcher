@@ -226,14 +226,14 @@
          (most 1 GB TVs report it). Choices made on the TV win over it. Set it here or with "light_defaults" in a
          pushed config.json. -->
     <string name="light_defaults" translatable="false">auto</string>
-    <!-- Launcher settings › Features (F14): which features run on this TV. Off, a feature never starts: no page, no
-         network call, no server; its Launcher settings section says it is off. Each starts on (the project lead,
-         2026-11-02): First run sets each up and switches off, when it ends, any whose setup isn't finished.
-         The household can switch them in Features, and its choice wins over these. A
-         pushed config.json can set them too, as "features": {"tmdb": true, "notes": false, ...}. Phone notes needs
-         TMDB account. -->
+    <!-- Which features run on this TV (F14). Off, a feature never starts: no page, no network call, no server; its
+         Launcher settings section and First run row stay, say it is off, and have its On/Off (F34). All but Phone notes
+         start on (Rebecca, 2026-11-02): First run sets each up and switches off, when it ends, any whose setup isn't
+         finished. Phone notes starts off, since on, the TV listens for phones (port 8765); its On/Off is the one in its
+         own pane. The household's choice on the TV wins over these. A pushed config.json can set them too, as
+         "features": {"tmdb": true, "notes": false, ...}. Phone notes needs TMDB account. -->
     <bool name="feature_tmdb">true</bool>
-    <bool name="feature_notes">true</bool>
+    <bool name="feature_notes">false</bool>
     <bool name="feature_prices">true</bool>
     <bool name="feature_weather">true</bool>
 
@@ -270,13 +270,10 @@
     <string name="tmdb_seen_list" translatable="false">Seen</string>
     <bool name="create_seen_list">true</bool>
 
-    <!-- Phone notes (docs/phone-notes.md; docs/rework.md, Phone notes, 2026-10-31): while on, the TV listens on the
-         home network (port 8765, POST /notes with the pairing code from Launcher settings → Phone notes) for a
-         watch-list note a phone's "Send to TV" shortcut shares, and adds its new lines to the signed-in TMDB
-         account's list of that name (a private one is made if there is none). This is only the default: the On / Off
-         switch in Launcher settings saves the household's choice, which wins. Off by default; a pushed config.json
-         can set "note_inbox": true. -->
-    <bool name="note_inbox">false</bool>
+    <!-- Phone notes (docs/phone-notes.md; docs/rework.md, Phone notes, 2026-10-31) is switched by feature_notes above:
+         while on, the TV listens on the home network (port 8765, POST /notes with the pairing code from Launcher
+         settings → Phone notes) for a watch-list note a phone's "Send to TV" shortcut shares, and adds its new lines to
+         the signed-in TMDB account's list of that name (a private one is made if there is none). -->
     <!-- The household's shared "Send to TV" shortcut, as an iCloud link (https://www.icloud.com/shortcuts/…; anything
          else is ignored). When set, the page the pane's QR opens has a "Get the shortcut" button beside "Pair this
          phone"; empty, phones build the shortcut by hand (docs/phone-notes.md). Usually set per household in
