@@ -20,6 +20,7 @@ import { themePane } from './panes/theme';
 import { weatherPane } from './panes/weather';
 import { keys } from '../core/keys';
 import { keysPane } from './panes/keys';
+import { updates } from '../core/updates';
 
 /** "All on" while every Performance choice draws and moves everything, "Default" for the usual start (all on but
  * Animated details, F25), "Light mode" at the lightest, else "Custom". */
@@ -86,7 +87,7 @@ const SECTIONS: Section[] = [
   { id: 'region', label: 'Region', icon: 'pin', value: () => ({ text: REGION_LABELS[settings.get().region] }) },
   { id: 'home', label: 'Default Home', icon: 'home', value: () => ({ text: 'On' }) },
   { id: 'tv', label: 'TV settings', icon: 'settings', value: () => ({ text: '' }) },
-  { id: 'about', label: 'About', icon: 'info', value: () => ({ text: '2.0.0' }) },
+  { id: 'about', label: 'About', icon: 'info', value: () => updates.value() },
 ];
 
 /**
@@ -155,7 +156,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     region: regionPane(),
     home: homePane(),
     tv: tvPane(),
-    about: aboutPane(),
+    about: aboutPane(host),
   };
 
   const rows = sections.map((sec) =>
@@ -289,6 +290,8 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     theme.on(() => rerender()),
     // Phone notes' sends and imports change the pane and its section value.
     notes.listen(() => rerender()),
+    // Family install step 5: an update's check, download and install show in About as they happen.
+    updates.on(() => rerender()),
     account.onTick(() => {
       const c = scroll.querySelector('[data-countdown]');
       if (c) c.textContent = account.countdown();

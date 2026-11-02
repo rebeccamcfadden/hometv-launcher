@@ -2896,8 +2896,28 @@
   gap: 12px;
 }
 
-/* ---- Phone notes: the import pill over every screen, and the Launcher settings pane ---- */
-.import-pill {
+/* Home's update notice: where the toast sits, clear of the import pill (bottom 56) below it. */
+.import-pill.update-notice {
+  bottom: 110px;
+}
+
+/* ---- About › Updates (Family install step 5): the status line and the check switch ---- */
+.about-updates {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 26px;
+}
+.about-update-line {
+  font-size: var(--t-small);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.about-update-line.is-warn {
+  color: var(--star);
+}
+
+/* ---- Phone notes: the import pill over every screen, and the Launcher settings pane ---- */.import-pill {
   position: absolute;
   /* Bottom centre, between the guide line's two ends, inside title-safe; the toast sits above it. */
   bottom: 56px;

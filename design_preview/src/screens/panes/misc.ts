@@ -16,6 +16,7 @@ import { button, segmented } from '../../ui/widgets';
 import { confirmDialog } from '../confirm';
 import { placeholder } from '../placeholder';
 import { paneHead, type Pane, type PaneHost } from './pane';
+import { CURRENT_VERSION, NEW_VERSION, updates } from '../../core/updates';
 
 const entry = (el: HTMLElement) => ((el.dataset.entry = ''), el);
 
@@ -190,35 +191,97 @@ export const tvPane = (): Pane => ({
   ],
 });
 
-export const aboutPane = (): Pane => ({
-  render: () => [
-    h('div.eyebrow', 'About'),
-    h('div.pane-title', 'HomeTV Launcher'),
-    h('div.kvs', h('div.kv', h('span', 'Version'), h('b', '2.0.0 (build 214)')), h('div.kv', h('span', 'Catalogue cached'), h('b', '1,240 titles · 86 MB'))),
-    h(
-      'div.tmdb',
-      // TMDB's official logo goes here, from their brand assets; a placeholder until it is added.
-      h('div.tmdb-logo', 'TMDB'),
-      h('div', h('div.tmdb-notice', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'), h('div.tmdb-note', 'Logo area: TMDB’s official logo, from their brand assets.')),
-    ),
-    h(
-      'div.pane-credits',
-      'Weather data by Open-Meteo.com (CC BY 4.0). Streaming availability from JustWatch via TMDB. Apple TV Store prices from Apple’s iTunes Search API.',
-    ),
-    h(
-      'div.pane-actions',
-      entry(button('Open-source licences', { key: 'licences', onOk: () => app.push(placeholder('Open-source licences', 'The licences of the libraries the launcher uses.')) })),
-      button('Clear cache', {
-        key: 'clear-cache',
-        onOk: () =>
-          app.push(
-            confirmDialog({
-              title: 'Clear the cache?',
-              body: 'Artwork, the catalogue and prices are fetched again. Your lists and settings stay.',
-              actions: [{ label: 'Clear cache', primary: true, onOk: () => app.toast('Cache cleared') }],
-            }),
-          ),
-      }),
-    ),
-  ],
+/**
+ * Launcher settings › About. Updates (Family install step 5, the project lead's Q4 a, 2026-11-01): only a release build
+ * (tools/release.ps1) checks GitHub once a day while Home shows; a line says where that stands, Install update downloads
+ * the APK only then (the project lead, 2026-11-02) and hands it to Android's own prompt, and the check can be switched
+ * off (it starts on). A build from a computer says so and has no check.
+ */
+export const aboutPane = (host: PaneHost): Pane => ({
+  render: () => {
+    const u = updates.get();
+    const release = u.state !== 'own';
+    const waiting = updates.waiting();
+    const install = () => {
+      if (u.state === 'nogrant') {
+        app.push(
+          confirmDialog({
+            title: 'Install unknown apps',
+            body: 'Android’s own screen for HomeTV Launcher. Switch “Allow from this source” on, then press Back: the update installs from About.',
+            actions: [{ label: 'Allow from this source', primary: true, onOk: () => updates.granted() }],
+          }),
+        );
+        return;
+      }
+      updates.download(() =>
+        app.push(
+        confirmDialog({
+          title: 'HomeTV Launcher',
+          body: 'Android asks: Do you want to install an update to this existing app? Your existing data will not be lost.',
+          actions: [
+            {
+              label: 'Install',
+              primary: true,
+              onOk: () => {
+                app.toast(`Updated to ${NEW_VERSION}`);
+                updates.installed();
+              },
+            },
+          ],
+        }),
+        ),
+      );
+    };
+    return [
+      h('div.eyebrow', 'About'),
+      h('div.pane-title', 'HomeTV Launcher'),
+      h('div.kvs', h('div.kv', h('span', 'Version'), h('b', `${CURRENT_VERSION} (build 8)`)), h('div.kv', h('span', 'Catalogue cached'), h('b', '1,240 titles · 86 MB'))),
+      h(
+        'div.about-updates',
+        h('div.perf-title', 'Updates'),
+        h(`div.about-update-line${u.check && (u.state === 'nogrant' || u.state === 'noscreen') ? '.is-warn' : ''}`, updates.line()),
+        release
+          ? perfRow(
+              'Check for updates',
+              'Once a day while Home shows, from the HomeTV Launcher releases on GitHub. Nothing else is sent.',
+              onOff('update-check', () => u.check, (on) => {
+                updates.setCheck(on);
+                host.rerender();
+              }),
+            )
+          : null,
+      ),
+      h(
+        'div.tmdb',
+        // TMDB's official logo goes here, from their brand assets; a placeholder until it is added.
+        h('div.tmdb-logo', 'TMDB'),
+        h('div', h('div.tmdb-notice', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'), h('div.tmdb-note', 'Logo area: TMDB’s official logo, from their brand assets.')),
+      ),
+      h(
+        'div.pane-credits',
+        'Weather data by Open-Meteo.com (CC BY 4.0). Streaming availability from JustWatch via TMDB. Apple TV Store prices from Apple’s iTunes Search API.',
+      ),
+      h(
+        'div.pane-actions',
+        waiting && u.state !== 'noscreen' ? entry(button('Install update', { key: 'update-install', icon: 'sync', onOk: install })) : null,
+        release && u.check && (u.state === 'current' || u.state === 'failed')
+          ? button('Check now', { key: 'update-check-now', onOk: () => updates.checkNow() })
+          : null,
+        ((b: HTMLElement) => (waiting && u.state !== 'noscreen' ? b : entry(b)))(
+          button('Open-source licences', { key: 'licences', onOk: () => app.push(placeholder('Open-source licences', 'The licences of the libraries the launcher uses.')) }),
+        ),
+        button('Clear cache', {
+          key: 'clear-cache',
+          onOk: () =>
+            app.push(
+              confirmDialog({
+                title: 'Clear the cache?',
+                body: 'Artwork, the catalogue and prices are fetched again. Your lists and settings stay.',
+                actions: [{ label: 'Clear cache', primary: true, onOk: () => app.toast('Cache cleared') }],
+              }),
+            ),
+        }),
+      ),
+    ];
+  },
 });
