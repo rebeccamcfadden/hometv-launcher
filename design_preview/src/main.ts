@@ -25,6 +25,8 @@ import { titleMenu } from './screens/titleMenu';
 import { notes } from './core/notes';
 import { keys, KEYS_PRESETS, type KeysPreset } from './core/keys';
 import { importPill } from './ui/importPill';
+import { updateNotice } from './ui/updateNotice';
+import { updates, UPDATE_STATES, type UpdateState } from './core/updates';
 
 // Launcher settings' Motion: the stage drops slides and scale-ups (Reduced) or every animation (Off).
 const stage = document.getElementById('stage')!;
@@ -55,6 +57,7 @@ app.init(stage, {
   search: searchScreen,
 });
 app.overlay(importPill());
+app.overlay(updateNotice());
 // Holding OK on a title card, wherever one shows, opens the title menu (F3).
 app.longOk = titleMenu;
 // ?notes=on starts with Launcher settings › Phone notes switched on.
@@ -105,6 +108,18 @@ keysSelect.addEventListener('change', () => {
 });
 const startKeys = params.get('keys') as KeysPreset | null;
 if (startKeys && KEYS_PRESETS.some(([id]) => id === startKeys)) keys.devSet(startKeys);
+
+// Family install step 5: where an in-app update stands (About's line and Home's notice); ?update=<state>.
+const updateSelect = document.getElementById('update') as HTMLSelectElement;
+updateSelect.append(new Option('Update: as it is', ''));
+for (const [id, label] of UPDATE_STATES) updateSelect.append(new Option(`Update: ${label}`, id));
+updateSelect.addEventListener('change', () => {
+  if (updateSelect.value) updates.devSet(updateSelect.value as UpdateState);
+  updateSelect.value = '';
+  updateSelect.blur();
+});
+const startUpdate = params.get('update') as UpdateState | null;
+if (startUpdate && UPDATE_STATES.some(([id]) => id === startUpdate)) updates.devSet(startUpdate);
 
 // Themes, beside them: switch the theme, and put the preview on a date in each Seasonal period.
 const themeSelect = document.getElementById('theme') as HTMLSelectElement;
@@ -184,10 +199,10 @@ const jumps: [string, string, () => void][] = [
       app.push(launcherSettings());
     },
   ],
-  ...(['account', 'notes', 'services', 'stores', 'keys', 'weather', 'apps', 'theme', 'performance', 'features', 'region'] as const).map(
+  ...(['account', 'notes', 'services', 'stores', 'keys', 'weather', 'apps', 'theme', 'performance', 'features', 'region', 'about'] as const).map(
     (id): [string, string, () => void] => [
       `settings-${id}`,
-      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', keys: 'API keys', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features', region: 'Region' }[id]}`,
+      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', keys: 'API keys', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features', region: 'Region', about: 'About (updates)' }[id]}`,
       () => {
         app.goTab('home');
         app.push(launcherSettings(id, { enter: true }));
