@@ -1,4 +1,5 @@
-"""F8: the launcher's package was renamed (com.gathin.tvhome -> com.hometv.launcher) and the old one stays installed,
+"""F8 and F11b: the launcher's package was renamed (com.gathin.tvhome -> com.rmcfad.tv -> com.hometv.launcher), and
+an old one stays installed,
 disabled, on a TV that ran it. The tools still know it as this project's launcher:
 
 - restore: a record taken while either name owned Home restores Home to the stock launcher, as it always has for this
@@ -54,6 +55,11 @@ class RestoreKnowsTheOldNameTest(unittest.TestCase):
         self.assertIn(STOCK, cmd)
 
     def test_the_renamed_launcher_hands_home_back_to_the_stock_launcher(self):
+        cmd = self.home_command(self.restore_with_home("com.rmcfad.tv/.MainActivity"))
+        self.assertNotIn("com.rmcfad.tv", cmd)
+        self.assertIn("resolve-activity", cmd)
+
+    def test_the_launcher_now_hands_home_back_to_the_stock_launcher(self):
         cmd = self.home_command(self.restore_with_home("com.hometv.launcher/.MainActivity"))
         self.assertNotIn("com.hometv.launcher", cmd)
         self.assertIn("resolve-activity", cmd)
@@ -68,7 +74,13 @@ class CheckKnowsTheOldNameTest(unittest.TestCase):
         self.assertEqual(check.expected_launcher({STOCK, "com.gathin.tvhome"}), "com.gathin.tvhome")
 
     def test_the_new_name_wins_once_both_are_installed(self):
-        self.assertEqual(check.expected_launcher({STOCK, "com.gathin.tvhome", "com.hometv.launcher"}), "com.hometv.launcher")
+        self.assertEqual(check.expected_launcher({STOCK, "com.gathin.tvhome", "com.rmcfad.tv"}), "com.rmcfad.tv")
+
+    def test_a_tv_still_on_the_name_before_f11b_expects_it_on_home(self):
+        self.assertEqual(check.expected_launcher({STOCK, "com.rmcfad.tv"}), "com.rmcfad.tv")
+
+    def test_the_newest_name_wins_once_installed(self):
+        self.assertEqual(check.expected_launcher({STOCK, "com.gathin.tvhome", "com.rmcfad.tv", "com.hometv.launcher"}), "com.hometv.launcher")
 
     def test_no_launcher_of_ours_expects_none(self):
         self.assertIsNone(check.expected_launcher({STOCK}))
@@ -85,7 +97,11 @@ class CheckKnowsTheOldNameTest(unittest.TestCase):
                          "com.gathin.tvhome/.MainActivity")
 
     def test_fix_prefers_the_new_name_over_the_old(self):
-        self.assertEqual(self.launcher_to_use(["com.gathin.tvhome/.MainActivity", "com.hometv.launcher/.MainActivity",
+        self.assertEqual(self.launcher_to_use(["com.gathin.tvhome/.MainActivity", "com.rmcfad.tv/.MainActivity",
+                                               f"{STOCK}/.MainActivity"]), "com.rmcfad.tv/.MainActivity")
+
+    def test_fix_prefers_the_newest_name(self):
+        self.assertEqual(self.launcher_to_use(["com.rmcfad.tv/.MainActivity", "com.hometv.launcher/.MainActivity",
                                                f"{STOCK}/.MainActivity"]), "com.hometv.launcher/.MainActivity")
 
 

@@ -39,10 +39,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Gradle build failed' }
 $py = '..\tools\venv\Scripts\python.exe'
 # Which app owns Home differs by build; ask the TV, but only accept a launcher we recognise (the answer
 # can also be Android's chooser "android", the setup wizard, or another third-party launcher).
-# com.gathin.tvhome is this launcher before its rename (F8), replaced like a stock launcher by the same steps: the new
+# com.gathin.tvhome and com.rmcfad.tv are this launcher before its renames (F8, F11b), replaced like a stock launcher by the same steps: the new
 # launcher must start first; then the old one is disabled (not removed), Home is set and checked, and if Home is not on
 # the new launcher the old one is enabled again and given Home back.
-$knownStock = @('com.google.android.tvlauncher', 'com.google.android.apps.tv.launcherx', 'com.google.android.leanbacklauncher', 'com.mitv.tvhome', 'com.gathin.tvhome')
+$knownStock = @('com.google.android.tvlauncher', 'com.google.android.apps.tv.launcherx', 'com.google.android.leanbacklauncher', 'com.mitv.tvhome', 'com.gathin.tvhome', 'com.rmcfad.tv')
 if (-not $StockLauncher) {
     $homePkg = & $py -I ..\tools\tv.py 'cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME' | Select-Object -Last 1
     if ($LASTEXITCODE -ne 0 -or -not $homePkg) { throw 'could not ask the TV which launcher owns Home; check -TvHost and the debugging prompt, or pass -StockLauncher <package>' }

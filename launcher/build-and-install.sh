@@ -56,10 +56,10 @@ export PATH="$JAVA_HOME/bin:$PATH"
 # Only a launcher we recognise is accepted: the answer can also be Android's chooser ("android"),
 # the setup wizard, or another third-party launcher, none of which should be disabled by accident.
 # Pass STOCK_LAUNCHER=<package> to name it yourself, or STOCK_LAUNCHER=none to disable nothing.
-# com.gathin.tvhome is this launcher before its rename (F8), replaced like a stock launcher by the same steps: the new
+# com.gathin.tvhome and com.rmcfad.tv are this launcher before its renames (F8, F11b), replaced like a stock launcher by the same steps: the new
 # launcher must start first; then the old one is disabled (not removed), Home is set and checked, and if Home is not on
 # the new launcher the old one is enabled again and given Home back.
-KNOWN_STOCK_LAUNCHERS="com.google.android.tvlauncher com.google.android.apps.tv.launcherx com.google.android.leanbacklauncher com.mitv.tvhome com.gathin.tvhome"
+KNOWN_STOCK_LAUNCHERS="com.google.android.tvlauncher com.google.android.apps.tv.launcherx com.google.android.leanbacklauncher com.mitv.tvhome com.gathin.tvhome com.rmcfad.tv"
 if [ -z "${STOCK_LAUNCHER:-}" ]; then
   HOME_PKG=$("$PY" -I ../tools/tv.py 'cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME' \
     | tail -n 1 | tr -d '\r' | cut -d/ -f1) || {

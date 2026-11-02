@@ -671,7 +671,7 @@ build machine's debug key, and speaks ADB on port 5555 with no pairing (`tools/t
 
 In order, one PR each:
 
-0. **Package rename** to `com.hometv.launcher` (the project lead's feedback list). Before anyone else installs: a rename
+0. **Package rename** to `com.rmcfad.tv` (F8; the project lead's feedback list), then `com.hometv.launcher` (F11b). Before anyone else installs: a rename
    later is a new app, and their lists, ticks and sign-in stay behind in the old one.
 1. **Settings at run time.** A `household.json` pushed over ADB into the launcher's files folder, as `tools/theme.sh`
    pushes `config.json`: the TMDB token, the Watchmode and Movie of the Night keys, the region, this TV's share of

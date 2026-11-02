@@ -103,7 +103,7 @@ def expected_launcher(installed, preferred=None):
     """
     if preferred:
         return preferred if preferred in installed else None
-    # This launcher, or the same one under its name before F8 on a TV not reinstalled since.
+    # This launcher, or the same one under a name before F11b or F8 on a TV not reinstalled since.
     for name in (recovery.CUSTOM_LAUNCHER, *recovery.OLD_CUSTOM_LAUNCHERS):
         if name in installed:
             return name

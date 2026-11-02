@@ -31,8 +31,8 @@ SETTINGS = ("window_animation_scale", "transition_animation_scale", "animator_du
 # This project's own launcher. When it already owned Home before debloating, restoring Home to it
 # would leave the stock launcher off, so restore goes back to the stock one instead.
 CUSTOM_LAUNCHER = "com.hometv.launcher"
-# The same launcher before its rename (F8); a record that names it as Home is treated the same way.
-OLD_CUSTOM_LAUNCHERS = ("com.gathin.tvhome",)
+# The same launcher before its renames (F11b, F8), newest first; a record that names one as Home is treated the same way.
+OLD_CUSTOM_LAUNCHERS = ("com.rmcfad.tv", "com.gathin.tvhome")
 VERSION = 1
 # Core Android packages no list may disable: with one of these off, Android itself can stop booting
 # (#884: an original Mi TV Stick that lost its permission controller, package installer, ext services,
