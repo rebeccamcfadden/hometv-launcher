@@ -51,6 +51,7 @@ final class FolderTile extends LinearLayout {
                 mini.setPadding(Ui.px(6), 0, Ui.px(6), 0);
                 mini.setBackground(Ui.round(Ui.SURFACE_2, Ui.RADIUS_S));
                 if (i < names.size()) mini.setText(names.get(i));
+                else mini.setVisibility(INVISIBLE);
                 LayoutParams mlp = new LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
                 if (c > 0) mlp.leftMargin = gap;
                 row.addView(mini, mlp);
