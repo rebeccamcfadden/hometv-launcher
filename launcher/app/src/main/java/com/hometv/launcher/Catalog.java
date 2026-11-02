@@ -24,6 +24,17 @@ interface Catalog {
     /** Every title known now, in the catalogue's order. */
     List<Title> all();
 
+    /**
+     * The titles Search matches on its own, before and beside what TMDB finds (F15 P2-1): the household's, in the
+     * catalogue's order. The same list object until one of them changes. The mock catalogue's are all of them.
+     */
+    default List<Title> local() {
+        return all();
+    }
+
+    /** Every title id the household keeps: never forgotten, and what {@link #local} holds. */
+    default void keep(Collection<String> ids) {}
+
     /** The title with this id, or null. */
     Title get(String id);
 

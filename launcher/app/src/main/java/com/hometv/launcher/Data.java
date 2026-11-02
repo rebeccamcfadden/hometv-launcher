@@ -30,6 +30,7 @@ final class Data {
         this.accounts = accounts;
         this.region = region;
         wantHousehold = () -> {
+            catalog.keep(household.titleIds());
             catalog.want(household.titleIds());
             catalog.keepPriced(household.listedIds());
         };

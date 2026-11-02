@@ -31,7 +31,8 @@ import java.util.function.Consumer;
  * The real catalogue, from TMDB (BACKLOG.md, Real catalogue; {@link Catalog} says how it answers). It starts from
  * the mock catalogue's titles on TMDB ({@link MockIds}), as stubs with a name and a year, and fills them in from the
  * disk cache or the network a couple of seconds after Home is up, never on the main thread and never holding Home
- * up. Titles met on the way (search hits, recommendations, a person's titles) join what it knows. A detailed title's
+ * up. Titles met on the way (search hits, recommendations, a person's titles) join what it knows, up to a few hundred
+ * beyond the household's ({@link CatalogBound}). A detailed title's
  * offers are where TMDB says it can be watched in the TV's {@link Region}, with the prices {@link PriceBook} finds on
  * demand merged in ({@link OfferMerge}); the imported watchlists stay mock ({@link MockOverlay}).
  *
@@ -55,6 +56,13 @@ final class TmdbCatalog implements Catalog {
 
     private final LinkedHashMap<String, Title> known = new LinkedHashMap<>();
     private List<Title> snapshot;
+    /** F15 P2-1: the household's titles and the starting stubs, never forgotten; {@link #local} lists them. */
+    private final Set<String> kept = new HashSet<>();
+    private final Set<String> stubs = new HashSet<>();
+    private List<Title> localSnapshot;
+    /** When each title was last stored or asked for, for {@link CatalogBound}: the least recently used go first. */
+    private final Map<String, Long> used = new HashMap<>();
+    private long useTick;
     private final Set<String> loading = new HashSet<>();
     private final Set<String> urgent = new HashSet<>();
     private final Map<String, Long> failedAt = new HashMap<>();
@@ -122,7 +130,9 @@ final class TmdbCatalog implements Catalog {
             Title.Draft d = new Title.Draft(e.id, TmdbApi.kindOf(e.id), e.name);
             d.year = e.year;
             known.put(e.id, overlay.apply(d.build()));
+            stubs.add(e.id);
         }
+        kept.addAll(stubs);
         Art.init(client);
         // The lists' details load once Home has drawn, so a cold start doesn't share the CPU with them.
         main.postDelayed(() -> {
@@ -144,8 +154,39 @@ final class TmdbCatalog implements Catalog {
     }
 
     @Override
+    public List<Title> local() {
+        if (localSnapshot == null) {
+            List<Title> out = new ArrayList<>();
+            for (Title t : known.values()) if (kept.contains(t.id)) out.add(t);
+            localSnapshot = Collections.unmodifiableList(out);
+        }
+        return localSnapshot;
+    }
+
+    @Override
+    public void keep(Collection<String> ids) {
+        Set<String> next = new HashSet<>(stubs);
+        next.addAll(ids);
+        if (next.equals(kept)) return;
+        kept.clear();
+        kept.addAll(next);
+        localSnapshot = null;
+    }
+
+    @Override
     public Title get(String id) {
-        return id == null ? null : known.get(id);
+        Title t = id == null ? null : known.get(id);
+        if (t != null) touch(id);
+        return t;
+    }
+
+    private void touch(String id) {
+        used.put(id, ++useTick);
+    }
+
+    /** A title's copy changed: the household's list is made again when it is one of theirs. */
+    private void stored(String id) {
+        if (kept.contains(id)) localSnapshot = null;
     }
 
     @Override
@@ -218,6 +259,7 @@ final class TmdbCatalog implements Catalog {
 
     @Override
     public void details(Title t, Consumer<Title> done) {
+        touch(t.id);
         Title k = known.get(t.id);
         if (k == null) k = upsert(t);
         if (k.detailed) {
@@ -313,6 +355,7 @@ final class TmdbCatalog implements Catalog {
                 if (!replaced) return;
                 d.seasons = seasons;
                 known.put(id, d.build());
+                stored(id);
                 changed();
                 done.accept(known.get(id));
             });
@@ -424,6 +467,7 @@ final class TmdbCatalog implements Catalog {
         for (Map.Entry<String, Title> k : known.entrySet()) {
             if (k.getValue().detailed && availability.containsKey(k.getKey())) k.setValue(priced(k.getValue()));
         }
+        localSnapshot = null;
         changed();
     }
 
@@ -432,6 +476,7 @@ final class TmdbCatalog implements Catalog {
         Title k = known.get(id);
         if (k == null || !k.detailed) return;
         known.put(id, priced(k));
+        stored(id);
         changed();
     }
 
@@ -591,6 +636,8 @@ final class TmdbCatalog implements Catalog {
             keep = d.build();
         }
         known.put(keep.id, keep);
+        touch(keep.id);
+        stored(keep.id);
         changed();
         return keep;
     }
@@ -620,6 +667,7 @@ final class TmdbCatalog implements Catalog {
 
     private void notifyListeners() {
         notifyPosted = false;
+        trim();
         List<Runnable> live = new ArrayList<>();
         for (Iterator<WeakReference<Runnable>> it = listeners.iterator(); it.hasNext(); ) {
             Runnable l = it.next().get();
@@ -627,6 +675,30 @@ final class TmdbCatalog implements Catalog {
             else live.add(l);
         }
         for (Runnable l : live) l.run();
+    }
+
+    /**
+     * Forgets the least recently used titles beyond the household's (CatalogBound), with what is kept beside them.
+     * A screen showing one still has its copy; asked for again, it loads again (from the disk cache, usually).
+     */
+    private void trim() {
+        List<String> gone = CatalogBound.victims(known.keySet(), this::pinned, used, CatalogBound.SPARE,
+                CatalogBound.SLACK);
+        if (gone.isEmpty()) return;
+        for (String id : gone) {
+            known.remove(id);
+            used.remove(id);
+            savedAt.remove(id);
+            availability.remove(id);
+            priceSources.remove(id);
+            failedAt.remove(id);
+        }
+        snapshot = null;
+    }
+
+    private boolean pinned(String id) {
+        return kept.contains(id) || listed.contains(id) || loading.contains(id) || urgent.contains(id)
+                || waiting.containsKey(id);
     }
 
     private void run(int priority, Runnable r) {

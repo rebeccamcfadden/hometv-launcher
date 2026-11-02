@@ -16,9 +16,9 @@ import java.util.Set;
  *
  * <p>With the real catalogue, what TMDB found for the query ({@link Remote}) is merged in: its titles and people
  * first, in TMDB's order, each scored by the same fuzzy rule (or, when the name doesn't match the letters typed, a
- * little below a one-typo match), then everything the TV already knows that matches, so "arival" still finds
- * Arrival offline. A genre typed in full ("drama") lists that genre's titles: those known here, then TMDB's most
- * popular ones. Pure Java, unit-tested on the JVM (SearchIndexTest).
+ * little below a one-typo match), then the household's titles that match ({@link Catalog#local}), so "arival"
+ * still finds Arrival offline when it is theirs. A genre typed in full ("drama") lists that genre's titles: the
+ * household's, then TMDB's most popular ones. Pure Java, unit-tested on the JVM (SearchIndexTest).
  */
 final class SearchIndex {
 
@@ -116,7 +116,7 @@ final class SearchIndex {
     private static final Fuzzy.Match NO_MATCH = new Fuzzy.Match(0, new int[0]);
 
     private final Catalog catalog;
-    /** The catalogue's titles the people were gathered from; gathered again when the catalogue has changed. */
+    /** The titles the people were gathered from (Catalog.local); gathered again when that list has changed. */
     private List<Title> indexed;
     /** Everyone in a title's cast or crew, in the order the catalogue first names them, with their titles. */
     private final Map<String, List<Title>> people = new LinkedHashMap<>();
@@ -128,7 +128,7 @@ final class SearchIndex {
     }
 
     private void index() {
-        List<Title> all = catalog.all();
+        List<Title> all = catalog.local();
         if (all == indexed) return;
         indexed = all;
         people.clear();
@@ -158,7 +158,7 @@ final class SearchIndex {
     /** Titles whose genres include genre, in catalogue order. */
     List<Title> titlesInGenre(String genre) {
         List<Title> out = new ArrayList<>();
-        for (Title t : catalog.all()) if (t.genres.contains(genre)) out.add(t);
+        for (Title t : catalog.local()) if (t.genres.contains(genre)) out.add(t);
         return out;
     }
 
@@ -166,14 +166,14 @@ final class SearchIndex {
         return search(query, null);
     }
 
-    /** The query's matches over what the catalogue knows, with what the network found for it merged in. */
+    /** The query's matches over the household's titles, with what the network found for it merged in. */
     Results search(String query, Remote remote) {
         index();
         Map<String, Hit> titleHits = new LinkedHashMap<>();
         if (remote != null && remote.found != null) {
             for (Title t : remote.found.titles) titleHits.put(t.id, titleHit(query, latest(t), REMOTE_SCORE));
         }
-        for (Title t : catalog.all()) {
+        for (Title t : catalog.local()) {
             if (titleHits.containsKey(t.id)) continue;
             Fuzzy.Match m = Fuzzy.match(query, t.name);
             if (m != null) titleHits.put(t.id, new Hit(HitKind.TITLE, t.name, m, t, null));
