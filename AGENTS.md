@@ -185,6 +185,5 @@ Never do these in a PR:
 
 ## Where to ask
 
-Questions go to [GitHub Discussions](https://github.com/Gathin23/cleanyourtv/discussions); bugs, TV lists and
-ideas that need a launcher change or a new dependency go to an issue first, with the templates in
-`.github/ISSUE_TEMPLATE/`.
+This repository has no Discussions: questions, bugs, TV lists and ideas that need a launcher change go to an issue,
+with the templates in `.github/ISSUE_TEMPLATE/` (a blank issue for a question).

@@ -17,8 +17,8 @@ to a tweet. Keep it like that.
 
 ## Not accepted
 
-- Insults, harassment, slurs, sexualised language or imagery, or personal attacks, in issues,
-  pull requests or Discussions.
+- Insults, harassment, slurs, sexualised language or imagery, or personal attacks, in issues or
+  pull requests.
 - Publishing other people's private information: device identifiers, Wi-Fi names, IP addresses,
   ADB keys or anything that could identify a TV or a home.
 - Lists or instructions that uninstall, root, or intentionally damage a TV, or that target a

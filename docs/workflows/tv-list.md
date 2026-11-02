@@ -25,8 +25,8 @@
    `tv` and `os` fill the folder's row in both TV tables, `brand` the brand line (spelled as it is there),
    `notes` the Notes cell in `examples/README.md`: one line of Markdown, links relative to `examples/`, `\|`
    for a pipe. `tests/test_examples.py` checks the file.
-5. Change nothing outside the folder. The tables in `README.md` and `examples/README.md`, the brand line and the
-   counts (the `TV models` number in the card's alt text) are generated from every `tv.json` by
+5. Change nothing outside the folder. The tables in `docs/supported-tvs.md` and `examples/README.md`, the brand line
+   and the counts (the "N TV models · B brands" line in `docs/supported-tvs.md`) are generated from every `tv.json` by
    `tools/gen_tables.py`, which a maintainer runs after merging; CI compares them only on `main`.
 6. A `README.md` for TV-specific notes and a `config.json` with the dock are welcome in the folder. Do not add
    install or restore scripts, Private DNS or AdGuard setup, or `pm uninstall` steps: the folder only
