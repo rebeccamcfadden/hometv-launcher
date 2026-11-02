@@ -123,9 +123,6 @@ before any scripted check.
   Also PSS after visiting every page, with artwork loaded (M1: 11 MB).
 - `tools/tv.py --screenshot shots/<screen>.png` for each screen, a different file each time (for example `shots/home.png`, `shots/movies.png`), to replace the prototype images in README.md. Blur or crop names,
   cities and Wi-Fi names first.
-- A photo of the new Home on the TV, to replace `docs/new-home.jpg` (the README card's "after", which still shows
-  the old Home). Then redraw the card with `tools/readme_card.py Fredoka.ttf docs/card.jpg`, after adjusting its
-  crop and its blur box for the Wi-Fi name to the new photo.
 
 **After:** close ADB as AGENTS.md requires: USB and network debugging off, authorisations revoked, a reboot, then `tools/adb-closed.py <tv ip>` must report the port closed. Record the results and any new decisions here.
 

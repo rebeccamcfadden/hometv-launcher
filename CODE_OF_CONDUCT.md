@@ -12,13 +12,13 @@ to a tweet. Keep it like that.
 - Say what you tested on. Specifics ("Android TV 11, build RTT1, Hisense A4") help; verdicts
   ("doesn't work") do not.
 - Respect the maintainers' decisions on scope. The launcher stays small, offline and without
-  prebuilt binaries; if your idea does not fit, a fork with a SHOWCASE row is a good outcome, not a
+  prebuilt binaries; if your idea does not fit, a fork in your own repository is a good outcome, not a
   rejection of you.
 
 ## Not accepted
 
-- Insults, harassment, slurs, sexualised language or imagery, or personal attacks, in issues,
-  pull requests, Discussions or the showcase.
+- Insults, harassment, slurs, sexualised language or imagery, or personal attacks, in issues or
+  pull requests.
 - Publishing other people's private information: device identifiers, Wi-Fi names, IP addresses,
   ADB keys or anything that could identify a TV or a home.
 - Lists or instructions that uninstall, root, or intentionally damage a TV, or that target a

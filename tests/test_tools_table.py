@@ -6,10 +6,8 @@ that AGENTS.md and tools/trace.md already send contributors to for key latency, 
 numbers, and tools/adb-closed.py, which the closing step in the README quoted inline and nowhere
 else. Nobody notices a missing row, so this test reads the table the way a reader does.
 
-Two kinds of file are not expected in the table, and neither is a judgement call about the tool:
+One file is not expected in the table, and that is not a judgement call about the tool:
 
-  * README_STATS, README_FEATURED and README_CARD draw the README's card image in CI, not something
-    a reader runs; the card's alt text is what points at them.
   * GEN_TABLES writes the README's TV tables and brand line after a merge, a maintainer's step; the
     markers around those tables name it, and so does CONTRIBUTING.md.
 
@@ -29,11 +27,8 @@ README = ROOT / "docs" / "tools.md"
 TABLE_HEADER = "| Tool | What it does |"
 TOOL_PATH = re.compile(r"tools/([\w.-]+\.(?:py|sh|ps1))")
 
-README_STATS = "readme_stats.py"        # the three that draw docs/card.jpg
-README_FEATURED = "readme_featured.py"
-README_CARD = "readme_card.py"
 GEN_TABLES = "gen_tables.py"            # the TV tables, from examples/*/tv.json
-NOT_IN_TABLE = {README_STATS, README_FEATURED, README_CARD, GEN_TABLES}
+NOT_IN_TABLE = {GEN_TABLES}
 
 
 def table_rows(text):
@@ -134,8 +129,8 @@ class CheckerTest(unittest.TestCase):
         self.assertEqual(unlisted({"disable.ps1"}, listed(self.rows)), [])
         self.assertEqual(unlisted({"theme.ps1"}, listed(self.rows)), ["theme.ps1"])
 
-    def test_a_card_renderer_or_the_table_writer_is_not_reported(self):
-        self.assertEqual(unlisted({README_CARD, GEN_TABLES}, listed(self.rows)), [])
+    def test_the_table_writer_is_not_reported(self):
+        self.assertEqual(unlisted({GEN_TABLES}, listed(self.rows)), [])
 
     def test_a_table_that_is_not_there_reads_as_empty(self):
         self.assertEqual(table_rows("## Tools\n\nNone yet.\n"), [])
