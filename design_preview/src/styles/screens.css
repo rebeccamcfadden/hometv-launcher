@@ -1878,29 +1878,16 @@
   background: var(--surface);
   border: var(--line-w) solid var(--line);
 }
-/* A placeholder for TMDB's official logo, in its colours, until the asset is added. */
+/* TMDB's approved logo (Primary short); 18 px tall, less prominent than the pane's title, as their terms ask. */
 .tmdb-logo {
   flex: none;
-  display: grid;
-  place-items: center;
-  width: 220px;
-  height: 80px;
-  border-radius: var(--radius-m);
-  background: #0d253f;
-  border: 1px dashed rgba(144, 206, 161, 0.5);
-  color: #90cea1;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  display: block;
+  height: 18px;
+  width: auto;
 }
 .tmdb-notice {
   font-size: var(--t-body);
   line-height: 1.5;
-}
-.tmdb-note {
-  margin-top: 6px;
-  font-size: var(--t-min);
-  color: var(--text-3);
 }
 .seg--small .seg-opt {
   height: 46px;

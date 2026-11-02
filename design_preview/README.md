@@ -685,7 +685,7 @@ picks another theme.
   Home app setting).
 - **TV settings:** a note and **Open TV settings**, Picture, Network, Apps.
 - **About:** "Clean your TV launcher", version and catalogue cache lines, the TMDB notice ("This product uses the
-  TMDB API but is not endorsed or certified by TMDB.") beside a placeholder for TMDB's logo, the Open-Meteo,
+  TMDB API but is not endorsed or certified by TMDB.") beside TMDB's approved logo (Primary short, 18 px tall), the Open-Meteo,
   JustWatch and Apple credits, and **Open-source licences** (a stub page) and **Clear cache** (asks first).
 - Choices are kept in `localStorage`; Reset state clears them.
 

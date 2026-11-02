@@ -1,5 +1,5 @@
 import { app, type Key } from '../../core/app';
-import { h } from '../../core/dom';
+import { h, imgUrl } from '../../core/dom';
 import {
   BACKDROP_LABELS,
   MOTION_LABELS,
@@ -253,9 +253,9 @@ export const aboutPane = (host: PaneHost): Pane => ({
       ),
       h(
         'div.tmdb',
-        // TMDB's official logo goes here, from their brand assets; a placeholder until it is added.
-        h('div.tmdb-logo', 'TMDB'),
-        h('div', h('div.tmdb-notice', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'), h('div.tmdb-note', 'Logo area: TMDB’s official logo, from their brand assets.')),
+        // TMDB's approved logo (Primary short), from themoviedb.org/about/logos-attribution, smaller than the title.
+        h('img.tmdb-logo', { src: imgUrl('tmdb-logo.svg'), alt: 'The Movie Database (TMDB)' }),
+        h('div.tmdb-notice', 'This product uses the TMDB API but is not endorsed or certified by TMDB.'),
       ),
       h(
         'div.pane-credits',

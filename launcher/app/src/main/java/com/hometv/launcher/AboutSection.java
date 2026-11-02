@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -45,12 +46,7 @@ final class AboutSection implements SettingsSection {
         SettingsKit.addWide(pane, kv(ctx, ctx.getString(R.string.about_version),
                 ctx.getString(R.string.about_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)), 18);
         if (!ApiKeys.get(ctx).key(KeyRules.Id.TMDB).isEmpty()) {
-            TextView tmdb = Ui.text(ctx, Ui.T_BODY, Ui.TEXT_1, Ui.REGULAR);
-            tmdb.setText(R.string.tmdb_notice);
-            tmdb.setLineSpacing(0f, 1.5f);
-            tmdb.setPadding(Ui.px(30), Ui.px(28), Ui.px(30), Ui.px(28));
-            tmdb.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W));
-            SettingsKit.addWide(pane, tmdb, 32);
+            SettingsKit.addWide(pane, tmdbBox(ctx), 32);
             StringBuilder prices = new StringBuilder(ctx.getString(R.string.prices_notice_justwatch))
                     .append('\n').append(ctx.getString(R.string.prices_notice_itunes));
             if (!PriceKeys.watchmode(ctx).isEmpty()) prices.append('\n').append(ctx.getString(R.string.prices_notice_watchmode));
@@ -72,6 +68,32 @@ final class AboutSection implements SettingsSection {
     @Override
     public View firstFocus() {
         return follow;
+    }
+
+    /**
+     * {@code .tmdb}: TMDB's approved logo (Primary short, R.drawable.tmdb_logo) beside their notice, in a framed box.
+     * Their terms ask for the logo to be less prominent than the app's own mark: it is 18 px tall, under the pane's
+     * 44 px title.
+     */
+    private static View tmdbBox(Context ctx) {
+        LinearLayout box = new LinearLayout(ctx);
+        box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setGravity(Gravity.CENTER_VERTICAL);
+        box.setPadding(Ui.px(30), Ui.px(28), Ui.px(30), Ui.px(28));
+        box.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W));
+        ImageView logo = new ImageView(ctx);
+        logo.setImageResource(R.drawable.tmdb_logo);
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        logo.setContentDescription(ctx.getString(R.string.tmdb_logo));
+        float h = 18;
+        box.addView(logo, new LinearLayout.LayoutParams(Ui.px(h * 273.42f / 35.52f), Ui.px(h)));
+        TextView notice = Ui.text(ctx, Ui.T_BODY, Ui.TEXT_1, Ui.REGULAR);
+        notice.setText(R.string.tmdb_notice);
+        notice.setLineSpacing(0f, 1.5f);
+        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        nlp.leftMargin = Ui.px(30);
+        box.addView(notice, nlp);
+        return box;
     }
 
     /** {@code .kv}: a name and its value across the pane, over a line (22 px). */
