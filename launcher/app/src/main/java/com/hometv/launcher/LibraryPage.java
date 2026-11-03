@@ -56,12 +56,12 @@ final class LibraryPage extends Screen {
     // Sizes from screens.css (.page-scroll, .lib-*), in design px.
     private static final int SCROLL_TOP = 150;
     private static final int SCROLL_PAD = 70;
-    private static final int COLUMNS = 4;
+    private static final int COLUMNS = 6;
     /** Rows whose art binds as the grid is built, before it is laid out: what the first screen shows. */
-    private static final int FIRST_ART_ROWS = 3;
-    private static final int CARD_W = 417;
-    private static final int GAP_X = 20;
-    private static final int GAP_Y = 50;
+    private static final int FIRST_ART_ROWS = 2;
+    private static final int CARD_W = Kit.POSTER_W;
+    private static final int GAP_X = 24;
+    private static final int GAP_Y = 40;
     private static final int PAGE_END = 180;
 
     private final Context ctx;
@@ -106,7 +106,7 @@ final class LibraryPage extends Screen {
     private static final String KEY_WIFI = "wifi-settings";
     private static final String KEY_TRY = "try-again";
     private static final long TRYING_MS = 1200;
-    private static final int SKELETON_CARDS = 8;
+    private static final int SKELETON_CARDS = 12;
     /** The longest the skeletons hold the grid once some titles are in (a slow network): 8 seconds. */
     private static final long LOADING_MAX_MS = 8000;
     private long loadingSince;
@@ -763,8 +763,8 @@ final class LibraryPage extends Screen {
                 r.getString(R.string.library_lists_and), r.getQuantityString(R.plurals.library_lists_more, more));
     }
 
-    /** .lib-grid: four columns of 417 px, 20 apart, rows 50 apart. The first rows' art binds at once, the rest as
-     *  they come near the screen (updateArtWindow). */
+    /** .lib-grid--poster (F40): six poster cards of 268 px, 24 apart, rows 40 apart. The first rows' art binds at once,
+     *  the rest as they come near the screen (updateArtWindow). */
     private void buildGrid(List<Title> shown) {
         LinearLayout row = null;
         for (int i = 0; i < shown.size(); i++) {

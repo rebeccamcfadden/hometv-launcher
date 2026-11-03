@@ -10,7 +10,8 @@ import java.util.List;
  * {@link #seasons} is empty for movies; {@link #lists} is empty for a catalogue-only title (on no imported
  * watchlist); {@link #nextSeason} and {@link #nextEpisode} are the episode to watch next, 0 when there is none.
  * {@link #art} is the artwork: a TMDB backdrop path ("/abc.jpg") that {@link Art} loads, or the mock catalogue's
- * base name ("arrival"), which shows the placeholder.
+ * base name ("arrival"), which shows the placeholder. {@link #poster} is its TMDB poster path (F40: the Movies and
+ * TV Shows cards), or null.
  *
  * <p>From TMDB a title first arrives as a summary (a search hit, a recommendation): name, year, genres, score,
  * synopsis and art. {@link #detailed} says whether its details (runtime, rating, cast, seasons, trailer) are in;
@@ -28,6 +29,7 @@ final class Title {
     final double score;
     final String synopsis;
     final String art;
+    final String poster;
     final List<Offer> offers;
     final List<ListId> lists;
     final List<Person> cast;
@@ -51,6 +53,14 @@ final class Title {
           String synopsis, String art, List<Offer> offers, List<ListId> lists, List<Person> cast, List<Person> crew,
           List<Season> seasons, int nextSeason, int nextEpisode, boolean detailed, int episodeRuntime,
           String trailer) {
+        this(id, kind, name, year, genres, runtime, rating, score, synopsis, art, null, offers, lists, cast, crew,
+                seasons, nextSeason, nextEpisode, detailed, episodeRuntime, trailer);
+    }
+
+    Title(String id, Kind kind, String name, int year, List<String> genres, int runtime, String rating, double score,
+          String synopsis, String art, String poster, List<Offer> offers, List<ListId> lists, List<Person> cast,
+          List<Person> crew, List<Season> seasons, int nextSeason, int nextEpisode, boolean detailed,
+          int episodeRuntime, String trailer) {
         this.id = id;
         this.kind = kind;
         this.name = name;
@@ -61,6 +71,7 @@ final class Title {
         this.score = score;
         this.synopsis = synopsis == null ? "" : synopsis;
         this.art = art;
+        this.poster = poster;
         this.offers = copy(offers);
         this.lists = copy(lists);
         this.cast = copy(cast);
@@ -115,6 +126,7 @@ final class Title {
         double score;
         String synopsis;
         String art;
+        String poster;
         List<Offer> offers;
         List<ListId> lists;
         List<Person> cast;
@@ -143,6 +155,7 @@ final class Title {
             score = t.score;
             synopsis = t.synopsis;
             art = t.art;
+            poster = t.poster;
             offers = t.offers;
             lists = t.lists;
             cast = t.cast;
@@ -156,8 +169,8 @@ final class Title {
         }
 
         Title build() {
-            return new Title(id, kind, name, year, genres, runtime, rating, score, synopsis, art, offers, lists, cast,
-                    crew, seasons, nextSeason, nextEpisode, detailed, episodeRuntime, trailer);
+            return new Title(id, kind, name, year, genres, runtime, rating, score, synopsis, art, poster, offers, lists,
+                    cast, crew, seasons, nextSeason, nextEpisode, detailed, episodeRuntime, trailer);
         }
     }
 }

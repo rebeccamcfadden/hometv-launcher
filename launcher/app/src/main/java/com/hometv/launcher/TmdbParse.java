@@ -47,6 +47,7 @@ final class TmdbParse {
         d.score = score(o);
         d.synopsis = o.optString("overview", "");
         d.art = path(o, "backdrop_path");
+        d.poster = path(o, "poster_path");
         d.detailed = false;
         return d.build();
     }
@@ -75,6 +76,7 @@ final class TmdbParse {
         d.score = score(o);
         d.synopsis = o.optString("overview", "");
         d.art = path(o, "backdrop_path");
+        d.poster = path(o, "poster_path");
         d.trailer = trailer(o.optJSONObject("videos"));
         JSONObject credits = o.optJSONObject("credits");
         d.cast = cast(credits);

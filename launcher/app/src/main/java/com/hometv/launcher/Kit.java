@@ -258,42 +258,32 @@ final class Kit {
 
     // ---- Cards ----------------------------------------------------------------------------------------------------
 
+    /** The Movies and TV Shows card's size (F40): a 2:3 poster, six across the 1728 px grid. */
+    static final int POSTER_W = 268, POSTER_H = 402;
+
     /**
-     * The library card from Movies and TV Shows ({@code .card--library}): 417 wide, art 172 tall with radius 16; the
-     * name (25 px, medium) with the provider and "Included" or a price right-aligned (18 px), from the household's
-     * services and stores only ({@link Data#cardOffer}; blank when none has it); the meta line and the
-     * provenance line. Focused: the 4 px accent ring on the art and the art scaled 1.03; the text stays as it is.
+     * The library card from Movies and TV Shows ({@code .card--poster}, F40, Rebecca 2026-11-02, Figma "Library cards
+     * (F40)" option A): the title's poster, 268 × 402 with radius 16 (its backdrop, cropped, when it has none); the
+     * name (22 px, medium); the service and "Included" or a price on one line ("Netflix · Included"), from the
+     * household's services and stores only ({@link Data#cardOffer}; just the availability when none has it); the meta
+     * line and the provenance line. Focused: the accent ring on the poster and the poster scaled 1.03; the text stays.
      */
     static View libraryCard(Context ctx, Title t, Data data, String group, String key, boolean isDefault,
                             View.OnClickListener onOk, boolean withArt) {
-        LinearLayout card = card(ctx, 417);
+        LinearLayout card = card(ctx, POSTER_W);
         RingFrame art = frame(ctx, Ui.RADIUS_L);
-        card.addView(art, new LinearLayout.LayoutParams(Ui.px(417), Ui.px(172)));
-
-        LinearLayout top = new LinearLayout(ctx);
-        top.setOrientation(LinearLayout.HORIZONTAL);
-        TextView name = Ui.line(ctx, 25, Ui.TEXT_1, Ui.MEDIUM);
-        name.setGravity(Gravity.TOP | Gravity.START);
-        top.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        LinearLayout provider = new LinearLayout(ctx);
-        provider.setOrientation(LinearLayout.VERTICAL);
-        provider.setGravity(Gravity.END);
-        TextView service = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_2, Ui.REGULAR);
-        provider.addView(service);
-        TextView avail = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
-        provider.addView(avail);
-        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        plp.leftMargin = Ui.px(12);
-        top.addView(provider, plp);
-        card.addView(top, below(10));
-
+        card.addView(art, new LinearLayout.LayoutParams(Ui.px(POSTER_W), Ui.px(POSTER_H)));
+        TextView name = Ui.line(ctx, 22, Ui.TEXT_1, Ui.MEDIUM);
+        name.setGravity(Gravity.START);
+        card.addView(name, below(12));
+        TextView service = textLine(ctx, "", Ui.TEXT_2);
+        card.addView(service, below(4));
         TextView meta = textLine(ctx, "", Ui.TEXT_2);
         card.addView(meta, below(4));
         TextView lists = textLine(ctx, "", Ui.TEXT_3);
         card.addView(lists, below(2));
         card.setTag(R.id.kit_provenance, lists);
-        LibraryParts parts = new LibraryParts((ImageView) art.content().getChildAt(0), name, service, avail, meta, lists);
+        LibraryParts parts = new LibraryParts((ImageView) art.content().getChildAt(0), name, service, meta, lists);
         card.setTag(R.id.kit_library_parts, parts);
         View v = focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name);
         fill(v, parts, t, data);
@@ -304,15 +294,14 @@ final class Kit {
     /** A library card's views, so the grid can show a title's new state on the card it has (rebindLibraryCard). */
     private static final class LibraryParts {
         final ImageView art;
-        final TextView name, service, avail, meta, lists;
+        final TextView name, service, meta, lists;
         /** The art is bound (libraryArt): the grid binds it only near the screen. */
         boolean artOn;
 
-        LibraryParts(ImageView art, TextView name, TextView service, TextView avail, TextView meta, TextView lists) {
+        LibraryParts(ImageView art, TextView name, TextView service, TextView meta, TextView lists) {
             this.art = art;
             this.name = name;
             this.service = service;
-            this.avail = avail;
             this.meta = meta;
             this.lists = lists;
         }
@@ -321,9 +310,9 @@ final class Kit {
     private static void fill(View card, LibraryParts p, Title t, Data data) {
         Offer o = data.cardOffer(t);
         p.name.setText(t.name);
-        p.service.setText(o == null ? "" : PriceCards.isPaid(o) ? data.table.storeName(o.service)
-                : data.table.name(o.service));
-        p.avail.setText(Offers.availability(o, data.services.subscribed()));
+        String where = o == null ? "" : PriceCards.isPaid(o) ? data.table.storeName(o.service) : data.table.name(o.service);
+        String avail = Offers.availability(o, data.services.subscribed());
+        p.service.setText(TitleText.serviceLine(where, avail));
         p.meta.setText(TitleText.meta(t));
         p.lists.setText(TitleText.provenance(t, data.household));
         card.setContentDescription(t.name);
@@ -332,27 +321,26 @@ final class Kit {
 
     /**
      * Shows t on a library card made for an earlier state of the same title (details, a price, a season arrived),
-     * without building it again; its art follows if it is bound, and is left alone when the picture is the same.
+     * without building it again; its poster follows if it is bound, and is left alone when the picture is the same.
      */
     static void rebindLibraryCard(View card, Title t, Data data) {
         Object tag = card.getTag(R.id.kit_library_parts);
         if (!(tag instanceof LibraryParts)) return;
         LibraryParts p = (LibraryParts) tag;
         fill(card, p, t, data);
-        if (p.artOn) Art.into(p.art, t.art, Ui.px(417), Ui.px(172));
+        if (p.artOn) Art.poster(p.art, t, Ui.px(POSTER_W), Ui.px(POSTER_H));
     }
 
-    /** Binds a library card's art (near the screen) or lets go of it (far off: the bitmap stays in Art's cache). */
+    /** Binds a library card's poster (near the screen) or lets go of it (far off: the bitmap stays in Art's cache). */
     static void libraryArt(View card, boolean on) {
         Object tag = card.getTag(R.id.kit_library_parts);
         Title t = titleOf(card);
         if (!(tag instanceof LibraryParts) || t == null || ((LibraryParts) tag).artOn == on) return;
         LibraryParts p = (LibraryParts) tag;
         p.artOn = on;
-        if (on) Art.into(p.art, t.art, Ui.px(417), Ui.px(172));
+        if (on) Art.poster(p.art, t, Ui.px(POSTER_W), Ui.px(POSTER_H));
         else Art.clear(p.art);
     }
-
     /**
      * The smaller card of Search and the title preview's rows ({@code .card--small}): 271 wide, art 152 with radius
      * 14, the name (22 px) or {@code nameOverride} (Search's highlighted match, see {@link #highlight}), "Movie · 2016"

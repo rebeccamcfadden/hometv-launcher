@@ -83,6 +83,15 @@ final class Art {
     }
 
     /**
+     * A title's poster (F40, the Movies and TV Shows cards), cropped to fill v; a title with no poster shows its backdrop,
+     * cropped to the poster's shape, and a mock title the placeholder.
+     */
+    static void poster(ImageView v, Title t, int widthPx, int heightPx) {
+        String url = TmdbApi.isImagePath(t.poster) ? TmdbApi.poster(t.poster, widthPx) : TmdbApi.backdrop(t.art, widthPx * 2);
+        bind(v, url, widthPx, heightPx, false);
+    }
+
+    /**
      * A person's portrait (a TMDB profile path), the same way, but transparent until it is ready (or for good), so
      * the initials under it show meanwhile.
      */
