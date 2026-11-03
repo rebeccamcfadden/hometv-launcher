@@ -312,6 +312,9 @@ try {
                 $file = Join-Path $list.FullName 'debloat.txt'
                 if (-not (Test-Path $file)) { continue }
                 [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file, "$($list.Name)/debloat.txt")
+                # That TV's config.json too: the installer takes its remote-button keys (step 4b), nothing else of it.
+                $config = Join-Path $list.FullName 'config.json'
+                if (Test-Path $config) { [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $config, "$($list.Name)/config.json") }
             }
         } finally { $zip.Dispose() }
     } finally { $zipStream.Dispose() }
