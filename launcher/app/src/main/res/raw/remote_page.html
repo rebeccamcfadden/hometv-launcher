@@ -1010,15 +1010,18 @@
       // once; the TV's answer is the truth: "Added" (with Undo) only once the TV says so, and a refusal puts the button
       // back and says why. Answers are counted per title, so a late one never undoes a later tap (or Undo).
       // A failure goes back to what the TV last confirmed for that title, not to the opposite of the last tap: two
-      // quick taps that both fail end where the TV is. Only the TV's answers move that value.
+      // quick taps that both fail end where the TV is. Only the TV's answers move that value, and an older tap's
+      // answer that comes after the latest one failed still puts the button right.
       var mylistSeq = {};
       var mylistInFlight = {}; // per title: requests not answered yet
       var mylistConfirmed = {}; // per title: { mine, seq } from the TV's newest answer, or what it showed before the tap
+      var mylistLatest = {}; // per title: { t, done } for the latest tap, done once its own request has ended
       function setMine(t, wanted) {
         var my = (mylistSeq[t.id] = (mylistSeq[t.id] || 0) + 1);
         // Nothing in flight: the button shows the TV's own value, so that is the last confirmed one.
         if (!mylistInFlight[t.id]) mylistConfirmed[t.id] = { mine: t.mine, seq: my - 1 };
         mylistInFlight[t.id] = (mylistInFlight[t.id] || 0) + 1;
+        mylistLatest[t.id] = { t: t, done: false };
         t.mine = wanted;
         update();
         paintResults();
@@ -1027,7 +1030,17 @@
           var answered = r.ok && r.data && typeof r.data.mine === 'boolean';
           // Any real answer is the TV's truth, even for an older tap; keep the newest one.
           if (answered && my > mylistConfirmed[t.id].seq) mylistConfirmed[t.id] = { mine: r.data.mine, seq: my };
-          if (mylistSeq[t.id] !== my) return; // a later tap on this title decides
+          var latest = mylistLatest[t.id];
+          if (mylistSeq[t.id] !== my) {
+            // A later tap on this title decides. If it has already ended without an answer, this one is the news.
+            if (latest.done && latest.t.mine !== mylistConfirmed[t.id].mine) {
+              latest.t.mine = mylistConfirmed[t.id].mine;
+              update();
+              paintResults();
+            }
+            return;
+          }
+          latest.done = true;
           if (answered) {
             var now = r.data.mine;
             t.mine = now;

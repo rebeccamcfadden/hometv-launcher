@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -591,23 +592,45 @@ final class PhoneRemote {
         return onMainOr(work, or, MAIN_WAIT_MS);
     }
 
-    /** Runs {@code work} on the main thread and waits for it, up to {@code waitMs}; {@code or} if it can't. */
+    /**
+     * Runs {@code work} on the main thread and waits for it, up to {@code waitMs}; {@code or} if it can't. Work that
+     * hasn't started when the wait ends never runs, so a caller told "no" (My list's 404) never sees it happen later.
+     */
     private <T> T onMainOr(Supplier<T> work, T or, long waitMs) {
         if (Looper.myLooper() == Looper.getMainLooper()) return work.get();
+        return runOrGiveUp(main::post, work, or, waitMs);
+    }
+
+    /** {@link #onMainOr}'s rule, for any {@code post}: work posted but not started when the wait ends never runs. */
+    static <T> T runOrGiveUp(java.util.function.Consumer<Runnable> post, Supplier<T> work, T or, long waitMs) {
         AtomicReference<T> out = new AtomicReference<>(or);
+        AtomicBoolean claimed = new AtomicBoolean();
         CountDownLatch done = new CountDownLatch(1);
-        main.post(() -> {
+        post.accept(() -> {
+            if (!claimed.compareAndSet(false, true)) return; // the caller gave up: don't run it late
             try {
                 out.set(work.get());
             } finally {
                 done.countDown();
             }
         });
+        boolean interrupted = false;
         try {
-            if (!done.await(waitMs, TimeUnit.MILLISECONDS)) return or;
+            if (done.await(waitMs, TimeUnit.MILLISECONDS)) return out.get();
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            interrupted = true;
         }
+        if (claimed.compareAndSet(false, true)) {
+            if (interrupted) Thread.currentThread().interrupt();
+            return or;
+        }
+        // It started just as the wait ended: it's running on the main thread now, so its answer is the truth.
+        try {
+            done.await();
+        } catch (InterruptedException e) {
+            interrupted = true;
+        }
+        if (interrupted) Thread.currentThread().interrupt();
         return out.get();
     }
 
