@@ -13,8 +13,8 @@ public class AppMarksTest {
         assertEquals("NETFLIX", m.text);
         assertEquals(800, m.weight);
         // HBO Max's old package too.
-        assertEquals("max", AppMarks.of("com.hbo.hbonow", "HBO Max").text);
-        assertEquals("max", AppMarks.of("com.wbd.stream", "Max").text);
+        assertEquals("HBO Max", AppMarks.of("com.hbo.hbonow", "HBO Max").text);
+        assertEquals("HBO Max", AppMarks.of("com.wbd.stream", "Max").text);
     }
 
     @Test
