@@ -117,12 +117,8 @@ gets a new port after a restart, so pass the current one with `-TvHost` and `-Ad
 | `-WorkDir` | Where downloads, backups and undo files go (`%USERPROFILE%\HomeTV`) |
 | `-AdbPath` | An `adb` already on the laptop, instead of the pinned download |
 | `-DownloadFrom` | A folder (a USB stick) with the release's APK, instead of GitHub; the APK is still checked |
-<<<<<<< HEAD
-| `-List` | A debloat list to apply after the handover (step 7 above) |
-| `-SwitchOffList` | Answer yes to the debloat's "Switch these off?" (its default is no) |
-=======
 | `-List` | A debloat list to apply after the handover (step 8 above) |
->>>>>>> fc95c916 (tools: the family installer allows the launcher's own updates (appops), reads it back, and -Restore undoes it (Family install step 5))
+| `-SwitchOffList` | Answer yes to the debloat's "Switch these off?" (its default is no) |
 | `-ListsFrom` | Testing, in the repository's copy only: a folder of lists (`examples`) to suggest from |
 | `-Restore` | Undo an install from its backup folder |
 | `-NoPrompt` | Every question takes its default, and the pauses are skipped |

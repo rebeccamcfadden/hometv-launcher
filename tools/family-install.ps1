@@ -656,6 +656,9 @@ function Invoke-Debloat([string[]]$Names) {
         $done += $off
         Say "Switched off: $($off -join ', ')"
     }
+    if ($done.Count -gt 0) {
+        Say 'Some TVs switch an app or two back on at every restart (TCL''s User Center does). That is the TV, not a fault: leave it on.'
+    }
     return $done
 }
 

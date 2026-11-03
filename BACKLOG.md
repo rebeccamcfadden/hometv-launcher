@@ -823,7 +823,7 @@ In order, one PR each:
    when its SHA-256 is `version.json`'s and its one signer is both the release certificate and the installed launcher's.
    Home shows one notice per version. A debug-key build can be pointed at a test feed with `-PupdateFeed` (https, or
    http to 127.0.0.1 or the emulator's 10.0.2.2; refused with a release key or a public release), which is how it was
-   checked on an emulator. Still to come: the installer's `appops` grant, and the TV check.
+   checked on an emulator. The installer grants `REQUEST_INSTALL_PACKAGES` with `appops`, reads it back and writes its undo (`tools/family-install.ps1`). Still to come: the TV check, once main's versionCode moves on for real (the project lead, 2026-11-02: nothing irreversible on her TV before then).
 6. **Debloat from a report.** A matching model doesn't make another household's choices theirs: a list can disable
    apps its owner didn't use (YouTube Music and the Assistant in `examples/jvc-android-tv-menlo`). So before
    applying a list for the model it read, the installer asks PROMPT.md's checklist question (streaming apps, the

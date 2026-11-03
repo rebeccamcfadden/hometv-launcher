@@ -588,6 +588,7 @@ class FamilyInstallTest(unittest.TestCase):
         undo = (self.backup_dir() / "undo.txt").read_text()
         for name in self.BLOAT:
             self.assertIn(f"undo pm enable --user 0 {name}", undo)
+        self.assertIn("switch an app or two back on at every restart", proc.stdout)
         # First run still opens last, after the debloat.
         self.assertIn("action.FIRST_RUN", end["shell"][-1])
 
