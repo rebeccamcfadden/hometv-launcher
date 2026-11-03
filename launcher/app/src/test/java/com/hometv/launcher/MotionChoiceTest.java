@@ -24,6 +24,14 @@ public class MotionChoiceTest {
     }
 
     @Test
+    public void reducedDropsTheFocusScaleUpAndOffJumpsToIt() {
+        assertEquals(1.05f, MotionChoice.FULL.focusScale(true, 1.05f), 0f);
+        assertEquals(1f, MotionChoice.REDUCED.focusScale(true, 1.05f), 0f);
+        assertEquals(1.05f, MotionChoice.OFF.focusScale(true, 1.05f), 0f);
+        for (MotionChoice m : MotionChoice.values()) assertEquals(1f, m.focusScale(false, 1.05f), 0f);
+    }
+
+    @Test
     public void systemAnimationsOffMeanMotionOff() {
         for (MotionChoice m : MotionChoice.values()) {
             assertEquals(MotionChoice.OFF, m.withSystem(true));

@@ -254,7 +254,7 @@ final class PickResultsPage extends Screen {
         tile.setContentDescription(t.name);
         tile.setOnFocusChangeListener((v, focused) -> {
             art.setRing(focused);
-            float s = focused ? 1.03f : 1f;
+            float s = Ui.focusScale(focused, 1.03f);
             art.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
         return Kit.titleCard(Focus.make(tile, GROUP_PICKS, "pk-" + i, i == 0, v -> router.openTitle(t)), t);

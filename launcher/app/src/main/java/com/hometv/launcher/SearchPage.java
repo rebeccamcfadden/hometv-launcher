@@ -1076,7 +1076,7 @@ final class SearchPage extends Screen {
         card.setContentDescription(hit.label);
         card.setOnFocusChangeListener((v, focused) -> {
             art.setRing(focused);
-            float s = focused ? 1.03f : 1f;
+            float s = Ui.focusScale(focused, 1.03f);
             art.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
         return Focus.make(card, GROUP_GRID, key, isDefault, v -> openPerson(hit.person));

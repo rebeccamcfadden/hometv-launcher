@@ -457,7 +457,7 @@ final class Kit {
         card.setContentDescription(description);
         card.setOnFocusChangeListener((v, focused) -> {
             ring.setRing(focused);
-            float s = focused ? scale : 1f;
+            float s = Ui.focusScale(focused, scale);
             ring.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
         return Focus.make(card, group, key, isDefault, onOk);

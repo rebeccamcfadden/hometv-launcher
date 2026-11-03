@@ -65,6 +65,14 @@ enum MotionChoice {
         return this != OFF;
     }
 
+    /**
+     * The scale a focused item takes: {@code scaleTo}, except with Reduced, which drops focus scale-ups
+     * (design_preview's base.css, .is-focused). Off keeps the scale and only drops the transition to it.
+     */
+    float focusScale(boolean focused, float scaleTo) {
+        return focused && this != REDUCED ? scaleTo : 1f;
+    }
+
     /** The Motion in effect on a TV whose system animations are off (animator scale 0): Off, whatever was chosen. */
     MotionChoice withSystem(boolean systemAnimationsOff) {
         return systemAnimationsOff ? OFF : this;

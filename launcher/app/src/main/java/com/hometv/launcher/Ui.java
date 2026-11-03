@@ -292,8 +292,8 @@ final class Ui {
         s.addState(new int[]{android.R.attr.state_focused}, focused);
         if (activated != null) s.addState(new int[]{android.R.attr.state_activated}, activated);
         s.addState(new int[]{}, normal);
-        s.setEnterFadeDuration((int) ms(FAST_MS));
-        s.setExitFadeDuration((int) ms(FAST_MS));
+        s.setEnterFadeDuration((int) fadeMs(FAST_MS));
+        s.setExitFadeDuration((int) fadeMs(FAST_MS));
         return s;
     }
 
@@ -303,12 +303,20 @@ final class Ui {
                 new int[]{focused, activated, normal});
     }
 
+    /**
+     * The scale a focused (or lifted) item takes: {@code scaleTo} (3–8% up in the spec), or none with Motion Reduced,
+     * which drops focus scale-ups (design_preview, .is-focused). Off keeps the scale, at once: Off drops transitions.
+     */
+    static float focusScale(boolean on, float scaleTo) {
+        return motion.focusScale(on, scaleTo);
+    }
+
     /** The small scale-up a focused item gets (3–8% in the spec), animated with the focus change. */
     static void scaleOnFocus(View v, float scaleTo) {
         View.OnFocusChangeListener previous = v.getOnFocusChangeListener();
         v.setOnFocusChangeListener((view, focused) -> {
             if (previous != null) previous.onFocusChange(view, focused);
-            float s = focused ? scaleTo : 1f;
+            float s = focusScale(focused, scaleTo);
             view.animate().scaleX(s).scaleY(s).setDuration(ms(FAST_MS)).setInterpolator(EASE).start();
         });
     }

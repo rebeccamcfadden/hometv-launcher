@@ -200,7 +200,7 @@ final class ServicesSection implements SettingsSection {
             host.shell().focus(again != null ? again : Focus.byKey(column, "svc-more"));
         });
         tile.setOnFocusChangeListener((v, focused) -> {
-            float sc = focused ? 1.05f : 1f;
+            float sc = Ui.focusScale(focused, 1.05f);
             face.animate().scaleX(sc).scaleY(sc).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
         return tile;
@@ -242,7 +242,7 @@ final class ServicesSection implements SettingsSection {
             host.shell().focus(Focus.byKey(column, "svc-more"));
         });
         tile.setOnFocusChangeListener((v, focused) -> {
-            float sc = focused ? 1.05f : 1f;
+            float sc = Ui.focusScale(focused, 1.05f);
             face.animate().scaleX(sc).scaleY(sc).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
         return tile;
