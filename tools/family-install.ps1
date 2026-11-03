@@ -790,7 +790,7 @@ function Invoke-Install {
     $mode = 'replace'
     if ($homePkg -eq $Launcher) {
         $mode = 'reinstall'
-        Say 'Home already belongs to the HomeTV Launcher: this run updates it and changes nothing else.'
+        Say 'Home already belongs to the HomeTV Launcher: this run updates it and leaves Home as it is.'
     } elseif ($isCvte -and $homePkg -like 'com.cvte.tv.launcher*') {
         # CVTE: the stock launcher stays enabled; Home is set, the TV restarts once, and Home and ADB must come back (#741).
         $mode = 'cvte'

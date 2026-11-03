@@ -807,8 +807,8 @@ In order, one PR each:
    and Cast warning, the CVTE path, the Home guard with a Home-press check, First run opened last after a fresh install,
    and debugging off with the port check.
    Changed: the last-resort command fetches the file with `irm -OutFile` and runs it, since `| iex` closes the window
-   at the end; keys go in on the TV (F16), so the installer keeps none. Still to come: key helpers by brand, the
-   updates grant (step 5), the debloat (step 6).
+   at the end; keys go in on the TV (F16), so the installer keeps none. The updates grant (step 5) and the debloat
+   (step 6) are built too. Still to come: key helpers by brand.
 5. **In-app updates.** The launcher reads the latest GitHub Release once a day while Home shows, downloads the APK,
    and Android asks to install it; shown in Launcher settings › About. Needs `REQUEST_INSTALL_PACKAGES` (justified in
    the PR) and "install unknown apps" for the launcher, which the installer grants with `appops` while ADB is on and

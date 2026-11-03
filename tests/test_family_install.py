@@ -537,6 +537,7 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertTrue(any(c.startswith("pm install") for c in end["shell"]))
         self.assert_nothing_disabled(end)
         self.assertFalse([c for c in end["shell"] if c.startswith("cmd package set-home-activity")])
+        self.assertIn("this run updates it and leaves Home as it is", proc.stdout)
 
     def test_unknown_home_changes_nothing(self):
         proc, end = self.run_installer(self.tv(claims=["com.other.home/.Main"], preferred="com.other.home/.Main",
