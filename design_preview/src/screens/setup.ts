@@ -55,7 +55,8 @@ const ALL_STEPS: Step[] = [
       title: 'Choose what this TV does.',
       body: () =>
         'TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes and Phone remote start off, since each opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.',
-      note: 'Change them any time in Launcher settings › Features.',
+      // F34: each feature's On/Off is in its own section; Features there only shows them all.
+      note: 'Each one’s On/Off is in its own section of Launcher settings; Features there shows them all.',
     },
   },
   {
@@ -224,7 +225,10 @@ export function setupScreen(): Screen {
             h(
               'div.setup-help-body',
               all
-                ? `Movies and TV Shows show your lists, and titles on your ${settings.get().services.length} services are marked Included.`
+                ? // The lists only when TMDB account stays on after First run: on and set up (launcher FirstRunRules.readyPromisesLists).
+                  featureOn('tmdb') && featureSetUp('tmdb')
+                  ? `Movies and TV Shows show your lists, and titles on your ${settings.get().services.length} services are marked Included.`
+                  : `Titles on your ${settings.get().services.length} services are marked Included.`
                 : `${left} row${left === 1 ? '' : 's'} still on ${left === 1 ? 'its' : 'their'} default. Start now and change any of it later.`,
             ),
             off.length
