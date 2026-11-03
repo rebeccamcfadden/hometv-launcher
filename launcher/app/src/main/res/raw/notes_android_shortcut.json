@@ -20,8 +20,9 @@
           "contentType": "text/plain",
           "bodyContent": "{{hometv_note}}",
           "timeout": 10000,
+          "launcherShortcut": true,
           "responseHandling": { "uiType": "toast", "successOutput": "none", "failureOutput": "none" },
-          "codeOnPrepare": "if (!getVariable('hometv_url') || !getVariable('hometv_auth') || !getVariable('hometv_list')) { showToast('Pair this phone first: scan the QR in the TV\\'s Launcher settings, Phone notes, then tap Pair this phone.'); abort(); }",
+          "codeOnPrepare": "if (!getVariable('hometv_url') || !getVariable('hometv_auth') || !getVariable('hometv_list')) { showToast('Pair this phone first: scan the TV\\'s Phone notes QR.'); abort(); }",
           "codeOnSuccess": "var m = ''; try { m = JSON.parse(response.body).message; } catch (e) {} showToast(m || 'Sent to the TV.');",
           "codeOnFailure": "var m = ''; try { m = JSON.parse(response.body).message; } catch (e) {} showToast(m || 'Could not reach the TV: is this phone on the home Wi-Fi?');"
         },
@@ -31,6 +32,7 @@
           "name": "Pair with TV",
           "description": "Opened from the TV's setup page: keeps the TV's address, code and your list on this phone",
           "hidden": true,
+          "launcherShortcut": false,
           "excludeFromFileSharing": true,
           "codeOnPrepare": "var u = getVariable('hometv_url'), a = getVariable('hometv_auth'), l = getVariable('hometv_list'); if (!u || !a || !l) { showToast('Open Pair this phone on the TV\\'s setup page.'); abort(); } setVariable('hometv_url', u); setVariable('hometv_auth', a); try { l = decodeURIComponent(l); } catch (e) {} setVariable('hometv_list', l); showToast('Paired: notes you share to Send to TV go to ' + l + '\\'s list.');"
         }

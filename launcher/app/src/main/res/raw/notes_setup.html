@@ -78,11 +78,11 @@
 <p>Each Android phone gets the free <b>HTTP Shortcuts</b> app and its <b>Send to TV</b> shortcut once, then pairs it with this TV. Pair again whenever the TV shows a new code.</p>
 <h2>1. Install the app</h2>
 <a class="btn" href="https://play.google.com/store/apps/details?id=ch.rmy.android.http_shortcuts">Install HTTP Shortcuts</a>
-<p>From Google Play (it's also on F-Droid). Open it once, then come back to this page.</p>
+<p>From Google Play, where it's called <b>HTTP Request Shortcuts</b> (it's also on F-Droid). Open it once, then come back to this page.</p>
 
 <h2>2. Set up the shortcut</h2>
 <a class="btn" id="aimport">Set up the shortcut</a>
-<p>Opens HTTP Shortcuts, which asks to import <b>Send to TV</b>: tap <b>Import</b>. Only once per phone; setting it up again needs a new pairing.</p>
+<p>Opens HTTP Shortcuts with this TV's <b>Send to TV</b> shortcut ready to import: tap <b>OK</b>. Only once per phone; setting it up again needs a new pairing.</p>
 
 <h2>3. Pair this phone</h2>
 <label for="alist">Whose list do this phone's notes go to?</label>
@@ -149,7 +149,8 @@
   var curl = function (name) {
     // HTTP Shortcuts' cURL import can't read a shell-escaped quote, so the URL keeps no apostrophe to escape.
     var q = function (s) { return "'" + s + "'"; };
-    return 'curl -X POST ' + q(notesUrl + '?list=' + encodeURIComponent(name).replace(/'/g, '%27')) + ' -H ' + q('Authorization: Bearer ' + code)
+    // -s: HTTP Shortcuts' import turns its response window off only for a silent command (step 6, skipped after it).
+    return 'curl -s -X POST ' + q(notesUrl + '?list=' + encodeURIComponent(name).replace(/'/g, '%27')) + ' -H ' + q('Authorization: Bearer ' + code)
         + ' -H ' + q('Content-Type: text/plain') + ' --data-raw ' + q('{{note}}');
   };
   var listChanged = function () {

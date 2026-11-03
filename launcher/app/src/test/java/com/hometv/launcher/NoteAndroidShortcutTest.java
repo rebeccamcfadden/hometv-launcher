@@ -135,12 +135,16 @@ public class NoteAndroidShortcutTest {
         assertEquals("custom_text", send.getString("requestBodyType"));
         assertEquals("text/plain", send.getString("contentType"));
         assertEquals("{{hometv_note}}", send.getString("bodyContent"));
-        // Using a share variable is what puts a shortcut in Android's share sheet (HTTP Shortcuts' ShareUtil).
+        // Using a share variable makes it a share target (HTTP Shortcuts' ShareUtil); launcherShortcut publishes it as a
+        // Direct Share target, so the share sheet shows Send to TV itself and not only the app (LauncherShortcutUpdater).
+        assertTrue(send.getBoolean("launcherShortcut"));
         assertTrue(byKey.get("hometv_note").getBoolean("isShareText"));
 
         JSONObject pair = shortcut(t, "Pair with TV");
         assertEquals("scripting", pair.getString("executionType"));
         assertTrue(pair.getBoolean("hidden"));
+        // The importer publishes every shortcut as an app shortcut unless told not to (ImportExportDefaultsProvider).
+        assertFalse(pair.getBoolean("launcherShortcut"));
         // A scripting shortcut is a file-share target unless it says not.
         assertTrue(pair.getBoolean("excludeFromFileSharing"));
         assertFalse(pair.toString().contains("{{hometv_note}}"));
@@ -161,6 +165,17 @@ public class NoteAndroidShortcutTest {
         String page = read("src/main/res/raw/notes_setup.html");
         assertTrue(page.contains("encodeURIComponent(name).replace(/'/g, '%27')"));
         assertFalse(page.contains("'\\''"));
+    }
+
+    /**
+     * The import turns the response window off only for a silent command (CurlParser's -s; responseSuccessOutput and
+     * responseFailureOutput NONE), which is step 6 of the by-hand steps; the page goes on at step 7 after it.
+     */
+    @Test
+    public void theCurlCommandIsSilent() throws Exception {
+        String page = read("src/main/res/raw/notes_setup.html");
+        assertTrue(page.contains("'curl -s -X POST '"));
+        assertTrue(page.contains("then go on at step 7"));
     }
 
     /** The page's links name the template's path, the Pair shortcut and the variables it fills. */
