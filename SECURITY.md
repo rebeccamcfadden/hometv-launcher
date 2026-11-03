@@ -12,6 +12,9 @@ Only the maintainer sees the report.
 Please include what is affected (the prompt, a tool in `tools/`, the launcher, a debloat list),
 the steps to reproduce it, and what an attacker could do with it.
 
+The debloat tools and the prompt came from upstream [CleanYourTV](https://github.com/Gathin23/cleanyourtv). A bug in
+them may be upstream's too, so you may also report it there, through its own Security tab.
+
 ## What counts
 
 - The launcher (`com.hometv.launcher`) doing something it shouldn't: reaching the network, exposing
