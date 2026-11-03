@@ -291,6 +291,12 @@ export function libraryScreen(kind: Kind): Screen {
     render();
     app.refocus();
   });
+  // F27: a phone changes My list while the page shows (the TV's own preview is redrawn by onShow on its way back).
+  store.on(() => {
+    if (app.top() !== screen) return;
+    render();
+    app.refocus();
+  });
 
   const screen: Screen = {
     label: heading,

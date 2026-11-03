@@ -481,6 +481,8 @@ export function setupScreen(): Screen {
     net.on(repaint),
     theme.on(repaint),
     notes.listen(repaint),
+    // F27: a phone pairs, or New code: the pane and the tab's value follow.
+    remote.listen(repaint),
     account.onTick(() => {
       const c = scroll.querySelector('[data-countdown]');
       if (c) c.textContent = account.countdown();

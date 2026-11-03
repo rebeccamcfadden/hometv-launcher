@@ -254,12 +254,16 @@ function keyButton(spec: string, key: RemoteKey, content: Kid, label?: string) {
     buzz();
     authed({ type: 'key', key });
   };
+  // A tap is handled on pointerdown (at once, and held arrows repeat); the click that follows it is skipped. A click
+  // with no pointer before it (a screen reader, or Enter/Space on the focused button) presses once.
+  let tapped = false;
   return el(
     spec,
     {
       'aria-label': label ?? key,
       onpointerdown: (e: Event) => {
         e.preventDefault();
+        tapped = true;
         stopRepeat?.();
         press();
         if (['up', 'down', 'left', 'right'].includes(key)) {
@@ -268,8 +272,12 @@ function keyButton(spec: string, key: RemoteKey, content: Kid, label?: string) {
         }
       },
       onpointerup: stop,
-      onpointerleave: stop,
-      onpointercancel: stop,
+      onpointerleave: () => ((tapped = false), stop()),
+      onpointercancel: () => ((tapped = false), stop()),
+      onclick: () => {
+        if (tapped) tapped = false;
+        else press();
+      },
       oncontextmenu: (e: Event) => e.preventDefault(),
     },
     content,
@@ -303,17 +311,21 @@ function card(t: PhoneTitle) {
   );
 }
 
-/** F39: add or take off; the TV toasts it too. Undo sends the opposite. */
+/**
+ * F39: add or take off; the TV toasts it too. The phone sends what it wants, never a toggle, so a stale + can't take
+ * off a title; Undo asks for what it was before. The TV's state (the card) follows.
+ */
 function toggleMine(t: PhoneTitle) {
   buzz();
-  authed({ type: 'mylist', id: t.id });
   const added = !t.mine;
   t.mine = added;
+  authed({ type: 'mylist', id: t.id, mine: added });
   update();
   paintResults();
   toast(`${added ? 'Added' : 'Removed'} ${t.name} ${added ? 'to' : 'from'} My list`, null, () => {
-    authed({ type: 'mylist', id: t.id });
     t.mine = !added;
+    authed({ type: 'mylist', id: t.id, mine: !added });
+    update();
     paintResults();
   });
 }
@@ -571,11 +583,12 @@ function openSheet() {
     'aria-label': 'Search to add to My list',
     oninput: () => {
       clearTimeout(searchTimer);
-      searchTimer = window.setTimeout(() => authed({ type: 'search', q: searchInput!.value }), 150);
+      searchTimer = window.setTimeout(() => searchInput && authed({ type: 'search', q: searchInput.value }), 150);
     },
   }) as HTMLInputElement;
   resultsEl = el('div.results');
   const close = () => {
+    clearTimeout(searchTimer);
     sheet = false;
     scrim.remove();
     searchInput = resultsEl = null;
@@ -626,9 +639,12 @@ function hello() {
   ask({ type: 'hello', token: me.token });
 }
 
-// A laptop's keyboard works as the remote too, outside a text box.
+// A laptop's keyboard works as the remote too, outside a text box. Enter or Space on a focused button is that button's
+// own press (its click), not OK.
 window.addEventListener('keydown', (e) => {
-  if (view !== 'remote' || (e.target as HTMLElement).tagName === 'INPUT') return;
+  const target = e.target as HTMLElement;
+  if (view !== 'remote' || target.tagName === 'INPUT') return;
+  if (target.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return;
   const keys: Record<string, RemoteKey> = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'ok', Escape: 'back', Backspace: 'back' };
   if (!keys[e.key]) return;
   e.preventDefault();

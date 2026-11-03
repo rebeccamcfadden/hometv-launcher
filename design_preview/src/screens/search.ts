@@ -295,6 +295,12 @@ export function searchScreen(): Screen {
 
   render();
   net.on(render);
+  // F27: a phone changes My list while Search shows: From My list follows.
+  store.on(() => {
+    if (app.top() !== screen || !tmdbReady()) return;
+    render();
+    app.refocus();
+  });
   // The dev bar's Account menu signs in or out while Search shows.
   account.on(() => {
     tmdbOn();

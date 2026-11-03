@@ -11,7 +11,7 @@ export type PhoneMsg =
   | { type: 'key'; token: string; key: RemoteKey }
   | { type: 'text'; token: string; value: string }
   | { type: 'enter'; token: string }
-  | { type: 'mylist'; token: string; id: string }
+  | { type: 'mylist'; token: string; id: string; mine: boolean }
   | { type: 'search'; token: string; q: string }
   | { type: 'forget'; token: string }
   | { type: 'bye'; token: string };

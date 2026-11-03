@@ -175,9 +175,9 @@ function onMessage(sender: string, msg: PhoneMsg) {
     return send(sender, { type: 'unpaired', locked: data.lockedUntil > now ? data.lockedUntil : 0 });
   }
   const wasConnected = connectedIds();
-  // Kept at most once a minute, so "Last used" survives a restart without a write per key.
+  // Kept at most once a minute, so "Last used" survives a restart without a write per key; seen holds the live time.
   const saveUse = now - phone.lastUsed > 60_000;
-  phone.lastUsed = now;
+  if (saveUse) phone.lastUsed = now;
   if (msg.type === 'forget') {
     // The phone's own Unpair: as Forget on the TV.
     data.phones = data.phones.filter((p) => p.id !== phone.id);
@@ -208,6 +208,8 @@ function onMessage(sender: string, msg: PhoneMsg) {
       } catch {
         return;
       }
+      // What the phone wants, so a stale button never takes off what it shows as added; nothing to say if it already is.
+      if (store.inMyList(t.id) === msg.mine) return broadcastState();
       const mine = store.toggleMyList(t.id);
       app.toast(`${mine ? 'Added' : 'Removed'} ${t.name} ${mine ? 'to' : 'from'} My list · From ${phone.name}`);
       return broadcastState();
