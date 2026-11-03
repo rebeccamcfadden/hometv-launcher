@@ -26,7 +26,8 @@
     <!-- The help pane for the focused row. -->
     <string name="first_run_features_help_title">Choose what this TV does.</string>
     <string name="first_run_features_help_body">TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes starts off, since it opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.</string>
-    <string name="first_run_features_help_note">Change them any time in Launcher settings › Features.</string>
+    <!-- Since F34 each feature's On/Off is in its own section; Features only shows them all. -->
+    <string name="first_run_features_help_note">Change any of them later in its own section of Launcher settings; Features there shows them all.</string>
     <string name="first_run_services_help_title">What does the household pay for?</string>
     <string name="first_run_services_help_body">Titles on these services show as Included in Movies and TV Shows. The ones with an app on this TV were ticked to start with.</string>
     <string name="first_run_services_help_note">→ opens the same pane as Launcher settings › Streaming services.</string>
@@ -49,6 +50,8 @@
     <string name="first_run_ready_eyebrow">Ready</string>
     <string name="first_run_ready_help_title">Your Home screen is set up.</string>
     <string name="first_run_ready_help_body">Movies and TV Shows show your lists, and titles on your services are marked Included.</string>
+    <!-- All done, but TMDB account isn't set up (it is switched off as First run ends, or is off): no lists to promise. -->
+    <string name="first_run_ready_help_body_no_lists">Titles on your services are marked Included.</string>
     <string name="first_run_settings_note">The Settings icon → Launcher settings changes any of it.</string>
 
     <!-- The panel's footer (F28: the panel opens on the same page). -->

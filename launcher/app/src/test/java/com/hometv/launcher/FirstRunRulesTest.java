@@ -163,6 +163,15 @@ public class FirstRunRulesTest {
     }
 
     @Test
+    public void theAllDoneHelpPromisesListsOnlyWhenTmdbAccountStaysOn() {
+        assertTrue(FirstRunRules.readyPromisesLists(true, true));
+        // On but not signed in: switched off as First run ends.
+        assertFalse(FirstRunRules.readyPromisesLists(true, false));
+        assertFalse(FirstRunRules.readyPromisesLists(false, true));
+        assertFalse(FirstRunRules.readyPromisesLists(false, false));
+    }
+
+    @Test
     public void whatCountsAsSetUp() {
         assertTrue(FirstRunRules.setUp(Features.Feature.TMDB, true, true, false, false));
         assertFalse(FirstRunRules.setUp(Features.Feature.TMDB, true, false, true, true));
