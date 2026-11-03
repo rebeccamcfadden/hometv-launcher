@@ -692,9 +692,10 @@ key still opens the TV maker's panel, or `settings_key_panel`'s old quick-settin
   the saved Motion. A TV whose config.xml or config.json sets `reduced_motion` is never Full (the project lead's
   decision, 2026-10-31): a saved Full is Reduced there, a saved Off stays Off, the row shows the Motion in effect and
   OK steps Reduced and Off only. With nothing saved, the switch and `reduced_motion` decide as before. A step applies at once and moves the settings change count, so Home
-  rebuilds with it the next time it resumes. The launcher has one reduced-motion mode (no animations), so Reduced
-  and Off look the same for now. Wanted: Reduced as the spec has it, keeping the fades and dropping slides, rises
-  and focus scale-ups.
+  rebuilds with it the next time it resumes. Reduced is the spec's: the fades stay (page switches, popups, menus, the
+  Filters drawer, toasts, Home's greeting and dim, Search's panel, the backdrop's crossfade) and nothing slides, rises
+  or scales up (focus, rows, scrolling); Off moves and fades nothing, as does a TV whose system animations are off.
+  The account spinner and the Seasonal animated details stay off with Reduced.
 - **The open menu's button:** as with the Wi-Fi and Inputs dropdowns, the Settings icon is not kept highlighted while
   its menu is open (the prototype's `is-open`).
 

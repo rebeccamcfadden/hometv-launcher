@@ -113,7 +113,7 @@ final class Ui {
     private static Theme theme = Theme.midnight();
 
     private static float scale = 1f;
-    private static boolean reducedMotion;
+    private static MotionChoice motion = MotionChoice.FULL;
 
     static Theme theme() {
         return theme;
@@ -201,21 +201,31 @@ final class Ui {
     }
 
     /** Reads the screen once per activity: the stage is as wide as the screen's long side. */
-    static void init(Context ctx, boolean reduced) {
+    static void init(Context ctx, MotionChoice choice) {
         DisplayMetrics m = ctx.getResources().getDisplayMetrics();
         scale = Math.max(m.widthPixels, m.heightPixels) / (float) STAGE_W;
         float animator = Settings.Global.getFloat(ctx.getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1f);
-        reducedMotion = reduced || animator == 0f;
+        motion = choice.withSystem(animator == 0f);
     }
 
-    /** Reduced motion (config reduced_motion, animations off, or the system's animator scale at 0). */
+    /** Reduced motion (Motion Reduced or Off): nothing slides, rises or scales up. Fades may still run (fadeMs). */
     static boolean reducedMotion() {
-        return reducedMotion;
+        return !motion.moves();
     }
 
-    /** A duration, or none with reduced motion: pages and menus then switch without animating. */
+    /** Motion Off (or the system's animator scale at 0): not even a fade. */
+    static boolean motionOff() {
+        return !motion.fades();
+    }
+
+    /** A movement's duration (a slide, a rise, a scale-up), or none with reduced motion: it then jumps. */
     static long ms(long duration) {
-        return reducedMotion ? 0 : duration;
+        return motion.moves() ? duration : 0;
+    }
+
+    /** A fade's duration, or none with Motion Off: Reduced keeps the fades. */
+    static long fadeMs(long duration) {
+        return motion.fades() ? duration : 0;
     }
 
     /** Design pixels to screen pixels. */

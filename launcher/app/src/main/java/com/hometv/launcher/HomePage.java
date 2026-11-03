@@ -460,10 +460,12 @@ final class HomePage extends Screen {
     private void setScrolled(boolean on) {
         if (on == scrolled) return;
         scrolled = on;
-        long ms = Ui.ms(Ui.SLOW_MS);
-        content.animate().translationY(on ? -Ui.px(SHIFT) : 0f).setDuration(ms).setInterpolator(Ui.EASE).start();
-        hero.animate().alpha(on ? 0f : 1f).setDuration(ms).setInterpolator(null).start();
-        dim.animate().alpha(on ? 1f : 0f).setDuration(ms).setInterpolator(null).start();
+        // Motion Reduced: the content jumps and the greeting and the dim still fade (design_preview, .home-content).
+        content.animate().translationY(on ? -Ui.px(SHIFT) : 0f).setDuration(Ui.ms(Ui.SLOW_MS)).setInterpolator(Ui.EASE)
+                .start();
+        long fade = Ui.fadeMs(Ui.SLOW_MS);
+        hero.animate().alpha(on ? 0f : 1f).setDuration(fade).setInterpolator(null).start();
+        dim.animate().alpha(on ? 1f : 0f).setDuration(fade).setInterpolator(null).start();
     }
 
     /** Slides a row so the focused item is inside view (both in the row's parent's coordinates). */

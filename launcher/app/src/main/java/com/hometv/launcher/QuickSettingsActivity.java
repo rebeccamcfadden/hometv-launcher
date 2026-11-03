@@ -26,7 +26,7 @@ public final class QuickSettingsActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         Config cfg = Config.load(this);
-        Ui.init(this, cfg.reducedMotion());
+        Ui.init(this, cfg.motion);
         Theme theme = ThemeStore.current(this);
         Ui.apply(theme);
         PerfChoices.apply(PerfPrefs.load(this, cfg));

@@ -14,6 +14,31 @@ import static org.junit.Assert.assertTrue;
 public class MotionChoiceTest {
 
     @Test
+    public void reducedKeepsTheFadesAndDropsTheMoves() {
+        assertTrue(MotionChoice.FULL.moves());
+        assertTrue(MotionChoice.FULL.fades());
+        assertFalse("no slides, rises or scale-ups", MotionChoice.REDUCED.moves());
+        assertTrue("the fades stay", MotionChoice.REDUCED.fades());
+        assertFalse(MotionChoice.OFF.moves());
+        assertFalse("nothing fades either", MotionChoice.OFF.fades());
+    }
+
+    @Test
+    public void systemAnimationsOffMeanMotionOff() {
+        for (MotionChoice m : MotionChoice.values()) {
+            assertEquals(MotionChoice.OFF, m.withSystem(true));
+            assertEquals(m, m.withSystem(false));
+        }
+    }
+
+    @Test
+    public void reducedStillCountsAsReducedMotion() {
+        assertFalse(MotionChoice.FULL.reduced());
+        assertTrue(MotionChoice.REDUCED.reduced());
+        assertTrue(MotionChoice.OFF.reduced());
+    }
+
+    @Test
     public void savedCodesParse() {
         assertEquals(MotionChoice.FULL, MotionChoice.parse("full"));
         assertEquals(MotionChoice.REDUCED, MotionChoice.parse(" reduced "));
