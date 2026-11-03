@@ -67,6 +67,8 @@ class FakeDevice:
         self.calls.append(("shell", command))
         if "| perfetto " in command:
             return self.perfetto_says
+        if command.startswith("cp "):
+            return "copied\n"
         return ""
 
     def pull(self, remote, local, transport_timeout_s=None, read_timeout_s=None):
@@ -143,9 +145,32 @@ class RecordTest(unittest.TestCase):
         start = next(i for i, c in enumerate(commands) if "| perfetto " in c)
         self.assertEqual(commands[0], "input keyevent KEYCODE_HOME")
         self.assertGreater(commands.index("input keyevent KEYCODE_DPAD_RIGHT"), start)
-        self.assertEqual(device.calls[-2][0], "pull")
-        self.assertEqual(commands[-1], f"rm -f {trace.REMOTE}")
+        self.assertEqual(device.calls[-2], ("pull", trace.PULLABLE, device.calls[-2][2]))
+        self.assertEqual(commands[-3], f"cp {trace.REMOTE} {trace.PULLABLE} && echo copied")
+        self.assertEqual(commands[-1], f"rm -f {trace.REMOTE} {trace.PULLABLE}")
         self.assertEqual(size, len(b"trace"))
+
+    def test_android_9_pulls_a_copy_since_selinux_refuses_perfettos_folder(self):
+        class SelinuxDevice(FakeDevice):
+            def pull(self, remote, local, transport_timeout_s=None, read_timeout_s=None):
+                if remote == trace.REMOTE:
+                    raise RuntimeError("Command failed: open failed: Permission denied")
+                super().pull(remote, local)
+
+        size, _ = self.record(SelinuxDevice(), [], ["sleep 1"])
+        self.assertEqual(size, len(b"trace"))
+
+    def test_pulls_from_perfettos_folder_when_the_copy_fails(self):
+        class NoCopyDevice(FakeDevice):
+            def shell(self, command, read_timeout_s=None):
+                if command.startswith("cp "):
+                    self.calls.append(("shell", command))
+                    return "cp: Permission denied\n"
+                return super().shell(command, read_timeout_s)
+
+        device = NoCopyDevice()
+        self.record(device, [], ["sleep 1"])
+        self.assertEqual(next(c for c in device.calls if c[0] == "pull")[1], trace.REMOTE)
 
     def test_android_9_accepts_the_binary_config_without_txt(self):
         class AndroidPDevice(FakeDevice):

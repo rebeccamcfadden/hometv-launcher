@@ -19,6 +19,11 @@ from Android 11. See Perfetto's [tracing-service setup](https://perfetto.dev/doc
 for the `persist.traced.enable` prerequisite on non-Pixel devices. This tool does not change that setting.
 It sends a binary trace config, which Android 9 accepts without the `--txt` option added in Android 10.
 
+On Android 9, adb can't read perfetto's folder (`/data/misc/perfetto-traces`), so the trace is copied to
+`/data/local/tmp` first and pulled from there. Some TVs still record no frames: on a TCL BeyondTV (Android 9, user
+build) the trace held processes but no ftrace events, so the report's tables come out empty. There, compare frames
+with `dumpsys gfxinfo <package>` instead: `reset` before the steps, then read its counts after.
+
 ## Record
 
 ```bash
