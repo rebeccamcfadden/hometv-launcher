@@ -701,7 +701,7 @@ picks another theme.
   the date and the sun) darkened to 38 %; **Black** is plain black, for an OLED. Every minute the clock fades out
   (0.9 s), moves to a new spot (10–90 % of the room each way) and fades in (1.2 s), and the glow follows it, so nothing
   burns in; with Motion Off it just moves. It starts only on Home itself (no dropdown, popup or other page over it,
-  never over an app or Live TV), after Home has had no key for the chosen time. Any key wakes it, and that key is
+  never over an app or Live TV), after Home has had no key for the chosen time. Any key wakes it (a phone remote's too), and that key is
   swallowed, so it doesn't also act on Home: focus stays where it was. ?saver=fast makes "5 min" 10 s and the move
   every 8 s, to review it; Jump to › Screensaver shows it at once. src/ui/screensaver.ts; the launcher's own will
   follow the same rules, and also register as a system screensaver the TV can start anywhere.
