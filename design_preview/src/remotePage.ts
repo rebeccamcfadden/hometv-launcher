@@ -254,8 +254,9 @@ function keyButton(spec: string, key: RemoteKey, content: Kid, label?: string) {
     buzz();
     authed({ type: 'key', key });
   };
-  // A tap is handled on pointerdown (at once, and held arrows repeat); the click that follows it is skipped. A click
-  // with no pointer before it (a screen reader, or Enter/Space on the focused button) presses once.
+  // A tap is handled on pointerdown (at once, and held arrows repeat), so a click that follows it, which has a detail
+  // count, is skipped; on touch, pointerleave comes between the two. A click with no pointer (a screen reader, or
+  // Enter/Space on the focused button) presses once.
   let tapped = false;
   return el(
     spec,
@@ -272,11 +273,16 @@ function keyButton(spec: string, key: RemoteKey, content: Kid, label?: string) {
         }
       },
       onpointerup: stop,
-      onpointerleave: () => ((tapped = false), stop()),
-      onpointercancel: () => ((tapped = false), stop()),
-      onclick: () => {
-        if (tapped) tapped = false;
-        else press();
+      onpointerleave: stop,
+      onpointercancel: stop,
+      onkeydown: (e: Event) => {
+        const k = (e as KeyboardEvent).key;
+        if (k === 'Enter' || k === ' ') tapped = false;
+      },
+      onclick: (e: Event) => {
+        const fromPointer = tapped || (e as MouseEvent).detail > 0;
+        tapped = false;
+        if (!fromPointer) press();
       },
       oncontextmenu: (e: Event) => e.preventDefault(),
     },
@@ -633,6 +639,22 @@ function paintResults() {
     ),
   );
 }
+
+// Android Chrome closes the keyboard (Back, the keyboard's own ⌄) without taking focus from the field, so no blur comes;
+// the visual viewport growing back to full height after the keyboard showed is that collapse.
+let keyboardSeen = false;
+window.visualViewport?.addEventListener('resize', () => {
+  const vv = window.visualViewport!;
+  if (!typing) {
+    keyboardSeen = false;
+    return;
+  }
+  if (window.innerHeight - vv.height > 120) keyboardSeen = true;
+  else if (keyboardSeen) {
+    keyboardSeen = false;
+    endTyping();
+  }
+});
 
 // ---- Start ----
 function hello() {
