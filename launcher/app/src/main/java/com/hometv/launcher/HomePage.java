@@ -134,7 +134,8 @@ final class HomePage extends Screen {
         dim.setBackgroundColor(Ui.theme().homeDim);
         Ui.flat(dim);
         dim.setAlpha(0f);
-        dim.setTag(R.id.ui_still, Boolean.TRUE);
+        // Still during a page switch, and resting at the alpha this tag holds (Shell): 0 until Home scrolls.
+        dim.setTag(R.id.ui_still, 0f);
         root.addView(dim, match());
 
         content = new FrameLayout(ctx);
@@ -431,6 +432,7 @@ final class HomePage extends Screen {
     private void setScrolled(boolean on) {
         if (on == scrolled) return;
         scrolled = on;
+        dim.setTag(R.id.ui_still, on ? 1f : 0f);
         long ms = Ui.ms(Ui.SLOW_MS);
         content.animate().translationY(on ? -Ui.px(SHIFT) : 0f).setDuration(ms).setInterpolator(Ui.EASE).start();
         hero.animate().alpha(on ? 0f : 1f).setDuration(ms).setInterpolator(null).withLayer().start();

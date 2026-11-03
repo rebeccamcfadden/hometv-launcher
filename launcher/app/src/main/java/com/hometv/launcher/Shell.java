@@ -12,7 +12,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,8 +46,6 @@ final class Shell {
     /** The page sliding out during a tab switch, kept on the stage under the new one until it has gone. */
     private Screen leaving;
     private Screen entering;
-    /** The entering page's nav and shade, each with the alpha it fades back to (startTransition). */
-    private final Map<View, Float> stillAlpha = new HashMap<>();
     private final Runnable endTransition = this::endTransition;
 
     /** OK is acted on when it is released, on the item it went down on, so an OK that opened something can't
@@ -543,7 +540,10 @@ final class Shell {
         entering = to;
         for (View child : still(to.view)) {
             child.setAlpha(0f);
-            child.animate().alpha(1f).setDuration(240).setInterpolator(null).withLayer().start();
+            ViewPropertyAnimator a = child.animate().alpha(restingAlpha(child)).setDuration(240).setInterpolator(null);
+            // Only the nav has content to keep on a layer; the shades and Home's dim are flat (Ui.flat).
+            if (child.getTag(R.id.ui_nav) != null) a.withLayer();
+            a.start();
         }
         for (View child : sliding(to.view)) {
             child.setAlpha(0f);
@@ -564,10 +564,8 @@ final class Shell {
             entering.view.setAlpha(1f);
             for (View child : still(entering.view)) {
                 child.animate().cancel();
-                Float rest = stillAlpha.get(child);
-                child.setAlpha(rest != null ? rest : 1f);
+                child.setAlpha(restingAlpha(child));
             }
-            stillAlpha.clear();
             for (View child : sliding(entering.view)) settle(child);
             entering = null;
         }
@@ -582,6 +580,15 @@ final class Shell {
         v.animate().cancel();
         v.setAlpha(1f);
         v.setTranslationX(0f);
+    }
+
+    /**
+     * The alpha a still child rests at: the Float its ui_still tag holds (Home's dim says 0 or 1 as the page scrolls,
+     * so a scroll during the transition is kept), else fully shown.
+     */
+    private static float restingAlpha(View child) {
+        Object rest = child.getTag(R.id.ui_still);
+        return rest instanceof Float ? (Float) rest : 1f;
     }
 
     /** A page's children that stay in place during a transition: the nav and the shade. */

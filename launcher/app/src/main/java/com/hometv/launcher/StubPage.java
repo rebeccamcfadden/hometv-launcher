@@ -80,6 +80,7 @@ final class StubPage {
         shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                 new int[]{Ui.SHADE_TOP, Ui.SHADE_BOTTOM}));
         shade.setTag(R.id.ui_still, Boolean.TRUE);
+        Ui.flat(shade);
         page.addView(shade, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         return page;
