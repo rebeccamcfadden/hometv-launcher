@@ -40,14 +40,18 @@ public class PosterCardTest {
     }
 
     @Test
-    public void aFailedPosterFallsBackToTheBackdrop() {
+    public void aFailedPosterFallsBackToTheBackdropForAWhile() {
         String p = "https://image.tmdb.org/t/p/w342/p.jpg", b = "https://image.tmdb.org/t/p/w780/b.jpg";
-        assertEquals(p, ArtSize.posterChoice(p, b, false));
-        assertEquals(b, ArtSize.posterChoice(p, b, true));
-        // No backdrop to fall back on: the poster is tried again.
-        assertEquals(p, ArtSize.posterChoice(p, null, true));
-        assertEquals(b, ArtSize.posterChoice(null, b, false));
-        assertNull(ArtSize.posterChoice(null, null, true));
+        long now = 1_000_000L;
+        assertEquals(p, ArtSize.posterChoice(p, b, 0, now));
+        // Failed a minute ago: the backdrop.
+        assertEquals(b, ArtSize.posterChoice(p, b, now - 60_000L, now));
+        // The failure has expired (the network may be back): the poster is tried again.
+        assertEquals(p, ArtSize.posterChoice(p, b, now - ArtSize.POSTER_RETRY_MS, now));
+        // No backdrop to fall back on: the poster is tried again at once.
+        assertEquals(p, ArtSize.posterChoice(p, null, now - 60_000L, now));
+        assertEquals(b, ArtSize.posterChoice(null, b, 0, now));
+        assertNull(ArtSize.posterChoice(null, null, now, now));
     }
 
     @Test

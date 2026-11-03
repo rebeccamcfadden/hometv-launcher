@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
+import android.os.SystemClock;
 import android.util.LruCache;
 import android.widget.ImageView;
 
@@ -68,8 +69,11 @@ final class Art {
     private static final Set<String> WANTED = Collections.newSetFromMap(new ConcurrentHashMap<>());
     /** A poster's key, and the backdrop to show when it fails to load (Art.poster, F40). Main thread only. */
     private static final Map<String, String> FALLBACK = new HashMap<>();
-    /** Posters that failed to load lately: their cards go straight to the backdrop. Main thread only. */
-    private static final LruCache<String, Boolean> FAILED_POSTERS = new LruCache<>(128);
+    /**
+     * Posters that failed to load lately, with when (uptime): their cards show the backdrop until the failure is
+     * {@link ArtSize#POSTER_RETRY_MS} old, then the poster is tried again. Main thread only.
+     */
+    private static final LruCache<String, Long> FAILED_POSTERS = new LruCache<>(128);
 
     private static volatile TmdbClient client;
 
@@ -93,8 +97,8 @@ final class Art {
     static void poster(ImageView v, Title t, int widthPx, int heightPx) {
         String poster = TmdbApi.isImagePath(t.poster) ? TmdbApi.poster(t.poster, widthPx) : null;
         String backdrop = TmdbApi.backdrop(t.art, widthPx * 2);
-        boolean failed = poster != null && FAILED_POSTERS.get(key(poster, widthPx, heightPx)) != null;
-        String url = ArtSize.posterChoice(poster, backdrop, failed);
+        Long failedAt = poster == null ? null : FAILED_POSTERS.get(key(poster, widthPx, heightPx));
+        String url = ArtSize.posterChoice(poster, backdrop, failedAt == null ? 0 : failedAt, SystemClock.uptimeMillis());
         // A poster that then fails to load falls back to the backdrop for the views still waiting for it (deliver).
         if (url != null && url.equals(poster) && backdrop != null && client != null) {
             FALLBACK.put(key(poster, widthPx, heightPx), backdrop);
@@ -217,7 +221,7 @@ final class Art {
             if (fallback == null) return;
             // A poster that didn't load: the views that still want it show the backdrop instead (their key moves on,
             // so a late answer for either can't land on a card that has been given another title since).
-            FAILED_POSTERS.put(key, Boolean.TRUE);
+            FAILED_POSTERS.put(key, SystemClock.uptimeMillis());
             if (waiting == null) return;
             for (ImageView v : new ArrayList<>(waiting)) {
                 if (key.equals(v.getTag(R.id.art_key))) bind(v, fallback, w, h, false);
