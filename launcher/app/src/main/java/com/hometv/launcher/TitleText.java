@@ -45,6 +45,16 @@ final class TitleText {
         return t.genres.isEmpty() ? list : list + " · " + t.genres.get(0);
     }
 
+    /**
+     * The poster card's service line (F40): "Netflix · Included", "Apple TV Store · Rent 39 kr"; just the
+     * availability when no service of the household's has the title, and nothing when there is neither.
+     */
+    static String serviceLine(String service, String availability) {
+        String s = service == null ? "" : service.trim(), a = availability == null ? "" : availability.trim();
+        if (s.isEmpty()) return a;
+        return a.isEmpty() ? s : s + " · " + a;
+    }
+
     /** "Movie · 2016", "TV show · 2022"; just the kind when the year isn't known. */
     static String kindYear(Title t) {
         String kind = t.isMovie() ? "Movie" : "TV show";

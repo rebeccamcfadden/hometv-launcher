@@ -214,25 +214,15 @@ final class StateUi {
         return v;
     }
 
-    /** widgets.ts libraryCardSkeleton: a library card's shape while it loads (417, art 172), not focusable. */
+    /** widgets.ts posterCardSkeleton (F40): a poster card's shape while it loads (268, poster 402), not focusable. */
     static View libraryCardSkeleton(Context ctx) {
         LinearLayout card = column(ctx);
-        card.addView(artSkeleton(ctx, 417, 172, Ui.RADIUS_L));
-        LinearLayout row = new LinearLayout(ctx);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.addView(sk(ctx, 190, 26));
-        row.addView(new View(ctx), new LinearLayout.LayoutParams(0, 1, 1f));
-        row.addView(sk(ctx, 90, 20));
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        rlp.topMargin = Ui.px(12);
-        card.addView(row, rlp);
-        card.addView(sk(ctx, 250, 18, Ui.RADIUS_S, 10));
-        card.addView(sk(ctx, 150, 18, Ui.RADIUS_S, 8));
+        card.addView(artSkeleton(ctx, Kit.POSTER_W, Kit.POSTER_H, Ui.RADIUS_L));
+        card.addView(sk(ctx, 190, 24, Ui.RADIUS_S, 12));
+        card.addView(sk(ctx, 140, 18, Ui.RADIUS_S, 8));
+        card.addView(sk(ctx, 210, 18, Ui.RADIUS_S, 6));
         return card;
     }
-
     /** widgets.ts smallCardSkeleton: a small card's shape (271, art 152), for More like this. */
     static View smallCardSkeleton(Context ctx) {
         LinearLayout card = column(ctx);

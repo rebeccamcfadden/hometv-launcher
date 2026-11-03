@@ -106,6 +106,7 @@ final class TmdbApi {
 
     private static final int[] BACKDROPS = {300, 780, 1280};
     private static final int[] PROFILES = {45, 185};
+    private static final int[] POSTERS = {154, 185, 342, 500, 780};
 
     /** The smallest TMDB width at least as wide as the box, else the widest. */
     static int pick(int[] widths, int boxWidthPx) {
@@ -121,6 +122,11 @@ final class TmdbApi {
     /** A portrait for a box this wide: w185 for every portrait the launcher shows (104 to 160 px). */
     static String profile(String path, int boxWidthPx) {
         return image(path, "w" + pick(PROFILES, boxWidthPx));
+    }
+
+    /** A poster at a width close to the box: w342 for the Movies and TV Shows cards (268 px wide, F40). */
+    static String poster(String path, int boxWidthPx) {
+        return image(path, "w" + pick(POSTERS, boxWidthPx));
     }
 
     /** Whether art is a TMDB image path ("/abc.jpg") rather than a mock name. */

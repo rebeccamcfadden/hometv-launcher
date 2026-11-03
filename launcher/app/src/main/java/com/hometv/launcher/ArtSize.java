@@ -28,4 +28,18 @@ final class ArtSize {
         if (s >= 0.8f) return null;
         return new int[]{Math.max(boxW, Math.round(srcW * s)), Math.max(boxH, Math.round(srcH * s))};
     }
+
+    /** How long a poster that failed to load is passed over for the backdrop before it is tried again. */
+    static final long POSTER_RETRY_MS = 5 * 60 * 1000L;
+
+    /**
+     * Which picture a poster card loads (F40): the poster, unless there is none, or it failed to load (a bad file, or
+     * offline with nothing cached) less than {@link #POSTER_RETRY_MS} ago and the backdrop is there to fall back on,
+     * cropped to the poster's shape. {@code failedAt} is when it failed (the uptime clock), 0 when it hasn't.
+     */
+    static String posterChoice(String posterUrl, String backdropUrl, long failedAt, long now) {
+        if (posterUrl == null) return backdropUrl;
+        boolean failed = failedAt > 0 && now - failedAt < POSTER_RETRY_MS;
+        return failed && backdropUrl != null ? backdropUrl : posterUrl;
+    }
 }

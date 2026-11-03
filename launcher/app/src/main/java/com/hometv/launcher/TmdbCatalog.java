@@ -574,9 +574,11 @@ final class TmdbCatalog implements Catalog {
         Title old = known.get(in.id);
         Title keep = in;
         if (old != null && old.detailed && !in.detailed) {
-            if (old.art != null || in.art == null) return old;
+            boolean art = old.art == null && in.art != null, poster = old.poster == null && in.poster != null;
+            if (!art && !poster) return old;
             Title.Draft d = new Title.Draft(old);
-            d.art = in.art;
+            if (art) d.art = in.art;
+            if (poster) d.poster = in.poster;
             keep = d.build();
         } else if (old != null && old.detailed) {
             List<Season> seasons = new ArrayList<>();

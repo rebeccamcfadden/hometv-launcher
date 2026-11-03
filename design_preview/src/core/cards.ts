@@ -1,17 +1,18 @@
-// F40 (Rebecca, 2026-11-02): Movies and TV Shows' gallery cards, as today (landscape art) or with the poster art, for
-// her to pick. A dev-bar choice (Cards menu, ?cards=), not a Launcher setting: the launcher gets the one she picks.
+// F40 (Rebecca, 2026-11-02): Movies and TV Shows' gallery cards. She picked the poster card with all its details (22:03,
+// Figma option A), which the launcher shows; the landscape card (before) and the compact poster stay in the dev bar's
+// Cards menu (?cards=) and compare.html, for comparison. Not a Launcher setting.
 
 export type CardStyle = 'landscape' | 'poster' | 'poster-compact';
 
 export const CARD_STYLES: [CardStyle, string][] = [
-  ['landscape', 'Cards: landscape (today)'],
-  ['poster', 'Cards: poster'],
+  ['poster', 'Cards: poster (chosen)'],
+  ['landscape', 'Cards: landscape (before F40)'],
   ['poster-compact', 'Cards: poster, name and service only'],
 ];
 
 export const isCardStyle = (s: string | null): s is CardStyle => CARD_STYLES.some(([id]) => id === s);
 
-let style: CardStyle = 'landscape';
+let style: CardStyle = 'poster';
 const listeners = new Set<() => void>();
 
 export const cards = {

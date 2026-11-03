@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
+import android.os.SystemClock;
 import android.util.LruCache;
 import android.widget.ImageView;
 
@@ -66,6 +67,13 @@ final class Art {
     private static final Map<String, List<ImageView>> PENDING = new HashMap<>();
     /** The keys some view still waits for; a worker skips a key that has left it. */
     private static final Set<String> WANTED = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    /** A poster's key, and the backdrop to show when it fails to load (Art.poster, F40). Main thread only. */
+    private static final Map<String, String> FALLBACK = new HashMap<>();
+    /**
+     * Posters that failed to load lately, with when (uptime): their cards show the backdrop until the failure is
+     * {@link ArtSize#POSTER_RETRY_MS} old, then the poster is tried again. Main thread only.
+     */
+    private static final LruCache<String, Long> FAILED_POSTERS = new LruCache<>(128);
 
     private static volatile TmdbClient client;
 
@@ -83,6 +91,26 @@ final class Art {
     }
 
     /**
+     * A title's poster (F40, the Movies and TV Shows cards), cropped to fill v; a title with no poster shows its backdrop,
+     * cropped to the poster's shape, and a mock title the placeholder.
+     */
+    static void poster(ImageView v, Title t, int widthPx, int heightPx) {
+        String poster = TmdbApi.isImagePath(t.poster) ? TmdbApi.poster(t.poster, widthPx) : null;
+        String backdrop = TmdbApi.backdrop(t.art, widthPx * 2);
+        Long failedAt = poster == null ? null : FAILED_POSTERS.get(key(poster, widthPx, heightPx));
+        String url = ArtSize.posterChoice(poster, backdrop, failedAt == null ? 0 : failedAt, SystemClock.uptimeMillis());
+        // A poster that then fails to load falls back to the backdrop for the views still waiting for it (deliver).
+        if (url != null && url.equals(poster) && backdrop != null && client != null) {
+            FALLBACK.put(key(poster, widthPx, heightPx), backdrop);
+        }
+        bind(v, url, widthPx, heightPx, false);
+    }
+
+    private static String key(String url, int widthPx, int heightPx) {
+        return url + "@" + widthPx + "x" + heightPx;
+    }
+
+    /**
      * A person's portrait (a TMDB profile path), the same way, but transparent until it is ready (or for good), so
      * the initials under it show meanwhile.
      */
@@ -92,10 +120,14 @@ final class Art {
 
     private static void bind(ImageView v, String url, int widthPx, int heightPx, boolean clear) {
         v.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        String key = url == null || client == null ? null : url + "@" + widthPx + "x" + heightPx;
+        String key = url == null || client == null ? null : key(url, widthPx, heightPx);
         Object shown = v.getTag(R.id.art_key);
         // Asked again for what it already shows or waits for (a rebind of the same title): leave it, no flash.
-        if (key != null && key.equals(shown) && (v.getDrawable() instanceof BitmapDrawable || isPending(key, v))) return;
+        if (key != null && key.equals(shown) && v.getDrawable() instanceof BitmapDrawable) {
+            FALLBACK.remove(key);
+            return;
+        }
+        if (key != null && key.equals(shown) && isPending(key, v)) return;
         if (shown instanceof String && !shown.equals(key)) forget((String) shown, v);
         v.setTag(R.id.art_key, key);
         Drawable empty = clear ? null : placeholder();
@@ -105,6 +137,7 @@ final class Art {
         }
         Bitmap cached = CACHE.get(key);
         if (cached != null) {
+            FALLBACK.remove(key);
             v.setImageBitmap(cached);
             return;
         }
@@ -136,7 +169,7 @@ final class Art {
                 b = null;
             }
             Bitmap result = b;
-            MAIN.post(() -> deliver(key, result));
+            MAIN.post(() -> deliver(key, result, w, h));
         });
     }
 
@@ -151,6 +184,7 @@ final class Art {
     /** Memory pressure: drop the cache. Views on screen keep their bitmaps; the rest load again when shown. */
     static void trim() {
         CACHE.evictAll();
+        FAILED_POSTERS.evictAll();
     }
 
     private static boolean isPending(String key, ImageView v) {
@@ -172,16 +206,29 @@ final class Art {
         if (waiting == null || waiting.isEmpty()) {
             PENDING.remove(key);
             WANTED.remove(key);
+            FALLBACK.remove(key);
             return;
         }
         WANTED.add(key);
         start(key, url, w, h);
     }
 
-    private static void deliver(String key, Bitmap b) {
+    private static void deliver(String key, Bitmap b, int w, int h) {
         List<ImageView> waiting = PENDING.remove(key);
         WANTED.remove(key);
-        if (b == null) return;
+        String fallback = FALLBACK.remove(key);
+        if (b == null) {
+            if (fallback == null) return;
+            // A poster that didn't load: the views that still want it show the backdrop instead (their key moves on,
+            // so a late answer for either can't land on a card that has been given another title since).
+            FAILED_POSTERS.put(key, SystemClock.uptimeMillis());
+            if (waiting == null) return;
+            for (ImageView v : new ArrayList<>(waiting)) {
+                if (key.equals(v.getTag(R.id.art_key))) bind(v, fallback, w, h, false);
+            }
+            return;
+        }
+        FAILED_POSTERS.remove(key);
         CACHE.put(key, b);
         if (waiting == null) return;
         for (ImageView v : waiting) {
