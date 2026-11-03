@@ -1,0 +1,1626 @@
+<!doctype html>
+<!--
+  The phone remote (F27 with F39). HomeTV Launcher serves this single file over HTTPS at
+  https://<tv>:8767/remote so a phone on the home Wi-Fi can drive the TV: arrows, OK, Back, Home, typing into
+  Search with the phone's own keyboard, and adding titles to My list (docs/phone-remote.md). It loads nothing
+  from the internet: no fonts, no CDNs, no images but inline SVG. It talks to the launcher's local HTTPS server
+  with fetch() (see the api() helper below for the exact calls); there is no BroadcastChannel and no build step.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#090e15" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>HomeTV remote</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c4ddf7' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 3h8v18H8zM11.5 17.5h1'/%3E%3C/svg%3E"
+    />
+    <style>
+      /* Design tokens used below, trimmed to what this page needs (full set: design_preview/src/styles/tokens.css). */
+      :root {
+        --bg: #090e15;
+        --bg-raised: #0d141d;
+        --surface: rgba(255, 255, 255, 0.05);
+        --surface-2: rgba(255, 255, 255, 0.09);
+        --surface-3: rgba(255, 255, 255, 0.14);
+        --line: rgba(255, 255, 255, 0.09);
+        --line-strong: rgba(255, 255, 255, 0.18);
+        --text-1: #f4f5f7;
+        --text-2: #adb5c0;
+        --text-3: #7d8999;
+        --ghost: #5e6878;
+        --accent: #c4ddf7;
+        --accent-soft: rgba(196, 221, 247, 0.14);
+        --on-accent: #101820;
+        --good: #8fd9a8;
+        --good-soft: rgba(143, 217, 168, 0.16);
+        --star: #f2c46d;
+        --star-rgb: 242, 196, 109;
+        --shade-rgb: 9, 14, 21;
+        --deep-rgb: 13, 20, 29;
+        --popup-bg: #121a24;
+        --toast-bg: rgba(22, 30, 41, 0.97);
+        --person-bg: #1c2633;
+        --radius-pill: 100px;
+        --fast: 140ms;
+        /* The D-pad's diameter: as big as it can be without ever forcing the remote view to scroll. */
+        --pad: min(300px, calc(100vw - 40px), 34dvh);
+      }
+      /* Phone sizes of the Midnight theme (design_preview/src/styles/remote.css); the phone's own font, since the
+         TV's page loads nothing from the internet. Big targets, no zoom. */
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--text-1);
+        font: 16px/1.4 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+        touch-action: manipulation;
+        overscroll-behavior: none;
+      }
+      button,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        border: 0;
+        background: none;
+        padding: 0;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+
+      .view {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        max-width: 480px;
+        min-height: 100dvh;
+        margin: 0 auto;
+        padding: max(20px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom));
+      }
+      /* The remote (and its typing panel) is one screen that never scrolls: header auto, top block auto, the
+         D-pad/typing field at 1fr (via .slot--main below), Type bar auto. Other views may still grow taller than
+         the viewport (a long pairing error, say), so this is scoped to the remote view only. */
+      .view--remote {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+      }
+      @media (max-height: 700px) {
+        .view--remote {
+          gap: 12px;
+        }
+      }
+      .grow {
+        flex: 1;
+      }
+      .slot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      .slot--main {
+        flex: 1;
+        gap: 20px;
+        min-height: 0; /* let a 1fr flex child actually shrink below its content size on a short screen */
+      }
+      @media (max-height: 700px) {
+        .slot--main {
+          gap: 10px;
+        }
+      }
+      .center {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        text-align: center;
+      }
+      .pairwrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      /* ---- Header ---- */
+      .hdr {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .hdr-badge {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--surface-2);
+      }
+      .hdr-names {
+        flex: 1;
+        min-width: 0;
+      }
+      .hdr-tv {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .hdr-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-3);
+      }
+      .dot {
+        display: inline-block;
+        flex: none;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .dot--good {
+        background: var(--good);
+      }
+      .dot--dim {
+        background: var(--text-3);
+      }
+      .dot--warn {
+        background: var(--star);
+      }
+      .dot--accent {
+        background: var(--accent);
+      }
+
+      /* ---- Round buttons, D-pad and the Back/Home keys ---- */
+      .round {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--surface-2);
+        color: var(--text-1);
+      }
+      .round:active {
+        background: var(--surface-3);
+      }
+      .hdr-more {
+        background: var(--surface);
+        color: var(--text-2);
+      }
+      .round--big {
+        width: 68px;
+        height: 68px;
+      }
+      @media (max-height: 700px) {
+        .round--big {
+          width: 60px;
+          height: 60px;
+        }
+      }
+      .round--small {
+        width: 40px;
+        height: 40px;
+        background: var(--surface);
+        color: var(--text-2);
+      }
+      .round--good {
+        background: var(--good-soft);
+        color: var(--good);
+      }
+      .rkey {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        width: 96px;
+      }
+      .rkey-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-2);
+      }
+      .keys {
+        display: flex;
+        justify-content: center;
+        gap: 64px;
+      }
+      @media (max-height: 700px) {
+        .keys {
+          gap: 40px;
+        }
+      }
+      /* A dimmed control: another app is in front on the TV, so only Home works (docs/phone-remote.md). */
+      .is-dim {
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      .dpad {
+        position: relative;
+        flex: none;
+        width: var(--pad);
+        height: var(--pad);
+        border-radius: 50%;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+      .dpad-arrow {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        width: 28%;
+        height: 28%;
+        border-radius: 50%;
+        color: var(--text-2);
+      }
+      .dpad-arrow:active {
+        background: var(--surface-2);
+        color: var(--text-1);
+      }
+      .dpad-up {
+        top: 2%;
+        left: 36%;
+      }
+      .dpad-down {
+        bottom: 2%;
+        left: 36%;
+      }
+      .dpad-left {
+        left: 2%;
+        top: 36%;
+      }
+      .dpad-right {
+        right: 2%;
+        top: 36%;
+      }
+      .dpad-ok {
+        position: absolute;
+        top: 28.5%;
+        left: 28.5%;
+        width: 43%;
+        height: 43%;
+        border-radius: 50%;
+        background: var(--surface-2);
+        border: 1px solid var(--line-strong);
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .dpad-ok:active {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+
+      /* ---- Screen hint, the "On the TV" card, and the search link ---- */
+      .hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px 8px 14px;
+        border-radius: var(--radius-pill);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-2);
+      }
+      .card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 10px 12px 10px 10px;
+        border-radius: 18px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+      .card-art {
+        flex: none;
+        width: 96px;
+        height: 54px;
+        border-radius: 8px;
+        background: var(--bg-raised);
+      }
+      .card-words {
+        flex: 1;
+        min-width: 0;
+      }
+      .card-eyebrow {
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+      .card-title {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .card-meta {
+        font-size: 13px;
+        color: var(--text-3);
+      }
+      .mylist {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex: none;
+        height: 40px;
+        padding: 0 14px 0 12px;
+        border-radius: var(--radius-pill);
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .mylist span,
+      .pill span,
+      .typebar span,
+      .link span,
+      .help span {
+        display: grid;
+      }
+      .mylist.is-on {
+        background: var(--good-soft);
+        color: var(--good);
+      }
+      .link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        align-self: flex-start;
+        padding: 4px 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--accent);
+      }
+      .link--strong {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      /* ---- Type bar and typing ---- */
+      .typebar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        height: 56px;
+        padding: 0 18px;
+        border-radius: 16px;
+        background: var(--surface-2);
+        border: 1px solid var(--line-strong);
+        font-size: 15px;
+        color: var(--text-2);
+        text-align: left;
+      }
+      .typebar--off {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: var(--line);
+        color: var(--ghost);
+      }
+      .typing {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+      }
+      .small {
+        font-size: 13px;
+        color: var(--text-3);
+      }
+
+      /* ---- Fields and pairing ---- */
+      .pair {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-top: 12px;
+      }
+      .pair-t,
+      .msg-t {
+        font-size: 28px;
+        font-weight: 400;
+      }
+      .pair-s,
+      .msg-b {
+        color: var(--text-2);
+      }
+      .msg-s {
+        font-size: 14px;
+        color: var(--text-3);
+      }
+      .note {
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: var(--surface);
+        font-size: 14px;
+        color: var(--text-2);
+      }
+      .group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .group-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-3);
+      }
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 56px;
+        padding: 0 14px 0 18px;
+        border-radius: 14px;
+        background: var(--surface-2);
+        border: 1px solid var(--line-strong);
+      }
+      .field--live {
+        height: 60px;
+        padding-right: 10px;
+        border: 2px solid var(--accent);
+      }
+      .field--warn {
+        border: 2px solid var(--star);
+      }
+      .field-input {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        border: 0;
+        outline: 0;
+        background: none;
+        font-size: 18px;
+      }
+      .field-input--code {
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .field-input--big {
+        font-size: 20px;
+      }
+      .field-ok {
+        display: grid;
+        color: var(--good);
+      }
+      .field-ico {
+        display: grid;
+        color: var(--text-2);
+      }
+      .help {
+        display: flex;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-3);
+      }
+      .help--good {
+        color: var(--good);
+      }
+      .help--warn {
+        color: var(--star);
+      }
+      .btn {
+        height: 52px;
+        border-radius: var(--radius-pill);
+        background: var(--accent);
+        color: var(--on-accent);
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .btn--wide {
+        align-self: stretch;
+      }
+      .btn--quiet,
+      .btn:disabled {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--text-2);
+        font-weight: 400;
+      }
+      .msg-ico {
+        color: var(--star);
+      }
+      .lock-badge {
+        display: grid;
+        place-items: center;
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: rgba(var(--star-rgb), 0.14);
+        color: var(--star);
+      }
+      .lock-count {
+        font-size: 52px;
+        font-weight: 300;
+        font-variant-numeric: tabular-nums;
+      }
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 3px solid var(--surface-3);
+        border-top-color: var(--accent);
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ---- Search sheet (F39) and the ⋯ menu ---- */
+      .sheet-scrim,
+      .menu-scrim {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        background: rgba(var(--shade-rgb), 0.7);
+        z-index: 10;
+      }
+      .sheet,
+      .menu {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        max-width: 480px;
+        padding: 12px 20px max(20px, env(safe-area-inset-bottom));
+        border-radius: 28px 28px 0 0;
+        background: var(--popup-bg);
+        border: 1px solid var(--line-strong);
+        border-bottom: 0;
+      }
+      .sheet {
+        height: 78dvh;
+      }
+      .handle {
+        align-self: center;
+        width: 40px;
+        height: 5px;
+        border-radius: 3px;
+        background: var(--line-strong);
+      }
+      .sheet-head {
+        display: flex;
+        align-items: center;
+      }
+      .sheet-head h2 {
+        flex: 1;
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .results {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .results-empty {
+        padding: 8px 2px;
+      }
+      .result {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 72px;
+      }
+      .result-art {
+        flex: none;
+        width: 40px;
+        height: 60px;
+        border-radius: 6px;
+        background: var(--person-bg);
+      }
+      .result-words {
+        flex: 1;
+        min-width: 0;
+      }
+      .result-t {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .result-m {
+        font-size: 13px;
+        color: var(--text-3);
+      }
+      .menu {
+        gap: 4px;
+      }
+      .menu-t {
+        padding: 8px 4px 12px;
+        font-size: 14px;
+        color: var(--text-3);
+      }
+      .menu-item {
+        height: 52px;
+        padding: 0 4px;
+        text-align: left;
+        font-size: 17px;
+        color: var(--star);
+      }
+      .menu-item--dim {
+        color: var(--text-2);
+      }
+
+      /* ---- Toast ---- */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: max(96px, calc(env(safe-area-inset-bottom) + 76px));
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: min(440px, calc(100% - 40px));
+        padding: 8px 8px 8px 16px;
+        border-radius: 16px;
+        background: var(--toast-bg);
+        border: 1px solid var(--line-strong);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, 12px);
+        transition:
+          opacity var(--fast) ease,
+          transform var(--fast) ease;
+        z-index: 20;
+      }
+      .toast--top {
+        top: max(16px, env(safe-area-inset-top));
+        bottom: auto;
+      }
+      .toast.is-shown {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, 0);
+      }
+      .toast-ico {
+        display: grid;
+        color: var(--good);
+      }
+      .toast-words {
+        flex: 1;
+        min-width: 0;
+        padding: 6px 0;
+      }
+      .toast-t {
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .toast-s {
+        font-size: 13px;
+        color: var(--text-2);
+      }
+      .toast--good {
+        background: rgba(var(--deep-rgb), 0.97);
+        border-color: rgba(143, 217, 168, 0.4);
+      }
+      .toast-undo {
+        height: 40px;
+        padding: 0 14px;
+        border-radius: var(--radius-pill);
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main id="app"></main>
+    <script>
+      'use strict';
+
+      // ---- A tiny element builder: el('div.a.b', attrs, kids…); `html` sets innerHTML (icons only, never user text). ----
+      function el(spec, attrs) {
+        var parts = spec.split('.');
+        var node = document.createElement(parts[0] || 'div');
+        if (parts.length > 1) node.className = parts.slice(1).join(' ');
+        var kids = Array.prototype.slice.call(arguments, 2);
+        if (attrs && typeof attrs === 'object' && !(attrs instanceof Node) && !Array.isArray(attrs)) {
+          Object.keys(attrs).forEach(function (k) {
+            var v = attrs[k];
+            if (v === undefined || v === false) return;
+            if (k === 'html') node.innerHTML = String(v);
+            else if (k.indexOf('on') === 0 && typeof v === 'function') node.addEventListener(k.slice(2), v);
+            else node.setAttribute(k, v === true ? '' : String(v));
+          });
+        } else {
+          kids.unshift(attrs);
+        }
+        function add(k) {
+          if (k === null || k === undefined || k === false) return;
+          if (Array.isArray(k)) return k.forEach(add);
+          node.append(k);
+        }
+        kids.forEach(add);
+        return node;
+      }
+
+      // ---- Outline icons on a 24-unit grid (design_preview/src/ui/icons.ts plus remotePage.ts's own I dict). ----
+      var PATHS = {
+        up: 'M6 15l6-6 6 6',
+        down: 'M6 9l6 6 6-6',
+        left: 'M15 6l-6 6 6 6',
+        right: 'M9 6l6 6-6 6',
+        keyboard: 'M3 6.5h18v11H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10',
+        x: 'M7 7l10 10M17 7L7 17',
+        more: 'M6 12h.01M12 12h.01M18 12h.01',
+        enter: 'M19 6v5a3 3 0 0 1-3 3H6M9 10l-4 4 4 4',
+        check: 'M5 12.5l4.5 4.5L19 7.5',
+        plus: 'M12 5v14M5 12h14',
+        tv: 'M3.5 5.5h17v11h-17zM8 20h8',
+        alert: 'M12 3.5l9.5 16.5h-19zM12 10v4.5M12 17.5h.01',
+        lock: 'M6.5 11h11v9h-11zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+        back: 'M15 5l-7 7 7 7',
+        home: 'M4 11l8-7 8 7v9h-5.5v-6h-5v6H4z',
+        search: 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5L20 20',
+        backspace: 'M9 6h11v12H9l-6-6zM12 9.5l5 5M17 9.5l-5 5',
+        phone: 'M8 3h8v18H8zM11.5 17.5h1',
+      };
+      function svgIcon(name, size, sw) {
+        size = size || 24;
+        sw = sw === undefined ? 1.8 : sw;
+        return (
+          '<svg class="icon" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+          'stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round"><path d="' + PATHS[name] + '"/></svg>'
+        );
+      }
+
+      // ---- This phone: a token and a name, kept across visits (design_preview/src/remotePage.ts: Me, loadMe). ----
+      var STORAGE_KEY = 'hometv-remote';
+      function loadMe() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            var m = JSON.parse(raw);
+            if (m && typeof m === 'object') return { token: m.token, name: m.name };
+          }
+        } catch (e) {
+          // Blocked storage: this phone isn't remembered between visits.
+        }
+        return {};
+      }
+      var me = loadMe();
+      function saveMe() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: me.token, name: me.name }));
+        } catch (e) {
+          // The pairing lasts for this visit only.
+        }
+      }
+
+      // The code from the QR link's #fragment, which a browser never sends over the network; used once, to pair.
+      var normalizeCode = function (c) {
+        return c.replace(/[\s-]/g, '').toUpperCase();
+      };
+      var codeFromLink = normalizeCode(decodeURIComponent(location.hash.slice(1)).replace(/[^0-9A-Za-z-]/g, ''));
+      // "K7QM4PXT" as the TV shows it, "K7QM-4PXT".
+      function showCode(c) {
+        return c.length === 8 ? c.slice(0, 4) + '-' + c.slice(4) : c;
+      }
+      // A first guess at the phone's name, which the person can change.
+      function guessName() {
+        var ua = navigator.userAgent;
+        if (/iPhone/.test(ua)) return 'iPhone';
+        if (/iPad/.test(ua)) return 'iPad';
+        if (/Android/.test(ua)) return 'Android phone';
+        return 'This phone';
+      }
+      function buzz() {
+        if (navigator.vibrate) navigator.vibrate(8);
+      }
+
+      // ---- Talking to the TV: fetch() to this same origin. Every call but /api/pair carries the phone's token. ----
+      var API_TIMEOUT_MS = 4000;
+      async function api(path, opts) {
+        opts = opts || {};
+        var ctrl = new AbortController();
+        var timer = setTimeout(function () {
+          ctrl.abort();
+        }, API_TIMEOUT_MS);
+        var headers = {};
+        if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+        if (path.indexOf('/api/pair') !== 0 && me.token) headers['Authorization'] = 'Bearer ' + me.token;
+        var res;
+        try {
+          res = await fetch(path, { method: opts.method || 'GET', body: opts.body, headers: headers, signal: ctrl.signal });
+        } catch (e) {
+          return { ok: false, kind: 'notv' }; // aborted (4 s with no answer) or a real network error
+        } finally {
+          clearTimeout(timer);
+        }
+        var data = null;
+        try {
+          data = await res.json();
+        } catch (e) {
+          /* no body, or not JSON */
+        }
+        if (res.status === 200) return { ok: true, data: data };
+        if (res.status === 401) {
+          if (data && data.error === 'unpaired') return { ok: false, kind: 'unpaired', locked: data.locked || 0 };
+          if (data && data.error === 'badcode') return { ok: false, kind: 'badcode', left: data.left };
+          return { ok: false, kind: 'notv' };
+        }
+        if (res.status === 429) {
+          if (data && data.error === 'locked') return { ok: false, kind: 'locked', until: data.until || 0 };
+          return { ok: false, kind: 'slowdown' };
+        }
+        return { ok: false, kind: 'off' }; // any other status: the TV answers, but Phone remote is off
+      }
+
+      // Keys, text and Enter are fire-and-forget: the TV answers {"ok":true} at once, with no state, so these never
+      // wait for or act on a reply. Only GET /api/state carries state, and only it can show "Can't reach the TV"
+      // (two failed polls in a row; see fetchState). statePending keeps at most one state request in flight;
+      // requestedAt timestamps let applyState tell a poll sent after the phone's last text send from an older or
+      // stale one (see applyState and endTyping).
+      var statePending = false;
+      var pollFailStreak = 0;
+      var keyInFlight = 0;
+      var MAX_INFLIGHT_KEYS = 4;
+      var lastTvTyping = false;
+      var lastTextSendTime = 0;
+
+      function applyState(data, requestedAt) {
+        data = data || {};
+        var stale = !!data.stale;
+        var wasTvTyping = lastTvTyping;
+        tv = {
+          tv: data.tv,
+          screen: data.screen || 'Loading…',
+          home: data.home !== false,
+          typing: !!data.typing,
+          text: typeof data.text === 'string' ? data.text : '',
+          title: data.title,
+        };
+        if (!stale) lastTvTyping = tv.typing;
+        if (view !== 'remote') {
+          show('remote');
+          return;
+        }
+        // Only a fresh (non-stale) state, from a poll sent after the last text send, ends typing here; a blur or
+        // Enter on the phone's keyboard end it too, through endTyping() directly (see typingPanel).
+        if (typing && !stale && !tv.typing && requestedAt > lastTextSendTime) {
+          endTyping();
+          return;
+        }
+        update();
+        if (!wasTvTyping && !stale && tv.typing && typing) focusField();
+      }
+
+      function handleFailure(r) {
+        if (r.kind === 'slowdown' || r.kind === 'badcode' || r.kind === 'locked') return; // not ours to act on here
+        if (r.kind === 'unpaired') {
+          if (me.token) {
+            me.token = undefined;
+            saveMe();
+            pairNotice = 'This phone was forgotten on the TV. Pair it again with the code.';
+          }
+          if (r.locked > 0) {
+            lockedUntil = Date.now() + r.locked;
+            show('locked');
+          } else {
+            show('pair');
+          }
+          return;
+        }
+        if (r.kind === 'off') return show('off');
+        show('notv');
+      }
+
+      function fetchState() {
+        if (statePending) return; // don't overlap state requests
+        statePending = true;
+        var requestedAt = Date.now();
+        api('/api/state').then(function (r) {
+          statePending = false;
+          if (r.ok) {
+            pollFailStreak = 0;
+            applyState(r.data, requestedAt);
+          } else if (r.kind === 'notv') {
+            // A network error/timeout: only the second one in a row says "Can't reach the TV".
+            pollFailStreak++;
+            if (pollFailStreak >= 2) show('notv');
+          } else {
+            pollFailStreak = 0; // the TV answered (unpaired/off/locked/…), so it's reachable
+            handleFailure(r);
+          }
+        });
+      }
+
+      function sendKey(key) {
+        if (keyInFlight >= MAX_INFLIGHT_KEYS) return; // keys go out immediately; just cap how many are in flight
+        buzz();
+        keyInFlight++;
+        api('/api/key', { method: 'POST', body: JSON.stringify({ key: key }) }).then(function () {
+          keyInFlight--;
+        });
+        window.setTimeout(fetchState, 250); // see the result sooner than the next regular poll
+      }
+
+      // Debounced ~120 ms after the last keystroke, at most one /api/text request in flight; if the field changed
+      // again while one was in flight, the latest queued value goes out the moment it returns. Enter goes out after
+      // any value still pending or in flight (sendEnter), so the TV has the final text before it searches.
+      var textDebounceTimer = 0;
+      var textInFlight = false;
+      var pendingTextValue = null; // the latest typed value not yet sent
+      var enterQueued = false; // Enter waits for the text still on its way, so the TV searches the final text
+      function flushText() {
+        clearTimeout(textDebounceTimer);
+        if (pendingTextValue === null || textInFlight) return; // nothing queued, or already sending one
+        var value = pendingTextValue;
+        pendingTextValue = null;
+        textInFlight = true;
+        lastTextSendTime = Date.now();
+        api('/api/text', { method: 'POST', body: JSON.stringify({ value: value }) }).then(function () {
+          textInFlight = false;
+          if (pendingTextValue !== null) flushText(); // the value changed meanwhile: send the latest now
+          else if (enterQueued) {
+            enterQueued = false;
+            sendEnter();
+          }
+        });
+      }
+      function sendText(value) {
+        pendingTextValue = value;
+        clearTimeout(textDebounceTimer);
+        textDebounceTimer = window.setTimeout(flushText, 120);
+      }
+      function sendEnter() {
+        if (textInFlight || pendingTextValue !== null) {
+          enterQueued = true;
+          flushText();
+          return;
+        }
+        api('/api/enter', { method: 'POST', body: '{}' });
+      }
+      function sendMylist(id) {
+        api('/api/mylist', { method: 'POST', body: JSON.stringify({ id: id }) }); // fire-and-forget, like keys
+      }
+
+      var searchSeq = 0;
+      function runSearch(q) {
+        var my = ++searchSeq;
+        api('/api/search?q=' + encodeURIComponent(q)).then(function (r) {
+          if (my !== searchSeq) return; // a newer search is already running
+          if (!searchInput || searchInput.value !== q) return; // the sheet moved on
+          if (r.ok) {
+            results = (r.data && r.data.items) || [];
+            resultsFor = (r.data && r.data.q) || q;
+            paintResults();
+          }
+          // A failed search just leaves the previous results; it never shows "Can't reach the TV".
+        });
+      }
+
+      function submitPair(codeValue, name) {
+        api('/api/pair', { method: 'POST', body: JSON.stringify({ code: codeValue, name: name }) }).then(function (r) {
+          pairing = false;
+          if (r.ok) {
+            me.token = r.data.token;
+            me.name = r.data.name;
+            saveMe();
+            pairError = '';
+            pairNotice = '';
+            // The code has done its job: drop it from the address bar, so a bookmark doesn't carry it, and from
+            // the page, so a phone forgotten later asks for the TV's code then (it may be a new one).
+            codeFromLink = '';
+            history.replaceState(null, '', location.pathname + location.search);
+            toast('Paired as “' + r.data.name + '”', 'Add it to your home screen to open it in one tap.', null, 'good');
+            fetchState();
+            return;
+          }
+          if (r.kind === 'badcode') {
+            pairError = 'That code doesn’t match the TV. Check it on the TV screen. ' + r.left + ' ' + (r.left === 1 ? 'try' : 'tries') + ' left.';
+            return show('pair');
+          }
+          if (r.kind === 'locked') {
+            lockedUntil = Date.now() + (r.until || 0);
+            return show('locked');
+          }
+          if (r.kind === 'off') return show('off');
+          show('notv');
+        });
+      }
+
+      function retry() {
+        show('connecting');
+        if (me.token) fetchState();
+        else show('pair');
+      }
+
+      // ---- State ----
+      var view = 'connecting'; // 'connecting' | 'notv' | 'off' | 'pair' | 'locked' | 'remote'
+      var tv = null; // the last state the TV gave us: {tv, screen, home, typing, text, title}
+      var typing = false;
+      var sheet = false;
+      var results = [];
+      var resultsFor = '';
+      var pairError = '';
+      var pairNotice = '';
+      var pairing = false;
+      var lockedUntil = 0;
+      var lockTimer = 0;
+      var fieldEl = null;
+      var searchInput = null;
+      var resultsEl = null;
+      // What the remote view's middle holds now, so update() rebuilds it only when that changes.
+      var mainMode = null; // 'pad' | 'typing' | null
+      // The D-pad and the Back key, built once per 'pad' mode (see update()): kept here so later state updates can
+      // dim them without rebuilding the buttons a finger might be holding down.
+      var dpadEl = null;
+      var backKeyEl = null;
+      var root = document.getElementById('app');
+      var slots = { top: el('div.slot'), main: el('div.slot.slot--main'), bottom: el('div.slot') };
+
+      function tvName() {
+        return (tv && tv.tv) || 'Your TV';
+      }
+
+      // ---- Toast ----
+      var toastTimer = 0;
+      var toastEl = el('div.toast');
+      function toast(text, sub, undo, tone) {
+        var kids = [
+          el('div.toast-ico', { html: svgIcon('check', 18, 2.4) }),
+          el('div.toast-words', el('div.toast-t', text), sub ? el('div.toast-s', sub) : null),
+        ];
+        if (undo) {
+          kids.push(
+            el(
+              'button.toast-undo',
+              {
+                onclick: function () {
+                  undo();
+                  hideToast();
+                },
+              },
+              'Undo',
+            ),
+          );
+        }
+        toastEl.replaceChildren.apply(
+          toastEl,
+          kids.filter(function (k) {
+            return !!k;
+          }),
+        );
+        toastEl.className = 'toast is-shown' + (tone === 'good' ? ' toast--good' : '') + (view === 'remote' && !sheet ? '' : ' toast--top');
+        clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(hideToast, undo ? 5000 : 3500);
+      }
+      function hideToast() {
+        toastEl.classList.remove('is-shown');
+      }
+
+      // ---- Pieces ----
+      function header(status, tone, menu) {
+        return el(
+          'header.hdr',
+          el('div.hdr-badge', { html: svgIcon('tv', 22) }),
+          el('div.hdr-names', el('div.hdr-tv', tvName()), el('div.hdr-status', el('i.dot.dot--' + tone), status)),
+          menu ? el('button.round.hdr-more', { 'aria-label': 'More', onclick: openMenu, html: svgIcon('more', 22, 2.6) }) : null,
+        );
+      }
+
+      function openMenu() {
+        var sheetEl;
+        var close = function () {
+          sheetEl.remove();
+        };
+        sheetEl = el(
+          'div.menu-scrim',
+          {
+            onclick: function (e) {
+              if (e.target === sheetEl) close();
+            },
+          },
+          el(
+            'div.menu',
+            el('div.menu-t', me.name ? 'This phone: ' + me.name : 'This phone'),
+            el(
+              'button.menu-item',
+              {
+                onclick: function () {
+                  api('/api/forget', { method: 'POST', body: '{}' });
+                  me.token = undefined;
+                  saveMe();
+                  close();
+                  pairNotice = 'Unpaired. The TV no longer lists this phone.';
+                  show('pair');
+                },
+              },
+              'Unpair this phone',
+            ),
+            el('button.menu-item.menu-item--dim', { onclick: close }, 'Cancel'),
+          ),
+        );
+        document.body.append(sheetEl);
+      }
+
+      // A key that sends on press; arrows repeat while held, as a remote's do. One repeat at a time, stopped by any
+      // release (pointerup/pointercancel/blur, below) or a view change.
+      var stopRepeat = null;
+      ['pointerup', 'pointercancel', 'blur'].forEach(function (ev) {
+        window.addEventListener(ev, function () {
+          if (stopRepeat) stopRepeat();
+        });
+      });
+      function keyButton(spec, key, content, label) {
+        var repeat = 0;
+        var delay = 0;
+        var stop = function () {
+          clearTimeout(delay);
+          clearInterval(repeat);
+          if (stopRepeat === stop) stopRepeat = null;
+        };
+        var press = function () {
+          buzz();
+          sendKey(key);
+        };
+        return el(
+          spec,
+          {
+            'aria-label': label || key,
+            onpointerdown: function (e) {
+              e.preventDefault();
+              if (stopRepeat) stopRepeat();
+              press();
+              if (key === 'up' || key === 'down' || key === 'left' || key === 'right') {
+                stopRepeat = stop;
+                delay = window.setTimeout(function () {
+                  repeat = window.setInterval(press, 120);
+                }, 400);
+              }
+            },
+            onpointerup: stop,
+            onpointerleave: stop,
+            onpointercancel: stop,
+            oncontextmenu: function (e) {
+              e.preventDefault();
+            },
+          },
+          content,
+        );
+      }
+
+      function dpad() {
+        return el(
+          'div.dpad',
+          keyButton('button.dpad-arrow.dpad-up', 'up', el('span', { html: svgIcon('up', 30, 2) })),
+          keyButton('button.dpad-arrow.dpad-down', 'down', el('span', { html: svgIcon('down', 30, 2) })),
+          keyButton('button.dpad-arrow.dpad-left', 'left', el('span', { html: svgIcon('left', 30, 2) })),
+          keyButton('button.dpad-arrow.dpad-right', 'right', el('span', { html: svgIcon('right', 30, 2) })),
+          keyButton('button.dpad-ok', 'ok', 'OK'),
+        );
+      }
+
+      function roundKey(key, iconName, label) {
+        return el('div.rkey', keyButton('button.round.round--big', key, el('span', { html: svgIcon(iconName, 26) }), label), el('div.rkey-label', label));
+      }
+
+      function card(t) {
+        return el(
+          'div.card',
+          el('div.card-art'), // no artwork: the TV doesn't serve images over this connection
+          el('div.card-words', el('div.card-eyebrow', 'On the TV'), el('div.card-title', t.name), el('div.card-meta', t.year + ' · ' + (t.kind === 'show' ? 'TV show' : 'Movie'))),
+          el(
+            'button.mylist' + (t.mine ? '.is-on' : ''),
+            {
+              onclick: function () {
+                toggleMine(t);
+              },
+            },
+            el('span', { html: svgIcon(t.mine ? 'check' : 'plus', 18, 2.2) }),
+            t.mine ? 'On My list' : 'My list',
+          ),
+        );
+      }
+
+      // F39: add or take off; the TV toasts it too. Undo sends the opposite.
+      function toggleMine(t) {
+        buzz();
+        var added = !t.mine;
+        t.mine = added;
+        sendMylist(t.id);
+        update();
+        paintResults();
+        toast((added ? 'Added ' : 'Removed ') + t.name + (added ? ' to ' : ' from ') + 'My list', null, function () {
+          sendMylist(t.id);
+          t.mine = !added;
+          paintResults();
+        });
+      }
+
+      // ---- Views ----
+      function show(v) {
+        view = v;
+        typing = v === 'remote' && typing;
+        pairing = false; // a view change ends any pairing under way (no answer, off, forgotten): Pair works again
+        mainMode = null;
+        dpadEl = null;
+        backKeyEl = null;
+        if (stopRepeat) stopRepeat();
+        if (v !== 'remote') {
+          sheet = false;
+          var scrim = document.querySelector('.sheet-scrim');
+          if (scrim) scrim.remove();
+          hideToast(); // an Undo from the remote means nothing once the phone isn't paired
+        }
+        clearInterval(lockTimer);
+        root.replaceChildren();
+        root.className = 'view view--' + v;
+        if (v === 'connecting') root.append(header('Connecting…', 'dim', false), el('div.center', el('div.spinner')));
+        if (v === 'notv')
+          root.append(
+            header('Not connected', 'warn', false),
+            message('Can’t reach the TV', 'Check that the TV is on, on the same Wi-Fi as this phone, and that Launcher settings › Phone remote is on.'),
+          );
+        if (v === 'off')
+          root.append(header('Phone remote is off', 'warn', false), message('Phone remote is off on the TV', 'Turn it on in Launcher settings › Phone remote on the TV, then try again.'));
+        if (v === 'pair') root.append(pairView());
+        if (v === 'locked') root.append(lockedView());
+        if (v === 'remote') {
+          root.append(header('Connected · HomeTV Launcher', 'good', true), slots.top, slots.main, slots.bottom);
+          update();
+        }
+        root.append(toastEl);
+      }
+
+      function message(title, body) {
+        return el('div.center', el('div.msg-ico', { html: svgIcon('alert', 40) }), el('h1.msg-t', title), el('p.msg-b', body), el('button.btn.btn--wide', { onclick: retry }, 'Try again'));
+      }
+
+      function pairView() {
+        var fromLink = !!codeFromLink;
+        var code = el('input.field-input.field-input--code', {
+          value: showCode(codeFromLink),
+          autocomplete: 'off',
+          autocapitalize: 'characters',
+          spellcheck: 'false',
+          maxlength: '9',
+          placeholder: 'K7QM-4PXT',
+          readonly: fromLink && !pairError,
+          'aria-label': 'Code from the TV',
+        });
+        var name = el('input.field-input', { value: me.name || guessName(), autocomplete: 'off', maxlength: '40', 'aria-label': 'Name this phone' });
+        var btn = el('button.btn.btn--wide', { type: 'submit' }, 'Pair');
+        var submit = function (e) {
+          e.preventDefault();
+          if (!normalizeCode(code.value) || pairing) return;
+          pairing = true;
+          pairError = '';
+          btn.setAttribute('disabled', '');
+          btn.textContent = 'Pairing…';
+          me.name = name.value.trim() || guessName();
+          submitPair(code.value, me.name);
+        };
+        return el(
+          'div.pairwrap',
+          header('Not paired yet', 'dim', false),
+          el(
+            'form.pair',
+            { onsubmit: submit },
+            el('h1.pair-t', 'Pair this phone'),
+            el('p.pair-s', fromLink ? 'It becomes a remote and keyboard for ' + tvName() + '.' : 'Type the code shown in Launcher settings › Phone remote on the TV.'),
+            pairNotice ? el('p.note', pairNotice) : null,
+            el(
+              'label.group',
+              el('span.group-label', 'Code from the TV'),
+              el('div.field' + (pairError ? '.field--warn' : ''), code, fromLink && !pairError ? el('span.field-ok', { html: svgIcon('check', 20, 2.2) }) : null),
+              pairError ? el('span.help.help--warn', el('span', { html: svgIcon('alert', 16) }), pairError) : fromLink ? el('span.help.help--good', 'Filled in from the QR code.') : null,
+            ),
+            el('label.group', el('span.group-label', 'Name this phone'), el('div.field', name), el('span.help', 'The TV lists phones by this name, so you can forget one later.')),
+            el('div.grow'),
+            btn,
+          ),
+        );
+      }
+
+      function lockedView() {
+        var count = el('div.lock-count');
+        var btn = el(
+          'button.btn.btn--wide.btn--quiet',
+          {
+            disabled: true,
+            onclick: function () {
+              pairError = '';
+              show('pair');
+            },
+          },
+          'Try again when the timer ends',
+        );
+        var tick = function () {
+          var left = Math.max(0, lockedUntil - Date.now());
+          var ss = String(Math.floor((left % 60000) / 1000));
+          if (ss.length < 2) ss = '0' + ss;
+          count.textContent = Math.floor(left / 60000) + ':' + ss;
+          if (left === 0) {
+            clearInterval(lockTimer);
+            btn.removeAttribute('disabled');
+            btn.textContent = 'Try again';
+            btn.classList.remove('btn--quiet');
+          }
+        };
+        queueMicrotask(function () {
+          tick();
+          lockTimer = window.setInterval(tick, 1000);
+        });
+        return el(
+          'div.pairwrap',
+          header('Pairing paused', 'warn', false),
+          el(
+            'div.center',
+            el('div.lock-badge', { html: svgIcon('lock', 40) }),
+            el('h1.msg-t', 'Pairing is paused'),
+            el('p.msg-b', 'Too many wrong codes. The TV takes new phones again in'),
+            count,
+            el('p.msg-s', 'Phones that are already paired keep working.'),
+            el('div.grow'),
+            btn,
+          ),
+        );
+      }
+
+      /** The remote view's parts, redrawn as the TV's state changes; the typing field keeps its focus. */
+      function update() {
+        if (view !== 'remote' || !tv) return;
+        var homeActive = tv.home !== false;
+        var t = homeActive ? tv.title : null; // another app is in front: no title card, just the dimmed hint
+        var hint = homeActive
+          ? el('div.hint', el('i.dot.dot--accent'), 'On the TV: ' + tv.screen + ' · ' + (tv.typing ? 'buttons and typing' : 'buttons only'))
+          : el('div.hint', el('i.dot.dot--warn'), 'On the TV: Another app · only Home works here');
+        slots.top.replaceChildren(
+          t ? card(t) : hint,
+          el('button.link', { onclick: openSheet }, el('span', { html: svgIcon('search', 16) }), 'Something else? Search to add'),
+        );
+        if (typing) {
+          if (mainMode !== 'typing' || !fieldEl || !slots.main.contains(fieldEl)) slots.main.replaceChildren(typingPanel());
+          // Never resync the field's value from TV state while typing: the phone is the source (see sendText).
+          mainMode = 'typing';
+          slots.bottom.replaceChildren();
+          return;
+        }
+        fieldEl = null;
+        // Built once per mode: rebuilding the D-pad under a finger would lose the key being held.
+        if (mainMode !== 'pad') {
+          dpadEl = dpad();
+          backKeyEl = roundKey('back', 'back', 'Back');
+          slots.main.replaceChildren(el('div.grow'), dpadEl, el('div.keys', backKeyEl, roundKey('home', 'home', 'Home')), el('div.grow'));
+        }
+        mainMode = 'pad';
+        // Another app is in front on the TV: dim the D-pad and Back (CSS pointer-events: none keeps them from
+        // sending while dimmed); Home stays enabled, and isn't touched here.
+        dpadEl.classList.toggle('is-dim', !homeActive);
+        backKeyEl.classList.toggle('is-dim', !homeActive);
+        var typeDisabled = !homeActive;
+        slots.bottom.replaceChildren(
+          tv.typing
+            ? el(
+                'button.typebar' + (typeDisabled ? '.is-dim' : ''),
+                {
+                  disabled: typeDisabled,
+                  onclick: function () {
+                    typing = true;
+                    lastTextSendTime = Date.now(); // ignore any state poll already in flight before this tap
+                    update();
+                    if (fieldEl) { fieldEl.focus(); caretToEnd(); } // synchronous, in the tap's own handler, so iOS opens the keyboard
+                  },
+                },
+                el('span', { html: svgIcon('keyboard', 22) }),
+                'Type on the TV',
+              )
+            : el('div.typebar.typebar--off' + (typeDisabled ? '.is-dim' : ''), el('span', { html: svgIcon('keyboard', 22) }), 'Typing works when the TV shows a text box'),
+        );
+        if (sheet && !document.querySelector('.sheet-scrim')) openSheet();
+      }
+
+      function typingPanel() {
+        fieldEl = el('input.field-input.field-input--big', {
+          value: (tv && tv.text) || '', // the field starts with the TV's current text, then the phone is the source
+          autocomplete: 'off',
+          autocapitalize: 'none',
+          spellcheck: 'false',
+          enterkeyhint: 'search',
+          'aria-label': 'Text on the TV',
+          oninput: function () {
+            sendText(fieldEl.value);
+          },
+          onkeydown: function (e) {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              sendEnter(); // after any text still on its way, so the TV searches the final text
+              endTyping();
+            }
+          },
+          onblur: function () {
+            // A real blur: the user collapsed the phone's keyboard or tapped outside. (The field is never
+            // recreated while typing, so this never fires from the page re-rendering itself.)
+            endTyping();
+          },
+        });
+        return el(
+          'div.typing',
+          el(
+            'div.field.field--live',
+            fieldEl,
+            el('button.round.round--small', {
+              'aria-label': 'Clear the TV’s text box',
+              // Keep the phone's keyboard open: without this, tapping the button would blur the field first.
+              onpointerdown: function (e) {
+                e.preventDefault();
+              },
+              onclick: function () {
+                fieldEl.value = '';
+                sendText('');
+              },
+              html: svgIcon('x', 18, 2),
+            }),
+          ),
+          el('p.small', 'Enter searches · close the keyboard to go back'),
+        );
+      }
+
+      function focusField() {
+        queueMicrotask(function () {
+          if (!fieldEl) return;
+          fieldEl.focus();
+          caretToEnd();
+        });
+      }
+
+      // Carry on from the end of what the TV already shows.
+      function caretToEnd() {
+        var end = fieldEl.value.length;
+        fieldEl.setSelectionRange(end, end);
+      }
+
+      // The three ways typing mode ends (see the spec note by Rebecca): a real blur, Enter on the phone keyboard,
+      // or a fresh TV state saying typing: false (applyState). All three end up here.
+      function endTyping() {
+        if (!typing) return;
+        typing = false;
+        if (fieldEl) fieldEl.blur(); // dismiss the phone's keyboard while the field is still attached
+        update();
+      }
+
+      // ---- F39: search to add ----
+      var searchTimer = 0;
+      function openSheet() {
+        sheet = true;
+        var existing = document.querySelector('.sheet-scrim');
+        if (existing) existing.remove();
+        searchInput = el('input.field-input', {
+          placeholder: 'Search films and shows',
+          autocomplete: 'off',
+          autocapitalize: 'none',
+          spellcheck: 'false',
+          enterkeyhint: 'search',
+          'aria-label': 'Search to add to My list',
+          oninput: function () {
+            clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(function () {
+              runSearch(searchInput.value);
+            }, 150);
+          },
+        });
+        resultsEl = el('div.results');
+        var scrim;
+        var close = function () {
+          sheet = false;
+          scrim.remove();
+          searchInput = null;
+          resultsEl = null;
+          results = [];
+          resultsFor = '';
+        };
+        scrim = el(
+          'div.sheet-scrim',
+          {
+            onclick: function (e) {
+              if (e.target === scrim) close();
+            },
+          },
+          el(
+            'div.sheet',
+            el('div.handle'),
+            el('div.sheet-head', el('h2', 'Add to My list'), el('button.link.link--strong', { onclick: close }, 'Done')),
+            el('div.field.field--live', el('span.field-ico', { html: svgIcon('search', 20) }), searchInput),
+            resultsEl,
+            el('p.small', 'Search uses the TV’s catalogue.'),
+          ),
+        );
+        document.body.append(scrim);
+        paintResults();
+        queueMicrotask(function () {
+          if (searchInput) searchInput.focus();
+        });
+      }
+
+      function paintResults() {
+        if (!resultsEl) return;
+        if (!searchInput || !searchInput.value.trim()) {
+          resultsEl.replaceChildren(el('p.small.results-empty', 'Type a title. + adds it to My list; ✓ is already on it.'));
+          return;
+        }
+        if (!results.length) {
+          resultsEl.replaceChildren(el('p.small.results-empty', resultsFor ? 'Nothing found for “' + resultsFor + '”.' : 'Searching…'));
+          return;
+        }
+        resultsEl.replaceChildren(
+          ...results.map(function (r) {
+            return el(
+              'div.result',
+              el('div.result-art'),
+              el('div.result-words', el('div.result-t', r.name), el('div.result-m', r.year + ' · ' + (r.kind === 'show' ? 'TV show' : 'Movie'))),
+              el('button.round' + (r.mine ? '.round--good' : ''), {
+                'aria-label': r.mine ? 'Take ' + r.name + ' off My list' : 'Add ' + r.name + ' to My list',
+                onclick: function () {
+                  toggleMine(r);
+                },
+                html: svgIcon(r.mine ? 'check' : 'plus', 20, 2.2),
+              }),
+            );
+          }),
+        );
+      }
+
+      // ---- Start ----
+      function boot() {
+        if (me.token) {
+          show('connecting');
+          fetchState();
+        } else {
+          show('pair'); // nothing to check yet: we have no token, so there's nothing to GET /api/state with
+        }
+      }
+
+      // A laptop's keyboard works as the remote too, outside a text box.
+      window.addEventListener('keydown', function (e) {
+        if (view !== 'remote' || (e.target && e.target.tagName === 'INPUT')) return;
+        var keys = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'ok', Escape: 'back', Backspace: 'back' };
+        if (!keys[e.key]) return;
+        e.preventDefault();
+        sendKey(keys[e.key]);
+      });
+
+      // Poll while the page is open, paired and visible; the TV doesn't push. Resuming visibility asks right away.
+      window.setInterval(function () {
+        if (view === 'remote' && document.visibilityState === 'visible' && me.token) fetchState();
+      }, 2000);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && view === 'remote' && me.token) fetchState();
+      });
+
+      boot();
+    </script>
+  </body>
+</html>
+

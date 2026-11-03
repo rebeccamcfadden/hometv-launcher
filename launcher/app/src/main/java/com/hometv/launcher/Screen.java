@@ -59,6 +59,28 @@ class Screen {
         return false;
     }
 
+    /** A page's text box as a phone remote sees it (F27; app.ts TextField): what it holds, set it whole, and Enter. */
+    interface TextField {
+        /** Whether it takes typing now (Search behind its TMDB gate doesn't). */
+        boolean ready();
+
+        String value();
+
+        void set(String value);
+
+        void enter();
+    }
+
+    /** The text box a phone remote types into while this screen shows, or null: buttons only (F27). */
+    TextField textField() {
+        return null;
+    }
+
+    /** The title this screen is about (a title preview), for the phone remote's "On the TV" card (F39); else null. */
+    Title title() {
+        return null;
+    }
+
     /** OK held down on an item (the hold-OK menus). Return true when used. */
     boolean onLongOk(View focused) {
         return false;

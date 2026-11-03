@@ -390,4 +390,41 @@ final class PaneParts {
             }
         };
     }
+
+    /**
+     * The confirm dialog for something that can't be undone (Phone remote's Forget all; design_preview confirm.ts
+     * cancelFirst): Cancel first, primary and focused, then the action.
+     */
+    static Screen confirmCancelFirst(Context ctx, Shell shell, CharSequence title, CharSequence body,
+                                     CharSequence action, CharSequence cancel, Runnable onConfirm) {
+        FrameLayout root = new FrameLayout(ctx);
+        View scrim = new View(ctx);
+        scrim.setBackgroundColor(Ui.SCRIM);
+        root.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        LinearLayout box = column(ctx);
+        box.setPadding(Ui.px(56), Ui.px(52), Ui.px(56), Ui.px(52));
+        box.setBackground(Ui.round(Ui.BG_RAISED, Ui.RADIUS_XL, Ui.LINE_STRONG, Ui.LINE_W));
+        box.setElevation(Ui.px(40));
+        TextView t = Ui.text(ctx, 38, Ui.TEXT_1, Ui.REGULAR);
+        t.setText(title);
+        box.addView(t);
+        TextView b = Ui.text(ctx, Ui.T_BODY, Ui.TEXT_2, Ui.REGULAR);
+        b.setText(body);
+        b.setLineSpacing(0f, 1.45f);
+        box.addView(b, wide(16));
+        View no = Kit.button(ctx, cancel, 0, Kit.PRIMARY, false, "confirm", "confirm-no", true, v -> shell.pop());
+        View yes = Kit.button(ctx, action, 0, Kit.NORMAL, false, "confirm", "confirm-yes", false, v -> {
+            shell.pop();
+            onConfirm.run();
+        });
+        box.addView(actions(ctx, java.util.Arrays.asList(no, yes)), below(40));
+        root.addView(box, new FrameLayout.LayoutParams(Ui.px(860), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        return new Screen(title.toString(), root, Screen.Layer.DIALOG) {
+            @Override
+            View defaultFocus() {
+                return no;
+            }
+        };
+    }
 }

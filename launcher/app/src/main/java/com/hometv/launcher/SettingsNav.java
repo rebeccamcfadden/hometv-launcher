@@ -32,7 +32,7 @@ final class SettingsNav {
             new Group("accounts", "account", "notes"),
             new Group("watch", "services", "stores", "keys", "features"),
             new Group("look", "theme", "performance", "apps", "weather"),
-            new Group("tv", "start", "home", "region", "tv", "about")));
+            new Group("tv", "start", "home", "region", "remote", "tv", "about")));
 
     /** The sections in the order the list shows them (SettingsSection.id): the groups' in turn. */
     static final List<String> ORDER = order();

@@ -22,6 +22,7 @@ The TV needs Android 8.0 (API 26) or newer. `minSdk` is a compile-time floor in
 | **TMDB account** | Optional. Launcher settings' Account pane shows a QR code; approve it on your phone and My list, Favorites and Seen follow the account's watchlist, favorites and a private list named "Seen" (made when missing), both ways, with changes made offline sent later. The first sign-in takes the account's lists and adds nothing from the TV. Choose lists shows or hides each of your TMDB lists; shown ones become chips in Movies, TV Shows and Pick for me, by name. `tmdb_shown_lists` in `config.xml` overrides that (list numbers or links, or list names; the older `tmdb_household_list` and `tmdb_friends_list` still work). Syncs only while Home is on screen; signing out keeps the lists on the TV. |
 | **Services** | "Included" marks a service the household pays for: worked out from the installed apps, or listed in `subscribed_services`, Sweden's services included (Viaplay, SkyShowtime, SVT Play, TV4 Play and others), and in the US Peacock, Paramount+, Tubi, The Roku Channel and Fandango at Home. Watch opens the title itself in that service's app where Wikidata has its id (Netflix, Disney+, Apple TV, HBO Max, Prime Video, SVT Play), else the app. |
 | **Phone notes** | Optional, off unless turned on: a watch-list note shared from a phone is sent to the TV over the home Wi-Fi and its new lines are added to that person's TMDB list. See [phone-notes.md](phone-notes.md). |
+| **Phone remote** | Optional, off unless turned on: a phone on the home Wi-Fi as a remote and keyboard for the launcher's own screens, and to add the title on the TV, or one searched for, to My list. Each phone pairs with a code and can be forgotten; HTTPS with a certificate the TV makes. See [phone-remote.md](phone-remote.md). |
 | **Themes** | Launcher settings › Theme. Classic: Midnight (the default), Daylight, OLED Black, High Contrast, Cinema and Landscapes. Seasonal, following the date from Snow to Christmas and the sun from dawn to night: Vector art and 8-bit. A theme changes colours, type, corners, shading and the picture behind Home; layout and data stay the same. Screenshots of each: [themes/README.md](../themes/README.md). |
 | **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone ([below](#remote-keys)). |
 | **Left for V2** | Wallpapers pushed as `config.json`, the clock screensaver, module cards and add-ons, Watch Next, festivals and the sky: [BACKLOG.md](../BACKLOG.md#left-for-v2). |
@@ -79,12 +80,13 @@ closes. The sections, top to bottom:
   Remove leaves none. The page answers only while this pane shows. With Price lookup off, the price keys wait behind
   Turn on.
 - **Home row apps**: pick an app up with OK to move it, take it off Home, or add another app.
-- **Features**: what runs: TMDB account, Phone notes, Price lookup and Weather, each with its state ("On · set up",
-  "Off · needs TMDB account"); OK opens the section that sets it up. Each feature is switched on or off there, by the
-  On/Off on top of its section (Account, Phone notes' own switch, Stores, Weather; `features` in a pushed config.json).
-  All but Phone notes start on, and First run switches off any whose setup isn't finished when it ends. A feature that
-  is off never starts; its section stays, reads Off, and says so above that switch, whose On goes straight into its
-  setup. Movies, TV Shows and Search's "needs a TMDB account" has **Turn on**, which does the same.
+- **Features**: what runs: TMDB account, Phone notes, Price lookup, Weather and Phone remote, each with its state ("On ·
+  set up", "Off · needs TMDB account"); OK opens the section that sets it up. Each feature is switched on or off there,
+  by the On/Off on top of its section (Account, Phone notes' and Phone remote's own switches, Stores, Weather; `features`
+  in a pushed config.json, or `feature_<id>` in config.xml). All but Phone notes and Phone remote start on, and First
+  run switches off any whose setup isn't finished when it ends. A feature that is off never starts; its section stays,
+  reads Off, and says so above that switch, whose On goes straight into its setup. Movies, TV Shows and Search's "needs
+  a TMDB account" has **Turn on**, which does the same.
 - **Theme**: the look of every page. Typeface switches between the theme's own fonts (downloaded from Google Fonts and
   kept on the TV) and Roboto. The theme's pictures, except 8-bit's, are downloaded once from `theme_assets_url`.
   App logos shows Home's row of apps in Full colour (each app's own banner, the default) or Minimal: each app's name as
@@ -102,6 +104,10 @@ closes. The sections, top to bottom:
   comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
 - **Default Home** says whether this launcher is Home and opens Android's home picker; **TV settings** opens the TV's
   own settings, Picture, Network and Apps.
+- **Phone remote**, off unless turned on here (or in Features): a QR and three steps to pair a phone, the address and
+  code to type instead, and the paired phones with Forget each, New code and Forget all. While it is on, a phone icon
+  leads the nav's device controls (its dot turns green while a phone is connected). See
+  [phone-remote.md](phone-remote.md).
 - **Region**: Sweden or the United States (`region` in config.xml or a pushed config.json; Sweden unless set). It
   decides which streaming services and stores the two sections above list, the currency of prices, and the country
   TMDB's availability is read for. Each region keeps its own store ticks; the streaming services stay ticked. Changing it rebuilds Home and comes back to it.

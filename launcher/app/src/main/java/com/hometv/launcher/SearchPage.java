@@ -375,6 +375,38 @@ final class SearchPage extends Screen {
         return true;
     }
 
+    /** F27: a phone remote types the whole query as its keyboard goes; Enter opens the full results, as → does. */
+    private final TextField phoneField = new TextField() {
+        @Override
+        public boolean ready() {
+            return gateShown == TmdbGate.Need.NONE;
+        }
+
+        @Override
+        public String value() {
+            return query;
+        }
+
+        @Override
+        public void set(String value) {
+            if (!ready()) return;
+            boolean wasExpanded = expanded;
+            expanded = false;
+            setQuery(value.toLowerCase(java.util.Locale.getDefault()));
+            if (wasExpanded) shell.focus(keyA);
+        }
+
+        @Override
+        public void enter() {
+            if (ready() && !expanded && !query.isEmpty() && hasMatches) expand();
+        }
+    };
+
+    @Override
+    TextField textField() {
+        return phoneField;
+    }
+
     @Override
     boolean onKey(Key key, View focused) {
         if (gateShown != TmdbGate.Need.NONE) return false;

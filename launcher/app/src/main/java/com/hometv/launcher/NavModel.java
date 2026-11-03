@@ -18,6 +18,9 @@ final class NavModel {
     /** Android reached the internet (a validated network). Without it the icon is crossed out (06-states A), and
      *  Home fetches the weather again when it comes back. */
     boolean internet;
+    /** F27: the phone remote's icon: not shown, shown with an accent dot, or with a green dot and its line. */
+    static final int REMOTE_OFF = 0, REMOTE_ON = 1, REMOTE_CONNECTED = 2;
+    int remote = REMOTE_OFF;
     private final List<Listener> listeners = new ArrayList<>();
 
     /** Adds a listener and tells it the current state at once. */
@@ -43,6 +46,13 @@ final class NavModel {
     /** An input was added, removed or renamed: listeners that list the inputs (Home's row) refresh, even when
      *  the nav itself shows the same. */
     void inputsChanged() {
+        notifyListeners();
+    }
+
+    /** F27: the phone remote switched on or off, or a phone connected or went quiet. */
+    void setRemote(int state) {
+        if (state == remote) return;
+        remote = state;
         notifyListeners();
     }
 

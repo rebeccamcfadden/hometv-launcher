@@ -143,6 +143,112 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private String vpnApp;
 
     private final Runnable refreshNav = this::refreshNav;
+    /** F27: the phone remote's icon in the nav (off, on, a phone connected). */
+    private final Runnable remoteChanged = () -> {
+        PhoneRemote r = PhoneRemote.get(this);
+        nav.setRemote(!r.on() ? NavModel.REMOTE_OFF : r.connected() != null ? NavModel.REMOTE_CONNECTED : NavModel.REMOTE_ON);
+    };
+    /** F39: titles a phone has seen in its search, so My list can find one the catalogue doesn't hold. */
+    private final java.util.Map<String, Title> phoneTitles = new java.util.LinkedHashMap<String, Title>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<String, Title> eldest) {
+            return size() > 100;
+        }
+    };
+    /** F27 with F39: what a phone remote does on the launcher's screens (PhoneRemote.Bridge); main thread. */
+    private final PhoneRemote.Bridge remoteBridge = new PhoneRemote.Bridge() {
+        @Override
+        public void press(String key) {
+            if ("home".equals(key)) {
+                // As the remote's Home: everything over Home closes (onNewIntent).
+                onNewIntent(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
+                return;
+            }
+            int code = PhoneRemoteKeys.keyCode(key);
+            if (code == KeyEvent.KEYCODE_UNKNOWN) return;
+            long now = SystemClock.uptimeMillis();
+            dispatchKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0));
+            dispatchKeyEvent(new KeyEvent(now, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, code, 0));
+        }
+
+        @Override
+        public Screen.TextField textField() {
+            Screen top = shell.top();
+            return top == null ? null : top.textField();
+        }
+
+        @Override
+        public String screenName() {
+            Screen top = shell.top();
+            if (top == null) return getString(R.string.nav_home);
+            if (top.title() != null) return top.title().name;
+            if (top.tab != null) {
+                switch (top.tab) {
+                    case MOVIES: return getString(R.string.nav_movies);
+                    case TV: return getString(R.string.nav_tv);
+                    case SEARCH: return getString(R.string.nav_search);
+                    default: return getString(R.string.nav_home);
+                }
+            }
+            return top.label;
+        }
+
+        @Override
+        public Title title() {
+            Screen top = shell.top();
+            Title t = top == null ? null : top.title();
+            if (t == null) t = Kit.titleOf(shell.focused());
+            if (t != null) phoneTitles.put(t.id, t);
+            return t;
+        }
+
+        @Override
+        public Title titleById(String id) {
+            Title t = data.catalog.get(id);
+            return t != null ? t : phoneTitles.get(id);
+        }
+
+        @Override
+        public boolean inMyList(String id) {
+            return data.household.inMyList(id);
+        }
+
+        @Override
+        public boolean toggleMyList(Title t, String phone) {
+            boolean now = data.household.toggleMyList(t.id);
+            shell.toast(getString(now ? R.string.remote_added_from : R.string.remote_removed_from, t.name, phone));
+            Screen top = shell.top();
+            if (top instanceof TitlePreview) ((TitlePreview) top).refreshToggles();
+            Kit.refreshTitleCard(shell.focused(), data);
+            return now;
+        }
+
+        @Override
+        public void search(String query, java.util.function.Consumer<List<Title>> done) {
+            List<Title> found = PhoneRemoteKeys.matching(data.catalog.all(), query);
+            boolean remote = data.catalog.isRemote() && StateUi.online(MainActivity.this)
+                    && TmdbGate.need(data.accounts) == TmdbGate.Need.NONE;
+            if (!remote) {
+                remember(found);
+                done.accept(found);
+                return;
+            }
+            data.catalog.search(query, f -> {
+                List<Title> all = PhoneRemoteKeys.merge(found, f.titles);
+                remember(all);
+                done.accept(all);
+            });
+        }
+
+        private void remember(List<Title> ts) {
+            for (Title t : ts) phoneTitles.put(t.id, t);
+        }
+
+        @Override
+        public void paired(String phone) {
+            shell.toast(getString(R.string.remote_paired_toast, phone));
+        }
+    };
     private final Runnable refreshNetwork = this::refreshNetwork;
     private final Runnable refreshNetworkLater = this::refreshNetwork;
     private final Runnable refreshInputs = this::refreshInputs;
@@ -227,6 +333,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         // The Phone notes inbox lives as long as the process: it opens or closes with the switches the launcher is
         // built with now.
         Notes.get(this).allow(Features.inboxAllowed(Features.current()));
+        // F27: the phone remote's server also lives as long as the process; it opens or closes with its switch.
+        PhoneRemote.get(this).sync();
+        PhoneRemote.get(this).addListener(remoteChanged);
+        remoteChanged.run();
         if (!ThemeFonts.apply(this, theme)) ThemeFonts.fetch(this, theme, fontsArrived);
         // restore_key_services: after a force stop, put back the remote's accessibility helpers that Android took
         // off the list (needs WRITE_SECURE_SETTINGS, granted by build-and-install with RESTORE_KEY_SERVICES=1).
@@ -489,6 +599,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     public void openSettings(View anchor) {
         if (shell.isOpen(QuickSettings.LABEL)) return;
         shell.push(QuickSettings.create(this, anchor));
+    }
+
+    /** F27: the phone remote's icon opens its pane. */
+    @Override
+    public void openRemote(View anchor) {
+        openLauncherSettings("remote", true);
     }
 
     /** The remote's Settings key on Home: the quick-settings dropdown under the Settings icon, or closing it. */
@@ -897,6 +1013,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         started = true;
         // F16: a keys pane left showing opens its page's server again.
         ApiKeys.get(this).setForeground(true);
+        // F27: a phone's keys and typing reach this Home while it is in front; elsewhere only Home works.
+        PhoneRemote.get(this).attach(remoteBridge);
         // F26: in front again, so the place kept on disk for the trip away is out of date.
         SavedPlace.forget(this);
         // V2 Phase 2: price lookups only while Home shows; V2 Phase 3: the TMDB account syncs only then too.
@@ -952,6 +1070,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         started = false;
         // F16: the keys page's server runs only while its pane is on screen, not with the launcher in the background.
         ApiKeys.get(this).setForeground(false);
+        PhoneRemote.get(this).detach(remoteBridge);
         backdrops.setVisible(false);
         unregisterReceiver(dateReceiver);
         Updates.get(this).unlisten(updateNotice);
@@ -984,6 +1103,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onDestroy() {
         super.onDestroy();
         ApiKeys.get(this).removeKeyListener(keyRefused);
+        PhoneRemote.get(this).removeListener(remoteChanged);
+        PhoneRemote.get(this).detach(remoteBridge);
         settingsClosed();
         firstRunClosed();
         handler.removeCallbacksAndMessages(null);

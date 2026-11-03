@@ -34,12 +34,17 @@ public class FeaturesTest {
     }
 
     @Test
-    public void nothingSavedOrConfiguredRunsEverything() {
-        // Every feature starts on; First run switches off what isn't set up when it ends (2026-11-02).
+    public void nothingSavedOrConfiguredRunsEverythingButPhoneRemote() {
+        // Every feature starts on except Phone remote, off by default (2026-11-02, decision 4); First run switches
+        // off what isn't set up when it ends (2026-11-02).
         Features f = Features.resolve(null, null);
-        for (Features.Feature x : Features.Feature.values()) assertTrue(x.id, f.on(x));
+        for (Features.Feature x : Features.Feature.values()) {
+            if (x == Features.Feature.REMOTE) assertFalse(x.id, f.on(x));
+            else assertTrue(x.id, f.on(x));
+        }
         assertEquals(4, f.onCount());
-        assertTrue(f.same(Features.ALL_ON));
+        assertTrue(f.same(Features.defaults()));
+        assertFalse(f.same(Features.ALL_ON));
     }
 
     @Test
@@ -54,7 +59,7 @@ public class FeaturesTest {
         // Switches that are gone (Pick for me, Themes: the project lead, 2026-11-02) are ignored.
         assertNull(Features.Feature.parse("pick"));
         assertNull(Features.Feature.parse("themes"));
-        assertEquals(4, Features.Feature.values().length);
+        assertEquals(5, Features.Feature.values().length);
     }
 
     @Test
@@ -97,7 +102,7 @@ public class FeaturesTest {
         assertFalse(a.same(Features.ALL_OFF));
         assertFalse(a.same(Features.ALL_ON));
         assertEquals(0, Features.ALL_OFF.onCount());
-        assertEquals(4, Features.ALL_ON.onCount());
+        assertEquals(5, Features.ALL_ON.onCount());
     }
 
     @Test
@@ -130,5 +135,30 @@ public class FeaturesTest {
         assertFalse(Features.isOn(Features.Feature.WEATHER));
         Features.apply(null);
         assertSame(Features.ALL_ON, Features.current());
+    }
+
+    @Test
+    public void phoneRemoteDefaultsOffUnlikeTheOtherFeatures() {
+        // Nothing saved, no config: off, same as Features.defaults (2026-11-02, decision 4), and onCount is 4 of 5.
+        Features f = Features.resolve(null, null);
+        assertFalse(f.switchedOn(Features.Feature.REMOTE));
+        assertFalse(f.on(Features.Feature.REMOTE));
+        assertEquals(4, f.onCount());
+        assertEquals(4, Features.defaults().onCount());
+        // A saved true turns it on.
+        Features saved = Features.resolve(saved("feature_remote", true), null);
+        assertTrue(saved.on(Features.Feature.REMOTE));
+        assertEquals(5, saved.onCount());
+        // The config turns it on too, with nothing saved.
+        Features configured = Features.resolve(null, config("remote", true));
+        assertTrue(configured.on(Features.Feature.REMOTE));
+        // A saved false wins over a config true.
+        Features both = Features.resolve(saved("feature_remote", false), config("remote", true));
+        assertFalse(both.on(Features.Feature.REMOTE));
+        // ALL_ON has it on explicitly; it needs nothing else.
+        assertTrue(Features.ALL_ON.on(Features.Feature.REMOTE));
+        assertNull(Features.ALL_ON.blockedBy(Features.Feature.REMOTE));
+        assertEquals("feature_remote", Features.Feature.REMOTE.key());
+        assertSame(Features.Feature.REMOTE, Features.Feature.parse("remote"));
     }
 }

@@ -101,13 +101,16 @@ public class FirstRunRulesTest {
         assertEquals("weather", FirstRunRules.setupOf(Features.Feature.WEATHER));
         // Price lookup takes its keys (F16), in First run's Price keys tab; Launcher settings has them in API keys.
         assertEquals("priceKeys", FirstRunRules.setupOf(Features.Feature.PRICES));
+        // Phone remote pairs a phone (F27); being on already counts as set up (FirstRunRules.setUp).
+        assertEquals("remote", FirstRunRules.setupOf(Features.Feature.REMOTE));
         assertEquals("keys", FirstRunRules.inSettings("priceKeys"));
         assertEquals("keys", FirstRunRules.inSettings("tmdbKey"));
         assertEquals("account", FirstRunRules.inSettings("account"));
         assertNull(FirstRunRules.inSettings(null));
         for (Features.Feature f : Features.Feature.values()) {
             String id = FirstRunRules.setupOf(f);
-            if (id != null) assertTrue(id, SettingsNav.ORDER.contains(FirstRunRules.inSettings(id)));
+            if (id == null) continue;
+            assertTrue(id, SettingsNav.ORDER.contains(FirstRunRules.inSettings(id)));
         }
     }
 
@@ -116,7 +119,8 @@ public class FirstRunRulesTest {
         assertEquals("tmdbKey", FirstRunRules.firstSetupOf(Features.Feature.TMDB, true));
         assertEquals("account", FirstRunRules.firstSetupOf(Features.Feature.TMDB, false));
         assertEquals("priceKeys", FirstRunRules.firstSetupOf(Features.Feature.PRICES, true));
-        assertEquals(Arrays.asList("tmdbKey", "account", "notes", "priceKeys", "weather"), FirstRunRules.setups(true));
+        assertEquals(Arrays.asList("tmdbKey", "account", "notes", "priceKeys", "weather", "remote"),
+                FirstRunRules.setups(true));
         assertSame(Features.Feature.TMDB, FirstRunRules.featureOf("tmdbKey"));
         assertSame(Features.Feature.PRICES, FirstRunRules.featureOf("priceKeys"));
     }
@@ -132,7 +136,7 @@ public class FirstRunRulesTest {
     @Test
     public void theSetupTabsStayWhateverTheFeaturesAre() {
         // F34: a feature that is off keeps its tab; its pane says so, with its On/Off.
-        assertEquals(Arrays.asList("account", "notes", "priceKeys", "weather"), FirstRunRules.setups(false));
+        assertEquals(Arrays.asList("account", "notes", "priceKeys", "weather", "remote"), FirstRunRules.setups(false));
         assertEquals(FirstRunRules.SETUPS, FirstRunRules.setups(true));
         assertSame(Features.Feature.NOTES, FirstRunRules.featureOf("notes"));
         assertNull(FirstRunRules.featureOf("services"));
@@ -185,6 +189,9 @@ public class FirstRunRulesTest {
         assertFalse(FirstRunRules.setUp(Features.Feature.PRICES, true, true, true, false));
         // Weather always has a place (the TV's default).
         assertTrue(FirstRunRules.setUp(Features.Feature.WEATHER, true, false, false, false));
+        // Phone remote: being on already counts as set up; pairing a phone from it is optional.
+        assertTrue(FirstRunRules.setUp(Features.Feature.REMOTE, true, false, false, false));
+        assertTrue(FirstRunRules.setUp(Features.Feature.REMOTE, false, false, false, false));
         // A build without a TMDB token has no sign-in to finish: TMDB account and Phone notes stay on.
         assertTrue(FirstRunRules.setUp(Features.Feature.TMDB, false, false, false, false));
         assertTrue(FirstRunRules.setUp(Features.Feature.NOTES, false, false, false, false));
@@ -209,6 +216,7 @@ public class FirstRunRulesTest {
         assertFalse(FirstRunRules.setupNeedsRebuild(Features.Feature.TMDB, true));
         assertFalse(FirstRunRules.setupNeedsRebuild(Features.Feature.WEATHER, false));
         assertFalse(FirstRunRules.setupNeedsRebuild(Features.Feature.PRICES, false));
+        assertFalse(FirstRunRules.setupNeedsRebuild(Features.Feature.REMOTE, false));
     }
 
     @Test

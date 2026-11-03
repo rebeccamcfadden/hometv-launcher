@@ -25,7 +25,7 @@
 
     <!-- The help pane for the focused row. -->
     <string name="first_run_features_help_title">Choose what this TV does.</string>
-    <string name="first_run_features_help_body">TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes starts off, since it opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.</string>
+    <string name="first_run_features_help_body">TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes and Phone remote start off, since each opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.</string>
     <!-- Since F34 each feature's On/Off is in its own section; Features only shows them all. -->
     <string name="first_run_features_help_note">Each one’s On/Off is in its own section of Launcher settings; Features there shows them all.</string>
     <string name="first_run_services_help_title">What does the household pay for?</string>

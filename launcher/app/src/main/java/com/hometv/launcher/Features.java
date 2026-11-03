@@ -8,10 +8,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Launcher settings › Features (F14, the project lead 2026-11-01; design_preview's Features pane): one build, with four
+ * Launcher settings › Features (F14, the project lead 2026-11-01; design_preview's Features pane): one build, with five
  * features switched on or off at run time. A feature that is off never starts: no page, no network call, no server.
  * Each switch is the household's choice saved on the TV, else this TV's config (config.xml {@code feature_<id>}, or a
- * pushed config.json's {@code "features": {"<id>": false}}), else on: every feature starts on, and First run switches
+ * pushed config.json's {@code "features": {"<id>": false}}), else each feature's own default: every feature starts on
+ * except Phone remote, which starts off (the project lead, 2026-11-02, decision 4), and First run switches
  * off, when it ends, any whose setup isn't finished (the project lead, 2026-11-02; FirstRunRules.setUp), and on again
  * when it opens again (F34; FeaturePrefs.restoreFirstRunOff). A feature that
  * needs another (Phone notes needs TMDB account) is off while that one is. Pure Java, unit-tested (FeaturesTest); FeaturePrefs reads and saves the switches,
@@ -21,23 +22,30 @@ final class Features {
 
     enum Feature {
         /** TMDB sign-in and the TMDB catalogue: Movies, TV Shows and Search need it (and a sign-in). */
-        TMDB("tmdb", null),
+        TMDB("tmdb", null, true),
         /** Phone notes: the inbox on port 8765 and the import pill. Puts a phone's list on TMDB. */
-        NOTES("notes", TMDB),
+        NOTES("notes", TMDB, true),
         /**
          * Price lookup (Watchmode, Movie of the Night, Apple): rent and buy prices; without it offers say where, not how
          * much, and Stores for rent and buy says it is off.
          */
-        PRICES("prices", null),
+        PRICES("prices", null, true),
         /** Open-Meteo's weather on Home, its Launcher settings and quick settings rows. */
-        WEATHER("weather", null);
+        WEATHER("weather", null, true),
+        /**
+         * Phone remote (F27): a phone on the home Wi-Fi as a remote and keyboard for this launcher, over HTTPS on port
+         * 8767. Off by default (the project lead, 2026-11-02, decision 4).
+         */
+        REMOTE("remote", null, false);
 
         final String id;
         final Feature needs;
+        final boolean defaultOn;
 
-        Feature(String id, Feature needs) {
+        Feature(String id, Feature needs, boolean defaultOn) {
             this.id = id;
             this.needs = needs;
+            this.defaultOn = defaultOn;
         }
 
         /** The preference and config key, "feature_tmdb". */
@@ -89,7 +97,7 @@ final class Features {
         return new Features(m);
     }
 
-    /** Each feature's own switch; a feature not in the map is on. */
+    /** Each feature's own switch; a feature not in the map is at its own default ({@link Feature#defaultOn}). */
     private final Map<Feature, Boolean> switches;
 
     private Features(Map<Feature, Boolean> switches) {
@@ -98,7 +106,7 @@ final class Features {
 
     /**
      * The switches in effect: each saved choice ({@code feature_<id>} booleans), else the config's ({@code config}, by
-     * feature id), else on.
+     * feature id), else the feature's own default ({@link Feature#defaultOn}).
      */
     static Features resolve(Map<String, ?> saved, Map<String, Boolean> config) {
         Map<Feature, Boolean> out = new EnumMap<>(Feature.class);
@@ -111,9 +119,15 @@ final class Features {
         return new Features(out);
     }
 
-    /** The feature's own switch, whatever it needs. */
+    /** Nothing saved and no config: every feature at its own default (on, except Phone remote, off). */
+    static Features defaults() {
+        return resolve(null, null);
+    }
+
+    /** The feature's own switch, whatever it needs: as saved or configured, else its default. */
     boolean switchedOn(Feature f) {
-        return !Boolean.FALSE.equals(switches.get(f));
+        Boolean v = switches.get(f);
+        return v != null ? v : f.defaultOn;
     }
 
     /** Whether the feature runs: switched on, and so is what it needs. */

@@ -92,6 +92,7 @@ final class FeaturePrefs {
         out.put(Features.Feature.NOTES.id, res.getBoolean(R.bool.feature_notes));
         out.put(Features.Feature.PRICES.id, res.getBoolean(R.bool.feature_prices));
         out.put(Features.Feature.WEATHER.id, res.getBoolean(R.bool.feature_weather));
+        out.put(Features.Feature.REMOTE.id, res.getBoolean(R.bool.feature_remote));
         JSONObject json = Config.overlay(ctx);
         JSONObject pushed = json == null ? null : json.optJSONObject("features");
         if (pushed != null) {
@@ -113,6 +114,8 @@ final class FeaturePrefs {
         if (firstRunOff.remove(f)) e.putString(KEY_FIRST_RUN_OFF, Features.encode(firstRunOff));
         e.apply();
         stopNotesIfOff(ctx);
+        // F27: the phone remote's server opens or closes with its switch at once, whichever page switched it.
+        if (f == Features.Feature.REMOTE) PhoneRemote.get(ctx).sync();
     }
 
     /**

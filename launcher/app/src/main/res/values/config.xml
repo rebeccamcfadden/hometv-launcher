@@ -240,6 +240,8 @@
     <bool name="feature_notes">false</bool>
     <bool name="feature_prices">true</bool>
     <bool name="feature_weather">true</bool>
+    <!-- Phone remote (F27): off by default (the project lead, 2026-11-02, decision 4). -->
+    <bool name="feature_remote">false</bool>
 
     <!-- The streaming services the household pays for, so their titles read "Included". Lowercase ids: netflix,
          prime, disney, max (HBO Max), appletvplus (Apple TV), hulu, youtube, appletv (the Apple TV Store),
