@@ -614,7 +614,8 @@ final class FirstRunPage extends Screen implements SettingsSection.Host {
                 : R.string.first_run_start_eyebrow)), 0);
         helpTitle(ctx.getString(all ? R.string.first_run_ready_help_title : R.string.first_run_start_help_title));
         helpBody(all ? ctx.getString(FirstRunRules.readyPromisesLists(FeaturePrefs.live(ctx).on(Features.Feature.TMDB),
-                setUp(Features.Feature.TMDB)) ? R.string.first_run_ready_help_body : R.string.first_run_ready_help_body_no_lists)
+                setUp(Features.Feature.TMDB), BuildConfig.PUBLIC_RELEASE && !activity.data().accounts.available())
+                ? R.string.first_run_ready_help_body : R.string.first_run_ready_help_body_no_lists)
                 : ctx.getResources().getQuantityString(R.plurals.first_run_start_help_body, left, left));
         List<String> off = unfinished(activity);
         if (!off.isEmpty()) {
