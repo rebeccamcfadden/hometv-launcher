@@ -137,4 +137,23 @@ public class AppRowTest {
         assertFalse(AppRow.validPackage("com.1app"));
         assertFalse(AppRow.validPackage("com.net flix"));
     }
+
+    @Test
+    public void aDockAppArrivingReplacesTheStreamingSeed() {
+        List<String> dock = list("com.example.tv");
+        // No dock app installed: the row is the streaming seed, which doesn't name the dock app.
+        List<String> seeded = AppRow.full(null, dock, installed("com.netflix.ninja"));
+        assertEquals(AppRow.STREAMING, seeded);
+        assertTrue(AppRow.affectsRow(seeded, dock, "com.example.tv"));
+        assertEquals(dock, AppRow.full(null, dock, installed("com.netflix.ninja", "com.example.tv")));
+    }
+
+    @Test
+    public void onlyTheRowsAppsAndDockAppsAffectTheRow() {
+        List<String> dock = list("com.example.tv");
+        List<String> saved = list("com.netflix.ninja");
+        assertTrue(AppRow.affectsRow(saved, dock, "com.netflix.ninja"));
+        assertTrue(AppRow.affectsRow(saved, dock, null));
+        assertFalse(AppRow.affectsRow(saved, dock, "com.google.android.gms"));
+    }
 }

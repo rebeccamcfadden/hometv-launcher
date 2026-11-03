@@ -94,6 +94,11 @@ final class HomeApps {
         return AppRow.full(AppRow.decode(text), dockApps, this::shown);
     }
 
+    /** Whether a change to pkg can change a row whose list is full (AppRow.affectsRow). */
+    boolean affectsRow(List<String> full, String pkg) {
+        return AppRow.affectsRow(full, dockApps, pkg);
+    }
+
     List<String> visible() {
         return AppRow.visible(full(), this::shown);
     }

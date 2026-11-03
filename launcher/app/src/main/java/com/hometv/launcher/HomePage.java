@@ -103,12 +103,17 @@ final class HomePage extends Screen {
     private boolean retryWeather;
     /**
      * An app was installed, changed or removed while Home is on screen (the broadcast can land after the first frame
-     * back): the row is rebuilt only for an app in its list (null: any app). Not mid-Move: the row catches up when
-     * Home next shows.
+     * back): the row is rebuilt only for an app in its list or in dock_apps (null: any app). Not mid-Move: the row
+     * catches up when Home next shows.
      */
     private final Consumer<String> appsChanged = pkg -> {
-        if (moving == null && (pkg == null || full.contains(pkg))) refreshApps(false);
+        if (moving == null && affectsRow(pkg)) refreshApps(false);
     };
+
+    private boolean affectsRow(String pkg) {
+        return apps.affectsRow(full, pkg);
+    }
+
     /** The inputs' catch-up when Home shows again, after its first frame: TvInputManager's binder calls. */
     private final Runnable inputsAfterFrame = () -> {
         if (visible) refreshInputs();
