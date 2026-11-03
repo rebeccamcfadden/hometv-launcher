@@ -11,7 +11,7 @@ export type PhoneMsg =
   | { type: 'key'; token: string; key: RemoteKey }
   | { type: 'text'; token: string; value: string }
   | { type: 'enter'; token: string }
-  | { type: 'mylist'; token: string; id: string; mine: boolean }
+  | { type: 'mylist'; token: string; id: string; mine: boolean; seq: number }
   | { type: 'search'; token: string; q: string }
   | { type: 'forget'; token: string }
   | { type: 'bye'; token: string };
@@ -34,7 +34,9 @@ export type TvMsg =
   | { type: 'locked'; until: number }
   | { type: 'paired'; token: string; name: string }
   | { type: 'state'; tv: string; name: string; screen: string; typing: boolean; text: string; title: PhoneTitle | null; stale?: boolean }
-  | { type: 'results'; q: string; items: PhoneTitle[] };
+  | { type: 'results'; q: string; items: PhoneTitle[] }
+  /** The answer to a phone's mylist (seq is the phone's): on the TV, POST /api/mylist's {mine} or its error. */
+  | { type: 'mylisted'; id: string; seq: number; mine?: boolean; failed?: boolean };
 
 export const CHANNEL = 'cleanyourtv-remote';
 /** The address the QR opens; the code follows as its #fragment, which a browser never sends. */
