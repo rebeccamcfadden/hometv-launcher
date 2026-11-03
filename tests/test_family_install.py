@@ -39,6 +39,7 @@ FAKE_ADB = r'''
 $path = $env:FAKE_ADB_STATE
 $s = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
 $a = @($args | ForEach-Object { "$_" })
+$script:code = 0
 $s.log = @($s.log) + ($a -join ' ')
 function Pkg([string]$c) { return ($c -split '/')[0] }
 function Enabled([string]$p) { return (@($s.packages) -contains $p) -and -not (@($s.disabled) -contains $p) }
@@ -110,7 +111,13 @@ function Shell([string]$c) {
     }
     if ($c -eq 'dumpsys wifi') { return $s.wifi }
     if ($c -match '^appops set com\.hometv\.launcher REQUEST_INSTALL_PACKAGES (\w+)$') { if (-not $s.appops_refused) { $s.install_grant = $Matches[1] }; return '' }
-    if ($c -eq 'appops get com.hometv.launcher REQUEST_INSTALL_PACKAGES') { return "REQUEST_INSTALL_PACKAGES: $($s.install_grant)" }
+    if ($c -eq 'appops get com.hometv.launcher REQUEST_INSTALL_PACKAGES') {
+        if ($s.appops_get -eq 'fail') { $script:code = 1; return 'Error: java.lang.SecurityException: appops' }
+        if ($s.appops_get -eq 'garbled') { return 'Operation REQUEST_INSTALL_PACKAGES not known here' }
+        # Android names no mode for an app-op never set.
+        if ($s.install_grant -eq 'default') { return 'No operations.' }
+        return "REQUEST_INSTALL_PACKAGES: $($s.install_grant); time=+1m2s ago"
+    }
     return ''
 }
 if ($a.Count -ge 2 -and $a[0] -eq '-s') { $a = @($a[2..($a.Count - 1)]) }
@@ -132,7 +139,7 @@ switch ($a[0]) {
 }
 $s | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $path
 if ($out) { Write-Output $out }
-exit 0
+exit $script:code
 '''
 
 
@@ -271,7 +278,7 @@ class FamilyInstallTest(unittest.TestCase):
             "wifi": "", "log": [], "shell": [], "reboots": 0, "pushed": False,
             "tv_hw": [], "input_apps": [], "settings_apps": [], "hw_fails": False, "handlers_fail": False,
             "front_when_disabled": None,
-            "refuse_disable": [], "enable_fails": False, "install_grant": "default", "appops_refused": False, "set_home_once": False, "set_home_used": False,
+            "refuse_disable": [], "enable_fails": False, "install_grant": "default", "appops_refused": False, "appops_get": None, "set_home_once": False, "set_home_used": False,
         }
         state.update(overrides)
         return state
@@ -470,6 +477,39 @@ class FamilyInstallTest(unittest.TestCase):
         proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(end["install_grant"], "deny")
+
+    def assert_unreadable_grant_left_alone(self, how):
+        proc, end = self.run_installer(self.tv(install_grant="deny", appops_get=how))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("Could not read whether the launcher may install its own updates", proc.stdout)
+        self.assertFalse([c for c in end["shell"] if c.startswith("appops set")])
+        self.assertNotIn("appops", (self.backup_dir() / "undo.txt").read_text())
+        self.assertEqual(end["install_grant"], "deny")
+
+    def test_a_failed_grant_read_changes_nothing(self):
+        self.assert_unreadable_grant_left_alone("fail")
+
+    def test_an_unknown_grant_answer_changes_nothing(self):
+        self.assert_unreadable_grant_left_alone("garbled")
+
+    def test_restore_reports_a_grant_it_could_not_put_back(self):
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "allow")
+        end["appops_refused"] = True
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("not complete", proc.stdout)
+        self.assertIn("  appops set com.hometv.launcher REQUEST_INSTALL_PACKAGES default", proc.stdout)
+
+    def test_restore_reports_a_grant_it_could_not_read_back(self):
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        end["appops_get"] = "fail"
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("not complete", proc.stdout)
+        self.assertIn("  appops set com.hometv.launcher REQUEST_INSTALL_PACKAGES default", proc.stdout)
     def test_a_refused_grant_only_says_so(self):
         proc, end = self.run_installer(self.tv(appops_refused=True))
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
