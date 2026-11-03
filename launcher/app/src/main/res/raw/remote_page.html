@@ -1192,8 +1192,9 @@
           buzz();
           sendKey(key);
         };
-        // A tap is handled on pointerdown (at once, and held arrows repeat); the click that follows it is skipped. A
-        // click with no pointer before it (a screen reader, or Enter/Space on the focused button) presses once.
+        // A tap is handled on pointerdown (at once, and held arrows repeat), so a click that follows it, which has a
+        // detail count, is skipped; on touch, pointerleave comes between the two. A click with no pointer (a screen
+        // reader, or Enter/Space on the focused button) presses once.
         var tapped = false;
         return el(
           spec,
@@ -1212,20 +1213,15 @@
               }
             },
             onpointerup: stop,
-            onpointerleave: function () {
-              tapped = false;
-              stop();
+            onpointerleave: stop,
+            onpointercancel: stop,
+            onkeydown: function (e) {
+              if (e.key === 'Enter' || e.key === ' ') tapped = false;
             },
-            onpointercancel: function () {
+            onclick: function (e) {
+              var fromPointer = tapped || e.detail > 0;
               tapped = false;
-              stop();
-            },
-            onclick: function () {
-              if (tapped) {
-                tapped = false;
-                return;
-              }
-              press();
+              if (!fromPointer) press();
             },
             oncontextmenu: function (e) {
               e.preventDefault();
@@ -1616,6 +1612,24 @@
             );
           }),
         );
+      }
+
+      // Android Chrome closes the keyboard (Back, the keyboard's own ⌄) without taking focus from the field, so no blur
+      // comes; the visual viewport growing back to full height after the keyboard showed is that collapse.
+      var keyboardSeen = false;
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function () {
+          if (!typing) {
+            keyboardSeen = false;
+            return;
+          }
+          var keyboardUp = window.innerHeight - window.visualViewport.height > 120;
+          if (keyboardUp) keyboardSeen = true;
+          else if (keyboardSeen) {
+            keyboardSeen = false;
+            endTyping();
+          }
+        });
       }
 
       // ---- Start ----
