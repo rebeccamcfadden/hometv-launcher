@@ -840,15 +840,20 @@ function Set-RemoteButtons([string]$Mode) {
 
     # TCL's TclAppBoot binds an app's helper only with the AUTO_START app-op (AUTO_START or APP_AUTO_START, by build),
     # and drops the grant at the next restart unless written to disk. TVs that don't know these ops are left alone.
-    $wrote = $false
+    $ops = [ordered]@{}
     foreach ($op in 'AUTO_START', 'APP_AUTO_START') {
         $was = Get-AppOpMode $Launcher $op
-        if ($null -eq $was -or $was -eq 'allow') { continue }
-        Add-Undo "appops set $Launcher $op $was"
-        [void](Invoke-TvShell "appops set $Launcher $op allow")
-        $wrote = $true
+        if ($null -ne $was -and $was -ne 'allow') { $ops[$op] = $was }
     }
-    if ($wrote) { [void](Invoke-TvShell 'appops write-settings') }
+    if ($ops.Count -gt 0) {
+        # -Restore runs the undo lines from the bottom up, so this one writes the modes it put back to disk, last.
+        Add-Undo 'appops write-settings'
+        foreach ($op in $ops.Keys) {
+            Add-Undo "appops set $Launcher $op $($ops[$op])"
+            [void](Invoke-TvShell "appops set $Launcher $op allow")
+        }
+        [void](Invoke-TvShell 'appops write-settings')
+    }
 
     $before = @(Get-HelperList)
     Add-SettingUndo 'accessibility_enabled' (Get-SecureSetting 'accessibility_enabled')

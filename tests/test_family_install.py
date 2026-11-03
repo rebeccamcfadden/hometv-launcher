@@ -872,8 +872,20 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertIn("appops write-settings", end["shell"])
         self.assertLess(self.index(end["shell"], "appops write-settings"),
                         self.index(end["shell"], "settings put secure enabled_accessibility_services"))
-        self.assertIn("undo appops set com.hometv.launcher AUTO_START default", self.undo())
-        self.assertNotIn("APP_AUTO_START", self.undo())
+        undo = self.undo().splitlines()
+        self.assertIn("undo appops set com.hometv.launcher AUTO_START default", undo)
+        self.assertNotIn("APP_AUTO_START", "\n".join(undo))
+        # -Restore runs from the bottom up: the modes go back first, then they are written to disk (or a restart undoes them).
+        self.assertLess(undo.index("undo appops write-settings"), undo.index("undo appops set com.hometv.launcher AUTO_START default"))
+
+    def test_restore_writes_the_auto_start_it_put_back_to_disk(self):
+        proc, end = self.run_installer(self.tv(tcl_ops={"AUTO_START": "default"}), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["tcl_ops"], {"AUTO_START": "default"})
+        restore = end["shell"][end["shell"].index("appops set com.hometv.launcher AUTO_START default"):]
+        self.assertIn("appops write-settings", restore)
 
     def test_a_tv_without_auto_start_gets_no_app_op(self):
         proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Input")
