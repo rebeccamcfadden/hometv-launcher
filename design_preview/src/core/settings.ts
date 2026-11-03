@@ -15,7 +15,7 @@ export type TimeOfDay = 'sun' | 'day' | 'night';
 /** The TV's region (F12; the launcher's Region): whose services, stores and prices show. */
 export type Region = 'se' | 'us';
 /** Launcher settings › Features (F14): what the launcher runs at all. */
-export type FeatureId = 'tmdb' | 'notes' | 'prices' | 'weather';
+export type FeatureId = 'tmdb' | 'notes' | 'prices' | 'weather' | 'remote';
 
 interface Saved {
   motion: Motion;
@@ -96,8 +96,9 @@ const defaults = (): Saved => ({
   movingDetails: false,
   // F14 (the project lead, 2026-11-02): every feature starts on; First run switches off any whose setup isn't finished
   // when it ends (setup.ts, featureSetUp).
-  // F34 (Rebecca, 2026-11-02): Phone notes alone starts off, since on it opens a port; it is its listening switch.
-  features: { tmdb: true, notes: false, prices: true, weather: true },
+  // F34 (Rebecca, 2026-11-02): Phone notes starts off, since on it opens a port; it is its listening switch. Phone
+  // remote (F27) likewise: off until the household turns it on.
+  features: { tmdb: true, notes: false, prices: true, weather: true, remote: false },
   utilityMoves: {},
 });
 
@@ -235,6 +236,13 @@ export const FEATURES: { id: FeatureId; label: string; sub: string; off: string;
     label: 'Weather',
     sub: 'Today, tomorrow and the hourly strip on Home, from Open-Meteo',
     off: 'No weather on Home or in quick settings',
+  },
+  {
+    // F27 (the project lead, 2026-11-02): off by default; the switch is also in its own pane, Launcher settings › Phone remote.
+    id: 'remote',
+    label: 'Phone remote',
+    sub: 'A phone on your Wi-Fi as a remote and keyboard for this launcher, and to add to My list',
+    off: 'The TV doesn’t listen for phones, and paired phones stop working',
   },
 ];
 

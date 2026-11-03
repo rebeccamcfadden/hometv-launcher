@@ -10,6 +10,7 @@ import type { Title } from '../types';
 import { icon, type IconName } from './icons';
 import { inputsMenu, topBarButton, wifiMenu } from '../screens/dropdown';
 import { settingsMenu } from '../screens/quickSettings';
+import { launcherSettings } from '../screens/settings';
 
 export function navBar(active: TabId | null): HTMLElement {
   const tabs: [TabId, string][] = [
@@ -54,7 +55,13 @@ export function navBar(active: TabId | null): HTMLElement {
   // Each page builds its own nav; a nav that left the document stops listening.
   const stop = net.on(() => (wifi.isConnected ? paintWifi() : stop()));
   tabsRoot = h('div.nav-left', h('div.nav-tabs', tabEls), searchEl);
-  return h('div.nav', tabsRoot, h('div.nav-device', device));
+  // F27: the phone remote's icon, shown by CSS while it is on (core/remote.ts sets data-remote); OK opens its pane.
+  const phone = focusable(h('div.nav-icon.nav-remote', h('span.nav-remote-ico', { html: icon('phone', 28) }), h('i.nav-remote-dot')), {
+    group: 'device',
+    key: 'dev-remote',
+    onOk: () => app.push(launcherSettings('remote', { enter: true, backCloses: true })),
+  });
+  return h('div.nav', tabsRoot, h('div.nav-device', phone, device, h('div.nav-remote-line', 'A phone is connected')));
 }
 
 export function button(

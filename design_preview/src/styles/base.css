@@ -525,6 +525,51 @@ body.no-devbar #devbar {
   color: var(--on-accent);
   transform: scale(1.05);
 }
+/* F27 Phone remote (Figma "Phone remote (F27)", Home sign B): a phone icon first in the cluster while the remote is on,
+   its dot green while a phone is connected, with a line under the cluster then. core/remote.ts sets data-remote. */
+.nav-device {
+  position: relative;
+}
+.nav-remote {
+  position: relative;
+  display: none;
+}
+:root[data-remote='on'] .nav-remote,
+:root[data-remote='connected'] .nav-remote {
+  display: grid;
+}
+.nav-remote-ico {
+  display: grid;
+}
+.nav-remote-dot {
+  position: absolute;
+  top: 11px;
+  right: 12px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg-raised);
+}
+:root[data-remote='connected'] .nav-remote-dot {
+  background: var(--good);
+}
+.nav-remote.is-focused .nav-remote-dot {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.nav-remote-line {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 26px;
+  display: none;
+  white-space: nowrap;
+  font-size: var(--t-min);
+  font-weight: 500;
+  color: var(--good);
+}
+:root[data-remote='connected'] .nav-remote-line {
+  display: block;
+}
 
 /* ---- Common page furniture ---- */
 .page-title {

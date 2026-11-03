@@ -87,8 +87,11 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
   };
 
   // The card is rebuilt whenever the (simulated) data state changes; focus comes back by key.
+  /** The My list, Seen and Favorite buttons' repaint, for a change made elsewhere (a phone remote, F39). */
+  let togglePaints: (() => void)[] = [];
   function build() {
     const loading = net.get() === 'preview-loading';
+    togglePaints = [];
 
     // ---- actions ----
     const watchLabel = !offer
@@ -136,6 +139,7 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
         replace(el, h('span.btn-icon', { html: icon(state ? icOn : icOff, 26, state && icOn === 'heart') }), h('span.btn-label', state ? on : off));
       };
       paint();
+      togglePaints.push(paint);
       return el;
     };
 
@@ -419,7 +423,7 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
   const el = h('div.screen.layer-popup', h('div.scrim'), popup);
   replace(popup, build());
   const first = opts.moreLike ? '[data-key="tab-More like this"]' : '[data-key="watch"]';
-  const screen: Screen = { label: t.name, el, layer: 'popup', defaultFocus: () => popup.querySelector<HTMLElement>(first) };
+  const screen: Screen = { label: t.name, el, layer: 'popup', title: t, defaultFocus: () => popup.querySelector<HTMLElement>(first) };
   const stop = net.on(() => {
     if (!app.has(screen)) return void stop();
     // A new simulated state starts over: a failing tab fails again until Retry.
@@ -441,5 +445,6 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
     replace(popup, build());
     app.refocus();
   });
+  const stopStore = store.on(() => (app.has(screen) ? togglePaints.forEach((p) => p()) : stopStore()));
   return screen;
 }

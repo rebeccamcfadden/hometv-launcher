@@ -445,9 +445,10 @@ on the right.
   four groups, in this order. **Accounts:** Account (Not signed in, amber "Getting a code…", "Waiting…", "Signing
   in…", "Code expired", or the username), Phone notes (Off, On, or amber "3 not matched"). **What you watch:**
   Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"), API keys ("3 working", amber "1 refused"),
-  Features ("4 of 4 on"). **Home & look:**
+  Features ("4 of 5 on"). **Home & look:**
   Theme (Midnight, or "Nature · Halloween"), Performance (Default, All on, or Custom), Home row apps (7), Weather (the
-  city). **This TV:** Open on start (Home), Default Home (On), Region (Sweden), TV settings, About (2.0.0). Values
+  city). **This TV:** Open on start (Home), Default Home (On), Region (Sweden), Phone remote (Off, On or "2 phones";
+  F27), TV settings, About (2.0.0). Values
   update live. Headings aren't focusable; ↑/↓ step over them. A section's name doesn't change with its group, so a path such as Launcher settings ›
   Phone notes stays as it is. The list stays inside title-safe and scrolls with focus when its sections don't fit,
   keeping a group's heading in view above its first section. A section whose feature is off in Features stays and
@@ -566,6 +567,48 @@ ever inside an APK. Never typed on the TV.
 - **Account without a TMDB key**: Sign in gives way to "This TV has no TMDB key yet…" and **Add a TMDB key** (in First
   run: add it in the TMDB key step above).
 
+#### Phone remote
+
+F27 with F39's Add to My list (Figma page "Phone remote (F27)", the project lead's picks of 2026-11-02: phone layout A,
+pane A, Home sign B, Add to My list C; plan and decisions in the rework's F27 notes). A phone on the home Wi-Fi drives
+this launcher: arrows, OK, Back, Home and typing, and adds titles to My list. The TV serves the page itself over HTTPS
+(a self-signed certificate made on the TV: each phone warns once), with the pairing code in the QR link's
+`#fragment`. **Off by default** (decision 4); also a row in Features.
+
+| State | Pane | First focus |
+|---|---|---|
+| Off | Eyebrow Features, "Phone remote", what it does, an **On / Off** switch, then four lines (the launcher's screens only, other apps keep the TV remote; Add to My list; each phone pairs once and can be forgotten; Wi-Fi only, encrypted, nothing leaves the home) and "Off means the TV doesn’t listen at all." | The switch |
+| On | The switch; a 380 px QR beside **Pair a phone**: three steps (scan; at the certificate warning tap Advanced, or Show Details on an iPhone, then continue; name the phone and tap Pair), then "No camera? Type the address, then the code" with `https://<tv>:8767/remote` and the code ("K7QM-4PXT"). **Paired phones**: "None yet", or one row each (name, "Connected now" in green or when it was last used, **Forget**), with a green "A phone is connected" by the heading; **New code** (asks first: paired phones keep working) and **Forget all phones** (asks first, **Cancel** focused: also a new code and, on the TV, a new key and certificate); a tiny note on the one-time warning and keeping the TV's address fixed | The switch |
+
+- **Home sign** (option B): while it is on, a phone icon leads the top bar's device controls, with a small accent
+  dot; while a phone is connected the dot turns green and "A phone is connected" shows under the cluster. OK on the
+  icon opens this pane (Back returns). A phone counts as connected for 25 s after it last spoke (its page says hello
+  every 10 s while open).
+- **The phone page** (`remote.html`; the TV serves it): a header with the TV's name and its connection, then
+  - **Pairing:** the code from the link (ticked, "Filled in from the QR code"; typed when the address was typed) and
+    the phone's name (a first guess from the browser); **Pair**. A wrong code says so in amber with the tries left;
+    five lock pairing for five minutes for every phone, as Phone notes, and the page counts down ("Pairing is
+    paused… 4:12"; phones already paired keep working). After pairing the code leaves the address bar.
+  - **The remote** (layout A): one screen that never scrolls (the D-pad shrinks to fit a small phone): "On the TV:
+    Search · buttons and typing" (or "buttons only"), a D-pad ring round OK (arrows repeat while held), **Back** and
+    **Home**, and a **Type on the TV** bar that opens the phone's keyboard; where the TV has no text box it is dimmed
+    and says so.
+  - **Typing:** only the TV's text box, starting from what the TV holds, with a cross that empties it, and "Enter
+    searches · close the keyboard to go back to the remote". Text goes to the TV ~120 ms after the last keystroke. The
+    keyboard goes away only when it is closed on the phone, on Enter (which also opens Search's full results) or when the
+    TV leaves the text box (the project lead after the TV pass, 2026-11-02); a pause never ends it.
+  - **Add to My list** (F39, option C): while the TV shows a title (a focused card, or an open preview) a card names it,
+    "On the TV", with **My list** (green **On My list** once added; again takes it off), and "Something else? Search to
+    add" opens a sheet that searches the TV's catalogue: + adds, ✓ is already on it. A toast with **Undo** on the
+    phone, and on the TV "Added Arrival to My list · From Rebecca’s phone"; an open preview's button follows.
+  - **Not reached:** "Can’t reach the TV" (off, another network, or Phone remote off: the TV doesn't listen then), with
+    **Try again**. A phone forgotten on the TV drops back to pairing with a note; ⋯ › **Unpair this phone** does the same
+    from the phone.
+- **In the prototype** the phone page is another tab of the same browser and talks to the TV tab over a
+  BroadcastChannel (on the TV: JSON over HTTPS). Jump to → "Phone remote · open the phone page (new tab)" turns it on
+  and opens the page with this TV's code; `?phone=2` on the page is a second phone; `?remote=on` starts the TV with it
+  on. Keep both tabs visible: a browser slows a hidden tab's timers.
+
 #### Weather
 
 r2-weather A, with r2-weather B's "now showing / quick picks".
@@ -646,9 +689,10 @@ picks another theme.
   end (no card shadows, Motion Reduced, no animated details; glow and picture on) until the household chooses, and the
   pane says so; config.xml or config.json `light_defaults` can set or stop that per TV. The prototype starts with
   everything on but animated details; it applies Motion and the backdrop, and saves the card shadows and glow, which it doesn't draw.
-- **Features** (F14, the project lead's decision 2026-11-01; no Figma frame): one build, with four features switched
-  on or off at run time: TMDB account, Phone notes, Price lookup and Weather (her review of 2026-11-02 took out Pick
-  for me and Themes as switches, and renamed Prices). **Every feature starts on** (the project lead, 2026-11-02, in
+- **Features** (F14, the project lead's decision 2026-11-01; no Figma frame): one build, with five features switched
+  on or off at run time: TMDB account, Phone notes, Price lookup, Weather and Phone remote (her review of 2026-11-02
+  took out Pick for me and Themes as switches, and renamed Prices; Phone remote came with F27). **Every feature starts
+  on** but Phone remote, which starts off (the project lead, 2026-11-02, in
   place of "all off" the day before); First run sets each up and **switches off, when it ends, any whose setup isn't
   finished** ([First run](#first-run)). "Turn on what this household uses", then a row per feature laid out as
   Performance's, each with an On / Off control; a feature that is off never starts: no page and nothing fetched for
@@ -668,11 +712,14 @@ picks another theme.
     buy reads Off and its pane is the off state ("Price lookup is off", **Turn on**); in [API keys](#api-keys) the price
     keys wait behind the same off state while the TMDB key stays.
   - **Weather:** off, Home has no weather or forecast.
+  - **Phone remote** (F27): off, the TV doesn't listen and paired phones stop working; its section keeps its own
+    On / Off rather than an off state ([Phone remote](#phone-remote)). Turned on in First run, its pane opens next as
+    a tab; on counts as set up, since a phone can pair any time.
   - **Pick for me** is no switch: its button is there on Movies and TV Shows when TMDB account is on, the TV is signed
     in and the lists hold something to pick from. Otherwise it is hidden, and the page's own state says why ("needs
     a TMDB account", "Nothing on your lists yet", offline with nothing saved); the chips lead on to the nav.
   - **Themes** are always there: no switch, every theme, its fonts and its pictures.
-  The section's value is "n of 4 on". ↓ goes to the next row's selected option and → stays within its control, as in
+  The section's value is "n of 5 on". ↓ goes to the next row's selected option and → stays within its control, as in
   Performance.
 - **Open on start:** Home / Last app / Live TV, only saved.
 - **Region** (F12; Family install step 2, the launcher's `Region`): "Where is this TV?", Sweden / United States as a
@@ -694,7 +741,7 @@ picks another theme.
 V2 designs 01-setup B and r2-setup-checklist, made one page by F28 (the project lead, 2026-11-02). Shown on demand from
 the dev bar (Jump to → First run). A page without the nav: "First run", "Set up your Home screen", "Everything has a
 sensible default. Move right to open a row, or start right away.", and four rows, each with its number, title, a line
-under it, the current value and a pill: Features ("4 of 4 on", the features on, Suggested), Region ("Services, stores
+under it, the current value and a pill: Features ("4 of 5 on", the features on, Suggested), Region ("Services, stores
 and prices", Sweden, Suggested; F12, before the two it decides), Streaming services ("8 ticked", "Netflix, Prime Video
 +6", Suggested), Stores for rent and buy ("Apple TV Store, Amazon Video +3", Suggested). A value that only repeats its
 pill is left out. Below them **Start using Home** and "The same pages are in Launcher
@@ -797,6 +844,9 @@ width with 243 px art.
   fall back to opening Wi-Fi settings.
 - **Phone notes:** the address assumes the TV keeps its IP (a DHCP reservation in the router); what Apple Notes and
   Keep put in the shared text (checklist ticks, the note's title) is to be checked on the phones.
+- **Phone remote:** the certificate warning's wording on Android Chrome and iPhone Safari, and that Safari offers to
+  go on past it, are to be checked on real phones; what the remote can do outside this launcher waits for the spike
+  (accessibility focus moves, typing into other apps' fields, the sound bar's volume).
 - **API keys:** the checks and the phone page's sending are mocked (`src/core/keys.ts`); the TV makes one real
   request per key. The port (8766, beside Phone notes' 8765) and the QR's address are the TV's own.
 - **Not designed yet:** hold-OK menus in Figma (the base uses them for tile Move / Remove / App info and a Settings
@@ -820,6 +870,8 @@ width with 243 px art.
 | `src/core/keys.ts` | API keys (F16): each key's state and last four characters, the code, the mock check; shared with the phone page through localStorage |
 | `keys.html`, `src/keysPage.ts` | The phone and laptop page the API keys QR opens (a second Vite page) |
 | `compare.html` | F40: Movies or TV Shows with today's cards and with poster cards, side by side (a third Vite page) |
+| `src/core/remote.ts`, `src/core/remoteProtocol.ts` | Phone remote (F27): the TV's side (pairing code and lock, each phone's token, keys, typing, My list, search, what the TV shows) and the messages both sides share |
+| `remote.html`, `src/remotePage.ts`, `src/styles/remote.css` | The phone remote page (a fourth Vite page) |
 | `src/core/net.ts` | The simulated network and data state behind the dev bar's State menu |
 | `src/data/` | Mock catalogue, services (and the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |
 | `src/screens/` | One module per screen; `dropdown.ts` holds the top-bar menus, `quickSettings.ts` the Settings icon's, `rent.ts` the rent/buy dialog, `settings.ts` Launcher settings, `setup.ts` First run |

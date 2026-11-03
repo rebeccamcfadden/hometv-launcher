@@ -21,6 +21,8 @@ import { weatherPane } from './panes/weather';
 import { keys } from '../core/keys';
 import { keysPane } from './panes/keys';
 import { updates } from '../core/updates';
+import { remote } from '../core/remote';
+import { remotePane } from './panes/remote';
 
 /** "All on" while every Performance choice draws and moves everything, "Default" for the usual start (all on but
  * Animated details, F25), "Light mode" at the lightest, else "Custom". */
@@ -45,6 +47,7 @@ export type SectionId =
   | 'start'
   | 'region'
   | 'home'
+  | 'remote'
   | 'tv'
   | 'about';
 
@@ -86,6 +89,8 @@ const SECTIONS: Section[] = [
   { id: 'start', label: 'Open on start', icon: 'power', value: () => ({ text: START_LABELS[settings.get().openOnStart] }) },
   { id: 'region', label: 'Region', icon: 'pin', value: () => ({ text: REGION_LABELS[settings.get().region] }) },
   { id: 'home', label: 'Default Home', icon: 'home', value: () => ({ text: 'On' }) },
+  // F27: its pane has its own On/Off (Figma option A), so it isn't hidden behind a feature-off pane.
+  { id: 'remote', label: 'Phone remote', icon: 'phone', value: () => remote.value() },
   { id: 'tv', label: 'TV settings', icon: 'settings', value: () => ({ text: '' }) },
   { id: 'about', label: 'About', icon: 'info', value: () => updates.value() },
 ];
@@ -100,7 +105,7 @@ const GROUPS: { title: string; items: SectionId[] }[] = [
   { title: 'Accounts', items: ['account', 'notes'] },
   { title: 'What you watch', items: ['services', 'stores', 'keys', 'features'] },
   { title: 'Home & look', items: ['theme', 'performance', 'apps', 'weather'] },
-  { title: 'This TV', items: ['start', 'home', 'region', 'tv', 'about'] },
+  { title: 'This TV', items: ['start', 'home', 'region', 'remote', 'tv', 'about'] },
 ];
 
 /**
@@ -163,6 +168,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     start: startPane(),
     region: regionPane(),
     home: homePane(),
+    remote: remotePane(host),
     tv: tvPane(),
     about: aboutPane(host),
   };
@@ -312,6 +318,8 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     notes.listen(() => rerender()),
     // Family install step 5: an update's check, download and install show in About as they happen.
     updates.on(() => rerender()),
+    // F27: a phone pairs, connects or goes quiet.
+    remote.listen(() => rerender()),
     account.onTick(() => {
       const c = scroll.querySelector('[data-countdown]');
       if (c) c.textContent = account.countdown();

@@ -49,10 +49,13 @@ function save() {
   localStorage.setItem(KEY, JSON.stringify(out));
 }
 
+const listeners = new Set<() => void>();
+
 function toggle(set: Set<string>, id: string): boolean {
   if (set.has(id)) set.delete(id);
   else set.add(id);
   save();
+  listeners.forEach((fn) => fn());
   return set.has(id);
 }
 
@@ -79,5 +82,10 @@ export const store = {
   reset() {
     localStorage.removeItem(KEY);
     location.reload();
+  },
+  /** Calls `fn` after My list, Seen or Favorites changes anywhere (a phone remote's My list, F39); returns a stop. */
+  on(fn: () => void): () => void {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
   },
 };
