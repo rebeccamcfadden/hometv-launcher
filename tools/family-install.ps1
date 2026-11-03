@@ -908,9 +908,14 @@ function Invoke-Install {
 
     # In-app updates (Family install step 5): Android asks before any update installs, but only an app allowed to "install
     # unknown apps" may ask. Granted here while ADB is on, and read back; without it, Launcher settings > About opens
-    # Android's screen to allow it. Undone by -Restore.
-    Add-Undo "appops set $Launcher REQUEST_INSTALL_PACKAGES default"
-    [void](Invoke-TvShell "appops set $Launcher REQUEST_INSTALL_PACKAGES allow")
+    # Android's screen to allow it. Undone by -Restore, to the mode it had before (nothing to undo when it was allowed).
+    $modeRe = 'REQUEST_INSTALL_PACKAGES: (allow|ignore|deny|default|foreground)'
+    $before = [regex]::Match((Invoke-TvShell "appops get $Launcher REQUEST_INSTALL_PACKAGES"), $modeRe)
+    $wasMode = if ($before.Success) { $before.Groups[1].Value } else { 'default' }
+    if ($wasMode -ne 'allow') {
+        Add-Undo "appops set $Launcher REQUEST_INSTALL_PACKAGES $wasMode"
+        [void](Invoke-TvShell "appops set $Launcher REQUEST_INSTALL_PACKAGES allow")
+    }
     $grant = Invoke-TvShell "appops get $Launcher REQUEST_INSTALL_PACKAGES"
     $updatesGranted = $grant -match 'REQUEST_INSTALL_PACKAGES: allow'
     if (-not $updatesGranted) {

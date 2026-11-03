@@ -456,6 +456,20 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(end["install_grant"], "default")
 
+    def test_a_grant_already_given_is_left_alone(self):
+        proc, end = self.run_installer(self.tv(install_grant="allow"))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertFalse([c for c in end["shell"] if c.startswith("appops set")])
+        self.assertNotIn("appops", (self.backup_dir() / "undo.txt").read_text())
+
+    def test_restore_puts_back_the_mode_it_found(self):
+        proc, end = self.run_installer(self.tv(install_grant="deny"))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "allow")
+        self.assertIn("undo appops set com.hometv.launcher REQUEST_INSTALL_PACKAGES deny", (self.backup_dir() / "undo.txt").read_text())
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "deny")
     def test_a_refused_grant_only_says_so(self):
         proc, end = self.run_installer(self.tv(appops_refused=True))
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
