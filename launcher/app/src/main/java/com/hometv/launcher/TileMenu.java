@@ -84,7 +84,7 @@ final class TileMenu {
                     panel.setPivotY(at.side == MenuPlace.Side.ABOVE ? panel.getHeight()
                             : sideways ? panel.getHeight() / 2f : 0);
                     panel.animate().alpha(1f).scaleX(1f).scaleY(1f).translationX(0f).translationY(0f)
-                            .setDuration(200).setInterpolator(Ui.EASE).start();
+                            .setDuration(200).withLayer().setInterpolator(Ui.EASE).start();
                 });
             }
 

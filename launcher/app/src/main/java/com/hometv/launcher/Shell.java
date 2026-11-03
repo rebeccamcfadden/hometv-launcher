@@ -6,11 +6,13 @@ import android.view.KeyEvent;
 import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +47,8 @@ final class Shell {
     /** The page sliding out during a tab switch, kept on the stage under the new one until it has gone. */
     private Screen leaving;
     private Screen entering;
+    /** The entering page's nav and shade, each with the alpha it fades back to (startTransition). */
+    private final Map<View, Float> stillAlpha = new HashMap<>();
     private final Runnable endTransition = this::endTransition;
 
     /** OK is acted on when it is released, on the item it went down on, so an OK that opened something can't
@@ -70,7 +74,8 @@ final class Shell {
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         lp.bottomMargin = Ui.px(110);
         stage.addView(toast, lp);
-        hideToast = () -> toast.animate().alpha(0f).translationY(Ui.px(20)).setDuration(Ui.ms(Ui.FAST_MS)).start();
+        hideToast = () -> toast.animate().alpha(0f).translationY(Ui.px(20)).setDuration(Ui.ms(Ui.FAST_MS)).withLayer()
+                .start();
     }
 
     Screen top() {
@@ -315,7 +320,8 @@ final class Shell {
         toast.removeCallbacks(hideToast);
         toast.bringToFront();
         toast.setTranslationY(Ui.px(20));
-        toast.animate().alpha(1f).translationY(0f).setDuration(Ui.ms(Ui.SLOW_MS)).setInterpolator(Ui.EASE).start();
+        toast.animate().alpha(1f).translationY(0f).setDuration(Ui.ms(Ui.SLOW_MS)).setInterpolator(Ui.EASE).withLayer()
+                .start();
         toast.postDelayed(hideToast, ms);
     }
 
@@ -526,22 +532,27 @@ final class Shell {
 
     /**
      * The new page's content slides 90 px in from the side of the section it came from and fades in (360 ms); the
-     * old content slides 60 px the other way and fades out (240 ms). The nav and the page's shade stay still.
+     * old content slides 60 px the other way and fades out (240 ms). The nav and the page's shade stay still and fade
+     * in (240 ms), as the prototype's whole-page fade. Each part fades on a hardware layer for the transition only,
+     * drawn once and then blended: a fade on the page itself drew it, and the layers in it, offscreen every frame
+     * (F15 P3-2).
      */
     private void startTransition(Screen from, Screen to) {
         int dir = Integer.signum(to.tab.ordinal() - from.tab.ordinal());
         if (dir == 0) dir = 1;
         entering = to;
-        to.view.setAlpha(0f);
-        to.view.animate().alpha(1f).setDuration(240).setInterpolator(null).start();
+        for (View child : still(to.view)) {
+            child.setAlpha(0f);
+            child.animate().alpha(1f).setDuration(240).setInterpolator(null).withLayer().start();
+        }
         for (View child : sliding(to.view)) {
             child.setAlpha(0f);
             child.setTranslationX(dir * Ui.px(90));
-            child.animate().alpha(1f).translationX(0f).setDuration(360).setInterpolator(Ui.EASE).start();
+            child.animate().alpha(1f).translationX(0f).setDuration(360).setInterpolator(Ui.EASE).withLayer().start();
         }
         for (View child : sliding(from.view)) {
             child.animate().alpha(0f).translationX(-dir * Ui.px(60)).setDuration(240)
-                    .setInterpolator(new android.view.animation.AccelerateInterpolator()).start();
+                    .setInterpolator(new android.view.animation.AccelerateInterpolator()).withLayer().start();
         }
         stage.postDelayed(endTransition, 380);
     }
@@ -551,6 +562,12 @@ final class Shell {
         if (entering != null) {
             entering.view.animate().cancel();
             entering.view.setAlpha(1f);
+            for (View child : still(entering.view)) {
+                child.animate().cancel();
+                Float rest = stillAlpha.get(child);
+                child.setAlpha(rest != null ? rest : 1f);
+            }
+            stillAlpha.clear();
             for (View child : sliding(entering.view)) settle(child);
             entering = null;
         }
@@ -565,6 +582,18 @@ final class Shell {
         v.animate().cancel();
         v.setAlpha(1f);
         v.setTranslationX(0f);
+    }
+
+    /** A page's children that stay in place during a transition: the nav and the shade. */
+    private static List<View> still(View page) {
+        List<View> out = new ArrayList<>();
+        if (!(page instanceof ViewGroup)) return out;
+        ViewGroup g = (ViewGroup) page;
+        for (int i = 0; i < g.getChildCount(); i++) {
+            View c = g.getChildAt(i);
+            if (c.getTag(R.id.ui_nav) != null || c.getTag(R.id.ui_still) != null) out.add(c);
+        }
+        return out;
     }
 
     /** A page's children that slide during a transition: everything but the nav and the shade. */

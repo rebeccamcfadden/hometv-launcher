@@ -40,6 +40,7 @@ final class RentDialog {
         FrameLayout root = new FrameLayout(ctx);
         View scrim = new View(ctx);
         scrim.setBackgroundColor(Ui.SCRIM);
+        Ui.flat(scrim);
         root.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -140,10 +141,10 @@ final class RentDialog {
             void onShow() {
                 if (shown || Ui.reducedMotion()) return;
                 shown = true;
-                for (View v : new View[]{scrim, box}) {
-                    v.setAlpha(0f);
-                    v.animate().alpha(1f).setDuration(Ui.FAST_MS).start();
-                }
+                scrim.setAlpha(0f);
+                scrim.animate().alpha(1f).setDuration(Ui.FAST_MS).start();
+                box.setAlpha(0f);
+                box.animate().alpha(1f).setDuration(Ui.FAST_MS).withLayer().start();
             }
         };
     }

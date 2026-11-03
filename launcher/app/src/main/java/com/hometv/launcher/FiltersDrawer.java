@@ -43,6 +43,7 @@ final class FiltersDrawer extends Screen {
         scrim = new View(ctx);
         // A lighter scrim than a popup's: the filtered page stays readable behind.
         scrim.setBackgroundColor(Ui.alpha(Ui.SCRIM, 0x59));
+        Ui.flat(scrim);
         root.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 

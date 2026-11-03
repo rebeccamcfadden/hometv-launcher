@@ -164,6 +164,7 @@ final class TitlePreview extends Screen {
 
         scrim = new View(ctx);
         scrim.setBackgroundColor(Ui.SCRIM);
+        Ui.flat(scrim);
         root.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -508,7 +509,7 @@ final class TitlePreview extends Screen {
         popup.setTranslationY(Ui.px(24));
         popup.setScaleX(0.985f);
         popup.setScaleY(0.985f);
-        popup.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(Ui.SLOW_MS)
+        popup.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(Ui.SLOW_MS).withLayer()
                 .setInterpolator(Ui.EASE).start();
     }
 

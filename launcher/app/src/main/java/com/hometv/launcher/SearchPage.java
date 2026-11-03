@@ -708,7 +708,8 @@ final class SearchPage extends Screen {
                 scroll.setTranslationX(0f);
                 return;
             }
-            panel.animate().translationX(-Ui.px(PANEL_SHIFT)).alpha(0f).setDuration(ms).setInterpolator(Ui.EASE).start();
+            panel.animate().translationX(-Ui.px(PANEL_SHIFT)).alpha(0f).setDuration(ms).setInterpolator(Ui.EASE)
+                    .withLayer().start();
             scroll.setTranslationX(contentLeft - Ui.px(VIEW_LEFT_EXPANDED));
             scroll.animate().translationX(0f).setDuration(ms).setInterpolator(Ui.EASE).start();
         } else {
@@ -719,7 +720,7 @@ final class SearchPage extends Screen {
                 setViewLeft(VIEW_LEFT);
                 return;
             }
-            panel.animate().translationX(0f).alpha(1f).setDuration(ms).setInterpolator(Ui.EASE).start();
+            panel.animate().translationX(0f).alpha(1f).setDuration(ms).setInterpolator(Ui.EASE).withLayer().start();
             // The viewport keeps its wide left edge while its content slides right, then takes the narrow one.
             scroll.animate().translationX(Ui.px(VIEW_LEFT) - Ui.px(viewLeft)).setDuration(ms).setInterpolator(Ui.EASE)
                     .withEndAction(() -> {

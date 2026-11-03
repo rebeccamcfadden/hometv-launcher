@@ -35,6 +35,7 @@ final class Pages {
         View shade = new View(ctx);
         shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                 new int[]{Ui.SHADE_TOP, Ui.SHADE_BOTTOM}));
+        Ui.flat(shade);
         shade.setTag(R.id.ui_still, Boolean.TRUE);
         page.addView(shade, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));

@@ -126,11 +126,13 @@ final class HomePage extends Screen {
         // The landscape shows through more than on other pages, darkening towards the apps (.home background).
         View shade = new View(ctx);
         shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, Ui.theme().homeShade));
+        Ui.flat(shade);
         shade.setTag(R.id.ui_still, Boolean.TRUE);
         root.addView(shade, match());
         // .home::before: the scrolled state dims the landscape further.
         dim = new View(ctx);
         dim.setBackgroundColor(Ui.theme().homeDim);
+        Ui.flat(dim);
         dim.setAlpha(0f);
         dim.setTag(R.id.ui_still, Boolean.TRUE);
         root.addView(dim, match());
@@ -431,7 +433,7 @@ final class HomePage extends Screen {
         scrolled = on;
         long ms = Ui.ms(Ui.SLOW_MS);
         content.animate().translationY(on ? -Ui.px(SHIFT) : 0f).setDuration(ms).setInterpolator(Ui.EASE).start();
-        hero.animate().alpha(on ? 0f : 1f).setDuration(ms).setInterpolator(null).start();
+        hero.animate().alpha(on ? 0f : 1f).setDuration(ms).setInterpolator(null).withLayer().start();
         dim.animate().alpha(on ? 1f : 0f).setDuration(ms).setInterpolator(null).start();
     }
 

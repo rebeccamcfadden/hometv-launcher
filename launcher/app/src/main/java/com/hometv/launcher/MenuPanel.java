@@ -271,7 +271,7 @@ final class MenuPanel {
         panel.post(() -> {
             panel.setPivotX(panel.getWidth());
             panel.setPivotY(0);
-            panel.animate().alpha(1f).scaleX(1f).scaleY(1f).translationY(0f).setDuration(200)
+            panel.animate().alpha(1f).scaleX(1f).scaleY(1f).translationY(0f).setDuration(200).withLayer()
                     .setInterpolator(Ui.EASE).start();
         });
     }

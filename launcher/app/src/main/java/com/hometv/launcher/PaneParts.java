@@ -350,6 +350,7 @@ final class PaneParts {
         FrameLayout root = new FrameLayout(ctx);
         View scrim = new View(ctx);
         scrim.setBackgroundColor(Ui.SCRIM);
+        Ui.flat(scrim);
         root.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         LinearLayout box = column(ctx);

@@ -213,6 +213,15 @@ final class Ui {
         return reducedMotion;
     }
 
+    /**
+     * A plain one-colour view (a scrim, Home's dim) never overlaps itself: fading it needs no offscreen buffer, which
+     * would otherwise be a full-screen fill on every frame of the fade (F15 P3-2). Returns v.
+     */
+    static <T extends View> T flat(T v) {
+        v.forceHasOverlappingRendering(false);
+        return v;
+    }
+
     /** A duration, or none with reduced motion: pages and menus then switch without animating. */
     static long ms(long duration) {
         return reducedMotion ? 0 : duration;
