@@ -12,13 +12,15 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.LruCache;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An app tile's art: the app's TV banner (16:9), cropped to the tile, or its icon where it has none. Drawn off the
  * main thread into a bitmap of exactly the size shown, so a full All Apps grid holds a few MB rather than every
- * app's full-size drawables, and kept in a small cache for the next time the tile is built.
+ * app's full-size drawables, and kept in a small cache for the next time the tile is built. Art with no transparent
+ * pixel (most TV banners) is kept at 16 bits, half the memory (F15 P3-5).
  */
 final class AppArt {
     private AppArt() {}
@@ -41,11 +43,18 @@ final class AppArt {
         }
     }
 
-    private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(r -> {
+    /** One low-priority thread, which goes away after 10 s with nothing to draw, as Art's do. */
+    private static final ThreadPoolExecutor WORKER = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(), r -> {
         Thread t = new Thread(r, "app-art");
         t.setPriority(Thread.MIN_PRIORITY);
+        t.setDaemon(true);
         return t;
     });
+
+    static {
+        WORKER.allowCoreThreadTimeOut(true);
+    }
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final LruCache<String, Art> CACHE = new LruCache<String, Art>(8 * 1024 * 1024) {
         @Override
@@ -135,6 +144,25 @@ final class AppArt {
             d.setBounds(left, top, left + w, top + h);
         }
         d.draw(c);
-        return b;
+        return opaque(b) ? sixteenBits(b) : b;
+    }
+
+    /** Whether no pixel shows through: a 16-bit copy would then look the same. */
+    private static boolean opaque(Bitmap b) {
+        int w = b.getWidth();
+        int[] row = new int[w];
+        for (int y = 0; y < b.getHeight(); y++) {
+            b.getPixels(row, 0, w, 0, y, w, 1);
+            if (!ArtPixels.opaque(row)) return false;
+        }
+        return true;
+    }
+
+    /** b at 16 bits per pixel (RGB_565), half the memory; b itself goes. b if the copy can't be made. */
+    private static Bitmap sixteenBits(Bitmap b) {
+        Bitmap small = b.copy(Bitmap.Config.RGB_565, false);
+        if (small == null) return b;
+        b.recycle();
+        return small;
     }
 }
