@@ -335,15 +335,16 @@ function toggleMine(t: PhoneTitle) {
  * answer that comes late can still put the button right.
  */
 let mylistSeq = 0;
-const mylistPending = new Map<string, { seq: number; t: PhoneTitle; timer: number }>();
+const mylistPending = new Map<string, { seq: number; t: PhoneTitle; timer: number; timedOut?: boolean }>();
 /** Per title: the TV's last answer (mine, and the seq it answered), or what the TV showed before the tap. */
 const mylistConfirmed = new Map<string, { mine: boolean; seq: number }>();
 function setMine(t: PhoneTitle, wanted: boolean) {
   const seq = ++mylistSeq;
   const old = mylistPending.get(t.id);
   if (old) clearTimeout(old.timer);
-  // Nothing in flight: the button shows the TV's own value, so that is the last confirmed one.
-  else mylistConfirmed.set(t.id, { mine: t.mine, seq: seq - 1 });
+  // Nothing in flight (or only a request that timed out, whose answer may never come): the button shows the TV's own
+  // value, so that is the last confirmed one. A late answer to the timed-out request still counts over it.
+  if (!old || old.timedOut) mylistConfirmed.set(t.id, { mine: t.mine, seq: old ? old.seq - 1 : seq - 1 });
   // On the TV: the request's 4 s timeout; here, the TV tab answers at once or not at all.
   const timer = window.setTimeout(() => mylisted({ type: 'mylisted', id: t.id, seq, failed: true }, true), 1500);
   mylistPending.set(t.id, { seq, t, timer });
@@ -358,7 +359,16 @@ function mylisted(msg: Extract<TvMsg, { type: 'mylisted' }>, unanswered = false)
   const known = mylistConfirmed.get(msg.id);
   if (answered && (!known || msg.seq > known.seq)) mylistConfirmed.set(msg.id, { mine: msg.mine as boolean, seq: msg.seq });
   const p = mylistPending.get(msg.id);
-  if (!p || p.seq !== msg.seq) return; // a later tap on this title decides
+  if (!p || p.seq !== msg.seq) {
+    // A later tap on this title decides. If it has timed out, this answer is the news: show the TV's value.
+    const now = mylistConfirmed.get(msg.id)?.mine;
+    if (p?.timedOut && now !== undefined && p.t.mine !== now) {
+      p.t.mine = now;
+      update();
+      paintResults();
+    }
+    return;
+  }
   clearTimeout(p.timer);
   const t = p.t;
   if (answered) {
@@ -372,6 +382,7 @@ function mylisted(msg: Extract<TvMsg, { type: 'mylisted' }>, unanswered = false)
   }
   // A refusal ends the request; a timeout keeps it, so the TV's late answer can still reconcile it.
   if (!unanswered) mylistPending.delete(msg.id);
+  else p.timedOut = true;
   t.mine = mylistConfirmed.get(msg.id)?.mine ?? t.mine;
   update();
   paintResults();
