@@ -21,6 +21,7 @@ export const featuresValue = () => `${FEATURES.filter((f) => featureOn(f.id)).le
  * - Price lookup: the Watchmode key works (F16's keys page); Movie of the Night is optional (the project lead,
  *   2026-11-02).
  * - Weather: a place is set (the TV's default counts).
+ * - Phone remote (F27): on is enough; phones pair when the household wants, and it works without one.
  */
 export function featureSetUp(id: FeatureId): boolean {
   switch (id) {
@@ -32,6 +33,8 @@ export function featureSetUp(id: FeatureId): boolean {
       return keys.pricesReady();
     case 'weather':
       return !!placeById(settings.get().place);
+    case 'remote':
+      return true;
   }
 }
 
@@ -48,11 +51,12 @@ export function turnOn(id: FeatureId): FeatureId {
 }
 
 /** The Launcher settings section that sets a feature up (Price lookup: F16's API keys). */
-export const SETUP_SECTION: Partial<Record<FeatureId, 'account' | 'notes' | 'keys' | 'weather'>> = {
+export const SETUP_SECTION: Partial<Record<FeatureId, 'account' | 'notes' | 'keys' | 'weather' | 'remote'>> = {
   tmdb: 'account',
   notes: 'notes',
   prices: 'keys',
   weather: 'weather',
+  remote: 'remote',
 };
 
 /**
@@ -136,7 +140,7 @@ export const featuresPane = (host: PaneHost): Pane => ({
     h(
       'div.pane-sub',
       host.setup
-        ? 'Everything but Phone notes starts on. Each is set up on its own row below, where you can also switch it on or off; one not set up when you finish is switched off.'
+        ? 'Everything but Phone notes and Phone remote starts on. Each is set up on its own row below, where you can also switch it on or off; one not set up when you finish is switched off.'
         : 'What this TV runs. Each is switched on or off in its own section; a feature that is off never starts.',
     ),
     h(

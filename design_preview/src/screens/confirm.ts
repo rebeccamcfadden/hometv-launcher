@@ -8,8 +8,11 @@ export interface DialogAction {
   onOk: () => void;
 }
 
-/** A small dialog over whatever is showing, e.g. before a rental opens another app. Cancel is added. */
-export function confirmDialog(opts: { title: string; body: string; detail?: string; actions: DialogAction[] }): Screen {
+/**
+ * A small dialog over whatever is showing, e.g. before a rental opens another app. Cancel is added; `cancelFirst`
+ * puts it first, focused, for an action that can't be undone (Phone remote's Forget all).
+ */
+export function confirmDialog(opts: { title: string; body: string; detail?: string; actions: DialogAction[]; cancelFirst?: boolean }): Screen {
   const buttons = opts.actions.map((a, i) =>
     button(a.label, {
       primary: a.primary,
@@ -20,7 +23,9 @@ export function confirmDialog(opts: { title: string; body: string; detail?: stri
       },
     }),
   );
-  buttons.push(button('Cancel', { key: 'cancel', onOk: () => app.pop() }));
+  const cancel = button('Cancel', { key: 'cancel', primary: opts.cancelFirst, onOk: () => app.pop() });
+  if (opts.cancelFirst) buttons.unshift(cancel);
+  else buttons.push(cancel);
   const el = h(
     'div.screen.layer-dialog',
     h('div.scrim'),

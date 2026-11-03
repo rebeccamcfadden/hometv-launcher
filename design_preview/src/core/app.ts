@@ -1,7 +1,16 @@
+import type { Title } from '../types';
 import { h } from './dom';
 import { type Dir, ensureVisible, findNext, handlerOf, nearest } from './focus';
 
 export type TabId = 'home' | 'movies' | 'tv' | 'search';
+
+/** A page's text box, as a phone remote sees it: whether it takes typing now, what it holds, set it whole, and Enter. */
+export interface TextField {
+  ready?(): boolean;
+  value(): string;
+  set(v: string): void;
+  enter?(): void;
+}
 
 /**
  * screen: a full page. popup: drawn over the nearest screen, which stays visible behind a scrim.
@@ -29,6 +38,10 @@ export interface Screen {
   onShow?(): void;
   /** Phone notes' import pill moves to the top centre while this page shows (Launcher settings: its pane runs to the bottom). */
   pillAtTop?: boolean;
+  /** The title this page is about (a title preview), for the phone remote's "On the TV" card (F39). */
+  title?: Title;
+  /** The text box a phone remote types into while this page shows (Search's query); none means buttons only (F27). */
+  textField?: TextField;
   /**
    * Called when a tab's page stops being the current tab (another tab, Back to Home, the remote's Home), not when
    * something is pushed over it. Search forgets its query here.
@@ -206,6 +219,23 @@ class App {
     ensureVisible(el, this.scale);
     handlerOf(el)?.onFocus?.();
     s.onFocus?.(el);
+    this.focusListeners.forEach((fn) => fn());
+  }
+
+  private focusListeners: (() => void)[] = [];
+
+  /** Calls `fn` after every focus move (the phone remote's "On the TV" card); returns a function that stops it. */
+  onFocusChange(fn: () => void): () => void {
+    this.focusListeners.push(fn);
+    return () => (this.focusListeners = this.focusListeners.filter((x) => x !== fn));
+  }
+
+  /** A remote button from a phone (F27), as if pressed on the TV's remote: OK acts at once, Home goes Home. */
+  press(key: Key | 'home') {
+    if (key === 'home') return this.remoteKeys.h?.();
+    if (key === 'back') return this.back();
+    if (key === 'ok') return this.ok();
+    this.move(key);
   }
 
   /** Focus survives re-renders by key; falls back to the screen's default. A hidden item is passed over, as on the TV. */

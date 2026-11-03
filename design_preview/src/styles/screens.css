@@ -3253,3 +3253,112 @@
   margin-top: 16px;
 }
 
+
+/* ---- Phone remote pane (F27; Figma "Phone remote (F27)", pane option A) ---- */
+.rem-what {
+  margin-top: 36px;
+}
+.rem-ben {
+  font-weight: 400;
+  line-height: 1.4;
+}
+.rem-rule {
+  height: 1px;
+  margin: 32px 0 28px;
+  background: var(--line);
+}
+.rem-pair {
+  gap: 48px;
+}
+.rem-qr {
+  width: 380px;
+  height: 380px;
+}
+.rem-steps {
+  margin-top: 18px;
+}
+.rem-type {
+  margin-top: 28px;
+}
+.rem-type-cap {
+  font-size: var(--t-min);
+  font-weight: 500;
+  color: var(--text-3);
+}
+.rem-type-url {
+  margin-top: 6px;
+  font-size: var(--t-body);
+}
+.rem-code {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: var(--t-h1);
+  font-weight: 300;
+  letter-spacing: 0.1em;
+}
+.rem-head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.rem-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--good-soft);
+  color: var(--good);
+  font-size: var(--t-small);
+  font-weight: 500;
+}
+.rem-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--good);
+}
+.rem-phones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+.rem-phone {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 14px 12px 22px;
+  border-radius: var(--radius-l);
+  background: var(--well);
+}
+.rem-phone:has(.is-focused) {
+  background: var(--surface-2);
+}
+.rem-phone-ico {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--surface-2);
+}
+.rem-phone-text {
+  flex: 1;
+  min-width: 0;
+}
+.rem-phone-name {
+  font-size: var(--t-body);
+}
+.rem-phone-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: var(--t-min);
+  color: var(--text-3);
+}
+.rem-phone.is-live .rem-phone-sub {
+  color: var(--good);
+}

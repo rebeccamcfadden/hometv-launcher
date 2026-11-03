@@ -13,6 +13,8 @@ import { button } from '../ui/widgets';
 import { accountPane } from './panes/account';
 import { featureBar, featureOffPane, featureSetUp, featureState, featuresPane } from './panes/features';
 import { notesPane } from './panes/notes';
+import { remotePane } from './panes/remote';
+import { remote } from '../core/remote';
 import type { Pane, PaneHost } from './panes/pane';
 import { regionPane } from './panes/region';
 import { servicesPane, storesPane } from './panes/services';
@@ -52,7 +54,7 @@ const ALL_STEPS: Step[] = [
       eyebrow: 'Features',
       title: 'Choose what this TV does.',
       body: () =>
-        'TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes starts off, since it opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.',
+        'TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes and Phone remote start off, since each opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.',
       note: 'Change them any time in Launcher settings › Features.',
     },
   },
@@ -123,6 +125,8 @@ const SUB_STEPS: SubStep[] = [
   { id: 'notes', feature: 'notes', title: 'Phone notes', icon: 'phone', value: () => notes.value().text },
   { id: 'keys', feature: 'prices', title: 'Price keys', icon: 'key', value: () => keys.value(['watchmode', 'motn']).text },
   { id: 'weather', feature: 'weather', title: 'Weather city', icon: 'cloud', value: () => placeById(settings.get().place).name },
+  // F27: off by default; turned on here, its pane pairs a phone (optional).
+  { id: 'remote', feature: 'remote', title: 'Phone remote', icon: 'phone', value: () => remote.value().text },
 ];
 
 /**
@@ -192,6 +196,7 @@ export function setupScreen(): Screen {
     weather: weatherPane(host),
     keys: priceKeysPane(host),
     tmdbKey: tmdbKeyPane(host),
+    remote: remotePane(host),
   };
   const paneOf = (id: PanelId): Pane | null => panes[id] ?? null;
   /** The open step's pane while it shows (not Stores' off state with Price lookup off). */

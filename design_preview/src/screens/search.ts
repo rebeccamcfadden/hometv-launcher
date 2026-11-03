@@ -345,6 +345,22 @@ export function searchScreen(): Screen {
       setQuery(query + ch.toLowerCase());
       return true;
     },
+    // F27: a phone remote types the whole query; Enter opens the full results, as → does.
+    textField: {
+      ready: () => tmdbReady(),
+      value: () => query,
+      set(v) {
+        if (!tmdbReady()) return;
+        if (expanded) {
+          expanded = false;
+          app.focus(keyboard.querySelector<HTMLElement>('[data-default]'));
+        }
+        setQuery(v.toLowerCase());
+      },
+      enter() {
+        if (tmdbReady() && query && hasMatches && !expanded) expand();
+      },
+    },
     onKey(k, f) {
       if (!tmdbReady()) return false;
       if (k === 'back' && expanded) {

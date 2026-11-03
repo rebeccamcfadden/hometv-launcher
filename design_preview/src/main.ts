@@ -28,6 +28,7 @@ import { keys, KEYS_PRESETS, type KeysPreset } from './core/keys';
 import { importPill } from './ui/importPill';
 import { updateNotice } from './ui/updateNotice';
 import { updates, UPDATE_STATES, type UpdateState } from './core/updates';
+import { remote } from './core/remote';
 
 // Launcher settings' Motion: the stage drops slides and scale-ups (Reduced) or every animation (Off).
 const stage = document.getElementById('stage')!;
@@ -63,6 +64,11 @@ app.overlay(importPill());
 app.overlay(updateNotice());
 // Holding OK on a title card, wherever one shows, opens the title menu (F3).
 app.longOk = titleMenu;
+// F27: the phone remote listens while it is on; the Features page or a reset switches it.
+remote.init();
+settings.on(() => remote.sync());
+// ?remote=on starts with Phone remote switched on.
+if (params.get('remote') === 'on') remote.setOn(true);
 // ?notes=on starts with Launcher settings › Phone notes switched on.
 if (params.get('notes') === 'on') notes.setOn(true);
 // ?features=on starts with every feature on (F14: a new install starts with them all off), and ?features=off with
@@ -70,7 +76,7 @@ if (params.get('notes') === 'on') notes.setOn(true);
 const startFeatures = params.get('features');
 if (startFeatures === 'on' || startFeatures === 'off') {
   const on = startFeatures === 'on';
-  settings.set({ features: { tmdb: on, notes: on, prices: on, weather: on } });
+  settings.set({ features: { tmdb: on, notes: on, prices: on, weather: on, remote: on } });
 }
 
 // ---- Dev bar under the stage: the screen stack, the data state, quick jumps and a state reset ----
@@ -214,10 +220,10 @@ const jumps: [string, string, () => void][] = [
       app.push(launcherSettings());
     },
   ],
-  ...(['account', 'notes', 'services', 'stores', 'keys', 'weather', 'apps', 'theme', 'performance', 'features', 'region', 'about'] as const).map(
+  ...(['account', 'notes', 'services', 'stores', 'keys', 'weather', 'apps', 'theme', 'performance', 'features', 'region', 'remote', 'about'] as const).map(
     (id): [string, string, () => void] => [
       `settings-${id}`,
-      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', keys: 'API keys', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features', region: 'Region', about: 'About (updates)' }[id]}`,
+      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', keys: 'API keys', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features', region: 'Region', remote: 'Phone remote', about: 'About (updates)' }[id]}`,
       () => {
         app.goTab('home');
         app.push(launcherSettings(id, { enter: true }));
@@ -225,6 +231,15 @@ const jumps: [string, string, () => void][] = [
     ],
   ),
   ['keys-page', 'API keys · open the phone page (new tab)', () => window.open(`./keys.html#${keys.code()}`, '_blank')],
+  // F27: turns Phone remote on (it is off by default) and opens the phone page for this TV's code.
+  [
+    'remote-page',
+    'Phone remote · open the phone page (new tab)',
+    () => {
+      if (!remote.on()) remote.setOn(true);
+      remote.openPhonePage();
+    },
+  ],
   [
     'notes-send',
     'Phone notes · a phone sends a note (3 not matched)',
