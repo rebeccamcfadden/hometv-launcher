@@ -181,21 +181,23 @@ function receive(msg: TvMsg) {
       results = msg.items;
       resultsFor = msg.q;
       return paintResults();
+    case 'mylisted':
+      return mylisted(msg);
   }
 }
 
 // ---- Toast ----
 let toastTimer = 0;
 const toastEl = el('div.toast');
-function toast(text: string, sub: string | null, undo: (() => void) | null, tone: 'good' | 'plain' = 'plain') {
+function toast(text: string, sub: string | null, undo: (() => void) | null, tone: 'good' | 'plain' | 'warn' = 'plain') {
   toastEl.replaceChildren(
     ...[
-      el('div.toast-ico', { html: svg('M5 12.5l4.5 4.5L19 7.5', 18, 2.4) }),
+      el('div.toast-ico', { html: tone === 'warn' ? icon('alert', 18) : svg('M5 12.5l4.5 4.5L19 7.5', 18, 2.4) }),
       el('div.toast-words', el('div.toast-t', text), sub ? el('div.toast-s', sub) : null),
       undo ? el('button.toast-undo', { onclick: () => (undo(), hideToast()) }, 'Undo') : null,
     ].filter((x): x is HTMLElement => !!x),
   );
-  toastEl.className = `toast is-shown${tone === 'good' ? ' toast--good' : ''}${view === 'remote' && !sheet ? '' : ' toast--top'}`;
+  toastEl.className = `toast is-shown${tone === 'good' ? ' toast--good' : tone === 'warn' ? ' toast--warn' : ''}${view === 'remote' && !sheet ? '' : ' toast--top'}`;
   clearTimeout(toastTimer);
   toastTimer = window.setTimeout(hideToast, undo ? 5000 : 3500);
 }
@@ -317,23 +319,74 @@ function card(t: PhoneTitle) {
   );
 }
 
-/**
- * F39: add or take off; the TV toasts it too. The phone sends what it wants, never a toggle, so a stale + can't take
- * off a title; Undo asks for what it was before. The TV's state (the card) follows.
- */
+/** F39: add or take off (setMine); the TV toasts it too. */
 function toggleMine(t: PhoneTitle) {
   buzz();
-  const added = !t.mine;
-  t.mine = added;
-  authed({ type: 'mylist', id: t.id, mine: added });
+  setMine(t, !t.mine);
+}
+
+/**
+ * F39: what the phone wants (on or off), never a toggle, so a stale + can't take off a title. The button moves at once;
+ * the TV's answer is the truth: "Added" (with Undo) only once the TV says so, and a refusal or no answer puts the button
+ * back and says why. Answers are counted per title, so a late one never undoes a later tap (or Undo).
+ *
+ * A failure goes back to what the TV last confirmed for that title, not to the opposite of the last tap: two quick taps
+ * with no answer end where the TV is. Only the TV's answers move that value. A timeout keeps the latest request, so an
+ * answer that comes late can still put the button right.
+ */
+let mylistSeq = 0;
+const mylistPending = new Map<string, { seq: number; t: PhoneTitle; timer: number; timedOut?: boolean }>();
+/** Per title: the TV's last answer (mine, and the seq it answered), or what the TV showed before the tap. */
+const mylistConfirmed = new Map<string, { mine: boolean; seq: number }>();
+function setMine(t: PhoneTitle, wanted: boolean) {
+  const seq = ++mylistSeq;
+  const old = mylistPending.get(t.id);
+  if (old) clearTimeout(old.timer);
+  // Nothing in flight (or only a request that timed out, whose answer may never come): the button shows the TV's own
+  // value, so that is the last confirmed one. A late answer to the timed-out request still counts over it.
+  if (!old || old.timedOut) mylistConfirmed.set(t.id, { mine: t.mine, seq: old ? old.seq - 1 : seq - 1 });
+  // On the TV: the request's 4 s timeout; here, the TV tab answers at once or not at all.
+  const timer = window.setTimeout(() => mylisted({ type: 'mylisted', id: t.id, seq, failed: true }, true), 1500);
+  mylistPending.set(t.id, { seq, t, timer });
+  t.mine = wanted;
+  authed({ type: 'mylist', id: t.id, mine: wanted, seq });
   update();
   paintResults();
-  toast(`${added ? 'Added' : 'Removed'} ${t.name} ${added ? 'to' : 'from'} My list`, null, () => {
-    t.mine = !added;
-    authed({ type: 'mylist', id: t.id, mine: !added });
+}
+function mylisted(msg: Extract<TvMsg, { type: 'mylisted' }>, unanswered = false) {
+  const answered = !msg.failed && typeof msg.mine === 'boolean';
+  // Any real answer is the TV's truth, even for an older tap; keep the newest one.
+  const known = mylistConfirmed.get(msg.id);
+  if (answered && (!known || msg.seq > known.seq)) mylistConfirmed.set(msg.id, { mine: msg.mine as boolean, seq: msg.seq });
+  const p = mylistPending.get(msg.id);
+  if (!p || p.seq !== msg.seq) {
+    // A later tap on this title decides. If it has timed out, this answer is the news: show the TV's value.
+    const now = mylistConfirmed.get(msg.id)?.mine;
+    if (p?.timedOut && now !== undefined && p.t.mine !== now) {
+      p.t.mine = now;
+      update();
+      paintResults();
+    }
+    return;
+  }
+  clearTimeout(p.timer);
+  const t = p.t;
+  if (answered) {
+    mylistPending.delete(msg.id);
+    const now = msg.mine as boolean;
+    t.mine = now;
     update();
     paintResults();
-  });
+    toast(`${now ? 'Added' : 'Removed'} ${t.name} ${now ? 'to' : 'from'} My list`, null, () => setMine(t, !now));
+    return;
+  }
+  // A refusal ends the request; a timeout keeps it, so the TV's late answer can still reconcile it.
+  if (!unanswered) mylistPending.delete(msg.id);
+  else p.timedOut = true;
+  t.mine = mylistConfirmed.get(msg.id)?.mine ?? t.mine;
+  update();
+  paintResults();
+  toast('My list didn’t change', unanswered ? 'This phone can’t reach the TV.' : 'Open HomeTV on the TV and try again.', null, 'warn');
 }
 
 // ---- Views ----

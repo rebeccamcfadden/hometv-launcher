@@ -206,12 +206,15 @@ function onMessage(sender: string, msg: PhoneMsg) {
       try {
         t = getTitle(msg.id);
       } catch {
-        return;
+        // On the TV: 404, a title it doesn't know (or another app in front).
+        return send(phone.id, { type: 'mylisted', id: msg.id, seq: msg.seq, failed: true });
       }
       // What the phone wants, so a stale button never takes off what it shows as added; nothing to say if it already is.
-      if (store.inMyList(t.id) === msg.mine) return broadcastState();
-      const mine = store.toggleMyList(t.id);
-      app.toast(`${mine ? 'Added' : 'Removed'} ${t.name} ${mine ? 'to' : 'from'} My list · From ${phone.name}`);
+      if (store.inMyList(t.id) !== msg.mine) {
+        const mine = store.toggleMyList(t.id);
+        app.toast(`${mine ? 'Added' : 'Removed'} ${t.name} ${mine ? 'to' : 'from'} My list · From ${phone.name}`);
+      }
+      send(phone.id, { type: 'mylisted', id: t.id, seq: msg.seq, mine: store.inMyList(t.id) });
       return broadcastState();
     }
     case 'search': {

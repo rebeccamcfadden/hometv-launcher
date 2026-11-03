@@ -667,6 +667,9 @@ p {
   background: rgba(var(--deep-rgb), 0.97);
   border-color: rgba(143, 217, 168, 0.4);
 }
+.toast--warn .toast-ico {
+  color: var(--star);
+}
 .toast-undo {
   height: 40px;
   padding: 0 14px;
