@@ -40,6 +40,17 @@ public class PosterCardTest {
     }
 
     @Test
+    public void aFailedPosterFallsBackToTheBackdrop() {
+        String p = "https://image.tmdb.org/t/p/w342/p.jpg", b = "https://image.tmdb.org/t/p/w780/b.jpg";
+        assertEquals(p, ArtSize.posterChoice(p, b, false));
+        assertEquals(b, ArtSize.posterChoice(p, b, true));
+        // No backdrop to fall back on: the poster is tried again.
+        assertEquals(p, ArtSize.posterChoice(p, null, true));
+        assertEquals(b, ArtSize.posterChoice(null, b, false));
+        assertNull(ArtSize.posterChoice(null, null, true));
+    }
+
+    @Test
     public void theServiceLine() {
         assertEquals("Netflix · Included", TitleText.serviceLine("Netflix", "Included"));
         assertEquals("Apple TV Store · Rent 39 kr", TitleText.serviceLine("Apple TV Store", "Rent 39 kr"));

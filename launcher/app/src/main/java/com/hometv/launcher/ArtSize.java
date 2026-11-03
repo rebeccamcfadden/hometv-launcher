@@ -28,4 +28,12 @@ final class ArtSize {
         if (s >= 0.8f) return null;
         return new int[]{Math.max(boxW, Math.round(srcW * s)), Math.max(boxH, Math.round(srcH * s))};
     }
-}
+
+    /**
+     * Which picture a poster card loads (F40): the poster, unless there is none or it failed to load (a bad file, or
+     * offline with nothing cached) and the backdrop is there to fall back on, cropped to the poster's shape.
+     */
+    static String posterChoice(String posterUrl, String backdropUrl, boolean posterFailed) {
+        if (posterUrl == null) return backdropUrl;
+        return posterFailed && backdropUrl != null ? backdropUrl : posterUrl;
+    }}
