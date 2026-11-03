@@ -158,6 +158,17 @@ function Get-HomeNow { return ((Invoke-TvShell $HomeQuery) -split "`n" | Select-
 
 function Get-PackageOf([string]$Component) { return ($Component -split '/')[0] }
 
+# An app-op's mode for a package, or $null when the read failed or its answer is not one we know. Android answers
+# 'No operations.' for an app-op never set, which is 'default'; nothing else is taken to mean that.
+function Get-AppOpMode([string]$Package, [string]$Op) {
+    $out = Invoke-TvShell "appops get $Package $Op"
+    if ($script:AdbExit -ne 0) { return $null }
+    $m = [regex]::Match($out, "\b${Op}: (allow|ignore|deny|default|foreground)\b")
+    if ($m.Success) { return $m.Groups[1].Value }
+    if ($out.Trim() -eq 'No operations.') { return 'default' }
+    return $null
+}
+
 # Ours in front: the activity Android resumed after a Home press. resolve-activity alone can name ours while Home still
 # opens setupwraith's RecoveryActivity on some Google TV builds (PROMPT.md, Launcher).
 function Test-HomeShowsOurs {
@@ -437,6 +448,8 @@ function Invoke-Restore {
         Say $out
         $ok = $script:AdbExit -eq 0 -and $out -notmatch '(?i)error|exception|unknown package'
         if ($ok -and $command -match '^pm enable --user 0 (\S+)$') { $ok = $out -match 'new state: enabled' }
+        # appops set prints nothing either way: read the mode back.
+        if ($ok -and $command -match '^appops set (\S+) (\S+) (\S+)$') { $ok = (Get-AppOpMode $Matches[1] $Matches[2]) -eq $Matches[3] }
         if (-not $ok) { $failed += $command }
     }
     $homeNow = Get-HomeNow
@@ -655,6 +668,9 @@ function Invoke-Debloat([string[]]$Names) {
         }
         $done += $off
         Say "Switched off: $($off -join ', ')"
+    }
+    if ($done.Count -gt 0) {
+        Say 'Some TVs switch an app or two back on at every restart (TCL''s User Center does). That is the TV, not a fault: leave it on.'
     }
     return $done
 }
@@ -903,6 +919,25 @@ function Invoke-Install {
         Say 'The HomeTV Launcher is the home screen.'
     }
 
+    # In-app updates (Family install step 5): Android asks before any update installs, but only an app allowed to "install
+    # unknown apps" may ask. Granted here while ADB is on, and read back; without it, Launcher settings > About opens
+    # Android's screen to allow it. Undone by -Restore, to the mode it had before (nothing to undo when it was allowed).
+    # A mode that can't be read is left alone, since its undo could not put it back.
+    $wasMode = Get-AppOpMode $Launcher 'REQUEST_INSTALL_PACKAGES'
+    $updatesGranted = $false
+    if ($null -eq $wasMode) {
+        Say 'Could not read whether the launcher may install its own updates, so that setting was left as it is. Launcher settings > About will show how to allow it.'
+    } else {
+        if ($wasMode -ne 'allow') {
+            Add-Undo "appops set $Launcher REQUEST_INSTALL_PACKAGES $wasMode"
+            [void](Invoke-TvShell "appops set $Launcher REQUEST_INSTALL_PACKAGES allow")
+        }
+        $updatesGranted = (Get-AppOpMode $Launcher 'REQUEST_INSTALL_PACKAGES') -eq 'allow'
+        if (-not $updatesGranted) {
+            Say 'This TV did not let the launcher install its own updates. It still works; Launcher settings > About will show how to allow it, or run this installer again for an update.'
+        }
+    }
+
     $debloated = @()
     if ($script:ListNames.Count -gt 0) { $debloated = @(Invoke-Debloat $script:ListNames) }
 
@@ -946,7 +981,7 @@ function Invoke-Install {
     [IO.File]::WriteAllText((Join-Path $backup 'summary.txt'), (@(
         "HomeTV Launcher $ReleaseTag on $maker $model, Android $android (SDK $sdk).",
         "Mode: $mode. Stock home: $stock. Disabled: $($toDisable -join ', '). From the list: $($debloated -join ', ').",
-        "USB devices: $usbThings. USB network adapter: $usbEthernet.") -join "`n") + "`n")
+        "USB devices: $usbThings. USB network adapter: $usbEthernet. Updates allowed: $updatesGranted.") -join "`n") + "`n")
     Step 'Done'
     Say 'Press Home on the remote to see the HomeTV Launcher. Everything First run set up is in Launcher settings too.'
     Say "The backup and undo file are in $backup."
