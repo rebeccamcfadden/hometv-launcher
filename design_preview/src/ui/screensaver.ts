@@ -33,6 +33,8 @@ let date!: HTMLElement;
 let glow!: HTMLElement;
 let shown = false;
 let moveTimer = 0;
+/** The fade's halfway point in move(): cleared by hide(), so it can't move the clock in a later showing. */
+let fadeTimer = 0;
 let tickTimer = 0;
 let glowTimers: number[] = [];
 let colour = Math.floor(Math.random() * PALETTE.length);
@@ -105,8 +107,7 @@ function move() {
     place();
   } else {
     clock.classList.add('is-out');
-    window.setTimeout(() => {
-      if (!shown) return;
+    fadeTimer = window.setTimeout(() => {
       place();
       clock.classList.remove('is-out');
     }, 900);
@@ -137,6 +138,7 @@ function hide() {
   shown = false;
   el!.classList.remove('is-shown');
   clearTimeout(moveTimer);
+  clearTimeout(fadeTimer);
   clearInterval(tickTimer);
   glowTimers.forEach(clearTimeout);
   glowTimers = [];
@@ -171,6 +173,13 @@ export function initScreensaver() {
     true,
   );
   window.addEventListener('pointerdown', () => (lastInput = Date.now()), true);
+  // A phone remote's button (F27) is a key too: it holds the clock off, and the one that wakes it is swallowed.
+  app.beforePress = () => {
+    lastInput = Date.now();
+    if (!shown) return false;
+    hide();
+    return true;
+  };
   window.setInterval(() => {
     const after = settings.get().screensaverAfter;
     if (shown || after === 'off' || document.visibilityState !== 'visible') return;

@@ -230,8 +230,15 @@ class App {
     return () => (this.focusListeners = this.focusListeners.filter((x) => x !== fn));
   }
 
+  /**
+   * Runs first on a phone remote's button (F27): true swallows it. The screensaver (F36) uses it, so a phone press
+   * counts as a key and the one that wakes the clock does nothing else.
+   */
+  beforePress: (() => boolean) | null = null;
+
   /** A remote button from a phone (F27), as if pressed on the TV's remote: OK acts at once, Home goes Home. */
   press(key: Key | 'home') {
+    if (this.beforePress?.()) return;
     if (key === 'home') return this.remoteKeys.h?.();
     if (key === 'back') return this.back();
     if (key === 'ok') return this.ok();
