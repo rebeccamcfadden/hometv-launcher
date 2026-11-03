@@ -54,6 +54,13 @@ interface Saved {
   features: Record<FeatureId, boolean>;
   /** F35: apps moved into or out of All Apps' TV Utilities folder by hand (hold OK), by app id. */
   utilityMoves: Record<string, Moved>;
+  /**
+   * F36: Launcher settings › Screensaver. The clock starts after Home has sat this long without a key (never over an
+   * app or Live TV); Off by default for every TV (AGENTS.md: new behaviour off).
+   */
+  screensaverAfter: ScreensaverAfter;
+  /** What the screensaver's clock floats over: a slow coloured glow, the theme's picture dimmed, or black (OLED). */
+  screensaverBack: ScreensaverBack;
 }
 
 const KEY = 'cleanyourtv-preview-settings-v2';
@@ -100,6 +107,8 @@ const defaults = (): Saved => ({
   // remote (F27) likewise: off until the household turns it on.
   features: { tmdb: true, notes: false, prices: true, weather: true, remote: false },
   utilityMoves: {},
+  screensaverAfter: 'off',
+  screensaverBack: 'glow',
 });
 
 function load(): Saved {
@@ -117,6 +126,8 @@ function load(): Saved {
       if (saved.timeOfDay !== 'day' && saved.timeOfDay !== 'night') saved.timeOfDay = 'sun';
       if (saved.region !== 'us') saved.region = 'se';
       if (saved.appLogos !== 'minimal') saved.appLogos = 'full';
+      if (!['off', '5', '15', '30'].includes(saved.screensaverAfter)) saved.screensaverAfter = 'off';
+      if (!['glow', 'picture', 'black'].includes(saved.screensaverBack)) saved.screensaverBack = 'glow';
       return saved;
     }
   } catch {
@@ -203,6 +214,13 @@ export const BACKDROP_LABELS: Record<BackdropPicture, string> = { photo: 'Photo'
 export type AppLogos = 'full' | 'minimal';
 export const APP_LOGOS_LABELS: Record<AppLogos, string> = { full: 'Full colour', minimal: 'Minimal' };
 export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = { sun: 'Follow the sun', day: 'Day', night: 'Night' };
+/** F36: minutes Home sits untouched before the clock screensaver, or off. */
+export type ScreensaverAfter = 'off' | '5' | '15' | '30';
+export const SCREENSAVER_AFTER_LABELS: Record<ScreensaverAfter, string> = { off: 'Off', '5': '5 min', '15': '15 min', '30': '30 min' };
+/** In the pane's order: Off first (numeric keys would come first in Object.keys). */
+export const SCREENSAVER_AFTER: ScreensaverAfter[] = ['off', '5', '15', '30'];
+export type ScreensaverBack = 'glow' | 'picture' | 'black';
+export const SCREENSAVER_BACK_LABELS: Record<ScreensaverBack, string> = { glow: 'Glow', picture: 'Theme picture', black: 'Black' };
 
 /**
  * Launcher settings › Features (F14, the project lead 2026-11-01; four since her review of 2026-11-02: Pick for me goes\n * with TMDB account and the lists, Themes are always there): one build, with each feature switched on or off at

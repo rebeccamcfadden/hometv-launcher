@@ -644,3 +644,74 @@ body.no-devbar #devbar {
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+/* ---- F36: the clock screensaver (ui/screensaver.ts) ---- */
+.saver {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  background: #000;
+  color: var(--text-1);
+  cursor: none;
+}
+.saver.is-shown {
+  display: block;
+  animation: fade-in 1200ms ease-out;
+}
+/* Glow: a soft colour pool centred on the clock, at partial alpha on black (upstream's 25% / 8% / 0% stops). */
+.saver-glow {
+  position: absolute;
+  inset: 0;
+  --glow: #2b5cff;
+  background: radial-gradient(
+    circle 1056px at var(--gx, 50%) var(--gy, 50%),
+    color-mix(in srgb, var(--glow) 25%, transparent),
+    color-mix(in srgb, var(--glow) 8%, transparent) 50%,
+    transparent 100%
+  );
+}
+/* Theme picture: the theme's own backdrop (the Seasonal picture of the hour), darkened so the clock reads. */
+.saver[data-back='picture'] .saver-glow {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.62)),
+    var(--bg-image) center / cover no-repeat,
+    var(--sky),
+    var(--bg);
+}
+.saver[data-back='black'] .saver-glow {
+  display: none;
+}
+.saver-clock {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition: opacity 1200ms ease-out;
+}
+.saver-clock.is-out {
+  opacity: 0;
+  transition-duration: 900ms;
+}
+.saver-time {
+  font-family: var(--font-display);
+  font-size: 150px;
+  font-weight: var(--display-weight);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.saver-ampm {
+  margin-left: 20px;
+  font-family: var(--font-display);
+  font-size: 44px;
+  color: var(--text-2);
+}
+.saver-date {
+  margin-top: 16px;
+  font-size: 34px;
+  color: var(--text-2);
+}
+#stage[data-motion='off'] .saver.is-shown,
+#stage[data-motion='off'] .saver-clock {
+  animation: none;
+  transition: none;
+}
