@@ -173,7 +173,7 @@ final class TitlePreview extends Screen {
         // The rounded outline clips the art and everything on it; the rows inside may still draw past the body.
         popup.setClipToOutline(true);
         popup.setClipChildren(false);
-        popup.setElevation(Ui.px(30));
+        Ui.elevate(popup, 30);
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(Ui.px(WIDTH), Ui.px(HEIGHT), Gravity.TOP | Gravity.START);
         plp.leftMargin = Ui.px(Ui.SAFE_X);
         plp.topMargin = Ui.px(TOP);

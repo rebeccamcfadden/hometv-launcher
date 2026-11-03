@@ -52,6 +52,15 @@ final class PerfChoices {
 
     /** A TV's start, unless it is low-RAM: everything the theme draws, still. */
     // Animated details (F25's snow and rain) start off on every TV, the project lead's decision of 2026-11-01.
+    /**
+     * Whether popups, menus, dialogs and toasts cast their elevation shadow: unless card shadows are Off (F15 P3-4).
+     * HWUI draws those shadows again on every frame the popup redraws; with Off, the scrim and the outline set them
+     * apart.
+     */
+    boolean popupShadows() {
+        return shadows != Shadows.OFF;
+    }
+
     static final PerfChoices FULL = new PerfChoices(Shadows.ON, true, false, false);
     /** Everything on, Animated details too: the pane's "All on". */
     static final PerfChoices ALL = new PerfChoices(Shadows.ON, true, false, true);

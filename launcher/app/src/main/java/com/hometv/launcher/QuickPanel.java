@@ -34,7 +34,7 @@ final class QuickPanel {
         panel.setPadding(pad, pad, pad, pad);
         // .menu--settings is opaque, the other dropdowns' colour at full strength.
         panel.setBackground(Ui.round(Ui.MENU_BG | 0xFF000000, 28, Ui.LINE_STRONG, Ui.LINE_W));
-        panel.setElevation(Ui.px(30));
+        Ui.elevate(panel, 30);
         for (int i = 0; i < rows.size(); i++) {
             QuickSettings.Row r = rows.get(i);
             if (r.divider && panel.getChildCount() > 0) {

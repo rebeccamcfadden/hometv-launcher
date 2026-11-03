@@ -121,7 +121,7 @@ final class MenuPanel {
         panel.setPadding(pad, pad, pad, pad);
         panel.setMinimumWidth(Ui.px(420));
         panel.setBackground(Ui.round(Ui.MENU_BG, 28, Ui.LINE_STRONG, Ui.LINE_W));
-        panel.setElevation(Ui.px(30));
+        Ui.elevate(panel, 30);
         if (header != null) panel.addView(header);
         int first = 0;
         for (int i = 0; i < rows.size(); i++) {

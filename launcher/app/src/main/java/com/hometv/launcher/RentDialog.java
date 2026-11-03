@@ -47,7 +47,7 @@ final class RentDialog {
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(Ui.px(56), Ui.px(52), Ui.px(56), Ui.px(52));
         box.setBackground(Ui.round(Ui.DIALOG_BG, Ui.RADIUS_XL, Ui.LINE_STRONG, Ui.LINE_W));
-        box.setElevation(Ui.px(40));
+        Ui.elevate(box, 40);
 
         TextView title = Ui.text(ctx, 38, Ui.TEXT_1, Ui.REGULAR);
         title.setText(ctx.getString(R.string.preview_dialog_title, t.name, store));

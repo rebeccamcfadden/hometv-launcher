@@ -14,6 +14,15 @@ import static org.junit.Assert.assertTrue;
 public class PerfChoicesTest {
 
     @Test
+    public void popupsCastTheirShadowUnlessCardShadowsAreOff() {
+        assertTrue(new PerfChoices(PerfChoices.Shadows.ON, true, false, false).popupShadows());
+        assertTrue(new PerfChoices(PerfChoices.Shadows.FOCUS, true, false, false).popupShadows());
+        assertFalse(new PerfChoices(PerfChoices.Shadows.OFF, true, false, false).popupShadows());
+        assertTrue(PerfChoices.FULL.popupShadows());
+        assertFalse("the light end (the TCL)", PerfChoices.LIGHT.popupShadows());
+    }
+
+    @Test
     public void lightDefaultsFollowTheLowRamFlagUnlessTheConfigSays() {
         assertTrue(PerfChoices.light("auto", true));
         assertFalse(PerfChoices.light("auto", false));

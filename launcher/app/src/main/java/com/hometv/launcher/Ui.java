@@ -293,6 +293,11 @@ final class Ui {
                 new int[]{focused, activated, normal});
     }
 
+    /** A popup's elevation (design px), or none when Performance's card shadows are Off (PerfChoices.popupShadows). */
+    static void elevate(View v, float design) {
+        v.setElevation(PerfChoices.current().popupShadows() ? px(design) : 0f);
+    }
+
     /** The small scale-up a focused item gets (3–8% in the spec), animated with the focus change. */
     static void scaleOnFocus(View v, float scaleTo) {
         View.OnFocusChangeListener previous = v.getOnFocusChangeListener();

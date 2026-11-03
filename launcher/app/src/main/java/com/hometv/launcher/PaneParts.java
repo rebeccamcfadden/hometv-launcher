@@ -355,7 +355,7 @@ final class PaneParts {
         LinearLayout box = column(ctx);
         box.setPadding(Ui.px(56), Ui.px(52), Ui.px(56), Ui.px(52));
         box.setBackground(Ui.round(Ui.BG_RAISED, Ui.RADIUS_XL, Ui.LINE_STRONG, Ui.LINE_W));
-        box.setElevation(Ui.px(40));
+        Ui.elevate(box, 40);
         TextView t = Ui.text(ctx, 38, Ui.TEXT_1, Ui.REGULAR);
         t.setText(title);
         box.addView(t);

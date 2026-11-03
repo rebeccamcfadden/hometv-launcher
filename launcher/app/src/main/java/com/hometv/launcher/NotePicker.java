@@ -64,7 +64,7 @@ final class NotePicker {
         LinearLayout box = PaneParts.column(ctx);
         box.setPadding(Ui.px(56), Ui.px(52), Ui.px(56), Ui.px(52));
         box.setBackground(Ui.round(Ui.BG_RAISED, Ui.RADIUS_XL, Ui.LINE_STRONG, Ui.LINE_W));
-        box.setElevation(Ui.px(40));
+        Ui.elevate(box, 40);
 
         String title = ctx.getString(mode == Mode.LOOKING ? R.string.notes_pick_looking
                 : mode == Mode.OFFLINE ? R.string.notes_pick_title_offline
@@ -137,7 +137,7 @@ final class NotePicker {
         LinearLayout box = PaneParts.column(ctx);
         box.setPadding(Ui.px(56), Ui.px(52), Ui.px(56), Ui.px(52));
         box.setBackground(Ui.round(Ui.BG_RAISED, Ui.RADIUS_XL, Ui.LINE_STRONG, Ui.LINE_W));
-        box.setElevation(Ui.px(40));
+        Ui.elevate(box, 40);
         String title = ctx.getString(R.string.notes_pick_edit_title);
         TextView t = Ui.text(ctx, 38, Ui.TEXT_1, Ui.REGULAR);
         t.setText(title);

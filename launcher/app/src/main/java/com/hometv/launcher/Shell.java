@@ -64,7 +64,7 @@ final class Shell {
         toast = Ui.text(ctx, 22, Ui.TEXT_1, Ui.REGULAR);
         toast.setPadding(Ui.px(32), Ui.px(18), Ui.px(32), Ui.px(18));
         toast.setBackground(Ui.round(Ui.TOAST_BG, Ui.RADIUS_PILL, Ui.LINE_STRONG, Ui.LINE_W));
-        toast.setElevation(Ui.px(20));
+        Ui.elevate(toast, 20);
         toast.setAlpha(0f);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
