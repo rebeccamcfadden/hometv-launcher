@@ -134,7 +134,7 @@ gets a new port after a restart, so pass the current one with `-TvHost` and `-Ad
 | `-DownloadFrom` | A folder (a USB stick) with the release's APK, instead of GitHub; the APK is still checked |
 | `-List` | A debloat list to apply after the handover (step 8 above) |
 | `-SwitchOffList` | Answer yes to the debloat's "Switch these off?" (its default is no) |
-| `-BrokenButtons` | `Home`, `Input`, `Settings`: the remote's buttons that do nothing, when you already know (step 9 above) |
+| `-BrokenButtons` | The remote's buttons that do nothing, when you already know, separated by commas: `Home,Input,Settings` (step 9 above) |
 | `-ListsFrom` | Testing, in the repository's copy only: a folder of lists (`examples`) to suggest from |
 | `-Restore` | Undo an install from its backup folder |
 | `-NoPrompt` | Every question takes its default, and the pauses are skipped |

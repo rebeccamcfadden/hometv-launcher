@@ -41,8 +41,8 @@ param(
     # Answer yes to the debloat's one "Switch these off?", whose default is no (tests, or the helper who has read the list).
     [switch]$SwitchOffList,
     # The remote's buttons that did nothing, when the helper already knows (tests, or the person helping on a call):
-    # answers "no" to those buttons' first question. Home, Input or Settings.
-    [ValidateSet('Home', 'Input', 'Settings')][string[]]$BrokenButtons = @()
+    # answers "no" to those buttons' first question. Home, Input and/or Settings, separated by commas.
+    [string]$BrokenButtons
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2
@@ -105,6 +105,7 @@ $ButtonHelpers = [ordered]@{ 'Home' = 'HomeKeyService'; 'Input' = 'InputKeyServi
 $script:ListNames = @()
 $script:ListNotes = @{}
 $script:ListFolder = $null
+$script:Broken = @()
 $script:BackupDir = $null
 # The folder the release's debloat lists were unpacked to (or -ListsFrom), when the person may pick one.
 $script:ListsDir = $null
@@ -709,7 +710,7 @@ function Write-Report([string]$Folder, [string[]]$Packages, [string[]]$Disabled)
 # Rebecca, 2026-11-03): the person presses each button on the real remote (an injected key skips the helpers), a helper
 # goes on only for a button that failed, after they hear what it can cost, and then they try again.
 function Test-Button([string]$Name, [string]$Question) {
-    if ($BrokenButtons -contains $Name) { Say "$Question no (-BrokenButtons)"; return $false }
+    if ($script:Broken -contains $Name) { Say "$Question no (-BrokenButtons)"; return $false }
     return Ask-YesNo $Question $true
 }
 
@@ -1212,6 +1213,10 @@ try {
         if (-not $stamped -and -not ($ApkPath -and $CertSha256)) {
             Stop-Install 'This copy is not from a release. Download family-install.ps1 from the release page (tools/family-install.md); for a test, pass -ApkPath and -CertSha256.'
         }
+        # A comma list, since powershell -File passes one string per parameter.
+        $script:Broken = @($BrokenButtons -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+        $unknown = @($script:Broken | Where-Object { @($ButtonHelpers.Keys) -notcontains $_ })
+        if ($unknown.Count -gt 0) { Stop-Install "-BrokenButtons takes Home, Input and Settings, not: $($unknown -join ', '). Nothing was changed." }
         if ($List) { $script:ListNames = @(Read-DebloatList $List) }
         elseif ($ListsFrom) { $script:ListsDir = $ListsFrom }
         Invoke-Install

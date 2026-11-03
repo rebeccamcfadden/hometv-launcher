@@ -157,7 +157,7 @@ switch ($a[0]) {
         $seq = @($s.auth_sequence)
         if ($seq.Count -gt 0 -and $null -ne $seq[0]) { $out = $seq[0]; $s.auth_sequence = @($seq | Select-Object -Skip 1) } else { $out = $s.auth }
     }
-    'push' { $s.pushed = $true; if ($a[1] -like '*.json') { $s.staged_config = Get-Content -Raw -LiteralPath $a[1] }; $out = '1 file pushed' }
+    'push' { $s.pushed = $true; if ($a[1] -like '*.json') { $s.staged_config = [IO.File]::ReadAllText($a[1]) }; $out = '1 file pushed' }
     'reboot' { $s.reboots = [int]$s.reboots + 1 }
     'pair' { $out = 'Successfully paired' }
     'shell' { $out = Shell $a[1] }
@@ -839,7 +839,7 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertIn("action.FIRST_RUN", shell[-1])
 
     def test_home_and_settings_share_one_helper(self):
-        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Home", "Settings")
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Home,Settings")
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.helpers(end), "com.hometv.launcher/.HomeKeyService")
 
@@ -909,6 +909,12 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(json.loads(end["config_on_tv"]), {"input_key_keycodes": [170]})
         self.assertIsNone(self.helpers(end))
+
+    def test_an_unknown_broken_button_changes_nothing(self):
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Home,Mute")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("not: Mute", proc.stdout)
+        self.assert_tv_untouched(end)
 
     def test_a_config_already_on_the_tv_is_left_alone(self):
         proc, end = self.run_installer(self.tv(config_on_tv='{"dock_apps": []}'), "-BrokenButtons", "Input")
