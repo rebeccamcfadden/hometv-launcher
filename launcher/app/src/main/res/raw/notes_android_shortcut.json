@@ -1,0 +1,48 @@
+{
+  "version": 92,
+  "compatibilityVersion": 90,
+  "categories": [
+    {
+      "id": "192b4f2a-b244-4dca-9122-d295974d6cc1",
+      "name": "HomeTV",
+      "shortcuts": [
+        {
+          "id": "1784794a-93a0-4fa9-998d-53ad8511adc2",
+          "executionType": "app",
+          "name": "Send to TV",
+          "description": "Share a note here to add it to your list on the TV",
+          "method": "POST",
+          "url": "{{hometv_url}}?list={{hometv_list}}",
+          "headers": [
+            { "key": "Authorization", "value": "{{hometv_auth}}" }
+          ],
+          "requestBodyType": "custom_text",
+          "contentType": "text/plain",
+          "bodyContent": "{{hometv_note}}",
+          "timeout": 10000,
+          "launcherShortcut": true,
+          "responseHandling": { "uiType": "toast", "successOutput": "none", "failureOutput": "none" },
+          "codeOnPrepare": "if (!getVariable('hometv_url') || !getVariable('hometv_auth') || !getVariable('hometv_list')) { showToast('Pair this phone first: scan the TV\\'s Phone notes QR.'); abort(); }",
+          "codeOnSuccess": "var m = ''; try { m = JSON.parse(response.body).message; } catch (e) {} showToast(m || 'Sent to the TV.');",
+          "codeOnFailure": "var m = ''; try { m = JSON.parse(response.body).message; } catch (e) {} showToast(m || 'Could not reach the TV: is this phone on the home Wi-Fi?');"
+        },
+        {
+          "id": "ee1251ca-b09b-479b-afe9-77d73915624a",
+          "executionType": "scripting",
+          "name": "Pair with TV",
+          "description": "Opened from the TV's setup page: keeps the TV's address, code and your list on this phone",
+          "hidden": true,
+          "launcherShortcut": false,
+          "excludeFromFileSharing": true,
+          "codeOnPrepare": "var u = getVariable('hometv_url'), a = getVariable('hometv_auth'), l = getVariable('hometv_list'); if (!u || !a || !l) { showToast('Open Pair this phone on the TV\\'s setup page.'); abort(); } setVariable('hometv_url', u); setVariable('hometv_auth', a); try { l = decodeURIComponent(l); } catch (e) {} setVariable('hometv_list', l); showToast('Paired: notes you share to Send to TV go to ' + l + '\\'s list.');"
+        }
+      ]
+    }
+  ],
+  "variables": [
+    { "id": "e132c88a-0923-4022-b7ac-bee589c37412", "key": "hometv_note", "type": "constant", "value": "", "isShareText": true },
+    { "id": "f50eb42b-b395-4420-b8a8-82e86d029734", "key": "hometv_url", "type": "constant", "value": "", "isExcludeValueFromExport": true },
+    { "id": "c5142558-a46e-4124-96c5-e70310ec88b1", "key": "hometv_auth", "type": "constant", "value": "", "isExcludeValueFromExport": true, "isSecret": true },
+    { "id": "8fabcf67-71f8-47d2-84a6-84acfbce904b", "key": "hometv_list", "type": "constant", "value": "", "urlEncode": true, "isExcludeValueFromExport": true }
+  ]
+}

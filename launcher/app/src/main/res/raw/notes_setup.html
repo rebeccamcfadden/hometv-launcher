@@ -21,11 +21,13 @@
   h2 { font-size: 18px; margin: 26px 0 4px; }
   details { margin-top: 28px; }
   summary { font-weight: 600; color: #cfd5dd; }
+  a.btn.off { background: #2c3440; color: #7d8792; }
+  button.link { font: inherit; padding: 0; background: none; color: #c4ddf7; text-decoration: underline; }
 </style>
 </head>
 <body data-shortcut="{{shortcut}}">
 <h1>Send to TV</h1>
-<p>Share a watch-list note from your phone to this TV. On an Android phone, see <a href="#android">Android</a> below.</p>
+<p>Share a watch-list note from your phone to this TV. <button type="button" class="link" id="other">On an Android phone?</button></p>
 <p id="nocode" class="warn" hidden>No pairing code in this link: scan the QR in the TV's Launcher settings → Phone notes again.</p>
 
 <section id="ios">
@@ -72,11 +74,30 @@
 </details>
 </section>
 
-<details id="android">
-<summary>On an Android phone: the HTTP Shortcuts app</summary>
-<p>Install <b>HTTP Shortcuts</b> (free, from Google Play or F-Droid). Type whose list this phone's notes go to, then copy each value below into the app.</p>
-<label for="alist">Your list's name</label>
+<section id="android" hidden>
+<p>Each Android phone gets the free <b>HTTP Shortcuts</b> app and its <b>Send to TV</b> shortcut once, then pairs it with this TV. Pair again whenever the TV shows a new code.</p>
+<h2>1. Install the app</h2>
+<a class="btn" href="https://play.google.com/store/apps/details?id=ch.rmy.android.http_shortcuts">Install HTTP Shortcuts</a>
+<p>From Google Play, where it's called <b>HTTP Request Shortcuts</b> (it's also on F-Droid). Open it once, then come back to this page.</p>
+
+<h2>2. Set up the shortcut</h2>
+<a class="btn" id="aimport">Set up the shortcut</a>
+<p>Opens HTTP Shortcuts with this TV's <b>Send to TV</b> shortcut ready to import: tap <b>OK</b>. Only once per phone; setting it up again needs a new pairing.</p>
+
+<h2>3. Pair this phone</h2>
+<label for="alist">Whose list do this phone's notes go to?</label>
 <div class="row"><input id="alist" autocomplete="off" autocapitalize="words" placeholder="Rebecca"></div>
+<a class="btn off" id="apair">Pair this phone</a>
+<p id="apairhint">Type the list's name first. Then this opens HTTP Shortcuts, which keeps the TV's address, code and the list on this phone.</p>
+
+<h2>Then send a note</h2>
+<p>In Google Keep, open the note, then &#8942; &rarr; Send &rarr; Send via other apps &rarr; <b>Send to TV</b>. In Samsung Notes, Share &rarr; Text &rarr; <b>Send to TV</b>. The TV's answer shows for a moment at the bottom of the screen.</p>
+
+<details>
+<summary>Set it up by hand instead</summary>
+<p>This keeps the address and code in the shortcut itself: after a new code, paste the new Authorization value again. Type the list's name above first.</p>
+<label for="acurl">Command for HTTP Shortcuts' Import from cURL</label>
+<div class="row"><input id="acurl" readonly><button data-copy="acurl">Copy</button></div>
 <label for="aurl">URL</label>
 <div class="row"><input id="aurl" readonly><button data-copy="aurl">Copy</button></div>
 <label for="aauth">Authorization header value</label>
@@ -85,7 +106,7 @@
 <div class="row"><input id="ascript" readonly><button data-copy="ascript">Copy</button></div>
 <ol>
   <li>In HTTP Shortcuts, open <b>&#8942;</b> &rarr; <b>Global Variables</b> &rarr; <b>+</b> &rarr; <b>Static Variable</b>. Name it <code>note</code>, tick <b>Allow Receiving Value from Share Dialog</b>, and save.</li>
-  <li>On the main screen, tap <b>+</b> &rarr; <b>Regular Shortcut</b> and name it <b>Send to TV</b>.</li>
+  <li>Quickest: on the main screen, tap <b>+</b> &rarr; <b>Import from cURL</b>, paste the command above, and name the new shortcut <b>Send to TV</b>; then go on at step 7. Or by hand: tap <b>+</b> &rarr; <b>Regular Shortcut</b> and name it <b>Send to TV</b>.</li>
   <li><b>Basic Request Settings</b>: method <b>POST</b>; URL: paste the URL above.</li>
   <li><b>Request Headers</b>: add <code>Authorization</code> with the value above.</li>
   <li><b>Request Body / Parameters</b>: body type <b>Custom Text</b>, content type <code>text/plain</code>; for the body, tap <b>{ }</b> and pick <code>note</code>.</li>
@@ -93,9 +114,8 @@
   <li><b>Scripting</b>: paste the script above into <b>Run on Success</b> and into <b>Run on Failure</b>; it shows the TV's answer.</li>
   <li><b>Trigger &amp; Execution Settings</b> (Android 11 and later): tick the Direct Share option, so <b>Send to TV</b> shows in the share sheet. Save.</li>
 </ol>
-<p>Send: in Google Keep, open the note, then &#8942; &rarr; Send &rarr; Send via other apps &rarr; <b>Send to TV</b> (or HTTP Shortcuts). In Samsung Notes, Share &rarr; Text &rarr; <b>Send to TV</b>. After a new code on the TV, scan its QR again and paste the new Authorization value into the shortcut.</p>
 </details>
-<p>The code stays on this phone: it is in the link after the #, which is never sent to the TV.</p>
+</section><p>The code stays on this phone: it is in the link after the #, which is never sent to the TV.</p>
 <script>
   // The code is in the fragment (never sent over the network); the address is this page's own origin.
   var raw = (location.hash || '').slice(1), code = '';
@@ -119,23 +139,45 @@
         + '&input=text&text=' + encodeURIComponent(pairing);
     document.getElementById('pairbox').hidden = false;
   }
-  // Android: the HTTP Shortcuts settings, with the list in the URL so the note can go as plain text.
-  var alist = document.getElementById('alist'), aurl = document.getElementById('aurl');
-  var listUrl = function () {
-    var name = alist.value.trim();
-    aurl.value = name ? location.origin + '/notes?list=' + encodeURIComponent(name) : 'Type your list\'s name above';
+  // Android: HTTP Shortcuts. Set up imports the TV's template (no address, no code in it); Pair runs its hidden
+  // "Pair with TV" shortcut (by its id in notes_android_shortcut.json) with the address, code and list, handed to
+  // the app on this phone and never sent to the TV.
+  var notesUrl = location.origin + '/notes', PAIR_ID = 'ee1251ca-b09b-479b-afe9-77d73915624a';
+  document.getElementById('aimport').href = 'http-shortcuts://import?url='
+      + encodeURIComponent(location.origin + '/android-shortcut.json');
+  var alist = document.getElementById('alist'), apair = document.getElementById('apair');
+  var curl = function (name) {
+    // HTTP Shortcuts' cURL import can't read a shell-escaped quote, so the URL keeps no apostrophe to escape.
+    var q = function (s) { return "'" + s + "'"; };
+    // -s: HTTP Shortcuts' import turns its response window off only for a silent command (step 6, skipped after it).
+    return 'curl -s -X POST ' + q(notesUrl + '?list=' + encodeURIComponent(name).replace(/'/g, '%27')) + ' -H ' + q('Authorization: Bearer ' + code)
+        + ' -H ' + q('Content-Type: text/plain') + ' --data-raw ' + q('{{note}}');
   };
-  alist.addEventListener('input', listUrl);
-  listUrl();
+  var listChanged = function () {
+    var name = alist.value.trim(), ready = !!(name && code);
+    if (ready) {
+      apair.href = 'http-shortcuts://deep-link/' + PAIR_ID + '?hometv_url=' + encodeURIComponent(notesUrl)
+          + '&hometv_auth=' + encodeURIComponent('Bearer ' + code) + '&hometv_list=' + encodeURIComponent(name);
+    } else {
+      apair.removeAttribute('href');
+    }
+    apair.className = ready ? 'btn' : 'btn off';
+    document.getElementById('aurl').value = name ? notesUrl + '?list=' + encodeURIComponent(name) : 'Type the list\'s name above';
+    document.getElementById('acurl').value = ready ? curl(name) : 'Type the list\'s name above';
+  };
+  alist.addEventListener('input', listChanged);
+  listChanged();
   document.getElementById('aauth').value = code ? 'Bearer ' + code : '';
   document.getElementById('ascript').value = "var m = ''; try { m = JSON.parse(response.body).message; } catch (e) {} "
       + "showToast(m || 'Could not reach the TV: is this phone on the home Wi-Fi?');";
-  if (/Android/i.test(navigator.userAgent)) {
-    // The iPhone buttons don't work here: show Android's settings first, open.
-    document.getElementById('ios').hidden = true;
-    document.getElementById('android').open = true;
-  }
-  [].forEach.call(document.querySelectorAll('[data-copy]'), function (b) {
+  var android = /Android/i.test(navigator.userAgent), other = document.getElementById('other');
+  var show = function (onAndroid) {
+    document.getElementById('ios').hidden = onAndroid;
+    document.getElementById('android').hidden = !onAndroid;
+    other.textContent = onAndroid ? 'On an iPhone?' : 'On an Android phone?';
+  };
+  other.addEventListener('click', function () { android = !android; show(android); });
+  show(android);  [].forEach.call(document.querySelectorAll('[data-copy]'), function (b) {
     b.addEventListener('click', function () {
       var input = document.getElementById(b.getAttribute('data-copy'));
       input.focus();

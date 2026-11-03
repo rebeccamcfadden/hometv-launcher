@@ -141,12 +141,17 @@ final class Notes {
 
     /** The page the pane's QR opens on a phone (res/raw/notes_setup.html), or null if it can't be read. */
     private String setupPage() {
-        try (java.io.InputStream in = app.getResources().openRawResource(R.raw.notes_setup)) {
+        String page = raw(R.raw.notes_setup);
+        return page == null ? null : NoteWords.setupPage(page, shortcutUrl(app));
+    }
+
+    /** A raw resource as text, or null if it can't be read. */
+    private String raw(int id) {
+        try (java.io.InputStream in = app.getResources().openRawResource(id)) {
             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
             byte[] buf = new byte[4096];
             for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
-            return NoteWords.setupPage(new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8),
-                    shortcutUrl(app));
+            return new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException | android.content.res.Resources.NotFoundException e) {
             return null;
         }
@@ -157,7 +162,8 @@ final class Notes {
         String code = code();
         control.execute(() -> {
             if (inbox != null) inbox.stop();
-            inbox = new NoteInbox(code, this::accept, System::currentTimeMillis, setupPage());
+            inbox = new NoteInbox(code, this::accept, System::currentTimeMillis, setupPage(),
+                    raw(R.raw.notes_android_shortcut));
             boolean taken = true;
             // A port just let go can take a moment to be free again; another app's stays taken.
             for (int i = 0; i < 3 && taken; i++) {

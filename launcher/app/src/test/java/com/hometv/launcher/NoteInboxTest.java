@@ -2,6 +2,7 @@ package com.hometv.launcher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -147,7 +148,7 @@ public class NoteInboxTest {
         NoteInbox withPage = new NoteInbox(CODE, (list, text) -> {
             got.add(list);
             return new NoteInbox.Reply(200, "ok", 0, 0);
-        }, () -> now, "<html>setup</html>");
+        }, () -> now, "<html>setup</html>", null);
         NoteInbox.Reply r = withPage.handle(request("GET /setup HTTP/1.1\r\nHost: tv\r\n\r\n"));
         assertEquals(200, r.status);
         assertEquals("<html>setup</html>", r.html);
@@ -163,7 +164,7 @@ public class NoteInboxTest {
     @Test
     public void setupPageIsServedAsHtmlOverLoopback() throws Exception {
         NoteInbox withPage = new NoteInbox(CODE, (list, text) -> new NoteInbox.Reply(200, "ok", 0, 0), () -> now,
-                "<html>setup</html>");
+                "<html>setup</html>", "{\"version\":92}");
         int port = withPage.start(0);
         try (Socket s = new Socket(InetAddress.getLoopbackAddress(), port)) {
             s.getOutputStream().write("GET /setup HTTP/1.1\r\nHost: tv\r\n\r\n".getBytes(StandardCharsets.US_ASCII));
@@ -172,9 +173,35 @@ public class NoteInboxTest {
             assertTrue(answer, answer.contains("Content-Type: text/html; charset=utf-8\r\n"));
             assertTrue(answer, answer.contains("Content-Security-Policy: default-src 'none'"));
             assertTrue(answer, answer.endsWith("<html>setup</html>"));
+        }
+        try (Socket s = new Socket(InetAddress.getLoopbackAddress(), port)) {
+            s.getOutputStream().write(("GET " + NoteInbox.ANDROID_SHORTCUT_PATH + " HTTP/1.1\r\nHost: tv\r\n\r\n")
+                    .getBytes(StandardCharsets.US_ASCII));
+            String answer = readAll(s.getInputStream());
+            assertTrue(answer, answer.startsWith("HTTP/1.1 200 OK\r\n"));
+            assertTrue(answer, answer.contains("Content-Type: application/json; charset=utf-8\r\n"));
+            assertTrue(answer, answer.endsWith("{\"version\":92}"));
         } finally {
             withPage.stop();
         }
+    }
+
+    @Test
+    public void androidShortcutNeedsNoCodeAndIsOnlyAGet() throws IOException {
+        NoteInbox withFile = new NoteInbox(CODE, (list, text) -> {
+            got.add(list);
+            return new NoteInbox.Reply(200, "ok", 0, 0);
+        }, () -> now, null, "{\"version\":92}");
+        NoteInbox.Reply r = withFile.handle(request("GET " + NoteInbox.ANDROID_SHORTCUT_PATH + " HTTP/1.1\r\nHost: tv\r\n\r\n"));
+        assertEquals(200, r.status);
+        assertEquals("{\"version\":92}", r.file);
+        assertNull(r.html);
+        assertTrue(got.isEmpty());
+        assertEquals(404, withFile.handle(request(post(CODE, "text/plain", "Dune")
+                .replace("POST /notes", "POST " + NoteInbox.ANDROID_SHORTCUT_PATH))).status);
+        // No setup page here, so no /setup either; and without the file (the other tests) no route at all.
+        assertEquals(404, withFile.handle(request("GET /setup HTTP/1.1\r\n\r\n")).status);
+        assertEquals(404, handle("GET " + NoteInbox.ANDROID_SHORTCUT_PATH + " HTTP/1.1\r\n\r\n").status);
     }
 
     @Test
