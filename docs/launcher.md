@@ -140,11 +140,11 @@ Two more switches help with the key helpers above. Both are off by default, need
 are set in `config.xml` or a pushed `config.json`; Launcher settings has no switch for them.
 
 - **`gamepad_passthrough`**: while a game controller is connected, the key helpers stop catching keys, so a game sees
-  every button (Steam Link with an Xbox controller on a TCL G07 did not before). While it is connected, every button
-  the helpers handle does nothing extra: `app_keys`, Input, the gear, and the Home key fixes (a Home key that sends
-  ALL_APPS; with `stock_home_redirect`, its Home key press, though its redirect from the stock home screen still
-  works). They work again when it disconnects. A voice remote that reports a joystick doesn't
-  count as a controller. Turn it on if you play with a controller on the TV.
+  every button (Steam Link with an Xbox controller on a TCL G07 did not before). While it is connected, the buttons the
+  helpers handle stop working: `app_keys`, Input, the gear, and the Home key fixes (a Home key that sends ALL_APPS;
+  with `stock_home_redirect`, its Home key press, though its redirect from the stock home screen still works). They
+  work again when it disconnects. A voice remote that reports a joystick doesn't count as a controller. Turn it on if
+  you play with a controller on the TV.
 - **`consume_volume_keys`**: the key helpers keep Volume Up and Down for themselves and repeat a held one (after half
   a second, then every 60 ms). Turn it on only where one tap on the remote moves the volume two steps: some firmware
   applies a volume key both before the helper sees it and again when the helper hands it back (TCL G03 / BeyondTV4 on
