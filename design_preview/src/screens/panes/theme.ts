@@ -1,6 +1,6 @@
 import { h } from '../../core/dom';
 import { focusable } from '../../core/focus';
-import { FONT_LABELS, settings, TIME_OF_DAY_LABELS } from '../../core/settings';
+import { APP_LOGOS_LABELS, FONT_LABELS, settings, TIME_OF_DAY_LABELS } from '../../core/settings';
 import { loadSwatchFonts, PERIOD_LABELS, theme, THEMES, type Period, type ThemeDef } from '../../core/theme';
 import type { Pane } from './pane';
 
@@ -20,7 +20,7 @@ export function swatch(t: ThemeDef, period: Period): HTMLElement {
 
 /**
  * Launcher settings › Theme (Figma page "Settings · Theme picker", frame 18:10): Classic and Seasonal swatches, then
- * Typeface and Time of day (F22, F29: a Seasonal picture follows the sun, or stays on its Day or Night picture; OK steps
+ * Typeface, Time of day and App logos (F43: Home row apps in full colour, or as wordmarks on the glass tile; F22, F29: a Seasonal picture follows the sun, or stays on its Day or Night picture; OK steps
  * through the three; Moving details moved to Performance as Animated details). Moving only highlights a swatch; OK
  * selects it, and the whole preview wears it at once.
  */
@@ -61,6 +61,10 @@ export const themePane = (): Pane => ({
         ),
         row('theme-time', 'Time of day', 'For Seasonal themes', TIME_OF_DAY_LABELS[s.timeOfDay], false, () =>
           settings.set({ timeOfDay: NEXT_TIME_OF_DAY[s.timeOfDay] }),
+        ),
+        // F43: OK flips between Full colour and Minimal.
+        row('theme-logos', 'App logos', 'On Home’s row of apps', APP_LOGOS_LABELS[s.appLogos], false, () =>
+          settings.set({ appLogos: s.appLogos === 'full' ? 'minimal' : 'full' }),
         ),
       ),
     ];

@@ -15,6 +15,8 @@ import android.widget.TextView;
  * An app on Home's row or in All Apps (design_preview/src/styles/screens.css, .app): the app's banner in a rounded
  * tile, or its icon and name where it has no banner, with the name under the tile. Focused, the tile scales up 5%
  * inside the accent focus ring and the name brightens. While being moved it is lifted, with arrows on its sides.
+ * Minimal (F43, Theme › App logos): the app's wordmark (AppMarks) in off-white on the glass tile, and no banner is
+ * loaded.
  */
 @SuppressLint("ViewConstructor") // built in code only, never inflated
 final class AppTile extends LinearLayout {
@@ -34,6 +36,11 @@ final class AppTile extends LinearLayout {
      * the name under it.
      */
     AppTile(Context ctx, String pkg, CharSequence label, float width, float height, float labelGap) {
+        this(ctx, pkg, label, width, height, labelGap, false);
+    }
+
+    /** As above; {@code minimal} draws the app's wordmark on the glass tile instead of its banner (F43). */
+    AppTile(Context ctx, String pkg, CharSequence label, float width, float height, float labelGap, boolean minimal) {
         super(ctx);
         this.pkg = pkg;
         setOrientation(VERTICAL);
@@ -50,8 +57,11 @@ final class AppTile extends LinearLayout {
         frame.setClipChildren(false);
 
         FrameLayout tile = new FrameLayout(ctx);
-        tile.setBackground(Ui.states(Ui.round(Ui.TILE, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W), null,
-                Ui.round(Ui.SURFACE_2, Ui.RADIUS_L, Ui.LINE, Ui.LINE_W)));
+        // Minimal: Figma's glass tile, white at 3% inside a white 9% line; focused, the surface as any tile.
+        int rest = minimal ? Ui.alpha(0xFFFFFFFF, 0x08) : Ui.TILE;
+        int line = minimal ? Ui.alpha(0xFFFFFFFF, 0x17) : Ui.LINE;
+        tile.setBackground(Ui.states(Ui.round(rest, Ui.RADIUS_L, line, Ui.LINE_W), null,
+                Ui.round(Ui.SURFACE_2, Ui.RADIUS_L, line, Ui.LINE_W)));
         tile.setDuplicateParentStateEnabled(true);
         tile.setClipToOutline(true);
         int w = Ui.px(width), h = Ui.px(height);
@@ -101,6 +111,11 @@ final class AppTile extends LinearLayout {
             frame.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
 
+        if (minimal) {
+            tile.addView(wordmark(ctx, AppMarks.of(pkg, label), height), new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            return;
+        }
         AppArt.load(ctx, pkg, w, h, iconSize, (b, i) -> {
             if (b != null) {
                 banner.setImageBitmap(b);
@@ -111,6 +126,28 @@ final class AppTile extends LinearLayout {
                 fallback.setVisibility(VISIBLE);
             }
         });
+    }
+
+    /**
+     * The app's wordmark, centred, one line, shrinking to fit a long name and then ending in "…" (Figma's #f4f5f7 is
+     * TEXT_1). Sized for Home's 136 px tile, and in proportion on smaller ones (Home row apps' 84 px).
+     */
+    private static TextView wordmark(Context ctx, AppMarks.Mark m, float tileH) {
+        int face = AppMarks.face(m.weight);
+        float size = AppMarks.scaled(m.size, tileH);
+        TextView t = Ui.text(ctx, size, Ui.TEXT_1, face >= 700 ? Ui.BOLD : face >= 500 ? Ui.MEDIUM : Ui.REGULAR);
+        // maxLines, not singleLine: a single-line TextView scrolls sideways and never auto-sizes.
+        t.setMaxLines(1);
+        t.setText(m.text);
+        t.setGravity(Gravity.CENTER);
+        t.setTextColor(Ui.colors(Ui.TEXT_1, Ui.TEXT_1, Ui.TEXT_1));
+        t.setDuplicateParentStateEnabled(true);
+        int pad = Ui.px(14);
+        t.setPadding(pad, 0, pad, 0);
+        t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        int min = Math.min(Ui.px(size), Ui.px(AppMarks.scaled(AppMarks.MIN_SIZE, tileH)));
+        t.setAutoSizeTextTypeUniformWithConfiguration(min, Ui.px(size), 1, android.util.TypedValue.COMPLEX_UNIT_PX);
+        return t;
     }
 
     /** Picked up with Move: lifted 14 px with arrows on its sides, until it is put down. */

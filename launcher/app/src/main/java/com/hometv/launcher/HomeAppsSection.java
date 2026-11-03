@@ -121,8 +121,13 @@ final class HomeAppsSection implements SettingsSection {
         if (save) host.valueChanged();
     }
 
+    /** Theme › App logos is Minimal, as read when the tiles were last built. */
+    private boolean minimal;
+
     private void fill() {
         column.removeAllViews();
+        // Theme › App logos (F43), once per fill: reading it means reading a pushed config.json.
+        minimal = ThemeStore.minimalLogos(ctx);
         List<String> on = edit.visible();
         column.addView(PaneParts.eyebrow(ctx, ctx.getString(R.string.home_apps_eyebrow)));
         column.addView(PaneParts.title(ctx, ctx.getString(R.string.settings_home_apps), 40), PaneParts.below(10));
@@ -173,7 +178,7 @@ final class HomeAppsSection implements SettingsSection {
     }
 
     private View tile(String pkg, boolean onHome, boolean isDefault) {
-        AppTile t = new AppTile(ctx, pkg, apps.label(pkg), TILE_W, TILE_H, 8);
+        AppTile t = new AppTile(ctx, pkg, apps.label(pkg), TILE_W, TILE_H, 8, minimal);
         Focus.make(t, onHome ? GROUP_HOME : GROUP_OTHER, key(pkg), isDefault, v -> {
             // OK reaches onKey first while an app is picked up; this is for a page that sends it here instead.
             if (edit.moving() != null) {

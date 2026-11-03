@@ -39,6 +39,8 @@ interface Saved {
   themeFont: ThemeFont;
   /** Theme › Time of day: a Seasonal picture follows the sun (dawn, day, sunset, night) or always shows the day. */
   timeOfDay: TimeOfDay;
+  /** Theme › App logos (F43): Home row apps as full-colour banners, or as wordmarks on the glass tile (Figma 2:741). */
+  appLogos: AppLogos;
   /**
    * Launcher settings › Performance (with Motion): card shadows, the focus glow, the backdrop picture and the animated
    * details (F25, F31: snow, rain or leaves over Seasonal pictures while Home is idle, core/weatherfx; off by default for every TV).
@@ -86,6 +88,8 @@ const defaults = (): Saved => ({
   theme: 'midnight',
   themeFont: 'theme',
   timeOfDay: 'sun',
+  // F43: full colour unless a theme or the household picks Minimal (AGENTS.md: new behaviour off by default).
+  appLogos: 'full',
   cardShadows: 'on',
   focusGlow: true,
   backdropPicture: 'photo',
@@ -111,6 +115,7 @@ function load(): Saved {
       // Time of day (F29): anything but Day or Night, an older or odd value, follows the sun, as ThemeStore reads it.
       if (saved.timeOfDay !== 'day' && saved.timeOfDay !== 'night') saved.timeOfDay = 'sun';
       if (saved.region !== 'us') saved.region = 'se';
+      if (saved.appLogos !== 'minimal') saved.appLogos = 'full';
       return saved;
     }
   } catch {
@@ -194,6 +199,8 @@ export const UNIT_LABELS: Record<Unit, string> = { c: '°C', f: '°F', tv: `TV d
 export const FONT_LABELS: Record<ThemeFont, string> = { theme: 'Theme font', system: 'System font' };
 export const SHADOW_LABELS: Record<CardShadows, string> = { on: 'On', focus: 'Focused card only', off: 'Off' };
 export const BACKDROP_LABELS: Record<BackdropPicture, string> = { photo: 'Photo', plain: 'Plain colour' };
+export type AppLogos = 'full' | 'minimal';
+export const APP_LOGOS_LABELS: Record<AppLogos, string> = { full: 'Full colour', minimal: 'Minimal' };
 export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = { sun: 'Follow the sun', day: 'Day', night: 'Night' };
 
 /**

@@ -87,6 +87,8 @@ closes. The sections, top to bottom:
   setup. Movies, TV Shows and Search's "needs a TMDB account" has **Turn on**, which does the same.
 - **Theme**: the look of every page. Typeface switches between the theme's own fonts (downloaded from Google Fonts and
   kept on the TV) and Roboto. The theme's pictures, except 8-bit's, are downloaded once from `theme_assets_url`.
+  App logos shows Home's row of apps in Full colour (each app's own banner, the default) or Minimal: each app's name as
+  an off-white wordmark on a glass tile, the look of the V2 designs (`app_logos` in `config.xml` or a config.json).
 - **Weather**: the place Home's weather is for, with the weather there now. Change city searches Open-Meteo's places
   as you type, on the on-screen keyboard or a real one; Use default goes back to the place in `tv.properties`. The
   temperature in °C, °F or the TV default, which follows the TV's region.

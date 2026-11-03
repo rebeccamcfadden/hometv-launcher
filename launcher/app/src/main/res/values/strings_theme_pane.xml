@@ -17,6 +17,11 @@
     <!-- Time of day (F22): a Seasonal theme's picture follows sunrise and sunset at the Weather place, or stays day. -->
     <string name="theme_time_of_day">Time of day</string>
     <string name="theme_time_of_day_sub">For Seasonal themes</string>
+    <!-- F43: Home row apps as full-colour banners or as wordmarks on the glass tile. -->
+    <string name="theme_app_logos">App logos</string>
+    <string name="theme_app_logos_sub">On Home’s row of apps</string>
+    <string name="theme_app_logos_full">Full colour</string>
+    <string name="theme_app_logos_minimal">Minimal</string>
     <string name="theme_time_sun">Follow the sun</string>
     <string name="theme_time_day">Day</string>
     <string name="theme_time_night">Night</string>
