@@ -11,6 +11,7 @@ import android.view.Gravity;
 import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -56,6 +57,8 @@ final class LibraryPage extends Screen {
     private static final int SCROLL_TOP = 150;
     private static final int SCROLL_PAD = 70;
     private static final int COLUMNS = 4;
+    /** Rows whose art binds as the grid is built, before it is laid out: what the first screen shows. */
+    private static final int FIRST_ART_ROWS = 3;
     private static final int CARD_W = 417;
     private static final int GAP_X = 20;
     private static final int GAP_Y = 50;
@@ -108,6 +111,16 @@ final class LibraryPage extends Screen {
     private static final long LOADING_MAX_MS = 8000;
     private long loadingSince;
     private final Runnable renderLater = this::renderIfShown;
+    private boolean artWindowQueued;
+    private final ViewTreeObserver.OnPreDrawListener artBeforeDraw = new ViewTreeObserver.OnPreDrawListener() {
+        @Override
+        public boolean onPreDraw() {
+            view.getViewTreeObserver().removeOnPreDrawListener(this);
+            artWindowQueued = false;
+            updateArtWindow();
+            return true;
+        }
+    };
     private CatalogState.Lists state = CatalogState.Lists.ONLINE;
     /** The lists have loaded once: later titles fill in where they are, without the skeletons. */
     private boolean settled;
@@ -221,6 +234,24 @@ final class LibraryPage extends Screen {
         grid.setOrientation(LinearLayout.VERTICAL);
         col.addView(grid, below(22));
         col.addView(new View(ctx), new LinearLayout.LayoutParams(1, Ui.px(PAGE_END)));
+        // F15 P1-2: the grid's art follows the screen. Scrolling moves the window at once; a new layout (a rebuilt
+        // grid, the page shown again) works it out just before that layout is drawn, so cached art is in its frame.
+        box.setOnScrollChangeListener((v, x, y, oldX, oldY) -> updateArtWindow());
+        grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> queueArtWindow());
+        root.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                queueArtWindow();
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                if (!artWindowQueued) return;
+                artWindowQueued = false;
+                ViewTreeObserver o = v.getViewTreeObserver();
+                if (o.isAlive()) o.removeOnPreDrawListener(artBeforeDraw);
+            }
+        });
 
         root.addView(Kit.bottomFade(ctx));
         // The real catalogue's scores and availability are not illustrative (V2): say where they come from.
@@ -664,7 +695,12 @@ final class LibraryPage extends Screen {
         else if (shown.isEmpty()) gridKey = "empty-filters:" + chosen.size() + ":" + summary;
         else gridKey = "titles";
         boolean titles = gridKey.equals("titles");
-        if (!gridKey.equals(gridBuilt) || (titles && !same(shown, gridTitles))) {
+        if (titles && gridKey.equals(gridBuilt) && !same(shown, gridTitles) && ArtWindow.sameIds(shown, gridTitles)) {
+            // The same titles in the same order, some in a newer state (details, a price, a season): those cards
+            // show it where they are, without building the grid again (F15 P2-2).
+            rebindGrid(shown);
+            gridTitles = shown;
+        } else if (!gridKey.equals(gridBuilt) || (titles && !same(shown, gridTitles))) {
             gridBuilt = gridKey;
             gridTitles = titles ? shown : null;
             grid.removeAllViews();
@@ -727,7 +763,8 @@ final class LibraryPage extends Screen {
                 r.getString(R.string.library_lists_and), r.getQuantityString(R.plurals.library_lists_more, more));
     }
 
-    /** .lib-grid: four columns of 417 px, 20 apart, rows 50 apart. */
+    /** .lib-grid: four columns of 417 px, 20 apart, rows 50 apart. The first rows' art binds at once, the rest as
+     *  they come near the screen (updateArtWindow). */
     private void buildGrid(List<Title> shown) {
         LinearLayout row = null;
         for (int i = 0; i < shown.size(); i++) {
@@ -737,12 +774,57 @@ final class LibraryPage extends Screen {
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 grid.addView(row, below(i == 0 ? 0 : GAP_Y));
             }
-            View card = Kit.libraryCard(ctx, t, data, GROUP_GRID, "t-" + t.id, i == 0, v -> router.openTitle(t));
+            View card = Kit.libraryCard(ctx, t, data, GROUP_GRID, "t-" + t.id, i == 0, this::openCard,
+                    i < COLUMNS * FIRST_ART_ROWS);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(CARD_W),
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.leftMargin = i % COLUMNS == 0 ? 0 : Ui.px(GAP_X);
             row.addView(card, lp);
         }
+    }
+
+    /** OK on a card opens the title it shows now: a card rebound in place shows a newer state than it was made for. */
+    private void openCard(View card) {
+        Title t = Kit.titleOf(card);
+        if (t != null) router.openTitle(t);
+    }
+
+    /** The cards whose title changed take its new state; the grid holds the same titles in the same order. */
+    private void rebindGrid(List<Title> shown) {
+        int i = 0;
+        for (int r = 0; r < grid.getChildCount(); r++) {
+            View row = grid.getChildAt(r);
+            if (!(row instanceof ViewGroup)) continue;
+            ViewGroup cards = (ViewGroup) row;
+            for (int c = 0; c < cards.getChildCount() && i < shown.size(); c++, i++) {
+                if (shown.get(i) != gridTitles.get(i)) Kit.rebindLibraryCard(cards.getChildAt(c), shown.get(i), data);
+            }
+        }
+    }
+
+    /** Rows near the screen show their art; rows far off let go of it (F15 P1-2, ArtWindow). */
+    private void updateArtWindow() {
+        if (gridTitles == null || !box.isLaidOut() || !view.isAttachedToWindow()) return;
+        int h = box.getHeight();
+        for (int r = 0; r < grid.getChildCount(); r++) {
+            View row = grid.getChildAt(r);
+            float[] at = Focus.rectIn(row, box);
+            ArtWindow.Act act = ArtWindow.decide(at[1], at[3], h);
+            if (act != ArtWindow.Act.KEEP) rowArt(row, act == ArtWindow.Act.BIND);
+        }
+    }
+
+    /** Works the window out once, just before the next frame is drawn (after its layout). */
+    private void queueArtWindow() {
+        if (artWindowQueued || !view.isAttachedToWindow()) return;
+        artWindowQueued = true;
+        view.getViewTreeObserver().addOnPreDrawListener(artBeforeDraw);
+    }
+
+    private static void rowArt(View row, boolean on) {
+        if (!(row instanceof ViewGroup)) return;
+        ViewGroup cards = (ViewGroup) row;
+        for (int c = 0; c < cards.getChildCount(); c++) Kit.libraryArt(cards.getChildAt(c), on);
     }
 
     /** 06-states A: the page's shape at once, eight skeleton cards in the grid's place; none is focusable. */
