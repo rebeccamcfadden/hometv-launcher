@@ -56,7 +56,7 @@ const ALL_STEPS: Step[] = [
       body: () =>
         'TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes and Phone remote start off, since each opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.',
       // F34: each feature's On/Off is in its own section; Features there only shows them all.
-      note: 'Change any of them later in its own section of Launcher settings; Features there shows them all.',
+      note: 'Each one’s On/Off is in its own section of Launcher settings; Features there shows them all.',
     },
   },
   {
