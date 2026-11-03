@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- F27 Phone remote, with F39's Add to My list (Figma "Phone remote (F27)"; design_preview src/screens/panes/remote.ts). -->
+<resources>
+    <string name="remote_section">Phone remote</string>
+    <string name="remote_nav">Phone remote</string>
+    <string name="remote_on">On</string>
+    <string name="remote_off">Off</string>
+    <plurals name="remote_phones">
+        <item quantity="one">%d phone</item>
+        <item quantity="other">%d phones</item>
+    </plurals>
+    <string name="remote_pane_sub">Use a phone on the same Wi-Fi as a remote and keyboard for this launcher.</string>
+    <string name="remote_what_screens">Arrows, OK, Back, Home and typing on Home, Movies, TV Shows, Search and these settings. Other apps keep using the TV remote.</string>
+    <string name="remote_what_my_list">Add the title on the TV, or any you search for, to My list.</string>
+    <string name="remote_what_pair">Each phone pairs once with a code shown here, and can be forgotten on its own.</string>
+    <string name="remote_what_private">Phones on your Wi-Fi only, over an encrypted link. No account, and nothing leaves your home.</string>
+    <string name="remote_off_note">While it is on, Home shows a phone icon by Settings. Off means the TV doesn’t listen at all.</string>
+    <string name="remote_qr_description">QR code that opens the phone remote on a phone</string>
+    <string name="remote_pair_title">Pair a phone</string>
+    <string name="remote_step_scan">Scan the code with the phone’s camera</string>
+    <string name="remote_step_warning">If the phone says the connection isn’t private, tap Advanced (Show Details on iPhone), then continue</string>
+    <string name="remote_step_name">Name the phone and tap Pair</string>
+    <string name="remote_type_instead">No camera? Type the address, then the code</string>
+    <string name="remote_port_taken">Other apps are using ports %1$d to %2$d, so phones can’t reach the TV. Turn Phone remote off and on again, or restart the TV.</string>
+    <string name="remote_failed">The TV couldn’t make its certificate. Turn Phone remote off and on again; if it stays, restart the TV.</string>
+    <string name="remote_phones">Paired phones</string>
+    <string name="remote_connected_line">A phone is connected</string>
+    <string name="remote_none">None yet.</string>
+    <string name="remote_connected_now">Connected now</string>
+    <string name="remote_used_today">Used today</string>
+    <string name="remote_used_yesterday">Last used yesterday</string>
+    <plurals name="remote_used_days">
+        <item quantity="one">Last used %d day ago</item>
+        <item quantity="other">Last used %d days ago</item>
+    </plurals>
+    <string name="remote_forget">Forget</string>
+    <string name="remote_forget_title">Forget “%1$s”?</string>
+    <string name="remote_forget_body">It stops working as a remote straight away. To use it again, pair it with the code.</string>
+    <string name="remote_forget_all">Forget all phones</string>
+    <string name="remote_forget_all_yes">Forget all</string>
+    <string name="remote_forget_all_title">Forget all phones?</string>
+    <string name="remote_forget_all_body">Every phone stops working as a remote. The TV also makes a new code and a new certificate, so phones show the browser’s warning again when they pair.</string>
+    <string name="remote_new_code_title">Make a new pairing code?</string>
+    <string name="remote_new_code_body">Phones already paired keep working. The old code and QR no longer pair a phone.</string>
+    <string name="remote_warning_note">Each phone warns once that the connection isn’t private: the TV makes its own certificate. Keep the TV’s address fixed in your router, or phones warn again.</string>
+    <string name="remote_phone_unnamed">A phone</string>
+    <string name="remote_another_app">Another app</string>
+    <string name="remote_paired_toast">%1$s is paired as a remote</string>
+    <string name="remote_added_from">Added %1$s to My list · From %2$s</string>
+    <string name="remote_removed_from">Removed %1$s from My list · From %2$s</string>
+</resources>

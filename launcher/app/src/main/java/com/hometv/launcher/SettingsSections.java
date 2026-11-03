@@ -45,6 +45,8 @@ final class SettingsSections {
         if (config.openOnStartChoice) out.add(new OpenOnStartSection());
         out.add(new DefaultHomeSection());
         out.add(new RegionSection());
+        // F27: off by default; its pane has its own On / Off (Features' switch), so it is never a feature-off pane.
+        out.add(new RemoteSection());
         out.add(new TvSettingsSection());
         out.add(new AboutSection());
         out.sort(Comparator.comparingInt(s -> SettingsNav.ORDER.indexOf(s.id())));

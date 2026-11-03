@@ -48,8 +48,9 @@ enter, a feature switched off in Launcher settings › Features makes none of it
 | TMDB, Watchmode, Movie of the Night | Checking an API key: one free request with it (`/authentication`, `/regions`, `/countries`) | When you enter or re-check a key, and when the TV couldn't reach the service last time; whatever Features says |
 | [GitHub Releases](https://github.com/rebeccamcfadden/hometv-launcher/releases) (`github.com` and its download host) | In-app updates: the latest release's `version.json`, and the new APK | Only in a release build from `tools/release.ps1`, with Launcher settings › About › Check for updates on: `version.json` once a day while Home shows; the APK only when you press Install update |
 
-Phone notes and the API key page are served on your home network by the TV itself; they don't go through the
-internet.
+Phone notes, the API key page and the phone remote are served on your home network by the TV itself; they don't go
+through the internet. The phone remote (HTTPS on port 8767, or the next free one up to 8770, with a certificate the TV
+makes) listens only while Phone remote is on, and acts only for a phone that paired with the code the TV shows.
 ## Install
 
 On a computer on the same Wi-Fi as an Android TV or Google TV, with this repo cloned, paste [PROMPT.md](PROMPT.md) into
@@ -75,7 +76,7 @@ LG webOS are different systems: [supported TVs](docs/supported-tvs.md).
 | [Restoring and updates](docs/restore.md) | One line puts the TV back; what to do after a firmware update or when something goes wrong |
 | [Questions people ask](docs/faq.md) | Is it safe, firmware updates, closing ADB, blocking ads, going online |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Everything that bit us, by symptom |
-| [Phone notes](docs/phone-notes.md), [Themes](themes/README.md), [Another home](docs/REMOTE.md), [The microphone](docs/microphone.md) | Send a watch-list note from a phone, the eight themes, helping someone remotely, what can be said about listening |
+| [Phone notes](docs/phone-notes.md), [Phone remote](docs/phone-remote.md), [Themes](themes/README.md), [Another home](docs/REMOTE.md), [The microphone](docs/microphone.md) | Send a watch-list note from a phone, a phone as remote and keyboard, the eight themes, helping someone remotely, what can be said about listening |
 
 ## Build and contribute
 

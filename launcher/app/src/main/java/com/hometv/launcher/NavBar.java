@@ -27,8 +27,12 @@ final class NavBar {
         void openInputs(View anchor);
 
         void openSettings(View anchor);
+
+        /** F27: the phone remote's icon: Launcher settings › Phone remote. */
+        void openRemote(View anchor);
     }
 
+    static final String KEY_REMOTE = "dev-remote";
     static final String KEY_WIFI = "dev-wifi";
     static final String KEY_INPUTS = "dev-input";
     static final String KEY_SETTINGS = "dev-settings";
@@ -76,20 +80,59 @@ final class NavBar {
         device.setPadding(pad, pad, pad, pad);
         device.setClipToPadding(false);
         device.setBackground(Ui.round(Ui.SURFACE, Ui.RADIUS_PILL, Ui.LINE, Ui.LINE_W));
+        // F27: the phone remote's icon, first while it is on, with a dot: accent, or green while a phone is connected.
+        ImageView phone = deviceIcon(ctx, R.drawable.ic_ui_phone, R.string.remote_nav, KEY_REMOTE, host::openRemote);
+        android.graphics.drawable.GradientDrawable dot = new android.graphics.drawable.GradientDrawable();
+        dot.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        dot.setSize(Ui.px(11), Ui.px(11));
+        dot.setStroke(Ui.px(2), Ui.BG);
+        android.graphics.drawable.LayerDrawable fg = new android.graphics.drawable.LayerDrawable(
+                new android.graphics.drawable.Drawable[] {dot});
+        fg.setLayerGravity(0, Gravity.TOP | Gravity.END);
+        fg.setLayerInsetTop(0, Ui.px(10));
+        fg.setLayerInsetEnd(0, Ui.px(11));
+        phone.setForeground(fg);
         ImageView wifi = deviceIcon(ctx, R.drawable.ic_ui_wifi, R.string.wifi, KEY_WIFI, host::openNetwork);
         ImageView inputs = deviceIcon(ctx, R.drawable.ic_ui_input, R.string.inputs, KEY_INPUTS, host::openInputs);
         ImageView settings = deviceIcon(ctx, R.drawable.ic_ui_settings, R.string.settings, KEY_SETTINGS,
                 host::openSettings);
-        ImageView[] icons = {wifi, inputs, settings};
+        ImageView[] icons = {phone, wifi, inputs, settings};
         for (ImageView icon : icons) {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(56), Ui.px(56));
             if (device.getChildCount() > 0) lp.leftMargin = Ui.px(8);
             device.addView(icon, lp);
         }
-        bar.addView(device, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+        // "A phone is connected", under the cluster: drawn outside the bar, which doesn't clip it.
+        FrameLayout cluster = new FrameLayout(ctx);
+        cluster.setClipChildren(false);
+        bar.setClipChildren(false);
+        cluster.addView(device, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        TextView connected = Ui.line(ctx, Ui.T_MIN, Ui.GOOD, Ui.MEDIUM);
+        connected.setText(R.string.remote_connected_line);
+        FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END);
+        clp.rightMargin = Ui.px(26);
+        cluster.addView(connected, clp);
+        connected.setTranslationY(Ui.px(36));
+        // The line hangs below the bar: the page under it must not clip the bar to its own bounds (Home's does).
+        bar.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                if (v.getParent() instanceof ViewGroup) ((ViewGroup) v.getParent()).setClipChildren(false);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+            }
+        });
+        bar.addView(cluster, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
         NavModel.Listener listener = model -> {
+            phone.setVisibility(model.remote != NavModel.REMOTE_OFF ? View.VISIBLE : View.GONE);
+            dot.setColor(model.remote == NavModel.REMOTE_CONNECTED ? Ui.GOOD : Ui.ACCENT);
+            connected.setVisibility(model.remote == NavModel.REMOTE_CONNECTED ? View.VISIBLE : View.GONE);
             wifi.setVisibility(model.networkShown ? View.VISIBLE : View.GONE);
             wifi.setImageResource(model.networkIcon);
             inputs.setVisibility(model.inputsShown ? View.VISIBLE : View.GONE);

@@ -34,7 +34,8 @@ final class FirstRunRules {
     /**
      * The setup a feature turned on in the Features step opens, as a SettingsSection id (F14, design_preview's
      * features.ts): TMDB account signs in, Weather picks the city, Phone notes pairs a phone, Price lookup takes its
-     * keys (F16's Price keys tab). TMDB account's TMDB key tab, when it shows, comes first ({@link #firstSetupOf}).
+     * keys (F16's Price keys tab), Phone remote pairs a phone (F27, optional: see {@link #setUp}). TMDB account's TMDB
+     * key tab, when it shows, comes first ({@link #firstSetupOf}).
      */
     static String setupOf(Features.Feature f) {
         switch (f) {
@@ -42,6 +43,7 @@ final class FirstRunRules {
             case NOTES: return "notes";
             case PRICES: return KeysSection.PRICES_ID;
             case WEATHER: return "weather";
+            case REMOTE: return "remote";
             default: return null;
         }
     }
@@ -53,7 +55,7 @@ final class FirstRunRules {
 
     /** Every setup the Features step can open, as SettingsSection ids. */
     static final List<String> SETUPS = Collections.unmodifiableList(Arrays.asList(
-            KeysSection.TMDB_ID, "account", "notes", KeysSection.PRICES_ID, "weather"));
+            KeysSection.TMDB_ID, "account", "notes", KeysSection.PRICES_ID, "weather", "remote"));
 
     /** The Launcher settings section that stands for a setup: API keys for First run's two key tabs (F16). */
     static String inSettings(String setupId) {
@@ -118,7 +120,8 @@ final class FirstRunRules {
      * is switched off, so nothing shows half set up. TMDB account: the TV is signed in. Phone notes: TMDB account is set
      * up and the TV is listening (Phone notes' own switch; the TV can't tell a phone paired until it sends a note).
      * Price lookup: the Watchmode key works (F16's keys page, or the build's; Movie of the Night is optional). Weather: a
-     * place is set, which the TV's default always is. A launcher running without a TMDB key ({@code tmdbBuild} false:
+     * place is set, which the TV's default always is. Phone remote: being on counts as set up (F27; pairing a phone from
+     * it is optional). A launcher running without a TMDB key ({@code tmdbBuild} false:
      * the emulator, CI, a TV whose key isn't in yet) has no sign-in to finish, so TMDB account and Phone notes count as
      * set up there and stay on.
      */

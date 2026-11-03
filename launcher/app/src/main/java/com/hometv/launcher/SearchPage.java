@@ -334,6 +334,7 @@ final class SearchPage extends Screen {
     @Override
     void onLeave() {
         query = "";
+        enterFor = null;
         filter = SearchIndex.Filter.ALL;
         expanded = false;
         snap = true;
@@ -375,6 +376,54 @@ final class SearchPage extends Screen {
         return true;
     }
 
+    /** F27: a phone remote types the whole query as its keyboard goes; Enter opens the full results, as → does. */
+    private final TextField phoneField = new TextField() {
+        @Override
+        public boolean ready() {
+            return gateShown == TmdbGate.Need.NONE;
+        }
+
+        @Override
+        public String value() {
+            return query;
+        }
+
+        @Override
+        public void set(String value) {
+            if (!ready()) return;
+            boolean wasExpanded = expanded;
+            expanded = false;
+            setQuery(value.toLowerCase(java.util.Locale.getDefault()));
+            if (wasExpanded) shell.focus(keyA);
+        }
+
+        @Override
+        public void enter() {
+            if (!ready()) return;
+            boolean asking = data.catalog.isRemote() && StateUi.online(ctx) && query.trim().length() >= REMOTE_MIN
+                    && !query.equals(foundFor);
+            switch (PhoneRemoteKeys.onEnter(query, expanded, hasMatches, asking)) {
+                case EXPAND:
+                    enterFor = null;
+                    expand();
+                    break;
+                case WAIT:
+                    enterFor = query;
+                    break;
+                default:
+                    enterFor = null;
+            }
+        }
+    };
+
+    /** F27: the query a phone pressed Enter on before TMDB answered it; expanded when the answer brings matches. */
+    private String enterFor;
+
+    @Override
+    TextField textField() {
+        return phoneField;
+    }
+
     @Override
     boolean onKey(Key key, View focused) {
         if (gateShown != TmdbGate.Need.NONE) return false;
@@ -403,6 +452,7 @@ final class SearchPage extends Screen {
 
     private void setQuery(String q) {
         query = SearchQuery.clean(q);
+        if (!query.equals(enterFor)) enterFor = null;
         if (query.isEmpty()) expanded = false;
         view.removeCallbacks(askRemote);
         // Offline, TMDB isn't asked: the results come from the saved titles (06-states A).
@@ -427,7 +477,12 @@ final class SearchPage extends Screen {
             foundFor = q;
             askingPage = 0;
             askedFromKey = null;
-            if (shell.top() == this) render();
+            if (shell.top() != this) return;
+            render();
+            // A phone's Enter that came before this answer: the full results now, if it brought any.
+            boolean expand = PhoneRemoteKeys.expandsOnAnswer(enterFor, query, expanded, hasMatches);
+            if (q.equals(enterFor)) enterFor = null;
+            if (expand) expand();
         });
         String genre = results == null ? null : SearchIndex.strongGenre(results);
         if (genre == null || q.trim().length() < GENRE_MIN || genre.equals(genreAsked)) return;

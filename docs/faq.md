@@ -68,13 +68,23 @@ Not from this repo. Chromecast built-in stays for Android phones. For iPhones,
 [jqssun/android-airplay-server](https://github.com/jqssun/android-airplay-server) works; an install script for it is in
 [PR #84](https://github.com/Gathin23/cleanyourtv/pull/84).
 
+## Can I use my phone as the remote?
+
+Two ways. The launcher's own **Phone remote** (off until you turn it on in Launcher settings) needs nothing on the
+phone: scan a QR and the phone drives the launcher's screens, types into Search, and adds titles to My list
+([phone-remote.md](phone-remote.md)). It doesn't reach into other apps. For that, Google's own **Google TV app**
+(Android and iPhone) is a D-pad, keyboard and voice remote for any Android TV or Google TV, through the TV's remote
+service (`com.google.android.tv.remote.service`); keep that package enabled when you debloat if anyone in the home
+uses it.
+
 ## Does the launcher go online?
 
 Yes, and only for content. The weather comes from Open-Meteo, with no key and no account. With a TMDB token in the
 build, the catalogue, artwork, availability and prices come from TMDB, Watchmode and Movie of the Night, and a themed
 backdrop is downloaded once from a CDN. Everything fetched is kept, so Home and what you have already seen still show
 while the TV is offline, and without a token the launcher builds with a mock catalogue that needs no network. There are
-no analytics and no telemetry. Details: [launcher.md](launcher.md).
+no analytics and no telemetry. With Phone notes or Phone remote turned on, it also listens on the home network for
+your own phones, and only theirs. Details: [launcher.md](launcher.md).
 
 ## Can I just download the APK?
 

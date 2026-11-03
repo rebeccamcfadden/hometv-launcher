@@ -96,6 +96,7 @@ final class FeaturesSection implements SettingsSection {
             case TMDB: return R.string.feature_tmdb;
             case NOTES: return R.string.feature_notes;
             case PRICES: return R.string.feature_prices;
+            case REMOTE: return R.string.feature_remote;
             default: return R.string.feature_weather;
         }
     }
@@ -105,6 +106,7 @@ final class FeaturesSection implements SettingsSection {
             case TMDB: return R.string.feature_tmdb_sub;
             case NOTES: return R.string.feature_notes_sub;
             case PRICES: return R.string.feature_prices_sub;
+            case REMOTE: return R.string.feature_remote_sub;
             default: return R.string.feature_weather_sub;
         }
     }
@@ -114,6 +116,7 @@ final class FeaturesSection implements SettingsSection {
             case TMDB: return R.string.feature_tmdb_off;
             case NOTES: return R.string.feature_notes_off;
             case PRICES: return R.string.feature_prices_off;
+            case REMOTE: return R.string.feature_remote_off;
             default: return R.string.feature_weather_off;
         }
     }

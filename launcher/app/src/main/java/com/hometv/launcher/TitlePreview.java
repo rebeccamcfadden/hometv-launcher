@@ -460,6 +460,17 @@ final class TitlePreview extends Screen {
         return startTab == Tab.MORE ? tabViews.get(tabs.indexOf(Tab.MORE)) : watch;
     }
 
+    /** F39: the phone remote's "On the TV" card names this title. */
+    @Override
+    Title title() {
+        return t;
+    }
+
+    /** F39: My list, Seen or Favorite changed elsewhere (a phone remote): the buttons show it. */
+    void refreshToggles() {
+        for (Toggle tg : toggles) tg.paint();
+    }
+
     /** Landing on a tab shows it; landing on a season shows its episodes. */
     @Override
     void onFocus(View v) {
