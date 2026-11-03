@@ -230,16 +230,21 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         public void search(String query, java.util.function.Consumer<List<Title>> done) {
             List<Title> found = PhoneRemoteKeys.matching(data.catalog.all(), query);
             boolean remote = data.catalog.isRemote() && StateUi.online(MainActivity.this)
-                    && TmdbGate.need(data.accounts) == TmdbGate.Need.NONE;
+                    && TmdbGate.need(data.accounts) == TmdbGate.Need.NONE && PhoneRemoteKeys.asksTmdb(query);
+            java.util.function.Consumer<List<Title>> answer = PhoneRemoteKeys.once(ts -> {
+                remember(ts);
+                done.accept(ts);
+            });
             if (!remote) {
-                remember(found);
-                done.accept(found);
+                answer.accept(found);
                 return;
             }
+            // TMDB never calls back on a failed fetch: the TV's own matches answer after a while instead.
+            Runnable fallback = () -> answer.accept(found);
+            handler.postDelayed(fallback, PhoneRemoteKeys.SEARCH_FALLBACK_MS);
             data.catalog.search(query, f -> {
-                List<Title> all = PhoneRemoteKeys.merge(found, f.titles);
-                remember(all);
-                done.accept(all);
+                handler.removeCallbacks(fallback);
+                answer.accept(PhoneRemoteKeys.merge(found, f.titles));
             });
         }
 

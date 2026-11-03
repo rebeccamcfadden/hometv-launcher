@@ -328,11 +328,10 @@ final class PhoneRemote {
                 Thread.currentThread().interrupt();
             }
             if (taken || broken) server = null;
-            if (taken != portTaken || broken != failed) {
-                portTaken = taken;
-                failed = broken;
-                main.post(this::changed);
-            }
+            portTaken = taken;
+            failed = broken;
+            // Also after a bind that worked: a fallback port changes the address and QR the pane drew before it.
+            main.post(this::changed);
         });
     }
 

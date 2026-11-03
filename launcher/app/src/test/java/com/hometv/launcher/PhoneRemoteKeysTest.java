@@ -52,4 +52,35 @@ public class PhoneRemoteKeysTest {
         assertEquals(first, PhoneRemoteKeys.merge(first, null));
         assertEquals(Collections.emptyList(), PhoneRemoteKeys.merge(Collections.emptyList(), Collections.emptyList()));
     }
+
+    @Test public void shortQueriesAreAnsweredFromTheTvAlone() {
+        assertFalse(PhoneRemoteKeys.asksTmdb(null));
+        assertFalse(PhoneRemoteKeys.asksTmdb(""));
+        assertFalse(PhoneRemoteKeys.asksTmdb(" a "));
+        assertTrue(PhoneRemoteKeys.asksTmdb("ar"));
+    }
+
+    @Test public void onlyTheFirstAnswerReachesThePhone() {
+        List<String> got = new ArrayList<>();
+        java.util.function.Consumer<String> answer = PhoneRemoteKeys.once(got::add);
+        answer.accept("tmdb");
+        answer.accept("fallback");
+        assertEquals(Collections.singletonList("tmdb"), got);
+    }
+
+    @Test public void enterWaitsForTmdbWhenItHasNotAnsweredYet() {
+        assertEquals(PhoneRemoteKeys.Enter.EXPAND, PhoneRemoteKeys.onEnter("dune", false, true, true));
+        assertEquals(PhoneRemoteKeys.Enter.WAIT, PhoneRemoteKeys.onEnter("dune", false, false, true));
+        assertEquals(PhoneRemoteKeys.Enter.NOTHING, PhoneRemoteKeys.onEnter("dune", false, false, false));
+        assertEquals(PhoneRemoteKeys.Enter.NOTHING, PhoneRemoteKeys.onEnter("dune", true, true, true));
+        assertEquals(PhoneRemoteKeys.Enter.NOTHING, PhoneRemoteKeys.onEnter("", false, false, true));
+    }
+
+    @Test public void aWaitingEnterExpandsOnlyForItsOwnQuery() {
+        assertTrue(PhoneRemoteKeys.expandsOnAnswer("dune", "dune", false, true));
+        assertFalse(PhoneRemoteKeys.expandsOnAnswer("dune", "dunk", false, true));
+        assertFalse(PhoneRemoteKeys.expandsOnAnswer("dune", "dune", false, false));
+        assertFalse(PhoneRemoteKeys.expandsOnAnswer("dune", "dune", true, true));
+        assertFalse(PhoneRemoteKeys.expandsOnAnswer(null, "dune", false, true));
+    }
 }

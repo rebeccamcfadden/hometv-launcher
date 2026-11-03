@@ -723,6 +723,9 @@
         background: rgba(var(--deep-rgb), 0.97);
         border-color: rgba(143, 217, 168, 0.4);
       }
+      .toast--warn .toast-ico {
+        color: var(--star);
+      }
       .toast-undo {
         height: 40px;
         padding: 0 14px;
@@ -945,9 +948,11 @@
             pollFailStreak = 0;
             applyState(r.data, requestedAt);
           } else if (r.kind === 'notv') {
-            // A network error/timeout: only the second one in a row says "Can't reach the TV".
+            // A network error/timeout: only the second one in a row says "Can't reach the TV". Outside the remote
+            // (a remembered phone still connecting) nothing else polls, so the second try is asked for here.
             pollFailStreak++;
             if (pollFailStreak >= 2) show('notv');
+            else if (view !== 'remote') window.setTimeout(fetchState, 1500);
           } else {
             pollFailStreak = 0; // the TV answered (unpaired/off/locked/…), so it's reachable
             handleFailure(r);
@@ -1001,14 +1006,38 @@
         }
         api('/api/enter', { method: 'POST', body: '{}' });
       }
-      // F39: what the phone wants (on or off), never a toggle, so a stale + can't take off a title; the TV's answer
-      // is the truth, and the button shows it.
-      function sendMylist(t, mine) {
-        api('/api/mylist', { method: 'POST', body: JSON.stringify({ id: t.id, mine: mine }) }).then(function (r) {
-          if (!r.ok || !r.data || typeof r.data.mine !== 'boolean' || r.data.mine === t.mine) return;
-          t.mine = r.data.mine;
+      // F39: what the phone wants (on or off), never a toggle, so a stale + can't take off a title. The button moves at
+      // once; the TV's answer is the truth: "Added" (with Undo) only once the TV says so, and a refusal puts the button
+      // back and says why. Answers are counted per title, so a late one never undoes a later tap (or Undo).
+      var mylistSeq = {};
+      function setMine(t, wanted) {
+        var before = !wanted;
+        var my = (mylistSeq[t.id] = (mylistSeq[t.id] || 0) + 1);
+        t.mine = wanted;
+        update();
+        paintResults();
+        api('/api/mylist', { method: 'POST', body: JSON.stringify({ id: t.id, mine: wanted }) }).then(function (r) {
+          if (mylistSeq[t.id] !== my) return; // a later tap on this title decides
+          if (r.ok && r.data && typeof r.data.mine === 'boolean') {
+            var now = r.data.mine;
+            t.mine = now;
+            update();
+            paintResults();
+            toast((now ? 'Added ' : 'Removed ') + t.name + (now ? ' to ' : ' from ') + 'My list', null, function () {
+              setMine(t, !now);
+            });
+            return;
+          }
+          t.mine = before;
           update();
           paintResults();
+          if (r.kind === 'unpaired') return handleFailure(r);
+          toast(
+            'My list didn’t change',
+            r.kind === 'notv' ? 'This phone can’t reach the TV.' : 'Open HomeTV on the TV and try again.',
+            null,
+            'warn',
+          );
         });
       }
 
@@ -1058,6 +1087,7 @@
       }
 
       function retry() {
+        pollFailStreak = 0; // a retry gets its own two tries before "Can't reach the TV"
         show('connecting');
         if (me.token) fetchState();
         else show('pair');
@@ -1096,7 +1126,7 @@
       var toastEl = el('div.toast');
       function toast(text, sub, undo, tone) {
         var kids = [
-          el('div.toast-ico', { html: svgIcon('check', 18, 2.4) }),
+          el('div.toast-ico', { html: svgIcon(tone === 'warn' ? 'alert' : 'check', 18, 2.4) }),
           el('div.toast-words', el('div.toast-t', text), sub ? el('div.toast-s', sub) : null),
         ];
         if (undo) {
@@ -1119,7 +1149,7 @@
             return !!k;
           }),
         );
-        toastEl.className = 'toast is-shown' + (tone === 'good' ? ' toast--good' : '') + (view === 'remote' && !sheet ? '' : ' toast--top');
+        toastEl.className = 'toast is-shown' + (tone === 'good' ? ' toast--good' : tone === 'warn' ? ' toast--warn' : '') + (view === 'remote' && !sheet ? '' : ' toast--top');
         clearTimeout(toastTimer);
         toastTimer = window.setTimeout(hideToast, undo ? 5000 : 3500);
       }
@@ -1264,20 +1294,10 @@
         );
       }
 
-      // F39: add or take off; the TV toasts it too. Undo asks for what it was before.
+      // F39: add or take off (setMine); the TV toasts it too.
       function toggleMine(t) {
         buzz();
-        var added = !t.mine;
-        t.mine = added;
-        sendMylist(t, added);
-        update();
-        paintResults();
-        toast((added ? 'Added ' : 'Removed ') + t.name + (added ? ' to ' : ' from ') + 'My list', null, function () {
-          t.mine = !added;
-          sendMylist(t, !added);
-          update();
-          paintResults();
-        });
+        setMine(t, !t.mine);
       }
 
       // ---- Views ----

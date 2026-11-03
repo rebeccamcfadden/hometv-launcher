@@ -46,4 +46,42 @@ final class PhoneRemoteKeys {
         if (then != null) for (Title t : then) if (!out.containsKey(t.id)) out.put(t.id, t);
         return new ArrayList<>(out.values());
     }
+
+    /** TMDB is asked only from two characters (TmdbCatalog.searchPage, SearchPage); shorter, the TV's own titles. */
+    static final int TMDB_MIN = 2;
+
+    /** How long a phone's search waits for TMDB before it answers with the TV's own matches. */
+    static final long SEARCH_FALLBACK_MS = 2500;
+
+    static boolean asksTmdb(String query) {
+        return query != null && query.trim().length() >= TMDB_MIN;
+    }
+
+    /** Passes on only the first answer: TMDB's or the fallback's, whichever comes first. Main thread. */
+    static <T> java.util.function.Consumer<T> once(java.util.function.Consumer<T> done) {
+        boolean[] given = {false};
+        return t -> {
+            if (given[0]) return;
+            given[0] = true;
+            done.accept(t);
+        };
+    }
+
+    /** What a phone's Enter does on Search: expand now, wait for TMDB's answer to this query, or nothing. */
+    enum Enter { EXPAND, WAIT, NOTHING }
+
+    /**
+     * Enter from a phone (F27): the full results when there are matches; while TMDB hasn't answered this query yet
+     * ({@code asking}), it waits for the answer instead of being lost.
+     */
+    static Enter onEnter(String query, boolean expanded, boolean hasMatches, boolean asking) {
+        if (expanded || query == null || query.isEmpty()) return Enter.NOTHING;
+        if (hasMatches) return Enter.EXPAND;
+        return asking ? Enter.WAIT : Enter.NOTHING;
+    }
+
+    /** A waiting Enter expands when the answer for its own query brings matches; a changed query drops it. */
+    static boolean expandsOnAnswer(String enterFor, String query, boolean expanded, boolean hasMatches) {
+        return enterFor != null && enterFor.equals(query) && !expanded && hasMatches;
+    }
 }
