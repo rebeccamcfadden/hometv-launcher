@@ -56,13 +56,18 @@ final class LibraryPage extends Screen {
     // Sizes from screens.css (.page-scroll, .lib-*), in design px.
     private static final int SCROLL_TOP = 150;
     private static final int SCROLL_PAD = 70;
+    /**
+     * Room under a focused card: the bottom fade's height, so a card's name and lines stay clear of the fade and the
+     * guide line (the sweep's finding 3). {@link #PAGE_END} is as tall, so the last row can scroll that far up.
+     */
+    private static final int SCROLL_PAD_BOTTOM = Kit.BOTTOM_FADE;
     private static final int COLUMNS = 6;
     /** Rows whose art binds as the grid is built, before it is laid out: what the first screen shows. */
     private static final int FIRST_ART_ROWS = 2;
     private static final int CARD_W = Kit.POSTER_W;
     private static final int GAP_X = 24;
     private static final int GAP_Y = 40;
-    private static final int PAGE_END = 180;
+    private static final int PAGE_END = SCROLL_PAD_BOTTOM;
 
     private final Context ctx;
     private final Router router;
@@ -83,6 +88,8 @@ final class LibraryPage extends Screen {
     /** F14: the needs-a-TMDB-account state, in place of the page while TmdbGate says so. */
     private final FrameLayout gate;
     private TmdbGate.Need gateShown = TmdbGate.Need.NONE;
+    /** True while {@link #onShow} renders: its caller focuses the page next. */
+    private boolean showing;
     private final View guide;
     private final TextView context;
     private final TextView scope;
@@ -148,7 +155,7 @@ final class LibraryPage extends Screen {
                 data.services.installed(), household::isSeen);
         restoreSaved();
 
-        box = ScrollBox.vertical(ctx, SCROLL_PAD);
+        box = ScrollBox.vertical(ctx, SCROLL_PAD, SCROLL_PAD_BOTTOM);
         LinearLayout col = Kit.unclip(new LinearLayout(ctx));
         col.setOrientation(LinearLayout.VERTICAL);
         col.setPadding(Ui.px(Ui.SAFE_X), 0, Ui.px(Ui.SAFE_X), 0);
@@ -438,7 +445,19 @@ final class LibraryPage extends Screen {
     @Override
     void onShow() {
         recall();
-        render();
+        // Whoever shows the page focuses it next (the nav item, or where it was left). A refocus here would put focus
+        // on the page's default first, and scroll the grid to it even when focus then goes to the nav.
+        showing = true;
+        try {
+            render();
+        } finally {
+            showing = false;
+        }
+    }
+
+    /** Focus back on the page after a render, unless it is just being shown ({@link #onShow}). */
+    private void refocusIfTop() {
+        if (!showing && shell.top() == this) shell.refocus();
     }
 
     @Override
@@ -461,7 +480,7 @@ final class LibraryPage extends Screen {
         box.setVisibility(on ? View.GONE : View.VISIBLE);
         guide.setVisibility(on ? View.GONE : View.VISIBLE);
         gate.setVisibility(on ? View.VISIBLE : View.GONE);
-        if (shell.top() == this) shell.refocus();
+        refocusIfTop();
         return on;
     }
 
@@ -711,7 +730,7 @@ final class LibraryPage extends Screen {
             else buildGrid(shown);
             rememberRebuilt();
         }
-        if (shell.top() == this) shell.refocus();
+        refocusIfTop();
     }
 
     private void renderIfShown() {

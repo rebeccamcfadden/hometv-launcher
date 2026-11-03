@@ -67,6 +67,12 @@ export function libraryScreen(kind: Kind): Screen {
 
   /** Pick for me shows: there is something on the lists to pick from. */
   let pickable = false;
+  /** True while onShow renders: whoever shows the page focuses it next (as the launcher's LibraryPage). */
+  let showing = false;
+  /** Focus back on the page after a render, unless it is just being shown: that would scroll to the default card. */
+  const refocus = () => {
+    if (!showing) app.refocus();
+  };
   const render = () => {
     // F40: the dev bar's Cards menu picks landscape (today) or poster cards.
     const style = cards.get();
@@ -77,7 +83,7 @@ export function libraryScreen(kind: Kind): Screen {
     tmdbOff.el.style.display = tmdb ? 'none' : '';
     for (const c of page.children) if (c !== tmdbOff.el) (c as HTMLElement).style.display = tmdb ? '' : 'none';
     guideEl.style.display = tmdb ? '' : 'none';
-    if (!tmdb) return app.refocus();
+    if (!tmdb) return refocus();
     const state = net.get();
     // Offline with nothing saved yet: no lists to count or show (06-states A).
     const empty = state === 'offline-empty';
@@ -243,7 +249,7 @@ export function libraryScreen(kind: Kind): Screen {
         }),
       );
     }
-    app.refocus();
+    refocus();
   };
 
   const pickBtn = button('Pick for me', { icon: 'shuffle', primary: true, key: 'pick', onOk: () => app.push(pickSetup(kind)) });
@@ -251,7 +257,7 @@ export function libraryScreen(kind: Kind): Screen {
 
   const page = h(
     'div.page-scroll',
-    { 'data-scroll': 'y', 'data-scroll-pad': 70 },
+    { 'data-scroll': 'y', 'data-scroll-pad': 70, 'data-scroll-pad-bottom': 200 },
     tmdbOff.el,
     h(
       'div.lib-intro',
@@ -323,7 +329,12 @@ export function libraryScreen(kind: Kind): Screen {
         page.scrollTop = 0;
       }
       leftAt = null;
-      render();
+      showing = true;
+      try {
+        render();
+      } finally {
+        showing = false;
+      }
     },
     onLeave: () => {
       leftAt ??= Date.now();

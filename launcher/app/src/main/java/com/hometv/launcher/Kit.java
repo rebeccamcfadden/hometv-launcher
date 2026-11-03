@@ -588,6 +588,9 @@ final class Kit {
         return g;
     }
 
+    /** {@link #bottomFade}'s height, in design px: a page that scrolls under it keeps its focused item above it. */
+    static final int BOTTOM_FADE = 200;
+
     /**
      * {@code .bottom-fade}: 200 px at the foot of a page that fades the content into the background (to 97% at 70%
      * of its height), under the guide. Laid out for a FrameLayout page.
@@ -605,7 +608,8 @@ final class Kit {
             }
         });
         v.setBackground(d);
-        v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(200), Gravity.BOTTOM));
+        v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(BOTTOM_FADE),
+                Gravity.BOTTOM));
         return v;
     }
 }

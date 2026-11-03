@@ -31,7 +31,15 @@ final class ScrollBox {
     }
 
     static ViewGroup vertical(Context ctx, float padDesign) {
-        return new Vertical(ctx, padDesign);
+        return new Vertical(ctx, padDesign, padDesign);
+    }
+
+    /**
+     * A vertical box with more room at its foot than at its top, so a focused item stops above whatever covers the
+     * box's foot (a page's bottom fade and guide line).
+     */
+    static ViewGroup vertical(Context ctx, float padTopDesign, float padBottomDesign) {
+        return new Vertical(ctx, padTopDesign, padBottomDesign);
     }
 
     static ViewGroup horizontal(Context ctx, float padDesign) {
@@ -79,8 +87,13 @@ final class ScrollBox {
      * prototype's rule, nearer edge first. 0 when it already does.
      */
     static int delta(float start, float end, int size, int pad) {
-        if (start < pad) return Math.round(start - pad);
-        if (end > size - pad) return Math.round(end - (size - pad));
+        return delta(start, end, size, pad, pad);
+    }
+
+    /** {@link #delta(float, float, int, int)} with its own padding at each end: [padStart, size - padEnd]. */
+    static int delta(float start, float end, int size, int padStart, int padEnd) {
+        if (start < padStart) return Math.round(start - padStart);
+        if (end > size - padEnd) return Math.round(end - (size - padEnd));
         return 0;
     }
 
@@ -96,12 +109,13 @@ final class ScrollBox {
     }
 
     private static final class Vertical extends ScrollView implements Box {
-        private final float pad;
+        private final float padTop, padBottom;
         private ValueAnimator anim;
 
-        Vertical(Context ctx, float padDesign) {
+        Vertical(Context ctx, float padTopDesign, float padBottomDesign) {
             super(ctx);
-            pad = padDesign;
+            padTop = padTopDesign;
+            padBottom = padBottomDesign;
             setFillViewport(false);
             setUp(this);
         }
@@ -112,7 +126,7 @@ final class ScrollBox {
             // previous focus could carry this one off screen.
             stop();
             float[] r = Focus.rectIn(d, this);
-            int dy = delta(r[1], r[3], getHeight(), Ui.px(pad));
+            int dy = delta(r[1], r[3], getHeight(), Ui.px(padTop), Ui.px(padBottom));
             if (dy == 0) return;
             View child = getChildCount() > 0 ? getChildAt(0) : null;
             int max = child == null ? 0 : Math.max(0, child.getHeight() + getPaddingTop() + getPaddingBottom() - getHeight());
