@@ -1001,8 +1001,15 @@
         }
         api('/api/enter', { method: 'POST', body: '{}' });
       }
-      function sendMylist(id) {
-        api('/api/mylist', { method: 'POST', body: JSON.stringify({ id: id }) }); // fire-and-forget, like keys
+      // F39: what the phone wants (on or off), never a toggle, so a stale + can't take off a title; the TV's answer
+      // is the truth, and the button shows it.
+      function sendMylist(t, mine) {
+        api('/api/mylist', { method: 'POST', body: JSON.stringify({ id: t.id, mine: mine }) }).then(function (r) {
+          if (!r.ok || !r.data || typeof r.data.mine !== 'boolean' || r.data.mine === t.mine) return;
+          t.mine = r.data.mine;
+          update();
+          paintResults();
+        });
       }
 
       var searchSeq = 0;
@@ -1185,12 +1192,16 @@
           buzz();
           sendKey(key);
         };
+        // A tap is handled on pointerdown (at once, and held arrows repeat); the click that follows it is skipped. A
+        // click with no pointer before it (a screen reader, or Enter/Space on the focused button) presses once.
+        var tapped = false;
         return el(
           spec,
           {
             'aria-label': label || key,
             onpointerdown: function (e) {
               e.preventDefault();
+              tapped = true;
               if (stopRepeat) stopRepeat();
               press();
               if (key === 'up' || key === 'down' || key === 'left' || key === 'right') {
@@ -1201,8 +1212,21 @@
               }
             },
             onpointerup: stop,
-            onpointerleave: stop,
-            onpointercancel: stop,
+            onpointerleave: function () {
+              tapped = false;
+              stop();
+            },
+            onpointercancel: function () {
+              tapped = false;
+              stop();
+            },
+            onclick: function () {
+              if (tapped) {
+                tapped = false;
+                return;
+              }
+              press();
+            },
             oncontextmenu: function (e) {
               e.preventDefault();
             },
@@ -1244,17 +1268,18 @@
         );
       }
 
-      // F39: add or take off; the TV toasts it too. Undo sends the opposite.
+      // F39: add or take off; the TV toasts it too. Undo asks for what it was before.
       function toggleMine(t) {
         buzz();
         var added = !t.mine;
         t.mine = added;
-        sendMylist(t.id);
+        sendMylist(t, added);
         update();
         paintResults();
         toast((added ? 'Added ' : 'Removed ') + t.name + (added ? ' to ' : ' from ') + 'My list', null, function () {
-          sendMylist(t.id);
           t.mine = !added;
+          sendMylist(t, !added);
+          update();
           paintResults();
         });
       }
@@ -1527,13 +1552,14 @@
           oninput: function () {
             clearTimeout(searchTimer);
             searchTimer = window.setTimeout(function () {
-              runSearch(searchInput.value);
+              if (searchInput) runSearch(searchInput.value);
             }, 150);
           },
         });
         resultsEl = el('div.results');
         var scrim;
         var close = function () {
+          clearTimeout(searchTimer);
           sheet = false;
           scrim.remove();
           searchInput = null;
@@ -1602,9 +1628,11 @@
         }
       }
 
-      // A laptop's keyboard works as the remote too, outside a text box.
+      // A laptop's keyboard works as the remote too, outside a text box. Enter or Space on a focused button is that
+      // button's own press (its click), not OK.
       window.addEventListener('keydown', function (e) {
         if (view !== 'remote' || (e.target && e.target.tagName === 'INPUT')) return;
+        if (e.target && e.target.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return;
         var keys = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'ok', Escape: 'back', Backspace: 'back' };
         if (!keys[e.key]) return;
         e.preventDefault();

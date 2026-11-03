@@ -109,8 +109,11 @@ final class RemoteServer {
         /** Enter in the TV's text box, after any text still waiting; answers at once. */
         JSONObject enter(Phone p);
 
-        /** F39: My list for a title, on or off; null for a title the TV doesn't know. */
-        JSONObject myList(Phone p, String id);
+        /**
+         * F39: the title on My list ({@code mine} true) or off it, whatever it was; null for a title the TV doesn't
+         * know. The phone sends what it wants, so a stale button never takes off what it shows as added.
+         */
+        JSONObject myList(Phone p, String id, boolean mine);
 
         /** F39: titles for a query, from the TV's catalogue. */
         JSONObject search(Phone p, String query);
@@ -359,7 +362,8 @@ final class RemoteServer {
             case "POST /api/enter":
                 return Reply.ok(handler.enter(p));
             case "POST /api/mylist": {
-                JSONObject r = handler.myList(p, body.optString("id", ""));
+                if (!(body.opt("mine") instanceof Boolean)) return Reply.error(400, "mine must be true or false");
+                JSONObject r = handler.myList(p, body.optString("id", ""), body.optBoolean("mine"));
                 return r == null ? Reply.error(404, "unknown title") : Reply.ok(r);
             }
             case "GET /api/search":

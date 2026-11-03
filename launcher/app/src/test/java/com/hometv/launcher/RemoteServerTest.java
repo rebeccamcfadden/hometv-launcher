@@ -78,8 +78,8 @@ public class RemoteServerTest {
             return obj("entered", true);
         }
 
-        @Override public JSONObject myList(RemoteServer.Phone p, String id) {
-            return "arrival".equals(id) ? obj("mine", true) : null;
+        @Override public JSONObject myList(RemoteServer.Phone p, String id, boolean mine) {
+            return "arrival".equals(id) ? obj("mine", mine) : null;
         }
 
         @Override public JSONObject search(RemoteServer.Phone p, String query) {
@@ -300,8 +300,12 @@ public class RemoteServerTest {
     }
 
     @Test public void myListAndSearchGoToTheTv() throws Exception {
-        assertTrue(call("POST", "/api/mylist", TOKEN, "{\"id\":\"arrival\"}").json().getBoolean("mine"));
-        assertEquals(404, call("POST", "/api/mylist", TOKEN, "{\"id\":\"nope\"}").status);
+        assertTrue(call("POST", "/api/mylist", TOKEN, "{\"id\":\"arrival\",\"mine\":true}").json().getBoolean("mine"));
+        // What the phone wants, never a toggle: a stale button can't take off what it shows as added.
+        assertFalse(call("POST", "/api/mylist", TOKEN, "{\"id\":\"arrival\",\"mine\":false}").json().getBoolean("mine"));
+        assertEquals(400, call("POST", "/api/mylist", TOKEN, "{\"id\":\"arrival\"}").status);
+        assertEquals(400, call("POST", "/api/mylist", TOKEN, "{\"id\":\"arrival\",\"mine\":\"yes\"}").status);
+        assertEquals(404, call("POST", "/api/mylist", TOKEN, "{\"id\":\"nope\",\"mine\":true}").status);
         assertEquals("the bear", call("GET", "/api/search?q=the%20bear", TOKEN, null).json().getString("q"));
     }
 

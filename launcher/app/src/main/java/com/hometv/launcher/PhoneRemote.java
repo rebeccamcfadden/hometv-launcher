@@ -75,8 +75,11 @@ final class PhoneRemote {
 
         boolean inMyList(String id);
 
-        /** F39: My list on or off for the title, as its preview's button does; a toast on the TV says who. */
-        boolean toggleMyList(Title t, String phone);
+        /**
+         * F39: the title on My list or off it, as the phone asks; nothing changes, and no toast, when it already is
+         * (another phone or the TV got there first). Returns whether it is on My list now.
+         */
+        boolean setMyList(Title t, boolean mine, String phone);
 
         /** F39: titles for a query, as Search finds them; {@code done} on the main thread. */
         void search(String query, Consumer<List<Title>> done);
@@ -460,12 +463,12 @@ final class PhoneRemote {
         }
 
         @Override
-        public JSONObject myList(RemoteServer.Phone p, String id) {
+        public JSONObject myList(RemoteServer.Phone p, String id, boolean want) {
             return onMain(() -> {
                 Bridge b = bridge;
                 Title t = b == null ? null : b.titleById(id);
                 if (t == null) return null;
-                boolean mine = b.toggleMyList(t, p.name);
+                boolean mine = b.setMyList(t, want, p.name);
                 JSONObject o = new JSONObject();
                 put(o, "mine", mine);
                 put(o, "name", t.name);

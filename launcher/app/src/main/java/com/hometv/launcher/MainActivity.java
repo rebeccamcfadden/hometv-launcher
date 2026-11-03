@@ -214,11 +214,14 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         }
 
         @Override
-        public boolean toggleMyList(Title t, String phone) {
+        public boolean setMyList(Title t, boolean mine, String phone) {
+            if (data.household.inMyList(t.id) == mine) return mine;
             boolean now = data.household.toggleMyList(t.id);
             shell.toast(getString(now ? R.string.remote_added_from : R.string.remote_removed_from, t.name, phone));
             Screen top = shell.top();
             if (top instanceof TitlePreview) ((TitlePreview) top).refreshToggles();
+            // Movies and TV Shows show My list as it is now, as when the TV's own preview changes it (Search listens).
+            if (top instanceof LibraryPage) ((LibraryPage) top).render();
             Kit.refreshTitleCard(shell.focused(), data);
             return now;
         }
