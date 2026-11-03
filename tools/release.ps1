@@ -300,10 +300,27 @@ try {
     $version = [ordered]@{ versionCode = $versionCode; versionName = $versionName; apk = $apkName; sha256 = $apkSha;
                            certSha256 = $pinned; minSdk = 26; commit = $head }
     [IO.File]::WriteAllText((Join-Path $out 'version.json'), (($version | ConvertTo-Json) -replace "`r`n", "`n") + "`n")
+    # The debloat lists, as this commit has them: the installer suggests the ones whose header names the TV's model, and
+    # takes them from here, never from main (tools/family-install.md, step 6).
+    $listsName = 'debloat-lists.zip'
+    Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+    $zipStream = [IO.File]::Open((Join-Path $out $listsName), [IO.FileMode]::CreateNew)
+    try {
+        $zip = New-Object IO.Compression.ZipArchive($zipStream, [IO.Compression.ZipArchiveMode]::Create)
+        try {
+            foreach ($list in Get-ChildItem (Join-Path $repo 'examples') -Directory | Sort-Object Name) {
+                $file = Join-Path $list.FullName 'debloat.txt'
+                if (-not (Test-Path $file)) { continue }
+                [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file, "$($list.Name)/debloat.txt")
+            }
+        } finally { $zip.Dispose() }
+    } finally { $zipStream.Dispose() }
+    $listsSha = (Get-FileHash (Join-Path $out $listsName) -Algorithm SHA256).Hash.ToLowerInvariant()
     # The family installer, stamped with this release, so a copy from it installs exactly this APK (tools/family-install.md).
     $installer = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'family-install.ps1'))
     $stamps = [ordered]@{ "'@RELEASE_TAG@'" = "'$tag'"; "'@RELEASE_APK@'" = "'$apkName'"
-                          "'@RELEASE_APK_SHA256@'" = "'$apkSha'"; "'@RELEASE_CERT_SHA256@'" = "'$pinned'" }
+                          "'@RELEASE_APK_SHA256@'" = "'$apkSha'"; "'@RELEASE_CERT_SHA256@'" = "'$pinned'"
+                          "'@RELEASE_LISTS_SHA256@'" = "'$listsSha'" }
     foreach ($placeholder in $stamps.Keys) {
         if (-not $installer.Contains($placeholder)) { throw "tools\family-install.ps1 has no $placeholder to stamp." }
         $installer = $installer.Replace($placeholder, $stamps[$placeholder])

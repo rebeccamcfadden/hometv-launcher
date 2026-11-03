@@ -32,8 +32,14 @@ param(
     [string]$CertSha256,
     # Undo an install: the backup folder it wrote (it holds undo.txt).
     [string]$Restore,
+    # A debloat list (an examples/ debloat.txt, or one made from this installer's report) to apply after the handover.
+    [string]$List,
+    # Testing, in an unstamped copy: a folder of <name>\debloat.txt lists (the repository's examples\) to suggest from.
+    [string]$ListsFrom,
     # Take every question's default answer and skip the pauses (tests, or the project lead on a call).
-    [switch]$NoPrompt
+    [switch]$NoPrompt,
+    # Answer yes to the debloat's one "Switch these off?", whose default is no (tests, or the helper who has read the list).
+    [switch]$SwitchOffList
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2
@@ -50,6 +56,7 @@ $ReleaseTag = '@RELEASE_TAG@'
 $ReleaseApk = '@RELEASE_APK@'
 $ReleaseApkSha256 = '@RELEASE_APK_SHA256@'
 $ReleaseCertSha256 = '@RELEASE_CERT_SHA256@'
+$ReleaseListsSha256 = '@RELEASE_LISTS_SHA256@'
 $PlatformToolsVersion = '37.0.1'
 $PlatformToolsUrl = 'https://dl.google.com/android/repository/platform-tools_r37.0.1-win.zip'
 $PlatformToolsSha256 = '45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99'
@@ -64,6 +71,32 @@ $KnownStockLaunchers = @('com.google.android.tvlauncher', 'com.google.android.ap
     'com.google.android.leanbacklauncher', 'com.mitv.tvhome', 'com.gathin.tvhome', 'com.rmcfad.tv')
 $GoogleTvLauncher = 'com.google.android.apps.tv.launcherx'
 $SetupWraith = 'com.google.android.tungsten.setupwraith'
+# The core packages tools/disable.ps1 refuses, in the same words (a test keeps them equal): without them Android may
+# not boot again (#884).
+$CoreRe = '^(android|com\.android\.systemui|com\.android\.shell|com\.android\.phone|com\.android\.settings|com\.android\.tv\.settings|com\.(google\.)?android\.(permissioncontroller|packageinstaller|ext\.services|ext\.shared|modulemetadata)|com\.google\.android\.overlay\.modules.*|com\.android\.providers\..*)$'
+$CoreOk = '^com\.android\.providers\.(calendar|contacts|userdictionary|blockednumber)$'
+$PkgRe = '^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$'
+# PROMPT.md's checklist question: what a family may use, kept unless they say it can go.
+$Checklist = [ordered]@{
+    'streaming apps' = '(netflix|amazonvideo|primevideo|aiv|avod|imdb|youtube|disney|hbo|wbd\.stream|hulu|peacock|paramount|cbs|tubi|roku|spotify|deezer|tidal|music|plex|twitch|svt|viaplay|appletv|atve|crunchyroll|pluto|vudu|fandango|crackle|sling|fubo|philo|mubi|britbox|showtime|starz|discovery|dazn|espn|rakuten|itv|bbc|iplayer|all4|channel4|my5|stv|freeview|uktv|zee5|hotstar|jio|sonyliv|nrk|tv2|ruutu|yle|joyn|zattoo|waipu|canal|molotov|nowtv|stan|kayo|binge)'
+    'the voice assistant' = '(katniss|assistant|alexa|voice|googlequicksearchbox)'
+    'casting from a phone (Chromecast)' = '(mediashell|\.cast)'
+    'screen mirroring (Miracast)' = '(miracast|wfd|multiscreen|screenshare|screencast|mirror|androidbox|eshare|airplay|dlna|dmr|bigscreen|cast\.sink)'
+    'firmware updates' = '(ota|update|fota|upgrade)'
+}
+# The same questions, from what a list's own comments say a package is (its heading and its line).
+$ChecklistNotes = [ordered]@{
+    'streaming apps' = '(?i)(stream|music|video app|tv app|apps? not used|by choice|personal choice|owner|preloaded app|not watched|catch-?up|vod)'
+    'the voice assistant' = '(?i)(voice|assistant|alexa|gemini|hotword|ok google|mic)'
+    'casting from a phone (Chromecast)' = '(?i)(\bcast|chromecast|dial)'
+    'screen mirroring (Miracast)' = '(?i)(mirror|miracast|screen ?shar|multi-?screen|magiconnect)'
+    'firmware updates' = '(?i)(firmware|\bota\b|updater|system update)'
+}
+$script:ListNames = @()
+$script:ListNotes = @{}
+$script:BackupDir = $null
+# The folder the release's debloat lists were unpacked to (or -ListsFrom), when the person may pick one.
+$script:ListsDir = $null
 
 $script:Adb = $null
 $script:Serial = $null
@@ -415,6 +448,229 @@ function Invoke-Restore {
     Say 'Done. Switch debugging off on the TV again (Developer options).'
 }
 
+# ---- Debloat from a list (Family install step 6) -------------------------------------------------------------------
+# The release's debloat lists (debloat-lists.zip, its SHA-256 stamped), unpacked under -WorkDir; null without one.
+function Get-CheckedLists {
+    if ($ReleaseTag.StartsWith('@')) { return $null }
+    $dir = Join-Path $WorkDir "release-$ReleaseTag"
+    $zip = Join-Path $dir 'debloat-lists.zip'
+    if (-not (Test-Path -LiteralPath $zip) -or (Get-FileSha256 $zip) -ne $ReleaseListsSha256) {
+        if ($DownloadFrom) {
+            $source = Join-Path $DownloadFrom 'debloat-lists.zip'
+            if (-not (Test-Path -LiteralPath $source)) { Say 'No debloat lists next to the APK: nothing beyond the home screen will be switched off.'; return $null }
+            Copy-Item -LiteralPath $source $zip -Force
+        } else {
+            Invoke-WebRequest -UseBasicParsing -OutFile $zip -Uri "https://github.com/$ReleaseRepo/releases/download/$ReleaseTag/debloat-lists.zip"
+        }
+    }
+    if ((Get-FileSha256 $zip) -ne $ReleaseListsSha256) {
+        Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
+        Stop-Install "The debloat lists download is not the file release $ReleaseTag published (its SHA-256 differs). Nothing was changed on the TV."
+    }
+    $out = Join-Path $dir 'lists'
+    if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [IO.Compression.ZipFile]::ExtractToDirectory($zip, $out)
+    return $out
+}
+
+# The lists whose header (the comment lines at the top) names this model as a word: a suggestion only, since one
+# model often has lists from different countries and firmware, and another household's choices aren't theirs.
+function Find-ListsForModel([string]$Dir, [string]$Model) {
+    if (-not $Dir -or -not $Model -or -not (Test-Path -LiteralPath $Dir)) { return @() }
+    $word = '(?<![A-Za-z0-9])' + [regex]::Escape($Model) + '(?![A-Za-z0-9])'
+    $found = @()
+    foreach ($folder in Get-ChildItem -LiteralPath $Dir -Directory | Sort-Object Name) {
+        $file = Join-Path $folder.FullName 'debloat.txt'
+        if (-not (Test-Path -LiteralPath $file)) { continue }
+        $header = @(Get-Content -LiteralPath $file -TotalCount 40 | ForEach-Object { $_ } | Where-Object { $_ -match '^\s*#' })
+        if (($header -join "`n") -match $word) { $found += $folder.Name }
+    }
+    return $found
+}
+
+# Step 6, option (a) (the project lead, 2026-11-02): suggests the lists that name this model, and the person helping
+# picks one by name on the call, or none. Without a pick nothing beyond the home screen is switched off; the report is
+# for making a list.
+function Select-DebloatList([string]$Model) {
+    if (-not $script:ListsDir) { return }
+    $suggested = @(Find-ListsForModel $script:ListsDir $Model)
+    Step 'Debloat lists'
+    if ($suggested.Count -eq 0) {
+        Say "No list in this release names the model $Model. Nothing beyond the home screen will be switched off; report.txt in the backup folder is for making one."
+    } else {
+        Say "Lists in this release that name the model ${Model}:"
+        foreach ($s in $suggested) { Say "  $s" }
+        Say 'Each is another household''s choices: the person helping you picks one with you, or none.'
+    }
+    if ($NoPrompt) { return }
+    while ($true) {
+        $name = Ask-Text 'Type the name of the list to use (the person helping you knows it), or press Enter for none'
+        if (-not $name) { Say 'No list: nothing beyond the home screen will be switched off.'; return }
+        $file = Join-Path (Join-Path $script:ListsDir $name) 'debloat.txt'
+        if ($name -match '^[A-Za-z0-9._-]+$' -and (Test-Path -LiteralPath $file)) {
+            $script:ListNames = @(Read-DebloatList $file)
+            Say "Using $name ($($script:ListNames.Count) apps on it; the ones you use stay on)."
+            return
+        }
+        Say "There is no list called '$name' in this release."
+    }
+}
+# Read and checked before anything reaches the TV: a list that names something that isn't a package, or one of
+# Android's core packages, stops the run with nothing changed, as tools/disable.ps1 refuses it.
+function Read-DebloatList([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path)) { Stop-Install "There is no list at $Path. Nothing was changed." }
+    # What the list says about each package: the comment heading above it and its own comment. The checklist reads them,
+    # so a household app the list itself files under streaming, voice, casting and the like is asked about by name.
+    $script:ListNotes = @{}
+    $section = ''
+    $names = @()
+    foreach ($raw in Get-Content -LiteralPath $Path) {
+        $line = $raw.Trim()
+        if (-not $line) { continue }
+        $hash = $line.IndexOf('#')
+        $code = if ($hash -ge 0) { $line.Substring(0, $hash).Trim() } else { $line }
+        $comment = if ($hash -ge 0) { $line.Substring($hash + 1) } else { '' }
+        if (-not $code) { $section = $comment; continue }
+        if ($names -notcontains $code) { $names += $code; $script:ListNotes[$code] = "$section $comment" }
+    }
+    $bad = @($names | Where-Object { $_ -cnotmatch $PkgRe })
+    if ($bad.Count -gt 0) { Stop-Install "The list $Path has lines that are not package names: $($bad -join ', '). Nothing was changed." }
+    $core = @($names | Where-Object { $_ -cmatch $CoreRe -and $_ -cnotmatch $CoreOk })
+    if ($core.Count -gt 0) {
+        Stop-Install "The list $Path would switch off Android's own core packages, and without them the TV may not start again (#884): $($core -join ', '). Nothing was changed."
+    }
+    return $names
+}
+
+# The packages a TV answer names at the start of a line (pkg/activity), in order.
+function Get-LinePackages([string[]]$Lines) {
+    return @($Lines | ForEach-Object { if ($_ -match '^\s*([A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+)/') { $Matches[1] } } | Select-Object -Unique)
+}
+
+# Applies the list after the handover, with tools/disable.sh's guards and no overrides: a check that cannot run skips
+# the debloat (the person can't test what it protects). Returns the packages it switched off.
+function Invoke-Debloat([string[]]$Names) {
+    Step 'Switching off what this TV does not need'
+    $installedNow = @((Invoke-TvShell 'pm list packages') -split "`n" | ForEach-Object { $_.Trim() -replace '^package:', '' } | Where-Object { $_ })
+    $offNow = @((Invoke-TvShell 'pm list packages -d') -split "`n" | ForEach-Object { $_.Trim() -replace '^package:', '' } | Where-Object { $_ })
+    $todo = @($Names | Where-Object { $installedNow -contains $_ -and $offNow -notcontains $_ -and $_ -ne $Launcher })
+    $skip = { param($pkg, $why) Say "Leaving $pkg on: $why"; $script:todoNow = @($script:todoNow | Where-Object { $_ -ne $pkg }) }
+    $script:todoNow = $todo
+
+    # Home guard: never the app that owns Home; and if Home isn't this launcher, no known launcher either.
+    $homePkg = Get-PackageOf (Get-HomeNow)
+    if ($script:todoNow -contains $homePkg) { & $skip $homePkg 'it is the home screen.' }
+    if ($homePkg -ne $Launcher) {
+        foreach ($k in $KnownStockLaunchers) { if ($script:todoNow -contains $k) { & $skip $k 'Home is not on the HomeTV Launcher, so the old home screen stays.' } }
+    }
+    # A CVTE board keeps its own launcher enabled (AGENTS.md, #741): only that exact board's examples/ list may switch it
+    # off, and a list suggested by a model word can be another CVTE board's. So never from here.
+    if (@($installedNow | Where-Object { $_ -like 'com.cvte.*' }).Count -gt 0) {
+        foreach ($p in @($script:todoNow | Where-Object { $_ -like 'com.cvte.tv.launcher*' })) {
+            & $skip $p 'on a CVTE board its own launcher stays on (only that exact board''s list may switch it off, by hand).'
+        }
+    }
+    # PROMPT.md's checklist: what the family uses stays on.
+    foreach ($what in $Checklist.Keys) {
+        $hits = @($script:todoNow | Where-Object { $_ -match $Checklist[$what] -or ($script:ListNotes.ContainsKey($_) -and $script:ListNotes[$_] -match $ChecklistNotes[$what]) })
+        if ($hits.Count -eq 0) { continue }
+        if (Ask-YesNo "Does anyone use $what on this TV? ($($hits -join ', '))" $true) {
+            foreach ($h in $hits) { & $skip $h "you use $what." }
+        }
+    }
+    # setupwraith deletes the Wi-Fi network it saved when it is switched off (tools/disable.sh).
+    if ($script:todoNow -contains $SetupWraith) {
+        $owners = @([regex]::Matches((Invoke-TvShell 'dumpsys wifi'), 'cname=[^ ]*') | ForEach-Object { $_.Value })
+        if ($owners.Count -eq 0 -or @($owners | Where-Object { $_ -match 'setupwraith' }).Count -gt 0) {
+            & $skip $SetupWraith 'it may own the saved Wi-Fi network, and switching it off would take the TV off Wi-Fi.'
+        }
+    }
+    if ($script:todoNow.Count -eq 0) { Say 'Nothing on the list is left to switch off.'; return @() }
+
+    # The software under HDMI, AV and the tuner (#321), and the apps that open the inputs and Settings. Each probe is
+    # judged on its own answer: a package's dump must name the package, and a query must answer without an error, or
+    # nothing more is switched off (the person can't test what these protect).
+    $probeFailed = $false
+    $hwPkgs = @()
+    foreach ($p in @($script:todoNow)) {
+        $dump = Invoke-TvShell "dumpsys package $p"
+        if ($script:AdbExit -ne 0 -or -not $dump.Contains("Package [$p]")) { $probeFailed = $true; break }
+        $m = [regex]::Match($dump, '(?s)requested permissions:(.*?)((install|runtime) permissions:|User [0-9]+:|$)')
+        if ($m.Success -and $m.Groups[1].Value -match 'android\.permission\.TV_INPUT_HARDWARE') { $hwPkgs += $p }
+    }
+    $inputs = Invoke-TvShell 'cmd package query-activities --brief -a android.intent.action.VIEW -t vnd.android.cursor.item/channel'
+    if ($script:AdbExit -ne 0 -or $inputs -match '(?i)exception|error|unknown') { $probeFailed = $true }
+    $settingsApps = Invoke-TvShell 'cmd package query-activities --brief -a android.settings.SETTINGS'
+    if ($script:AdbExit -ne 0 -or $settingsApps -match '(?i)exception|error|unknown') { $probeFailed = $true }
+    if ($probeFailed) {
+        Say 'Could not check which apps run the TV''s inputs and Settings, so nothing more is switched off. Send the report to the person helping you.'
+        return @()
+    }
+    foreach ($p in $hwPkgs) { & $skip $p 'it runs the HDMI, AV or tuner inputs.' }
+    foreach ($p in (Get-LinePackages ($inputs -split "`n"))) { if ($script:todoNow -contains $p) { & $skip $p 'the TV opens its inputs with it.' } }
+    foreach ($p in (Get-LinePackages ($settingsApps -split "`n"))) { if ($script:todoNow -contains $p) { & $skip $p 'the TV opens Settings with it.' } }
+    if ($script:todoNow.Count -eq 0) { Say 'Nothing on the list is left to switch off.'; return @() }
+
+    # Everything left is listed once, and switched off only on a yes: a list is another household's choices.
+    Say 'From the list, these would be switched off now (each can be switched back on with -Restore):'
+    foreach ($p in $script:todoNow) { Say "  $p" }
+    # No unless someone says yes: Enter, or -NoPrompt alone, switches nothing off.
+    $yes = if ($SwitchOffList) { $true } else { Ask-YesNo 'Switch these off?' $false }
+    if (-not $yes) { Say 'Nothing from the list was switched off.'; return @() }
+
+    # A reinstall wrote no Home line yet: -Restore must put Home back on HomeTV after it re-enables these.
+    if (-not @(Get-Content -LiteralPath $script:UndoFile | Where-Object { $_ -like 'undo cmd package set-home-activity *' }).Count) {
+        Add-Undo "cmd package set-home-activity --user 0 $LauncherHome"
+    }
+
+    # Small batches, one package per call, each undo line written first; Home is checked after each batch.
+    $done = @()
+    for ($i = 0; $i -lt $script:todoNow.Count; $i += 5) {
+        $batch = @($script:todoNow[$i..([Math]::Min($i + 4, $script:todoNow.Count - 1))])
+        $off = @()
+        foreach ($p in $batch) {
+            Add-Undo "pm enable --user 0 $p"
+            $out = Invoke-TvShell "pm disable-user --user 0 $p"
+            if ($out -match 'new state: disabled') { $off += $p } else { Say "The TV did not switch off ${p}: $out" }
+        }
+        # Resolving to ours is not enough: on some Google TV builds a Home press still opens setupwraith's RecoveryActivity.
+        if (-not ((Get-HomeNow).StartsWith("$Launcher/") -and (Test-HomeShowsOurs))) {
+            # The whole batch back on (its undo lines are all written), Home set to ours again, and checked: on Android 9
+            # and older, re-enabling a Home app doesn't bring the saved default back by itself.
+            $notBack = @()
+            foreach ($p in $batch) {
+                $out = Invoke-TvShell "pm enable --user 0 $p"
+                if ($out -notmatch 'new state: enabled') { $notBack += $p }
+            }
+            [void](Invoke-TvShell "cmd package set-home-activity --user 0 $LauncherHome")
+            $homeBack = (Get-HomeNow).StartsWith("$Launcher/") -and (Test-HomeShowsOurs)
+            if ($notBack.Count -gt 0 -or -not $homeBack) {
+                Stop-Install ("Switching off $($batch -join ', ') moved Home away from the HomeTV Launcher, and it did not all come back" +
+                    $(if ($notBack.Count -gt 0) { " (still off: $($notBack -join ', '))" } else { '' }) +
+                    ". Keep debugging on and run: powershell -ExecutionPolicy Bypass -File family-install.ps1 -Restore `"$script:BackupDir`"")
+            }
+            Say "Home moved away from the HomeTV Launcher after switching off $($batch -join ', '), so those are back on, Home is the HomeTV Launcher again, and the rest of the list is left as it was."
+            break
+        }
+        $done += $off
+        Say "Switched off: $($off -join ', ')"
+    }
+    return $done
+}
+
+# What the person helping gets to make a list from: the TV's make, model and firmware, and its packages. No serial,
+# address, account or network name.
+function Write-Report([string]$Folder, [string[]]$Packages, [string[]]$Disabled) {
+    $props = 'ro.product.manufacturer', 'ro.product.brand', 'ro.product.model', 'ro.product.device', 'ro.build.version.release',
+        'ro.build.version.sdk', 'ro.build.display.id'
+    $lines = @('# HomeTV install report: the TV, and its apps, for making a debloat list (tools/family-install.md).')
+    foreach ($p in $props) { $lines += "$p=$(Get-Prop $p)" }
+    $lines += '', '# Installed packages (disabled ones marked)'
+    $lines += @($Packages | Sort-Object | ForEach-Object { if ($Disabled -contains $_) { "$_ (disabled)" } else { $_ } })
+    [IO.File]::WriteAllText((Join-Path $Folder 'report.txt'), (($lines -join "`n") + "`n"))
+}
+
 # ---- The install ---------------------------------------------------------------------------------------------------
 function Invoke-Install {
     Step 'HomeTV Launcher installer'
@@ -426,6 +682,7 @@ function Invoke-Install {
     Step 'Checking the downloads'
     $script:Adb = Get-PinnedAdb
     $apk = Get-CheckedApk
+    if (-not $List -and -not $script:ListsDir) { $script:ListsDir = Get-CheckedLists }
     Say 'The launcher and adb are the files this installer expects.'
 
     Step 'Getting the TV ready'
@@ -484,6 +741,7 @@ function Invoke-Install {
     Step 'Backing up the TV to this laptop'
     $safeModel = ($model -replace '[^A-Za-z0-9._-]', '_')
     $backup = Join-Path $WorkDir ("backups\{0}-{1}" -f $safeModel, (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    $script:BackupDir = $backup
     New-Item -ItemType Directory -Force $backup | Out-Null
     $saves = [ordered]@{
         'packages.txt' = 'pm list packages -f'; 'packages-disabled.txt' = 'pm list packages -d'; 'getprop.txt' = 'getprop'
@@ -503,6 +761,8 @@ function Invoke-Install {
     if ($PSCommandPath -and (Split-Path -Parent $PSCommandPath) -ne $WorkDir) {
         Copy-Item -Force -LiteralPath $PSCommandPath -Destination (Join-Path $WorkDir 'family-install.ps1')
     }
+    Write-Report $backup $packages $disabledBefore
+    if ($script:ListNames.Count -eq 0) { Select-DebloatList $model }
     Say "Saved in $backup"
 
     # ---- Which launcher hands over Home (launcher/build-and-install.sh's rules) ------------------------------------
@@ -643,6 +903,9 @@ function Invoke-Install {
         Say 'The HomeTV Launcher is the home screen.'
     }
 
+    $debloated = @()
+    if ($script:ListNames.Count -gt 0) { $debloated = @(Invoke-Debloat $script:ListNames) }
+
     # Last on the TV, after every Home check: First run shows by itself on the first Home start after an install, and
     # the checks above end it (#98). Only after a fresh install, and nothing presses Home after it.
     if ($packages -notcontains $Launcher) {
@@ -682,7 +945,7 @@ function Invoke-Install {
 
     [IO.File]::WriteAllText((Join-Path $backup 'summary.txt'), (@(
         "HomeTV Launcher $ReleaseTag on $maker $model, Android $android (SDK $sdk).",
-        "Mode: $mode. Stock home: $stock. Disabled: $($toDisable -join ', ').",
+        "Mode: $mode. Stock home: $stock. Disabled: $($toDisable -join ', '). From the list: $($debloated -join ', ').",
         "USB devices: $usbThings. USB network adapter: $usbEthernet.") -join "`n") + "`n")
     Step 'Done'
     Say 'Press Home on the remote to see the HomeTV Launcher. Everything First run set up is in Launcher settings too.'
@@ -696,6 +959,8 @@ try {
     $Restore = & $resolve $Restore
     $DownloadFrom = & $resolve $DownloadFrom
     $ApkPath = & $resolve $ApkPath
+    $List = & $resolve $List
+    $ListsFrom = & $resolve $ListsFrom
     if ($AdbPath) { $AdbPath = & $resolve $AdbPath }
     New-Item -ItemType Directory -Force $WorkDir | Out-Null
     if ($Restore) {
@@ -709,6 +974,8 @@ try {
         if (-not $stamped -and -not ($ApkPath -and $CertSha256)) {
             Stop-Install 'This copy is not from a release. Download family-install.ps1 from the release page (tools/family-install.md); for a test, pass -ApkPath and -CertSha256.'
         }
+        if ($List) { $script:ListNames = @(Read-DebloatList $List) }
+        elseif ($ListsFrom) { $script:ListsDir = $ListsFrom }
         Invoke-Install
     }
     exit 0

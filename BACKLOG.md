@@ -832,6 +832,12 @@ In order, one PR each:
    Without a list it disables only the stock launcher (and not even that on a CVTE board, as in step 4), and writes a
    report (model, Android version, package list, their ticks; no IP, serial or Wi-Fi name) for the project lead. She
    makes the list with her agent under PROMPT.md's rules, and the next run applies it.
+   **Built:** in `tools/family-install.ps1`. `tv.json` names no model and one model often has several lists, so the
+   project lead chose (2026-11-02) that the installer only suggests the lists whose header names the model, from the
+   release's own `debloat-lists.zip` (pinned by SHA-256), and she picks one by name on the call, or none. `-List`
+   takes a list made from `report.txt`. The checklist keeps what they use by default, and `tools/disable.sh`'s guards
+   apply with no overrides (Home owner, setupwraith's Wi-Fi, `TV_INPUT_HARDWARE`, the input and Settings apps; a
+   check that can't run switches nothing off), in batches of five with Home checked after each.
 
 - **Quotas are per key:** Watchmode's free plan is 2,500 credits a month, Movie of the Night's 1,000, and each TV
   budgets the whole quota for itself; hence a key per household. TMDB has no quota, but its key form asks for an app

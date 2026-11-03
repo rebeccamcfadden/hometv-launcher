@@ -53,11 +53,26 @@ function HomeNow {
 function Claims([string]$p) { return @(@($s.claims) | Where-Object { (Pkg $_) -eq $p }).Count -gt 0 }
 function Shell([string]$c) {
     $s.shell = @($s.shell) + $c
-    if ($c -match '^getprop (\S+)$') { $v = $s.props.($Matches[1]); if ($null -eq $v) { return '' }; return "$v" }
+    # The installer's StrictMode reaches this script: a missing property must not throw.
+    if ($c -match '^getprop (\S+)$') { $v = $s.props.PSObject.Properties[$Matches[1]]; if ($null -eq $v) { return '' }; return "$($v.Value)" }
     if ($c -eq 'getprop') { return (($s.props.PSObject.Properties | ForEach-Object { "[$($_.Name)]: [$($_.Value)]" }) -join "`n") }
     if ($c -eq 'pm list packages' -or $c -eq 'pm list packages -f') { return ((@($s.packages) | ForEach-Object { "package:$_" }) -join "`n") }
     if ($c -eq 'pm list packages -d') { return ((@($s.disabled) | ForEach-Object { "package:$_" }) -join "`n") }
     if ($c -like 'settings list *') { return 'name=value' }
+    if ($c -match '^dumpsys package (\S+)$') {
+        $p = $Matches[1]
+        # A failing dump answers with an error and exit 0, as a busy package service does.
+        if ($s.hw_fails) { return "Error: Can't find service: package" }
+        $perm = if (@($s.tv_hw) -contains $p) { "      android.permission.TV_INPUT_HARDWARE`n" } else { '' }
+        return "Packages:`n  Package [$p] (1a2b3c):`n    requested permissions:`n      android.permission.INTERNET`n$perm    install permissions:`n"
+    }
+    if ($c -like 'cmd package query-activities --brief -a android.intent.action.VIEW*') {
+        if ($s.handlers_fail) { return 'Exception occurred while executing: java.lang.SecurityException' }
+        return ((@($s.input_apps) | ForEach-Object { "  $_/.Main" }) -join "`n")
+    }
+    if ($c -like 'cmd package query-activities --brief -a android.settings.SETTINGS*') {
+        return ((@($s.settings_apps) | ForEach-Object { "  $_/.Settings" }) -join "`n")
+    }
     if ($c -like 'cmd package query-activities*') { return ((@($s.claims) | Where-Object { Enabled (Pkg $_) }) -join "`n") }
     if ($c -match '^cmd package resolve-activity .*category\.HOME (\S+)$') {
         $p = $Matches[1]; return "priority=0`n" + (@($s.claims) | Where-Object { (Pkg $_) -eq $p } | Select-Object -First 1)
@@ -85,9 +100,12 @@ function Shell([string]$c) {
         $s.disabled = @(@($s.disabled) | Where-Object { $_ -ne $p }); if (Claims $p) { $s.preferred = $null }
         return "Package $p new state: enabled"
     }
-    if ($c -match '^cmd package set-home-activity --user 0 (\S+)$') { if ($s.set_home_works) { $s.preferred = $Matches[1] }; return 'Success' }
+    if ($c -match '^cmd package set-home-activity --user 0 (\S+)$') {
+        if ($s.set_home_works -and -not ($s.set_home_once -and $s.set_home_used)) { $s.preferred = $Matches[1]; $s.set_home_used = $true }
+        return 'Success'
+    }
     if ($c -like 'dumpsys activity activities*') {
-        $front = if ($s.front) { $s.front } else { HomeNow }
+        $front = if ($s.front) { $s.front } elseif ($s.front_when_disabled -and (@($s.disabled) -contains $s.front_when_disabled)) { "com.example.setup/.RecoveryActivity" } else { HomeNow }
         return "  mResumedActivity: ActivityRecord{1 u0 $front t1}"
     }
     if ($c -eq 'dumpsys wifi') { return $s.wifi }
@@ -166,7 +184,7 @@ class StaticTest(unittest.TestCase):
 
     def test_release_stamps_every_placeholder(self):
         found = placeholders(self.text)
-        self.assertEqual(len(found), 4, found)
+        self.assertEqual(len(found), 5, found)
         release = RELEASE.read_text(encoding="utf-8")
         for token in found:
             self.assertIn(f'"{token}"', release, f"tools/release.ps1 does not stamp {token}")
@@ -182,6 +200,38 @@ class StaticTest(unittest.TestCase):
         self.assertEqual(url, f"https://dl.google.com/android/repository/platform-tools_r{version}-win.zip")
         self.assertRegex(sha, r"^[0-9a-f]{64}$")
 
+    def test_core_packages_match_disable_ps1(self):
+        disable = (ROOT / "tools" / "disable.ps1").read_text(encoding="utf-8")
+        for name in ("coreRe", "coreOk"):
+            theirs = re.search(r"\$" + name + r" = '([^']+)'", disable).group(1)
+            ours = re.search(r"\$" + name[0].upper() + name[1:] + r" = '([^']+)'", self.text).group(1)
+            self.assertEqual(theirs, ours, name)
+
+    def test_checklist_covers_every_shipped_household_app(self):
+        # Every package a shipped list files under streaming, music, voice, casting, mirroring or updates (its section
+        # heading or its own comment) must be one the checklist asks about, so a new list can't slip one past it.
+        names = re.search(r"\$Checklist = \[ordered\]@\{(.*?)\n\}", self.text, re.S).group(1)
+        notes = re.search(r"\$ChecklistNotes = \[ordered\]@\{(.*?)\n\}", self.text, re.S).group(1)
+        patterns = [re.compile(p, re.I) for p in re.findall(r"= '([^']+)'", names)]
+        note_patterns = [re.compile(p.replace("(?i)", ""), re.I) for p in re.findall(r"= '([^']+)'", notes)]
+        topic = re.compile(r"stream|music|voice|assistant|\bcast|chromecast|mirror|miracast|firmware|\bota\b|updater", re.I)
+        missed = {}
+        for path in sorted((ROOT / "examples").glob("*/debloat.txt")):
+            section = ""
+            for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+                line = raw.strip()
+                if not line:
+                    continue
+                code, _, comment = line.partition("#")
+                code = code.strip()
+                if not code:
+                    section = comment
+                    continue
+                if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+", code) and topic.search(section + " " + comment):
+                    note = section + " " + comment
+                    if not any(p.search(code) for p in patterns) and not any(p.search(note) for p in note_patterns):
+                        missed.setdefault(code, path.parent.name)
+        self.assertEqual(missed, {}, "household apps the checklist would not ask about")
     def test_never_uninstalls(self):
         self.assertNotRegex(self.text, r"pm uninstall|'uninstall'|\buninstall-")
 
@@ -217,7 +267,9 @@ class FamilyInstallTest(unittest.TestCase):
             "start_result": "Starting: Intent { cmp=com.hometv.launcher/.MainActivity }\nStatus: ok\nActivity: x\nComplete",
             "set_home_works": True,
             "wifi": "", "log": [], "shell": [], "reboots": 0, "pushed": False,
-            "refuse_disable": [], "enable_fails": False,
+            "refuse_disable": [], "enable_fails": False, "set_home_once": False, "set_home_used": False,
+            "tv_hw": [], "input_apps": [], "settings_apps": [], "hw_fails": False, "handlers_fail": False,
+            "front_when_disabled": None,
         }
         state.update(overrides)
         return state
@@ -489,19 +541,183 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertIn("debugging is still on", proc.stdout)
         self.assertEqual(end["preferred"], OURS)
 
-    def stamped_copy(self, apk_sha):
+    # ---- Debloat from a list (step 6) ----
+
+    BLOAT = ["com.example.bloat1", "com.example.bloat2", "com.example.bloat3", "com.example.bloat4",
+             "com.example.bloat5", "com.example.bloat6"]
+
+    def debloat_tv(self, **overrides):
+        return self.tv(packages=self.tv()["packages"] + self.BLOAT + ["com.netflix.ninja", "com.example.hdmi",
+                                                                      "com.example.inputs", "com.example.setup"],
+                       **overrides)
+
+    def write_list(self, names):
+        path = self.base / "debloat.txt"
+        path.write_text("# Test TV\n" + "".join(f"{n}  # why\n" for n in names), encoding="utf-8")
+        return path
+
+    def disables(self, end):
+        return [c.split()[-1] for c in end["shell"] if c.startswith("pm disable-user")]
+
+    def test_list_is_applied_after_the_handover_in_batches(self):
+        names = self.BLOAT + ["com.example.not.installed"]
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(names)), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER] + self.BLOAT)
+        self.assertEqual(end["preferred"], OURS)
+        undo = (self.backup_dir() / "undo.txt").read_text()
+        for name in self.BLOAT:
+            self.assertIn(f"undo pm enable --user 0 {name}", undo)
+        # First run still opens last, after the debloat.
+        self.assertIn("action.FIRST_RUN", end["shell"][-1])
+
+    def test_a_list_with_a_core_package_changes_nothing(self):
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["com.android.shell"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("core packages", proc.stdout)
+        self.assert_tv_untouched(end)
+
+    def test_a_list_with_a_bad_line_changes_nothing(self):
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["pm uninstall x"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assert_tv_untouched(end)
+
+    def test_what_the_family_may_use_stays_by_default(self):
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(["com.netflix.ninja", "com.example.bloat1"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertNotIn("com.netflix.ninja", self.disables(end))
+        self.assertIn("com.example.bloat1", self.disables(end))
+
+    def test_input_and_settings_apps_stay(self):
+        state = self.debloat_tv(tv_hw=["com.example.hdmi"], input_apps=["com.example.inputs"], settings_apps=["com.example.setup"])
+        names = ["com.example.hdmi", "com.example.inputs", "com.example.setup", "com.example.bloat1"]
+        proc, end = self.run_installer(state, "-List", str(self.write_list(names)), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER, "com.example.bloat1"])
+
+    def test_a_guard_that_cannot_run_switches_nothing_off(self):
+        proc, end = self.run_installer(self.debloat_tv(hw_fails=True), "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER])
+
+    def test_a_handler_query_that_fails_switches_nothing_off(self):
+        proc, end = self.run_installer(self.debloat_tv(handlers_fail=True), "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER])
+        self.assertIn("Could not check", proc.stdout)
+
+    def test_a_home_press_that_shows_another_app_counts_as_home_moved(self):
+        # Resolution stays on ours; only a Home press shows the recovery screen once bloat3 is off.
+        state = self.debloat_tv(front_when_disabled="com.example.bloat3")
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
+        self.assertNotIn("com.example.bloat3", end["disabled"])
+        self.assertNotIn("com.example.bloat6", self.disables(end))
+        self.assertIn("Home moved away", proc.stdout)
+
+    def test_paramount_and_mediatek_mirroring_stay_by_default(self):
+        state = self.debloat_tv()
+        state["packages"] = state["packages"] + ["com.cbs.ott", "com.mediatek.androidbox"]
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.cbs.ott", "com.mediatek.androidbox", "com.example.bloat1"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER, "com.example.bloat1"])
+
+    def test_a_reinstall_with_a_list_records_home_for_restore(self):
+        state = self.debloat_tv(disabled=[TVLAUNCHER], preferred=OURS)
+        state["packages"] = state["packages"] + ["com.hometv.launcher"]
+        state["claims"] = [f"{TVLAUNCHER}/.MainActivity", OURS]
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.example.bloat1"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        undo = (self.backup_dir() / "undo.txt").read_text().splitlines()
+        home = undo.index(f"undo cmd package set-home-activity --user 0 {OURS}")
+        self.assertLess(home, undo.index("undo pm enable --user 0 com.example.bloat1"), "Home runs last on -Restore")
+    def test_without_a_yes_nothing_from_the_list_is_switched_off(self):
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(self.write_list(self.BLOAT)))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.disables(end), [TVLAUNCHER])
+        self.assertIn("Nothing from the list was switched off", proc.stdout)
+        for name in self.BLOAT:
+            self.assertIn(f"  {name}", proc.stdout, "the remaining apps are listed by name before the question")
+
+    def test_a_cvte_launcher_on_a_list_stays_on(self):
+        state = self.tv(packages=[CVTE_LAUNCHER, "com.cvte.tv.setting", "com.android.settings", "com.android.vending",
+                                  "com.google.android.gms", "com.example.bloat1"],
+                        claims=[f"{CVTE_LAUNCHER}/.HomeActivity"], preferred=f"{CVTE_LAUNCHER}/.HomeActivity")
+        proc, end = self.run_installer(state, "-List", str(self.write_list([CVTE_LAUNCHER, "com.example.bloat1"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertNotIn(CVTE_LAUNCHER, end["disabled"])
+        self.assertIn("com.example.bloat1", end["disabled"])
+        self.assertIn("CVTE board its own launcher stays on", proc.stdout)
+    def test_setup_that_owns_the_wifi_stays(self):
+        state = self.debloat_tv(wifi=f"cname={SETUPWRAITH}")
+        state["packages"] = state["packages"] + [SETUPWRAITH]
+        proc, end = self.run_installer(state, "-List", str(self.write_list([SETUPWRAITH, "com.example.bloat1"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertNotIn(SETUPWRAITH, self.disables(end))
+
+    def test_a_batch_that_moves_home_is_switched_back_on(self):
+        state = self.debloat_tv(hijacker="com.example.setup/.Recovery", hijack_when_disabled="com.example.bloat2")
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["disabled"], [TVLAUNCHER])
+        self.assertNotIn("com.example.bloat6", self.disables(end), "the batch after is not started")
+        self.assertIn("Home moved away", proc.stdout)
+        self.assertEqual(end["preferred"], OURS, "Home is set back to ours after the batch is undone")
+
+    def test_a_batch_whose_undo_leaves_home_elsewhere_stops(self):
+        # Disabling a Home app drops the saved default and so does enabling it again (Android 9 and older); here
+        # set-home-activity works only for the handover, so Home stays on the chooser after the batch is undone.
+        state = self.debloat_tv(set_home_once=True)
+        state["claims"] = state["claims"] + ["com.example.alt1/.Main", "com.example.alt2/.Main"]
+        state["packages"] = state["packages"] + ["com.example.alt1", "com.example.alt2"]
+        proc, end = self.run_installer(state, "-List", str(self.write_list(["com.example.alt1"])), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertNotIn("com.example.alt1", end["disabled"])
+        self.assertIn("-Restore", proc.stdout)
+        self.assertNotIn("== Done", proc.stdout)
+
+    def test_a_batch_that_cannot_be_undone_stops_with_restore(self):
+        state = self.debloat_tv(hijacker="com.example.setup/.Recovery", hijack_when_disabled="com.example.bloat2",
+                                enable_fails=True)
+        proc, end = self.run_installer(state, "-List", str(self.write_list(self.BLOAT)), "-SwitchOffList")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("Keep debugging on", proc.stdout)
+        self.assertIn("-Restore", proc.stdout)
+        self.assertNotIn("== Done", proc.stdout)
+
+    def test_the_report_has_no_serial(self):
+        state = self.tv()
+        state["props"]["ro.serialno"] = "SERIAL12345"
+        proc, end = self.run_installer(state)
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        report = (self.backup_dir() / "report.txt").read_text()
+        self.assertIn("ro.product.model=Test TV", report)
+        self.assertIn(TVLAUNCHER, report)
+        self.assertNotIn("SERIAL12345", report)
+
+    def lists_zip(self, folder, lists):
+        path = folder / "debloat-lists.zip"
+        with zipfile.ZipFile(path, "w") as z:
+            for name, text in lists.items():
+                z.writestr(f"{name}/debloat.txt", text)
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def stamped_copy(self, apk_sha, lists=None, lists_sha=None):
+        """A release copy of the installer and its release folder; `lists` puts a debloat-lists.zip there, and the
+        stamped SHA-256 is its own unless `lists_sha` names another."""
+        release = self.base / "release"
+        release.mkdir()
+        shutil.copy2(self.apk, release / "hometv-launcher-v9.9.apk")
+        real = self.lists_zip(release, lists) if lists is not None else "00" * 32
         text = INSTALLER.read_text(encoding="utf-8")
         for token, value in {"'@RELEASE_TAG@'": "'v9.9'", "'@RELEASE_APK@'": "'hometv-launcher-v9.9.apk'",
                              "'@RELEASE_APK_SHA256@'": f"'{apk_sha}'",
-                             "'@RELEASE_CERT_SHA256@'": f"'{self.cert_sha}'"}.items():
+                             "'@RELEASE_CERT_SHA256@'": f"'{self.cert_sha}'",
+                             "'@RELEASE_LISTS_SHA256@'": f"'{lists_sha or real}'"}.items():
             text = text.replace(token, value)
         self.assertNotIn("@RELEASE_", text)
         script = self.base / "stamped" / "family-install.ps1"
         script.parent.mkdir()
         script.write_text(text, encoding="utf-8")
-        release = self.base / "release"
-        release.mkdir()
-        shutil.copy2(self.apk, release / "hometv-launcher-v9.9.apk")
         return script, release
 
     def test_stamped_copy_installs_its_release(self):
@@ -509,6 +725,35 @@ class FamilyInstallTest(unittest.TestCase):
         proc, end = self.run_script(script, self.tv(), "-DownloadFrom", str(release))
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(end["preferred"], OURS)
+
+    def test_stamped_copy_suggests_the_lists_naming_this_model(self):
+        lists = {"test-tv-eu": "# Test TV (ro.product.model Test TV), Android 9\ncom.example.bloat1\n",
+                 "test-tv2": "# Test TV2, Android 11\ncom.example.bloat1\n",
+                 "other": "# Other TV\ncom.example.bloat1\n"}
+        script, release = self.stamped_copy(hashlib.sha256(self.apk.read_bytes()).hexdigest(), lists)
+        proc, end = self.run_script(script, self.tv(packages=self.tv()["packages"] + ["com.example.bloat1"]),
+                                    "-DownloadFrom", str(release))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("  test-tv-eu", proc.stdout)
+        self.assertNotIn("  test-tv2", proc.stdout, "Test TV2 is another model")
+        self.assertNotIn("  other", proc.stdout)
+        # No one picked a list (-NoPrompt): nothing but the home screen is switched off.
+        self.assertEqual([c for c in end["shell"] if c.startswith("pm disable-user")], [f"pm disable-user --user 0 {TVLAUNCHER}"])
+
+    def test_stamped_copy_refuses_lists_it_did_not_publish(self):
+        script, release = self.stamped_copy(hashlib.sha256(self.apk.read_bytes()).hexdigest(), {"x": "# x\n"}, "22" * 32)
+        proc, end = self.run_script(script, self.tv(), "-DownloadFrom", str(release))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("debloat lists download", proc.stdout)
+        self.assert_tv_untouched(end)
+
+    def test_repository_copy_suggests_from_lists_from(self):
+        lists = self.base / "examples" / "test-tv-x"
+        lists.mkdir(parents=True)
+        (lists / "debloat.txt").write_text("# TestCo Test TV\ncom.example.x\n", encoding="utf-8")
+        proc, end = self.run_installer(self.tv(), "-ListsFrom", str(self.base / "examples"))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("  test-tv-x", proc.stdout)
 
     def test_stamped_copy_refuses_another_apk(self):
         script, release = self.stamped_copy("11" * 32)
