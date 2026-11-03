@@ -44,4 +44,15 @@ public class ArtSizeTest {
         assertEquals(0, ScrollBox.delta(0, 1000, 1000, 0));
         assertEquals(-5, ScrollBox.delta(-5, 200, 1000, 0));
     }
+
+    @Test
+    public void scrollBoxKeepsMoreRoomAtItsFoot() {
+        // Movies and TV Shows: 70 px at the top, the bottom fade's 200 px at the foot (the sweep's finding 3).
+        assertEquals(0, ScrollBox.delta(100, 800, 1000, 70, 200));
+        // A card that ends inside the fade scrolls up until it ends where the fade starts.
+        assertEquals(130, ScrollBox.delta(400, 930, 1000, 70, 200));
+        assertEquals(-20, ScrollBox.delta(50, 500, 1000, 70, 200));
+        // The same padding at both ends is the four-argument rule.
+        assertEquals(ScrollBox.delta(800, 1100, 1000, 48), ScrollBox.delta(800, 1100, 1000, 48, 48));
+    }
 }

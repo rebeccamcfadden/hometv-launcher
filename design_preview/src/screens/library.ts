@@ -251,7 +251,7 @@ export function libraryScreen(kind: Kind): Screen {
 
   const page = h(
     'div.page-scroll',
-    { 'data-scroll': 'y', 'data-scroll-pad': 70 },
+    { 'data-scroll': 'y', 'data-scroll-pad': 70, 'data-scroll-pad-bottom': 200 },
     tmdbOff.el,
     h(
       'div.lib-intro',

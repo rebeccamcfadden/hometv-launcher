@@ -192,6 +192,8 @@ From [AGENTS.md](../AGENTS.md) and the design:
 - Moving with the D-pad picks the nearest item in that direction; moving up or down keeps left edges aligned so a
   column feels like a column.
 - Each row or grid remembers its last focused item, so leaving and coming back returns to the same item.
+- A page scrolls just enough to show the focused item. On Movies and TV Shows a focused card stops above the bottom
+  fade (200 px), so its name and lines are never faded or under the guide line, the last row too.
 - Each page keeps its focus and state when you switch tabs and come back, except Search: leaving it for another
   tab, by Back or by the remote's Home clears the query, the filter and the full results, so coming back shows the
   empty page with focus as on the first visit. A title or person opened from Search keeps the search.

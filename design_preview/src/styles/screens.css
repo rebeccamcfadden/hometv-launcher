@@ -308,8 +308,9 @@
   text-overflow: ellipsis;
   color: var(--text-2);
 }
+/* As tall as .bottom-fade, so the last row can scroll clear of it (data-scroll-pad-bottom on .page-scroll). */
 .page-end {
-  height: 180px;
+  height: 200px;
 }
 
 /* ===== Placeholder ===== */

@@ -110,12 +110,16 @@ export function findNext(
   return best;
 }
 
-/** Scroll every `data-scroll="x|y"` ancestor so `el` is inside it with some padding. */
+/**
+ * Scroll every `data-scroll="x|y"` ancestor so `el` is inside it with some padding (`data-scroll-pad`; a vertical
+ * box may keep more room at its foot with `data-scroll-pad-bottom`).
+ */
 export function ensureVisible(el: HTMLElement, scale: number): void {
   for (let node = el.parentElement; node; node = node.parentElement) {
     const axis = node.dataset.scroll;
     if (!axis) continue;
     const pad = Number(node.dataset.scrollPad ?? 48);
+    const padBottom = Number(node.dataset.scrollPadBottom ?? pad);
     const c = node.getBoundingClientRect();
     const r = el.getBoundingClientRect();
     if (axis.includes('y')) {
@@ -123,7 +127,7 @@ export function ensureVisible(el: HTMLElement, scale: number): void {
       const bottom = (r.bottom - c.top) / scale;
       const height = c.height / scale;
       if (top < pad) node.scrollTop += top - pad;
-      else if (bottom > height - pad) node.scrollTop += bottom - (height - pad);
+      else if (bottom > height - padBottom) node.scrollTop += bottom - (height - padBottom);
     }
     if (axis.includes('x')) {
       const left = (r.left - c.left) / scale;
