@@ -717,6 +717,8 @@ body.no-devbar #devbar {
 #stage[data-motion='off'] .saver-clock {
   animation: none;
   transition: none;
+}
+
 /* ---- F46: the C card (miniCard) and its service pill ---- */
 .card--mini {
   flex: none;

@@ -13,7 +13,7 @@ import { icon } from '../ui/icons';
 import { button, chip, guide, navBar, servicePill } from '../ui/widgets';
 
 /** "3 seasons". */
-const seasonsLabel = (t: Title) => { const n = t.seasons?.length ?? 0; return ` season${n === 1 ? '' : 's'}`; };
+const seasonsLabel = (t: Title) => { const n = t.seasons?.length ?? 0; return `${n} season${n === 1 ? '' : 's'}`; };
 import { titlePreview } from './preview';
 
 interface Field {
@@ -293,7 +293,7 @@ function pickResults(s: PickState): Screen {
               h(
                 'div.pick-info',
                 h('div.pick-name', t.name),
-                h('div.pick-from', { 'data-lists': '' }, `From ${lists.provenance(t)}`),
+                h('div.pick-from', { 'data-from-list': '' }, `From ${lists.provenance(t)}`),
                 h('div.pick-line', `${t.year} · ${length}`),
                 h('div.pick-line', `${t.rating} · ${t.score.toFixed(1)}/10`),
                 h('div.pick-line.pick-genre', t.genres.slice(0, 2).join(' · ')),
