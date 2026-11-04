@@ -1,4 +1,6 @@
-{"id": 9273, "name": "Amy Adams", "profile_path": "/amy-adams.jpg", "combined_credits": {
+{"id": 9273, "name": "Amy Adams", "profile_path": "/amy-adams.jpg",
+ "biography": " Amy Lou Adams is an American actress. ", "birthday": "1974-08-20", "place_of_birth": "Vicenza, Veneto, Italy",
+ "known_for_department": "Acting", "deathday": null, "combined_credits": {
   "cast": [
     {"media_type": "movie", "id": 329865, "title": "Arrival", "release_date": "2016-11-10", "vote_count": 18000,
      "character": "Louise Banks", "genre_ids": [18]},
@@ -12,7 +14,7 @@
      "genre_ids": [99]}
   ],
   "crew": [
-    {"media_type": "movie", "id": 4523, "title": "Enchanted", "vote_count": 6000, "job": "Producer"},
-    {"media_type": "movie", "id": 5000, "title": "Produced One", "vote_count": 7000, "job": "Producer"}
+    {"media_type": "movie", "id": 4523, "title": "Enchanted", "vote_count": 6000, "department": "Production", "job": "Producer"},
+    {"media_type": "movie", "id": 5000, "title": "Produced One", "vote_count": 7000, "department": "Production", "job": "Producer"}
   ]
 }}

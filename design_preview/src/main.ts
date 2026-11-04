@@ -30,6 +30,7 @@ import { updateNotice } from './ui/updateNotice';
 import { updates, UPDATE_STATES, type UpdateState } from './core/updates';
 import { remote } from './core/remote';
 import { initScreensaver, showScreensaver } from './ui/screensaver';
+import { personScreen, samplePersonScreen } from './screens/person';
 
 // Launcher settings' Motion: the stage drops slides and scale-ups (Reduced) or every animation (Off).
 const stage = document.getElementById('stage')!;
@@ -196,6 +197,11 @@ const preview = (tab: 'movies' | 'tv', id: string) => () => {
   app.push(titlePreview(getTitle(id)));
 };
 
+const person = (name: string) => () => {
+  app.goTab('movies');
+  app.push(personScreen(name));
+};
+
 /** Jump targets; the id also works as ?jump=<id> in the URL. */
 const jumps: [string, string, () => void][] = [
   ['home', 'Home', () => app.goTab('home')],
@@ -215,6 +221,10 @@ const jumps: [string, string, () => void][] = [
   ['interstellar', 'Title preview · Interstellar (a store with no price)', preview('movies', 'interstellar')],
   ['severance', 'Title preview · Severance (TV)', preview('tv', 'severance')],
   ['daredevil', 'Title preview · Daredevil (seasons to buy)', preview('tv', 'daredevil')],
+  // The person page (Rebecca's pick B, 18:55): a director with two jobs, an actor, and a long made-up career.
+  ['person', 'Person · Denis Villeneuve (directing and writing)', person('Denis Villeneuve')],
+  ['person-actor', 'Person · Ana de Armas', person('Ana de Armas')],
+  ['person-long', 'Person · a long career (sample)', () => { app.goTab('movies'); app.push(samplePersonScreen()); }],
   [
     'settings',
     'Launcher settings',

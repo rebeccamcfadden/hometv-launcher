@@ -462,11 +462,11 @@ final class TmdbCatalog implements Catalog {
         }
         Credits hit = people.get(p.id);
         if (hit != null) {
-            done.accept(new Credits(hit.person, resolve(hit.titles)));
+            done.accept(hit.withTitles(resolve(hit.titles)));
             return;
         }
         fetch(TmdbApi.person(p.id), o -> TmdbParse.credits(o, p), c -> {
-            Credits stored = new Credits(c.person, upsertAll(c.titles));
+            Credits stored = c.withTitles(upsertAll(c.titles));
             people.put(p.id, stored);
             done.accept(stored);
         });

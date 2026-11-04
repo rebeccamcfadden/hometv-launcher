@@ -93,7 +93,7 @@ interface Catalog {
 
     /** What a person is in or made, and their photo. */
     default void person(Person p, Consumer<Credits> done) {
-        done.accept(new Credits(p, PreviewRules.titlesFor(p.name, all())));
+        done.accept(Credits.fromCatalogue(p, PreviewRules.titlesFor(p.name, all())));
     }
 
     /** Titles and people the network finds for a query. The mock catalogue has no more than it holds, so never. */
@@ -155,14 +155,76 @@ interface Catalog {
         done.accept(out);
     }
 
-    /** A person and the titles they are known for. */
+    /**
+     * A person and the titles they are known for, with what TMDB says about them: their biography, birth date
+     * (yyyy-mm-dd) and place, the job they are known for ("Acting", "Directing"), and what they did on each title
+     * (by title id). Empty strings and an empty map when the source has none, as the mock catalogue.
+     */
     final class Credits {
         final Person person;
         final List<Title> titles;
+        final String biography;
+        final String birthday;
+        final String birthplace;
+        final String department;
+        final Map<String, List<Role>> roles;
 
         Credits(Person person, List<Title> titles) {
+            this(person, titles, "", "", "", "", Collections.emptyMap());
+        }
+
+        Credits(Person person, List<Title> titles, String biography, String birthday, String birthplace,
+                String department, Map<String, List<Role>> roles) {
             this.person = person;
             this.titles = Collections.unmodifiableList(new ArrayList<>(titles));
+            this.biography = biography;
+            this.birthday = birthday;
+            this.birthplace = birthplace;
+            this.department = department;
+            Map<String, List<Role>> copy = new LinkedHashMap<>();
+            for (Map.Entry<String, List<Role>> e : roles.entrySet()) {
+                copy.put(e.getKey(), Collections.unmodifiableList(new ArrayList<>(e.getValue())));
+            }
+            this.roles = Collections.unmodifiableMap(copy);
+        }
+
+        /**
+         * A person from the catalogue alone (the mock, or before TMDB answers): no facts, and what they did on each
+         * title from its cast (Acting, the character) and crew (the job's department, the job).
+         */
+        static Credits fromCatalogue(Person p, List<Title> titles) {
+            Map<String, List<Role>> roles = new LinkedHashMap<>();
+            for (Title t : titles) {
+                List<Role> r = new ArrayList<>();
+                for (Person c : t.cast) if (c.name.equals(p.name)) r.add(new Role("Acting", c.role));
+                for (Person c : t.crew) {
+                    if (c.name.equals(p.name)) r.add(new Role(PersonRules.departmentOf(c.role), c.role));
+                }
+                if (!r.isEmpty()) roles.put(t.id, r);
+            }
+            return new Credits(p, titles, "", "", "", "", roles);
+        }
+
+        /** The same person and facts with other titles (a catalogue swaps in the copies it already knows). */
+        Credits withTitles(List<Title> other) {
+            return new Credits(person, other, biography, birthday, birthplace, department, roles);
+        }
+
+        /** What they did on a title, in TMDB's order (cast first); empty when not known. */
+        List<Role> rolesFor(Title t) {
+            List<Role> r = roles.get(t.id);
+            return r == null ? Collections.emptyList() : r;
+        }
+    }
+
+    /** One thing a person did on a title: the department ("Acting", "Directing") and the character or the job. */
+    final class Role {
+        final String department;
+        final String what;
+
+        Role(String department, String what) {
+            this.department = department;
+            this.what = what;
         }
     }
 

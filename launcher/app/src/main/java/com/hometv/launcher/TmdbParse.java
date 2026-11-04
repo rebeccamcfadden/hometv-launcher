@@ -23,8 +23,8 @@ final class TmdbParse {
 
     /** How many of the cast and the crew a title keeps for Cast &amp; crew. */
     static final int CAST_MAX = 15, CREW_MAX = 6;
-    /** How many titles a person page lists. */
-    static final int KNOWN_FOR_MAX = 30;
+    /** How many titles a person page lists: every one (Rebecca, 2026-11-04 19:11); a number here caps it again. */
+    static final int PERSON_TITLES_MAX = Integer.MAX_VALUE;
 
     /** Talk shows, news and reality TV: a person's appearances there are not what they are known for. */
     private static final int[] NOT_KNOWN_FOR = {10767, 10763, 10764};
@@ -162,8 +162,10 @@ final class TmdbParse {
     }
 
     /**
-     * /person/{id} with combined_credits: the person with their photo, and up to 30 titles they are known for, most
-     * voted first, leaving out talk shows, news, reality TV and appearances as themselves.
+     * /person/{id} with combined_credits: the person with their photo, and every title they are known for, most
+     * voted first, leaving out talk shows, news, reality TV and appearances as themselves. Also their biography,
+     * birth date and place, the job they are known for, and what they did on each of those titles (the character,
+     * or the crew job; the character is "" when TMDB has none).
      */
     static Catalog.Credits credits(JSONObject o, Person asked) {
         Person p = new Person(o.optString("name", asked.name), asked.role, o.optInt("id", asked.id),
@@ -180,12 +182,34 @@ final class TmdbParse {
         // Stable, so equal votes keep TMDB's order (cast before crew).
         items.sort((a, b) -> Integer.compare(b.optInt("vote_count"), a.optInt("vote_count")));
         Map<String, Title> out = new LinkedHashMap<>();
+        Map<String, List<Catalog.Role>> roles = new LinkedHashMap<>();
         for (JSONObject c : items) {
             Title t = summary(c, null);
-            if (t != null && !out.containsKey(t.id)) out.put(t.id, t);
-            if (out.size() == KNOWN_FOR_MAX) break;
+            if (t == null) continue;
+            if (!out.containsKey(t.id)) {
+                if (out.size() == PERSON_TITLES_MAX) continue;
+                out.put(t.id, t);
+            }
+            List<Catalog.Role> r = roles.get(t.id);
+            if (r == null) roles.put(t.id, r = new ArrayList<>());
+            Catalog.Role role = role(c);
+            boolean seen = false;
+            for (Catalog.Role q : r) seen |= q.department.equals(role.department) && q.what.equals(role.what);
+            if (!seen) r.add(role);
         }
-        return new Catalog.Credits(p, new ArrayList<>(out.values()));
+        return new Catalog.Credits(p, new ArrayList<>(out.values()), text(o, "biography"), text(o, "birthday"),
+                text(o, "place_of_birth"), text(o, "known_for_department"), roles);
+    }
+
+    /** A cast entry is Acting with its character; a crew entry its department and job. */
+    private static Catalog.Role role(JSONObject c) {
+        if (c.has("character")) return new Catalog.Role("Acting", text(c, "character"));
+        return new Catalog.Role(text(c, "department"), text(c, "job"));
+    }
+
+    /** A string field, trimmed; "" when missing or JSON null. */
+    private static String text(JSONObject o, String key) {
+        return o.isNull(key) ? "" : o.optString(key, "").trim();
     }
 
     private static boolean knownFor(JSONObject c) {
