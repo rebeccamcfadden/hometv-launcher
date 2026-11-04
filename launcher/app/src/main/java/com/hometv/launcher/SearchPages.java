@@ -24,6 +24,23 @@ final class SearchPages {
     }
 
     /**
+     * F46: the typing preview beside the keyboard has room for six C cards and a sliver of a seventh, two rows above
+     * the fade. It builds those {@link #PREVIEW_ROWS} rows of {@link #PREVIEW_COLUMNS} only, and binds art for the six
+     * that show whole (the full results build and bind everything). Keeps each key press light on a 1 GB TV.
+     */
+    static final int PREVIEW_ROWS = 2, PREVIEW_COLUMNS = 7, PREVIEW_ART_COLUMNS = 6;
+
+    /** How many cards a grid builds: all on the full results, else the preview's rows of its columns. */
+    static int built(int count, boolean expanded) {
+        return expanded ? count : Math.min(count, PREVIEW_ROWS * PREVIEW_COLUMNS);
+    }
+
+    /** Whether the card at index (in rows of {@code columns}) binds its poster now: every card expanded, else the six whole ones. */
+    static boolean withArt(int index, int columns, boolean expanded) {
+        return expanded || index % columns < PREVIEW_ART_COLUMNS;
+    }
+
+    /**
      * The card that asked last, after focus lands somewhere: kept while focus is on the last row (a redraw puts it back
      * on that card, which must not ask again), forgotten anywhere else (another row, a filter chip), so coming back
      * to the same card asks again (a page that showed no new card leaves that card last).

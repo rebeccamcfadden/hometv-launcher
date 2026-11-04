@@ -288,8 +288,14 @@ final class Kit {
      */
     static View smallCard(Context ctx, Title t, CharSequence nameOverride, Data data, String group, String key,
                           boolean isDefault, View.OnClickListener onOk) {
+        return smallCard(ctx, t, nameOverride, data, group, key, isDefault, true, onOk);
+    }
+
+    /** {@link #smallCard} whose poster binds only {@code withArt} (Search's preview: none for a card off the screen). */
+    static View smallCard(Context ctx, Title t, CharSequence nameOverride, Data data, String group, String key,
+                          boolean isDefault, boolean withArt, View.OnClickListener onOk) {
         View v = miniCard(ctx, t, nameOverride, data, group, key, isDefault, onOk);
-        libraryArt(v, true);
+        if (withArt) libraryArt(v, true);
         return v;
     }
 

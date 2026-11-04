@@ -125,4 +125,19 @@ public class SearchPagesTest {
         for (Title t : ts) out.add(t.id);
         return out;
     }
+
+    @Test
+    public void theTypingPreviewBuildsOnlyWhatShows() {
+        // F46: two rows of seven beside the keyboard; the full results build all.
+        assertEquals(14, SearchPages.built(124, false));
+        assertEquals(5, SearchPages.built(5, false));
+        assertEquals(124, SearchPages.built(124, true));
+        // Art on the six whole cards of each preview row; the seventh is a sliver at the TV's edge.
+        assertTrue(SearchPages.withArt(0, 7, false));
+        assertTrue(SearchPages.withArt(5, 7, false));
+        assertFalse(SearchPages.withArt(6, 7, false));
+        assertTrue(SearchPages.withArt(7, 7, false));
+        assertFalse(SearchPages.withArt(13, 7, false));
+        assertTrue(SearchPages.withArt(7, 8, true));
+    }
 }

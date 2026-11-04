@@ -54,11 +54,6 @@ final class SearchPage extends Screen {
     private static final int COLUMNS = 8;
     private static final int COLUMN_GAP = 24;
     private static final int ROW_GAP = 32;
-    /**
-     * While typing, the preview shows a little over two rows of the grid and can't be focused, so it builds only
-     * the first rows; the full results build every card. Keeps each key press light on a 1 GB TV.
-     */
-    private static final int PREVIEW_ROWS = 3;
     /** A row that runs off the screen's edge stops scrolling this far short of it (search.ts titleRow). */
     private static final int ROW_REVEAL = 96;
     /** How long typing must pause before TMDB is asked, and how many letters it takes. */
@@ -1025,31 +1020,33 @@ final class SearchPage extends Screen {
     private View grid(List<SearchIndex.Hit> items) {
         LinearLayout grid = Kit.unclip(new LinearLayout(ctx));
         grid.setOrientation(LinearLayout.VERTICAL);
-        int shown = expanded ? items.size() : Math.min(items.size(), PREVIEW_ROWS * COLUMNS);
+        // While typing, only what shows beside the keyboard: two rows of seven, art on the six whole ones (SearchPages).
+        int columns = expanded ? COLUMNS : SearchPages.PREVIEW_COLUMNS;
+        int shown = SearchPages.built(items.size(), expanded);
         gridKeys.clear();
         LinearLayout row = null;
         for (int i = 0; i < shown; i++) {
-            if (i % COLUMNS == 0) {
+            if (i % columns == 0) {
                 row = Kit.unclip(new LinearLayout(ctx));
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 grid.addView(row, below(i == 0 ? 0 : ROW_GAP));
             }
-            View card = resultCard(items.get(i), i == 0);
+            View card = resultCard(items.get(i), i == 0, SearchPages.withArt(i, columns, expanded));
             gridKeys.add(Focus.key(card));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.px(CARD_W), ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.leftMargin = i % COLUMNS == 0 ? 0 : Ui.px(COLUMN_GAP);
+            lp.leftMargin = i % columns == 0 ? 0 : Ui.px(COLUMN_GAP);
             row.addView(card, lp);
         }
         return grid;
     }
 
-    private View resultCard(SearchIndex.Hit hit, boolean isDefault) {
+    private View resultCard(SearchIndex.Hit hit, boolean isDefault, boolean withArt) {
         // Titles by id: two titles may share a name (Dune, 1984 and 2021).
         String key = hit.kind == SearchIndex.HitKind.TITLE ? "r-title-" + hit.title.id
                 : "r-" + hit.kind.name().toLowerCase(Locale.ROOT) + "-" + hit.label;
         CharSequence name = Kit.highlight(hit.label, hit.match.indices);
         if (hit.kind == SearchIndex.HitKind.PERSON) return personCard(hit, name, key, isDefault);
-        return Kit.smallCard(ctx, hit.title, name, data, GROUP_GRID, key, isDefault, v -> openTitle(hit.title));
+        return Kit.smallCard(ctx, hit.title, name, data, GROUP_GRID, key, isDefault, withArt, v -> openTitle(hit.title));
     }
 
     /**
