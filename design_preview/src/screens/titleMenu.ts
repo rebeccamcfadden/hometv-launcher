@@ -30,10 +30,14 @@ function cardNow(card: HTMLElement, t: Title): HTMLElement {
   return app.focused?.dataset.title === t.id ? app.focused : card;
 }
 
-/** Brings a card's list line ("My list · Sci-fi") up to date in place; Search's cards have none. */
+/** Brings a card's list line ("My list · Sci-fi", or Pick for me's "From My list") up to date in place; C cards have none. */
 function refreshCard(card: HTMLElement, t: Title) {
-  const line = cardNow(card, t).querySelector('[data-lists]');
+  const now = cardNow(card, t);
+  const line = now.querySelector('[data-lists]');
   if (line) line.textContent = provenance(t);
+  // F46 P1: Pick for me's tag keeps its own form, "From My list".
+  const from = now.querySelector('[data-from-list]');
+  if (from) from.textContent = `From ${lists.provenance(t)}`;
 }
 
 /** Opens the menu when `card` is a title card; returns whether it did. */

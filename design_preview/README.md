@@ -39,7 +39,7 @@ The 1920×1080 TV screen is scaled to fit the window. The keyboard stands in for
 
 The mouse works too: a click is focus + OK. The bar under
 the stage shows the screen stack (what Back returns through), a **State** menu, an **Account** menu, **Theme** and
-**Date** menus, a **Cards** menu (F40: landscape or poster cards in Movies and TV Shows), a **Jump to** menu, and **Reset state**, which clears My list, Seen, Favorites, recent searches and Launcher settings (kept in
+**Date** menus, a **Cards** menu (F46's C cards, or F40's poster, the landscape or the compact poster cards in Movies and TV Shows), a **Jump to** menu, and **Reset state**, which clears My list, Seen, Favorites, recent searches and Launcher settings (kept in
 `localStorage`). `?devbar=off` hides the bar.
 
 The **State** menu simulates the network and the catalogue, so each loading, offline and error state can be
@@ -281,15 +281,17 @@ the one beside it when the change took the card off the page (a title removed fr
   scrolls with focus, and back on All lists it returns to its start.
   A list hidden while chosen falls back to All lists. Up from any chip, and Right from the last one, goes to
   **Pick for me**, so it comes before the nav and instead of the grid.
-- A six-column grid of poster cards (F40, Rebecca 2026-11-02, Figma "Library cards (F40)" option A): the title's TMDB
-  poster, 2:3 (`src/data/posters.ts`, loaded from image.tmdb.org; a title with none, or a poster that can't load,
-  shows its landscape art cropped), then the name; the service and "Included", "Free" or a price on one line
-  ("Netflix · Included", "Apple TV Store · Rent 39 kr", or just "Rent" for a store with no known price); runtime or
-  seasons · rating · score; and the first list in chip order that holds it, and its genre.
-- **Before F40, for comparison:** the dev bar's **Cards** menu (or `?cards=landscape`, `?cards=poster-compact`) shows
-  the four-column landscape cards the grid had, or the poster with just its name and service line. `compare.html`
-  shows the landscape cards and the poster cards side by side, each a live prototype (Movies or TV Shows; click a
-  side, then use the keys).
+- An eight-column grid of **C cards** (F46, Rebecca 2026-11-04 09:57, Figma "Smaller cards (F46)" option C, node
+  232:931; the same card on every page with title cards): the title's TMDB poster, 195 × 293, radius 12
+  (`src/data/posters.ts`; a title with none, or a poster that can't load, shows its landscape art cropped), and on its
+  top-left corner the **service pill**: the service or store's name in words after a round icon, a dark tick on green
+  for Included or Free, `kr` (Sweden) or `$` (US) for rent or buy. No price on a card: grids never fetch prices; the
+  title preview has them. Nothing under the poster. Focused: the accent ring, a slight scale-up, and the name (two
+  lines at most) with "year · score" on a dark fade at the poster's foot.
+- **Before F46, for comparison:** the dev bar's **Cards** menu (or `?cards=poster`, `?cards=landscape`,
+  `?cards=poster-compact`) shows F40's six-column poster cards with their details, the four-column landscape cards,
+  or the poster with its name and service line. `compare.html` shows the landscape cards and the poster cards side
+  by side, each a live prototype (Movies or TV Shows; click a side, then use the keys).
 - **Filters drawer** (from the right): Availability, Review score, Genre, Length (movies only), Watch state. ←/→
   changes a value, and the grid behind updates live. Clear all and Done. The default is no filters (F2; Figma's
   frame shows "Included only · Review 7.0+").
@@ -311,8 +313,9 @@ the one beside it when the change took the card off the page (a title removed fr
   the chips; My list and the first of them to start); Movies or TV Shows; six fields that
   OK steps through (length, genre pair, review score, content rating, watch state, availability). A card on the
   right shows how many picks match ("4 picks, just for tonight") and the **Find picks** button.
-- **Results:** four random matches with a short blurb each, the filter line, Reroll, and Adjust filters (Back to
-  setup). A bar under the tiles shows the focused pick with **Title details** and **Open in <service>**. Up from
+- **Results:** four random matches, the filter line, Reroll, and Adjust filters (Back to setup). Each pick is F46's
+  **P1** (Figma 241:976): the C poster with its pill; beside it the name (two lines), the list it comes from in an
+  accent tag ("From My list"), year · length, age rating · score, and genre; under them three lines of overview. A bar under the tiles shows the focused pick with **Title details** and **Open in <service>**. Up from
   a pick goes to Adjust filters or Reroll, whichever is nearer, before the nav. Reroll keeps focus, so it can be
   pressed again and again.
 
@@ -346,12 +349,13 @@ the one beside it when the change took the card off the page (a title removed fr
 - **Left panel (440 px):** a list above the keyboard, then the 6×6 keyboard. The list is Recent searches (up to
   four) when the bar is empty, and Suggestions (four, mixing titles, people and genres) while typing. Recent
   searches are saved when a result is opened.
-- **Empty state:** Recently viewed, From My list and Browse by genre, in rows that run off the right edge.
+- **Empty state:** Browse by genre first (F46, Rebecca 2026-11-04), then Recently viewed and From My list as C
+  cards, in rows that run off the right edge.
 - **Typing:** the results preview sits right of the panel: "N results", filter chips (All, Movies, TV shows,
-  People, Included only) and a grid of cards that runs off the right edge. The preview can't be focused yet.
-- **Full results:** → from the keyboard's right edge slides the panel away and widens the same grid to six
-  columns, with focus on the first result. Same cards, same size, same header, so it reads as the preview
-  expanding. The grid starts at the 96 px safe margin and its six columns end 98 px short of the right edge. Up
+  People, Included only) and a grid of C cards (six in view) that runs off the right edge. The preview can't be focused yet.
+- **Full results:** → from the keyboard's right edge slides the panel away and widens the same grid to eight
+  columns of C cards (F46), with focus on the first result. Same cards, same size, same header, so it reads as the preview
+  expanding. The grid starts at the 96 px safe margin. A person keeps their round portrait, in a card the C card's size. Up
   from the chips reaches the search bar; OK on it, Back (or Backspace), or ← from the first column bring the
   keyboard back with the query kept. If the focused card goes (a filter chip, typing), focus moves to the first
   result or the bar, never to the hidden keyboard.
@@ -843,8 +847,9 @@ and line widths.
 | Focus | accent fill, or a 4 px accent ring on cards and art, with a 3–8% scale-up |
 | Motion | 140 ms for focus changes; 320–360 ms for page and popup transitions |
 
-Card sizes: library cards 417 × 172 art; search and row cards 271 × 152 art; Pick for me tiles a quarter of the
-width with 243 px art.
+Card sizes (F46): every title card is the C card, a 195 × 293 poster, eight across in a grid; Pick for me's P1 tiles
+are a quarter of the width, the same poster with a 202 px column of details beside it. The title preview's More like
+this tab is 305 px tall for them (the title, buttons and tabs sit higher on that tab).
 
 ## What is mock, and open questions for the build
 

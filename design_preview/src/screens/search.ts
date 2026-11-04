@@ -9,7 +9,7 @@ import { byId, TITLES } from '../data/catalog';
 import { isOwnIncluded } from '../data/offers';
 import type { Title } from '../types';
 import { icon } from '../ui/icons';
-import { button, chip, navBar, rowOf, smallCard } from '../ui/widgets';
+import { button, chip, miniCard, navBar, rowOf } from '../ui/widgets';
 import { needsTmdb, tmdbReady } from './needsTmdb';
 import { account } from '../core/account';
 import { personScreen } from './person';
@@ -110,22 +110,23 @@ export function searchScreen(): Screen {
     if (hit.kind === 'person') {
       return focusable(
         h(
-          'div.card.card--small.card--person',
-          h('div.card-art', h('div.person-portrait', initials(hit.label))),
-          h('div.card-name', highlight(hit.label, hit.match.indices)),
-          h('div.card-meta', 'Person'),
-          h('div.card-sub', `${hit.titles?.length ?? 0} title${hit.titles?.length === 1 ? '' : 's'} in the catalogue`),
+          'div.card.card--mini.card--person',
+          h(
+            'div.card-art',
+            h('div.person-portrait', initials(hit.label)),
+            h('div.person-cap', h('div.card-name', highlight(hit.label, hit.match.indices)), h('div.card-meta', 'Person')),
+          ),
         ),
         { ...opts, onOk: () => openPerson(hit.label) },
       );
     }
-    return smallCard(hit.title!, { ...opts, name: highlight(hit.label, hit.match.indices), onOk: () => openTitle(hit.title!) });
+    return miniCard(hit.title!, { ...opts, name: highlight(hit.label, hit.match.indices), onOk: () => openTitle(hit.title!) });
   };
 
   const titleRow = (label: string, titles: Title[], group: string) => {
     const row = rowOf(
       label,
-      titles.map((t) => smallCard(t, { group, key: `${group}-${t.id}`, onOk: () => openTitle(t) })),
+      titles.map((t) => miniCard(t, { group, key: `${group}-${t.id}`, onOk: () => openTitle(t) })),
     );
     // The row runs off the screen edge; scrolling stops a safe margin short of it so the focused card stays whole.
     row.querySelector<HTMLElement>('.row-items')!.dataset.scrollPad = '96';
@@ -198,8 +199,7 @@ export function searchScreen(): Screen {
         results,
         h(
           'div.browse',
-          titleRow('Recently viewed', viewed, 'viewed'),
-          titleRow('From My list', mine, 'mine'),
+          // F46 (Rebecca, 2026-11-04 09:57): Browse by genre first, then the title rows as C cards.
           h(
             'div.row',
             h('div.row-label', 'Browse by genre'),
@@ -210,6 +210,8 @@ export function searchScreen(): Screen {
               ),
             ),
           ),
+          titleRow('Recently viewed', viewed, 'viewed'),
+          titleRow('From My list', mine, 'mine'),
         ),
       );
     } else if (!hasMatches) {
