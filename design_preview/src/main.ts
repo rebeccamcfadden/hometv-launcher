@@ -1,4 +1,4 @@
-import './styles/tokens.css';
+import '@hometv/core/tokens.css';
 import './styles/themes.css';
 import './styles/base.css';
 import './styles/screens.css';

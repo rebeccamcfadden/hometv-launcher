@@ -11,7 +11,9 @@ SDK (ANDROID_HOME, default %LOCALAPPDATA%\Android\Sdk).
 
 Jobs:
   python    python -m unittest discover -s tests; passes when it adds no failure over its base (this machine has
-            ~148 environment failures on main too, so "no new failures" stands in for CI's green).
+            ~148 environment failures on main too, so "no new failures" stands in for CI's green). Also runs
+            packages/core's Node tests (npm test) at the head, when the folder exists, and fails when they fail or
+            when node is missing (Node 22.18+); the ruleset requires exactly three statuses, so it reports here.
   tables    tools/gen_tables.py --check. Stale tables (exit 1) pass on a PR, since they are regenerated after merging,
             and fail on a ref; invalid input (exit 2) always fails.
   launcher  gradlew testReleaseUnitTest lintRelease assembleRelease (with the local build cache), 0 lint errors,
@@ -91,7 +93,23 @@ try {
     # python
     $now = @(PyFailures $sha); $was = @(PyFailures $base)
     $new = @($now | Where-Object { $was -notcontains $_ -or $_ -like 'INCOMPLETE:*' })
-    if ($new.Count -eq 0) { Post python success "no new failures ($($now.Count) environment failures, as base)" }
+    # packages/core (shared with HomeTV for Samsung): its Node tests, at the head only. A commit without the folder
+    # (the base, or an older branch) skips them.
+    $core = "skipped (no packages/core)"; $coreFail = $null; $cout = @()
+    if (Test-Path "$dir\packages\core\package.json") {
+        if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+            $coreFail = 'packages/core: node not found (needs Node 22.18 or newer)'
+        } else {
+            Push-Location "$dir\packages\core"; $cout = & npm test 2>&1; $c = $LASTEXITCODE; Pop-Location
+            if ($c -ne 0) { $coreFail = "packages/core tests failed (npm test exited $c)" }
+            else {
+                $m = $cout | Select-String '(?:^|\s)pass (\d+)\s*$' | Select-Object -Last 1
+                $core = if ($m) { "core $($m.Matches[0].Groups[1].Value) tests pass" } else { 'core tests pass' }
+            }
+        }
+    }
+    if ($coreFail) { Post python failure $coreFail; $cout | Select-Object -Last 25 }
+    elseif ($new.Count -eq 0) { Post python success "no new failures ($($now.Count) environment failures, as base); $core" }
     else {
         $d = "$($new.Count) new: $(($new | Select-Object -First 2) -join '; ')"
         Post python failure $d.Substring(0, [Math]::Min(139, $d.Length)); $new

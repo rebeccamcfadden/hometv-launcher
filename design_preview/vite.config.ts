@@ -6,7 +6,9 @@ import { resolve } from 'node:path';
 // remote (remote.html, F27).
 export default defineConfig({
   base: './',
-  server: { port: 5173, open: true },
+  // Logic shared with HomeTV for Samsung (packages/core), imported as @hometv/core/<file>.
+  resolve: { alias: { '@hometv/core': resolve(__dirname, '../packages/core/src') } },
+  server: { port: 5173, open: true, fs: { allow: [__dirname, resolve(__dirname, '../packages/core')] } },
   build: {
     rollupOptions: {
       input: {
