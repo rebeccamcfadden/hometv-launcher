@@ -520,8 +520,8 @@ function Get-CheckedLists {
 # lists from different countries and firmware, and another household's choices aren't theirs. A list counts only when
 # its header (the comment lines at the top) says the model outright (`ro.product.model <model>`) or names it alongside
 # this TV's firmware build. The TV's own software version (ro.build.version.incremental, such as AP03) ranks highest;
-# Android's build (often one for every TV of an Android version), the device name, the Android version and the model
-# on the first line rank them after
+# the declared model, Android's build (often one for every TV of an Android version), the device name, the Android
+# version and the model on the first line rank them after, in that order. Header lines naming another list don't count
 # (the project lead's (a), tightened 2026-11-04 after twelve lists named one TCL model).
 function Find-ListsForModel([string]$Dir, [hashtable]$Tv) {
     $model = "$($Tv.Model)"
@@ -533,23 +533,27 @@ function Find-ListsForModel([string]$Dir, [hashtable]$Tv) {
         $file = Join-Path $folder.FullName 'debloat.txt'
         if (-not (Test-Path -LiteralPath $file)) { continue }
         $header = @(Get-Content -LiteralPath $file -TotalCount 40 | ForEach-Object { $_ } | Where-Object { $_ -match '^\s*#' })
-        $text = $header -join "`n"
+        # Only the list's own lines: one that names another list ("same platform as examples/x (build AP06)") describes
+        # that TV, not this one.
+        $text = ($header | Where-Object { $_ -notmatch 'examples/' }) -join "`n"
         if ($text -notmatch (& $word $model)) { continue }
         # Written plain, quoted or in backticks: ro.product.model BeyondTV, ro.product.model="AI PONT", `ro.product.model` X.
         $declared = $text -match ('ro\.product\.model`?[\s:=]+["''`]?' + [regex]::Escape($model) + '(?![A-Za-z0-9])')
-        $sameBuild = $build -and $text -match (& $word $build)
+        $sameBuild = [bool]($build -and $text -match (& $word $build))
         if (-not ($declared -or $sameBuild)) { continue }
-        $score = 0
-        if ($declared) { $score += 2 }
-        if ($sameBuild) { $score += 1 }
+        # Firmware IDs such as AP03 or TV05, or plain numbers such as 200321; short numbers would match anything.
         $sw = "$($Tv.Software)"
-        if ($sw.Length -ge 3 -and $sw -match '[A-Za-z]' -and $text -match (& $word $sw)) { $score += 2 }
-        if ($Tv.Device -and $Tv.Device -ne $model -and $text -match (& $word "$($Tv.Device)")) { $score += 1 }
-        if ($Tv.Android -and $text -match ('Android(\s+TV)?\s+' + [regex]::Escape("$($Tv.Android)") + '(?![0-9.])')) { $score += 1 }
-        if ($header.Count -gt 0 -and $header[0] -match (& $word $model)) { $score += 1 }
-        $scored += [pscustomobject]@{ Name = $folder.Name; Score = $score }
+        $sameSoftware = [bool](($sw -match '^(?=.*[A-Za-z])[A-Za-z0-9._-]{3,}$' -or $sw -match '^[0-9]{4,}$') -and $text -match (& $word $sw))
+        $scored += [pscustomobject]@{
+            Name = $folder.Name; Software = $sameSoftware; Declared = $declared; Build = $sameBuild
+            Device = [bool]($Tv.Device -and $Tv.Device -ne $model -and $text -match (& $word "$($Tv.Device)"))
+            Android = [bool]($Tv.Android -and $text -match ('Android(\s+TV)?\s+' + [regex]::Escape("$($Tv.Android)") + '(?![0-9.])'))
+            FirstLine = [bool]($header.Count -gt 0 -and $header[0] -notmatch 'examples/' -and $header[0] -match (& $word $model))
+        }
     }
-    return @($scored | Sort-Object @{ Expression = 'Score'; Descending = $true }, Name | Select-Object -First 3 | ForEach-Object { $_.Name })
+    # Each criterion outranks all those after it, so no number of weaker matches beats the TV's own software version.
+    $order = 'Software', 'Declared', 'Build', 'Device', 'Android', 'FirstLine' | ForEach-Object { @{ Expression = [string]$_; Descending = $true } }
+    return @($scored | Sort-Object -Property ($order + @{ Expression = 'Name'; Descending = $false }) | Select-Object -First 3 | ForEach-Object { $_.Name })
 }
 
 # Step 6, option (a) (the project lead, 2026-11-02): suggests the lists that name this model, and the person helping

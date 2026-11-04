@@ -1125,6 +1125,36 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(offered, ["c-same-software", "b-declared", "d-declared"])
         self.assertNotIn("  a-mention", proc.stdout)
 
+    def offered_lists(self, headers, props):
+        examples = self.base / "examples"
+        for name, header in headers.items():
+            (examples / name).mkdir(parents=True)
+            (examples / name / "debloat.txt").write_text(header + "com.example.x\n", encoding="utf-8")
+        state = self.tv()
+        state["props"].update(props)
+        proc, end = self.run_installer(state, "-ListsFrom", str(examples))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        return [line.strip() for line in proc.stdout.split("best first:")[1].splitlines()[1:4] if line.startswith("  ")]
+
+    def test_a_note_about_another_list_is_not_this_lists_software(self):
+        # As examples/tcl-beyondtv-pl (AP03) names the AP06 list it started from: an AP06 TV gets the AP06 list first.
+        offered = self.offered_lists({
+            "a-ap03": "# Test TV (ro.product.model Test TV, build PPR1.180610.011 AP03), Android TV 9.\n"
+                      "# Same platform as examples/b-ap06/ (build AP06), which was the starting point.\n",
+            "b-ap06": "# Test TV (ro.product.model Test TV), Android TV 9, build PPR1.180610.011 AP06\n",
+        }, {"ro.build.display.id": "PPR1.180610.011 release-keys", "ro.build.version.incremental": "AP06"})
+        self.assertEqual(offered, ["b-ap06", "a-ap03"])
+
+    def test_the_same_software_beats_any_number_of_weaker_matches(self):
+        # A numeric software version (Philips: incremental 200321) counts too.
+        weaker = "# Test TV (ro.product.model Test TV), device tv_dev, Android 9, build PPR1.180610.011 incremental 200715\n"
+        offered = self.offered_lists({
+            "a-weaker": weaker, "b-weaker": weaker, "c-weaker": weaker,
+            "d-same-software": "# A set (ro.product.model Test TV), incremental 200321\n",
+        }, {"ro.build.display.id": "PPR1.180610.011 release-keys", "ro.build.version.incremental": "200321",
+            "ro.product.device": "tv_dev"})
+        self.assertEqual(offered, ["d-same-software", "a-weaker", "b-weaker"])
+
     def test_stamped_copy_refuses_another_apk(self):
         script, release = self.stamped_copy("11" * 32)
         proc, end = self.run_script(script, self.tv(), "-DownloadFrom", str(release))
