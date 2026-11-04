@@ -691,7 +691,7 @@ key still opens the TV maker's panel, or `settings_key_panel`'s old quick-settin
   Animations switch kept in step: Off is Animations off, and turning the switch on or off in Launcher settings drops
   the saved Motion. A TV whose config.xml or config.json sets `reduced_motion` is never Full (the project lead's
   decision, 2026-10-31): a saved Full is Reduced there, a saved Off stays Off, the row shows the Motion in effect and
-  OK steps Reduced and Off only. With nothing saved, the switch and `reduced_motion` decide as before. A step applies at once and moves the settings change count, so Home
+  OK steps Reduced and Off only. With nothing saved, the switch and `reduced_motion` decide as before, except on a TV that starts at the light end, which starts at Off. A step applies at once and moves the settings change count, so Home
   rebuilds with it the next time it resumes. Reduced is the spec's: the fades stay (page switches, popups, menus, the
   Filters drawer, toasts, Home's greeting and dim, Search's panel, the backdrop's crossfade) and nothing slides, rises
   or scales up (focus, rows, scrolling); Off moves and fades nothing, as does a TV whose system animations are off.

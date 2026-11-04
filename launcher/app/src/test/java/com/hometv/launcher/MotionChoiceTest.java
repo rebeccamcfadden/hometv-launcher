@@ -133,4 +133,11 @@ public class MotionChoiceTest {
         // Not a light start: as before.
         assertEquals(MotionChoice.FULL, MotionChoice.resolve(null, true, false, false));
     }
+
+    @Test
+    public void onlyReducedDropsMovesLift() {
+        assertTrue(MotionChoice.FULL.lifts());
+        assertFalse(MotionChoice.REDUCED.lifts());
+        assertTrue(MotionChoice.OFF.lifts());
+    }
 }

@@ -21,7 +21,7 @@ import java.util.List;
  * light_defaults) starts with PerfChoices.LIGHT and Motion Off, and the pane says so; a choice saved here wins.
  *
  * <p>Motion keeps its rules: a TV whose config sets reduced_motion is never Full, so Full isn't offered there; with
- * Android's animations off, motion stays reduced whatever is chosen. Everything takes effect when Home is rebuilt, as
+ * Android's animations off, Motion is Off whatever is chosen. Everything takes effect when Home is rebuilt, as
  * the page closes (Host#valueChanged moves the change count).
  */
 final class PerformanceSection implements SettingsSection {
@@ -71,8 +71,8 @@ final class PerformanceSection implements SettingsSection {
     @Override
     public CharSequence value(Context ctx) {
         MotionChoice m = motion(ctx);
-        // Android's animations off keep motion reduced: Full shows as Reduced, Off stays Off.
-        if (m == MotionChoice.FULL && systemOff(ctx)) m = MotionChoice.REDUCED;
+        // Android's animations off make Motion Off, whatever is chosen.
+        m = m.withSystem(systemOff(ctx));
         PerfChoices p = PerfPrefs.load(ctx, config);
         if (m == MotionChoice.FULL && p.same(PerfChoices.ALL)) return ctx.getString(R.string.perf_value_all_on);
         if (m == MotionChoice.FULL && p.same(PerfChoices.FULL)) return ctx.getString(R.string.perf_value_default);

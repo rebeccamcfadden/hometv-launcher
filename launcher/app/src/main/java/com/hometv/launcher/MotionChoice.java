@@ -74,6 +74,11 @@ enum MotionChoice {
         return focused && this != REDUCED ? scaleTo : 1f;
     }
 
+    /** Move's lift of a picked-up tile: dropped with Reduced (its arrows say it is picked up); Off jumps to it. */
+    boolean lifts() {
+        return this != REDUCED;
+    }
+
     /** The Motion in effect on a TV whose system animations are off (animator scale 0): Off, whatever was chosen. */
     MotionChoice withSystem(boolean systemAnimationsOff) {
         return systemAnimationsOff ? OFF : this;

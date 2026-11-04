@@ -217,8 +217,8 @@
     <bool name="animations">true</bool>
 
     <!-- Reduced motion: for TVs whose GPU cannot keep up (MediaTek MT5895 on Android 10 is the known case).
-         true keeps Motion from being Full: it starts at Reduced (fades only: nothing slides, rises or scales up),
-         and Off stays a choice on the TV. Set it here or with "reduced_motion": true in a pushed config.json; false
+         true keeps Motion from being Full: it starts at Reduced (fades only: nothing slides, rises or scales up), or at
+         Off on a TV that starts at the light end (light_defaults), and Off stays a choice on the TV. Set it here or with "reduced_motion": true in a pushed config.json; false
          keeps the normal motion. -->
     <bool name="reduced_motion">false</bool>
 

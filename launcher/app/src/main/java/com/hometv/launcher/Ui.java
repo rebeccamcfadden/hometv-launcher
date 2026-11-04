@@ -307,6 +307,10 @@ final class Ui {
      * The scale a focused (or lifted) item takes: {@code scaleTo} (3–8% up in the spec), or none with Motion Reduced,
      * which drops focus scale-ups (design_preview, .is-focused). Off keeps the scale, at once: Off drops transitions.
      */
+    static boolean lifts() {
+        return motion.lifts();
+    }
+
     static float focusScale(boolean on, float scaleTo) {
         return motion.focusScale(on, scaleTo);
     }

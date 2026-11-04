@@ -61,7 +61,7 @@
     <string name="motion_full">Full</string>
     <string name="motion_reduced">Reduced</string>
     <string name="motion_off">Off</string>
-    <string name="motion_forced_system">Android\'s animations are off on this TV, so motion stays reduced.</string>
+    <string name="motion_forced_system">Android\'s animations are off on this TV, so nothing moves or fades.</string>
     <string name="motion_forced_config">This TV\'s config keeps motion reduced (reduced_motion), so Full isn\'t offered.</string>
 
     <!-- Open on start. -->
