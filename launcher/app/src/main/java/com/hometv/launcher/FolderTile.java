@@ -45,7 +45,7 @@ final class FolderTile extends LinearLayout {
         addView(under, ulp);
 
         setOnFocusChangeListener((v, focused) -> {
-            float s = focused ? 1.05f : 1f;
+            float s = Ui.focusScale(focused, 1.05f);
             face.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
     }

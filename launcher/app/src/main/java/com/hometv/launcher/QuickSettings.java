@@ -148,7 +148,7 @@ final class QuickSettings {
                 motion[0] = motion[0].next(configReduced);
                 MotionPrefs.save(act, motion[0]);
                 // At once for what animates from here on; the change count rebuilds Home on its next resume.
-                Ui.init(act, motion[0].reduced());
+                Ui.init(act, motion[0]);
             }
         }, ctx -> ctx.getString(motionLabel(motion[0]))));
         return rows;

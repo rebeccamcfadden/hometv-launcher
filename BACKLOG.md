@@ -516,7 +516,7 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   start keeps, cost nothing visible next to that. Cold start was about 100 ms slower in these runs, not yet explained
   (Reduced motion shouldn't add to it; worth a trace).
   A low-RAM TV (`ActivityManager.isLowRamDevice()`, which the TCL reports) or one whose config.xml or config.json
-  sets `light_defaults` to on starts at the light end: no card shadows, Motion Reduced, no animated details; the focus
+  sets `light_defaults` to on starts at the light end: no card shadows, Motion Off (Reduced's fades cost frames there: Rebecca, 2026-11-04), no animated details; the focus
   glow (one tile) and the picture stay. The household's choices win; Follow theme and a theme push drop them.
 - **Focus glow:** checked on the TCL: a theme's glow shows in full on Home's Inputs and Shortcuts tiles, edges
   included.
@@ -691,10 +691,11 @@ key still opens the TV maker's panel, or `settings_key_panel`'s old quick-settin
   Animations switch kept in step: Off is Animations off, and turning the switch on or off in Launcher settings drops
   the saved Motion. A TV whose config.xml or config.json sets `reduced_motion` is never Full (the project lead's
   decision, 2026-10-31): a saved Full is Reduced there, a saved Off stays Off, the row shows the Motion in effect and
-  OK steps Reduced and Off only. With nothing saved, the switch and `reduced_motion` decide as before. A step applies at once and moves the settings change count, so Home
-  rebuilds with it the next time it resumes. The launcher has one reduced-motion mode (no animations), so Reduced
-  and Off look the same for now. Wanted: Reduced as the spec has it, keeping the fades and dropping slides, rises
-  and focus scale-ups.
+  OK steps Reduced and Off only. With nothing saved, the switch and `reduced_motion` decide as before, except on a TV that starts at the light end, which starts at Off. A step applies at once and moves the settings change count, so Home
+  rebuilds with it the next time it resumes. Reduced is the spec's: the fades stay (page switches, popups, menus, the
+  Filters drawer, toasts, Home's greeting and dim, Search's panel, the backdrop's crossfade) and nothing slides, rises
+  or scales up (focus, rows, scrolling); Off moves and fades nothing, as does a TV whose system animations are off.
+  The account spinner and the Seasonal animated details stay off with Reduced.
 - **The open menu's button:** as with the Wi-Fi and Inputs dropdowns, the Settings icon is not kept highlighted while
   its menu is open (the prototype's `is-open`).
 

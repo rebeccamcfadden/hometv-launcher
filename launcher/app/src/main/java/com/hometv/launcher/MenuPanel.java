@@ -261,13 +261,14 @@ final class MenuPanel {
         return lp;
     }
 
-    /** The drop-in: a short fade and grow from the top right corner (200 ms). */
+    /** The drop-in: a short fade and grow from the top right corner (200 ms); with Motion Reduced, the fade alone. */
     static void dropIn(View panel) {
-        if (Ui.reducedMotion()) return;
+        if (Ui.motionOff()) return;
+        boolean grow = !Ui.reducedMotion();
         panel.setAlpha(0f);
-        panel.setScaleX(0.96f);
-        panel.setScaleY(0.96f);
-        panel.setTranslationY(-Ui.px(8));
+        panel.setScaleX(grow ? 0.96f : 1f);
+        panel.setScaleY(grow ? 0.96f : 1f);
+        panel.setTranslationY(grow ? -Ui.px(8) : 0f);
         panel.post(() -> {
             panel.setPivotX(panel.getWidth());
             panel.setPivotY(0);

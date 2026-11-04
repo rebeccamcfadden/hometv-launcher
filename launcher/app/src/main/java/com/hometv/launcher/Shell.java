@@ -70,7 +70,8 @@ final class Shell {
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         lp.bottomMargin = Ui.px(110);
         stage.addView(toast, lp);
-        hideToast = () -> toast.animate().alpha(0f).translationY(Ui.px(20)).setDuration(Ui.ms(Ui.FAST_MS)).start();
+        hideToast = () -> toast.animate().alpha(0f).translationY(Ui.reducedMotion() ? 0f : Ui.px(20))
+                .setDuration(Ui.fadeMs(Ui.FAST_MS)).start();
     }
 
     Screen top() {
@@ -131,7 +132,8 @@ final class Shell {
         Screen root = stack.isEmpty() ? null : stack.get(0);
         if (root != null && root != s) root.onLeave();
         endTransition();
-        boolean animate = prev != null && prev.tab != null && prev != s && !Ui.reducedMotion();
+        // Motion Reduced fades the pages without sliding them; Off switches at once.
+        boolean animate = prev != null && prev.tab != null && prev != s && !Ui.motionOff();
         if (animate) leaving = prev;
         stack.clear();
         stack.add(s);
@@ -314,8 +316,8 @@ final class Shell {
         toast.setText(text);
         toast.removeCallbacks(hideToast);
         toast.bringToFront();
-        toast.setTranslationY(Ui.px(20));
-        toast.animate().alpha(1f).translationY(0f).setDuration(Ui.ms(Ui.SLOW_MS)).setInterpolator(Ui.EASE).start();
+        toast.setTranslationY(Ui.reducedMotion() ? 0f : Ui.px(20));
+        toast.animate().alpha(1f).translationY(0f).setDuration(Ui.fadeMs(Ui.SLOW_MS)).setInterpolator(Ui.EASE).start();
         toast.postDelayed(hideToast, ms);
     }
 
@@ -526,7 +528,8 @@ final class Shell {
 
     /**
      * The new page's content slides 90 px in from the side of the section it came from and fades in (360 ms); the
-     * old content slides 60 px the other way and fades out (240 ms). The nav and the page's shade stay still.
+     * old content slides 60 px the other way and fades out (240 ms). The nav and the page's shade stay still. With
+     * Motion Reduced the same fades run without the slides.
      */
     private void startTransition(Screen from, Screen to) {
         int dir = Integer.signum(to.tab.ordinal() - from.tab.ordinal());
@@ -536,11 +539,11 @@ final class Shell {
         to.view.animate().alpha(1f).setDuration(240).setInterpolator(null).start();
         for (View child : sliding(to.view)) {
             child.setAlpha(0f);
-            child.setTranslationX(dir * Ui.px(90));
+            child.setTranslationX(Ui.reducedMotion() ? 0f : dir * Ui.px(90));
             child.animate().alpha(1f).translationX(0f).setDuration(360).setInterpolator(Ui.EASE).start();
         }
         for (View child : sliding(from.view)) {
-            child.animate().alpha(0f).translationX(-dir * Ui.px(60)).setDuration(240)
+            child.animate().alpha(0f).translationX(Ui.reducedMotion() ? 0f : -dir * Ui.px(60)).setDuration(240)
                     .setInterpolator(new android.view.animation.AccelerateInterpolator()).start();
         }
         stage.postDelayed(endTransition, 380);

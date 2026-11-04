@@ -2,7 +2,7 @@
 <!-- Launcher settings › Performance (PerformanceSection; the project lead's decision, 2026-11-01). -->
 <resources>
     <string name="perf_sub">How much the launcher draws and moves. Lighter choices keep it smooth on TVs with little memory; what it shows stays the same.</string>
-    <string name="perf_light_note">This TV starts with the lighter choices, as it has little memory (or its config asks for them): no card shadows, Reduced motion and no animated details. What you choose here wins.</string>
+    <string name="perf_light_note">This TV starts with the lighter choices, as it has little memory (or its config asks for them): no card shadows, no motion and no animated details. What you choose here wins.</string>
 
     <string name="perf_light_mode">Light mode</string>
     <string name="perf_light_mode_sub">Sets every choice below to its lightest: Motion off, no card shadows or glow, a plain backdrop and nothing animated.</string>

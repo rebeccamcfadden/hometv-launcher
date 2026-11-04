@@ -69,14 +69,16 @@ final class TileMenu {
 
             @Override
             void onShow() {
-                if (shown || Ui.reducedMotion()) return;
+                if (shown || Ui.motionOff()) return;
                 shown = true;
+                // With Motion Reduced it fades in where it is, without growing.
+                boolean grow = !Ui.reducedMotion();
                 panel.setAlpha(0f);
-                panel.setScaleX(0.96f);
-                panel.setScaleY(0.96f);
+                panel.setScaleX(grow ? 0.96f : 1f);
+                panel.setScaleY(grow ? 0.96f : 1f);
                 // It grows out of the tile: down from under it, up from over it, sideways from beside it.
                 boolean sideways = at.side == MenuPlace.Side.RIGHT || at.side == MenuPlace.Side.LEFT;
-                int shift = Ui.px(8);
+                int shift = grow ? Ui.px(8) : 0;
                 if (sideways) panel.setTranslationX(at.side == MenuPlace.Side.RIGHT ? -shift : shift);
                 else panel.setTranslationY(at.side == MenuPlace.Side.BELOW ? -shift : shift);
                 panel.post(() -> {

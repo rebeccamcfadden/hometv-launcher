@@ -180,17 +180,21 @@ final class FiltersDrawer extends Screen {
         return false;
     }
 
-    /** Slides in once, the first time it shows (240–320 ms; at once with reduced motion). */
+    /** Slides in once, the first time it shows (240–320 ms); fades in with Motion Reduced, at once with Off. */
     @Override
     void onShow() {
         if (shown) return;
         shown = true;
-        long ms = Ui.ms(Ui.SLOW_MS);
-        if (ms == 0) return;
-        panel.setTranslationX(Ui.px(WIDTH + SHADOW));
-        panel.animate().translationX(0f).setDuration(ms).setInterpolator(Ui.EASE).start();
+        if (Ui.motionOff()) return;
+        if (Ui.reducedMotion()) {
+            panel.setAlpha(0f);
+            panel.animate().alpha(1f).setDuration(Ui.fadeMs(Ui.SLOW_MS)).start();
+        } else {
+            panel.setTranslationX(Ui.px(WIDTH + SHADOW));
+            panel.animate().translationX(0f).setDuration(Ui.ms(Ui.SLOW_MS)).setInterpolator(Ui.EASE).start();
+        }
         scrim.setAlpha(0f);
-        scrim.animate().alpha(1f).setDuration(Ui.ms(Ui.FAST_MS)).start();
+        scrim.animate().alpha(1f).setDuration(Ui.fadeMs(Ui.FAST_MS)).start();
     }
 
     private static LinearLayout.LayoutParams below(float top) {

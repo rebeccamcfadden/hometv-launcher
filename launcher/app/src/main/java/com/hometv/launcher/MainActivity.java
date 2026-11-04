@@ -351,7 +351,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         storage.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
         registerReceiver(packageReceiver, storage);
         HomeApps.forgetAll(this);
-        Ui.init(this, cfg.reducedMotion());
+        Ui.init(this, cfg.motion);
         theme = ThemeStore.current(this);
         systemFont = ThemeStore.systemFont(this);
         Ui.apply(theme);

@@ -512,13 +512,15 @@ final class TitlePreview extends Screen {
         for (Toggle toggle : toggles) toggle.paint();
         if (shown) return;
         shown = true;
-        if (Ui.reducedMotion()) return;
+        if (Ui.motionOff()) return;
+        // With Motion Reduced it fades in where it is, without the rise and the grow.
+        boolean rise = !Ui.reducedMotion();
         scrim.setAlpha(0f);
         scrim.animate().alpha(1f).setDuration(Ui.FAST_MS).start();
         popup.setAlpha(0f);
-        popup.setTranslationY(Ui.px(24));
-        popup.setScaleX(0.985f);
-        popup.setScaleY(0.985f);
+        popup.setTranslationY(rise ? Ui.px(24) : 0f);
+        popup.setScaleX(rise ? 0.985f : 1f);
+        popup.setScaleY(rise ? 0.985f : 1f);
         popup.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(Ui.SLOW_MS)
                 .setInterpolator(Ui.EASE).start();
     }

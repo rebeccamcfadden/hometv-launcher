@@ -107,7 +107,7 @@ final class AppTile extends LinearLayout {
         addView(under, ulp);
 
         setOnFocusChangeListener((v, focused) -> {
-            float s = focused || moving ? 1.05f : 1f;
+            float s = Ui.focusScale(focused || moving, 1.05f);
             frame.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
 
@@ -154,8 +154,9 @@ final class AppTile extends LinearLayout {
     void setMoving(boolean on) {
         moving = on;
         arrows.setVisibility(on ? VISIBLE : GONE);
-        float s = on || isFocused() ? 1.05f : 1f;
-        frame.animate().translationY(on ? -Ui.px(14) : 0f).scaleX(s).scaleY(s)
+        float s = Ui.focusScale(on || isFocused(), 1.05f);
+        // Motion Reduced drops the lift too: the arrows say it is picked up. Off keeps it, without the move.
+        frame.animate().translationY(on && Ui.lifts() ? -Ui.px(14) : 0f).scaleX(s).scaleY(s)
                 .setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
     }
 

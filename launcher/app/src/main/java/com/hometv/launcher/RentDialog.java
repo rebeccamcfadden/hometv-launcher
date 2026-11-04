@@ -138,7 +138,7 @@ final class RentDialog {
             /** The scrim and the dialog fade in (screens.css .dialog, fade-in), once. */
             @Override
             void onShow() {
-                if (shown || Ui.reducedMotion()) return;
+                if (shown || Ui.motionOff()) return;
                 shown = true;
                 for (View v : new View[]{scrim, box}) {
                     v.setAlpha(0f);

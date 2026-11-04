@@ -315,9 +315,12 @@ final class Backdrops {
         });
     }
 
-    /** Fades a picture in: over the sky the first time, crossfading from the one before when the hour changes it. */
+    /**
+     * Fades a picture in: over the sky the first time, crossfading from the one before when the hour changes it. A fade,
+     * so Motion Reduced keeps it; Off swaps at once.
+     */
     private void reveal(Drawable d) {
-        long ms = Ui.ms(Ui.SLOW_MS);
+        long ms = Ui.fadeMs(Ui.SLOW_MS);
         Drawable old = view.getDrawable();
         cancelFade();
         if (imageShown && old != null && ms > 0) {

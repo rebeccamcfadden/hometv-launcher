@@ -57,7 +57,7 @@ final class PerfChoices {
     static final PerfChoices ALL = new PerfChoices(Shadows.ON, true, false, true);
     /**
      * A low-RAM TV's start: no card shadows (about 19 points of jank on the TCL), nothing animated; the focus glow
-     * (one tile) and the backdrop picture stay, as the theme's look. Motion starts at Reduced (MotionChoice).
+     * (one tile) and the backdrop picture stay, as the theme's look. Motion starts at Off (MotionChoice).
      */
     static final PerfChoices LIGHT = new PerfChoices(Shadows.OFF, true, false, false);
     /** The pane's Light mode button: every choice at its lightest (with Motion Off). */

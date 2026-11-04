@@ -113,7 +113,7 @@ final class Ui {
     private static Theme theme = Theme.midnight();
 
     private static float scale = 1f;
-    private static boolean reducedMotion;
+    private static MotionChoice motion = MotionChoice.FULL;
 
     static Theme theme() {
         return theme;
@@ -201,21 +201,31 @@ final class Ui {
     }
 
     /** Reads the screen once per activity: the stage is as wide as the screen's long side. */
-    static void init(Context ctx, boolean reduced) {
+    static void init(Context ctx, MotionChoice choice) {
         DisplayMetrics m = ctx.getResources().getDisplayMetrics();
         scale = Math.max(m.widthPixels, m.heightPixels) / (float) STAGE_W;
         float animator = Settings.Global.getFloat(ctx.getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1f);
-        reducedMotion = reduced || animator == 0f;
+        motion = choice.withSystem(animator == 0f);
     }
 
-    /** Reduced motion (config reduced_motion, animations off, or the system's animator scale at 0). */
+    /** Reduced motion (Motion Reduced or Off): nothing slides, rises or scales up. Fades may still run (fadeMs). */
     static boolean reducedMotion() {
-        return reducedMotion;
+        return !motion.moves();
     }
 
-    /** A duration, or none with reduced motion: pages and menus then switch without animating. */
+    /** Motion Off (or the system's animator scale at 0): not even a fade. */
+    static boolean motionOff() {
+        return !motion.fades();
+    }
+
+    /** A movement's duration (a slide, a rise, a scale-up), or none with reduced motion: it then jumps. */
     static long ms(long duration) {
-        return reducedMotion ? 0 : duration;
+        return motion.moves() ? duration : 0;
+    }
+
+    /** A fade's duration, or none with Motion Off: Reduced keeps the fades. */
+    static long fadeMs(long duration) {
+        return motion.fades() ? duration : 0;
     }
 
     /** Design pixels to screen pixels. */
@@ -278,13 +288,25 @@ final class Ui {
 
     /** Focused first, then activated (the current page's nav item), then the resting look. */
     static StateListDrawable states(Drawable normal, Drawable activated, Drawable focused) {
-        StateListDrawable s = new StateListDrawable();
+        StateListDrawable s = new MotionStates();
         s.addState(new int[]{android.R.attr.state_focused}, focused);
         if (activated != null) s.addState(new int[]{android.R.attr.state_activated}, activated);
         s.addState(new int[]{}, normal);
-        s.setEnterFadeDuration((int) ms(FAST_MS));
-        s.setExitFadeDuration((int) ms(FAST_MS));
         return s;
+    }
+
+    /**
+     * Fades between its states for as long as the Motion in effect says at each change: Quick settings' Motion calls
+     * {@link #init} without rebuilding Home, so a duration taken when the drawable was built would go stale.
+     */
+    private static final class MotionStates extends StateListDrawable {
+        @Override
+        protected boolean onStateChange(int[] stateSet) {
+            int ms = (int) fadeMs(FAST_MS);
+            setEnterFadeDuration(ms);
+            setExitFadeDuration(ms);
+            return super.onStateChange(stateSet);
+        }
     }
 
     static ColorStateList colors(int normal, int activated, int focused) {
@@ -293,12 +315,24 @@ final class Ui {
                 new int[]{focused, activated, normal});
     }
 
+    /**
+     * The scale a focused (or lifted) item takes: {@code scaleTo} (3–8% up in the spec), or none with Motion Reduced,
+     * which drops focus scale-ups (design_preview, .is-focused). Off keeps the scale, at once: Off drops transitions.
+     */
+    static boolean lifts() {
+        return motion.lifts();
+    }
+
+    static float focusScale(boolean on, float scaleTo) {
+        return motion.focusScale(on, scaleTo);
+    }
+
     /** The small scale-up a focused item gets (3–8% in the spec), animated with the focus change. */
     static void scaleOnFocus(View v, float scaleTo) {
         View.OnFocusChangeListener previous = v.getOnFocusChangeListener();
         v.setOnFocusChangeListener((view, focused) -> {
             if (previous != null) previous.onFocusChange(view, focused);
-            float s = focused ? scaleTo : 1f;
+            float s = focusScale(focused, scaleTo);
             view.animate().scaleX(s).scaleY(s).setDuration(ms(FAST_MS)).setInterpolator(EASE).start();
         });
     }

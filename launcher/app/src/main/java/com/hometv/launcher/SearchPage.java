@@ -751,6 +751,8 @@ final class SearchPage extends Screen {
         }
         shownExpanded = expanded;
         long ms = snap ? 0 : Ui.ms(Ui.SLOW_MS);
+        // Motion Reduced (design_preview, .search-panel): the panel and the results jump, and the panel still fades.
+        long fade = snap ? 0 : Ui.fadeMs(Ui.SLOW_MS);
         snap = false;
         panel.animate().cancel();
         scroll.animate().cancel();
@@ -759,8 +761,9 @@ final class SearchPage extends Screen {
             setViewLeft(VIEW_LEFT_EXPANDED);
             if (ms == 0) {
                 panel.setTranslationX(-Ui.px(PANEL_SHIFT));
-                panel.setAlpha(0f);
                 scroll.setTranslationX(0f);
+                if (fade == 0) panel.setAlpha(0f);
+                else panel.animate().alpha(0f).setDuration(fade).start();
                 return;
             }
             panel.animate().translationX(-Ui.px(PANEL_SHIFT)).alpha(0f).setDuration(ms).setInterpolator(Ui.EASE).start();
@@ -769,9 +772,10 @@ final class SearchPage extends Screen {
         } else {
             if (ms == 0) {
                 panel.setTranslationX(0f);
-                panel.setAlpha(1f);
                 scroll.setTranslationX(0f);
                 setViewLeft(VIEW_LEFT);
+                if (fade == 0) panel.setAlpha(1f);
+                else panel.animate().alpha(1f).setDuration(fade).start();
                 return;
             }
             panel.animate().translationX(0f).alpha(1f).setDuration(ms).setInterpolator(Ui.EASE).start();
@@ -1072,7 +1076,7 @@ final class SearchPage extends Screen {
         card.setContentDescription(hit.label);
         card.setOnFocusChangeListener((v, focused) -> {
             art.setRing(focused);
-            float s = focused ? 1.03f : 1f;
+            float s = Ui.focusScale(focused, 1.03f);
             art.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
         return Focus.make(card, GROUP_GRID, key, isDefault, v -> openPerson(hit.person));

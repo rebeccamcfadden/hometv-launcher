@@ -14,6 +14,39 @@ import static org.junit.Assert.assertTrue;
 public class MotionChoiceTest {
 
     @Test
+    public void reducedKeepsTheFadesAndDropsTheMoves() {
+        assertTrue(MotionChoice.FULL.moves());
+        assertTrue(MotionChoice.FULL.fades());
+        assertFalse("no slides, rises or scale-ups", MotionChoice.REDUCED.moves());
+        assertTrue("the fades stay", MotionChoice.REDUCED.fades());
+        assertFalse(MotionChoice.OFF.moves());
+        assertFalse("nothing fades either", MotionChoice.OFF.fades());
+    }
+
+    @Test
+    public void reducedDropsTheFocusScaleUpAndOffJumpsToIt() {
+        assertEquals(1.05f, MotionChoice.FULL.focusScale(true, 1.05f), 0f);
+        assertEquals(1f, MotionChoice.REDUCED.focusScale(true, 1.05f), 0f);
+        assertEquals(1.05f, MotionChoice.OFF.focusScale(true, 1.05f), 0f);
+        for (MotionChoice m : MotionChoice.values()) assertEquals(1f, m.focusScale(false, 1.05f), 0f);
+    }
+
+    @Test
+    public void systemAnimationsOffMeanMotionOff() {
+        for (MotionChoice m : MotionChoice.values()) {
+            assertEquals(MotionChoice.OFF, m.withSystem(true));
+            assertEquals(m, m.withSystem(false));
+        }
+    }
+
+    @Test
+    public void reducedStillCountsAsReducedMotion() {
+        assertFalse(MotionChoice.FULL.reduced());
+        assertTrue(MotionChoice.REDUCED.reduced());
+        assertTrue(MotionChoice.OFF.reduced());
+    }
+
+    @Test
     public void savedCodesParse() {
         assertEquals(MotionChoice.FULL, MotionChoice.parse("full"));
         assertEquals(MotionChoice.REDUCED, MotionChoice.parse(" reduced "));
@@ -87,14 +120,24 @@ public class MotionChoiceTest {
     }
 
     @Test
-    public void aLightStartTvStartsAtReducedUntilAChoiceIsSaved() {
-        assertEquals(MotionChoice.REDUCED, MotionChoice.resolve(null, true, false, true));
+    public void aLightStartTvStartsAtOffUntilAChoiceIsSaved() {
+        assertEquals(MotionChoice.OFF, MotionChoice.resolve(null, true, false, true));
         assertEquals(MotionChoice.OFF, MotionChoice.resolve(null, false, false, true));
         assertEquals(MotionChoice.FULL, MotionChoice.resolve("full", true, false, true));
         assertEquals(MotionChoice.OFF, MotionChoice.resolve("off", true, false, true));
+        // Reduced, with its fades, only when someone picks it; and with reduced_motion as well.
+        assertEquals(MotionChoice.REDUCED, MotionChoice.resolve("reduced", true, false, true));
+        assertEquals(MotionChoice.OFF, MotionChoice.resolve(null, true, true, true));
         // reduced_motion still keeps a saved Full from being Full.
         assertEquals(MotionChoice.REDUCED, MotionChoice.resolve("full", true, true, true));
         // Not a light start: as before.
         assertEquals(MotionChoice.FULL, MotionChoice.resolve(null, true, false, false));
+    }
+
+    @Test
+    public void onlyReducedDropsMovesLift() {
+        assertTrue(MotionChoice.FULL.lifts());
+        assertFalse(MotionChoice.REDUCED.lifts());
+        assertTrue(MotionChoice.OFF.lifts());
     }
 }

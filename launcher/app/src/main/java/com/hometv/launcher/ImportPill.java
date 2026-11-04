@@ -148,7 +148,7 @@ final class ImportPill extends LinearLayout {
         animate().cancel();
         boolean still = Ui.reducedMotion();
         setTranslationY(still ? 0f : slide());
-        animate().alpha(1f).translationY(0f).setDuration(Ui.ms(Ui.FAST_MS)).setListener(null).start();
+        animate().alpha(1f).translationY(0f).setDuration(Ui.fadeMs(Ui.FAST_MS)).setListener(null).start();
     }
 
     private void hide() {
@@ -157,7 +157,7 @@ final class ImportPill extends LinearLayout {
         shownKind = null;
         animate().cancel();
         boolean still = Ui.reducedMotion();
-        animate().alpha(0f).translationY(still ? 0f : slide()).setDuration(Ui.ms(Ui.FAST_MS))
+        animate().alpha(0f).translationY(still ? 0f : slide()).setDuration(Ui.fadeMs(Ui.FAST_MS))
                 .withEndAction(() -> {
                     if (!shown) setVisibility(GONE);
                 }).start();
