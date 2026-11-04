@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - "design_preview/**"
+      - "packages/core/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
