@@ -1,15 +1,19 @@
 import { app, type Screen } from '../core/app';
-import { h, imgUrl, replace } from '../core/dom';
+import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { lists } from '../core/lists';
 import { net } from '../core/net';
 import { store } from '../core/store';
 import { TITLES } from '../data/catalog';
-import { availability, bestOffer, subscribedCount, isOwnIncluded, isIncludedOffer, offerLabel, paidAction } from '../data/offers';
+import { bestOffer, cardOffer, subscribedCount, isOwnIncluded, isIncludedOffer, offerLabel, paidAction, runtimeLabel } from '../data/offers';
+import { posterImg } from '../data/posters';
 import { SERVICES } from '../data/services';
 import type { Kind, Title } from '../types';
 import { icon } from '../ui/icons';
-import { button, chip, guide, navBar, provenance, titleMeta } from '../ui/widgets';
+import { button, chip, guide, navBar, servicePill } from '../ui/widgets';
+
+/** "3 seasons". */
+const seasonsLabel = (t: Title) => { const n = t.seasons?.length ?? 0; return ` season${n === 1 ? '' : 's'}`; };
 import { titlePreview } from './preview';
 
 interface Field {
@@ -276,19 +280,25 @@ function pickResults(s: PickState): Screen {
     replace(
       cards,
       picks.map((t, i) => {
-        const o = bestOffer(t);
+        // F46 P1 (Rebecca, 2026-11-04 09:57, Figma 241:976): the C poster with its pill; beside it the name, the list it
+        // comes from, year · length, age rating · score and genre; three lines of overview under them.
+        const length = t.kind === 'movie' ? runtimeLabel(t.runtime ?? 0) : seasonsLabel(t);
         return focusable(
           h(
             'div.pick-tile',
             { 'data-title': t.id },
-            h('div.card-art', h('img', { src: imgUrl(t.art), alt: '' })),
             h(
-              'div.card-row',
-              h('div.card-name', t.name),
-              h('div.card-provider', h('div', o ? SERVICES[o.service].name : ''), h('div.card-avail', availability(o))),
+              'div.pick-top',
+              h('div.card-art', posterImg(t), servicePill(cardOffer(t))),
+              h(
+                'div.pick-info',
+                h('div.pick-name', t.name),
+                h('div.pick-from', { 'data-lists': '' }, `From ${lists.provenance(t)}`),
+                h('div.pick-line', `${t.year} · ${length}`),
+                h('div.pick-line', `${t.rating} · ${t.score.toFixed(1)}/10`),
+                h('div.pick-line.pick-genre', t.genres.slice(0, 2).join(' · ')),
+              ),
             ),
-            h('div.card-meta', titleMeta(t)),
-            h('div.card-sub', { 'data-lists': '' }, provenance(t)),
             h('div.pick-blurb', t.synopsis),
           ),
           { group: 'picks', key: `pk-${i}`, isDefault: i === 0, onFocus: () => setFocus(t), onOk: () => app.push(titlePreview(t)) },
