@@ -992,9 +992,14 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (ids == null) return true;
         PickResultsPage results = setup.results(ids);
         String focus = place.getString(PLACE_PICKS_FOCUS);
+        // Before the push, so it focuses the pick at once when the catalogue already has it...
         results.lastFocusKey = focus;
         shell.push(results);
         if (focus != null && !focus.equals(Focus.key(shell.focused()))) results.pendingFocusKey = focus;
+        // ...and after, since the push focused whatever was there (Adjust filters while the kept picks are still to
+        // arrive): Back from a preview over it looks for the pick again.
+        results.lastFocus = null;
+        results.lastFocusKey = focus;
         return true;
     }
 

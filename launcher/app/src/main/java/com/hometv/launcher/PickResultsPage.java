@@ -208,6 +208,7 @@ final class PickResultsPage extends Screen {
     /** Draws a new set of picks: never the same four again while there are more. */
     private void roll() {
         kept = null;
+        trailerAsk++;
         List<Title> matches = PickRules.matches(state, data.catalog.all(), household, data.services.subscribed(),
                 data.services.installed());
         picks = PickRules.roll(matches, picks, random);
@@ -230,7 +231,11 @@ final class PickResultsPage extends Screen {
         cards.setVisibility(any ? View.VISIBLE : View.GONE);
         empty.setVisibility(any ? View.GONE : View.VISIBLE);
         bar.setVisibility(any ? View.VISIBLE : View.GONE);
-        if (any) showInBar(picks.get(0));
+        // Kept picks arriving one by one redraw the tiles: the bar stays on its pick (and a waiting Trailer with it).
+        Title stay = null;
+        for (Title p : picks) if (current != null && p.id.equals(current.id)) stay = p;
+        if (stay != null) current = stay;
+        if (any) showInBar(stay != null ? stay : picks.get(0));
     }
 
     private View firstTile() {
@@ -273,11 +278,14 @@ final class PickResultsPage extends Screen {
         view.postDelayed(() -> playIfStill(ask, t), TRAILER_WAIT_MS);
     }
 
-    /** The trailer asked for by press {@code ask}, unless the household has moved on (another pick, Reroll, Back). */
+    /**
+     * The trailer asked for by press {@code ask}, unless the household has moved on: another pick, Reroll, Open, Back,
+     * or another app in front (the window lost focus), where YouTube must not start over it.
+     */
     private void playIfStill(int ask, Title t) {
         if (ask != trailerAsk) return;
         trailerAsk++;
-        if (router.shell().top() == this) router.openTrailer(t);
+        if (router.shell().top() == this && view.hasWindowFocus()) router.openTrailer(t);
     }
 
     private View tileOf(Title t) {
@@ -291,6 +299,7 @@ final class PickResultsPage extends Screen {
      */
     private void open() {
         if (current == null) return;
+        trailerAsk++;
         Offer o = data.bestOffer(current);
         if (o != null && data.isIncluded(o)) router.watch(current, o);
         else router.openTitle(current);
