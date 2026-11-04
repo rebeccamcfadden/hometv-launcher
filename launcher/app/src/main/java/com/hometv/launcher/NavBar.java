@@ -37,6 +37,8 @@ final class NavBar {
     static final String KEY_INPUTS = "dev-input";
     static final String KEY_SETTINGS = "dev-settings";
     private static final String DEVICE_GROUP = "device";
+    /** The nav row's height, and the room under it for "A phone is connected" (hung 32 px below the cluster). */
+    static final int ROW_H = 72, LINE_ROOM = 40;
 
     static View build(Context ctx, Host host, Screen.Tab active) {
         LinearLayout bar = new LinearLayout(ctx);
@@ -114,18 +116,11 @@ final class NavBar {
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END);
         clp.rightMargin = Ui.px(26);
         cluster.addView(connected, clp);
-        connected.setTranslationY(Ui.px(36));
-        // The line hangs below the bar: the page under it must not clip the bar to its own bounds (Home's does).
-        bar.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-            @Override
-            public void onViewAttachedToWindow(View v) {
-                if (v.getParent() instanceof ViewGroup) ((ViewGroup) v.getParent()).setClipChildren(false);
-            }
+        // 32 below the cluster: the line ends by y 150, where Movies, TV Shows and Search's content starts.
+        connected.setTranslationY(Ui.px(32));
+        // The line hangs below the row, inside the bar's own bounds (its bottom padding, LINE_ROOM): the page under the
+        // bar keeps clipping its children, so content scrolling under the nav never draws over it.
 
-            @Override
-            public void onViewDetachedFromWindow(View v) {
-            }
-        });
         bar.addView(cluster, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -163,8 +158,12 @@ final class NavBar {
             }
         });
 
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(72),
-                Gravity.TOP);
+        // The row is 72 tall; the padding under it holds the hanging line and keeps the row centred where it was.
+        bar.setPadding(0, 0, 0, Ui.px(LINE_ROOM));
+        bar.setClipToPadding(false);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                Ui.px(ROW_H + LINE_ROOM), Gravity.TOP);
+
         lp.topMargin = Ui.px(48);
         lp.leftMargin = Ui.px(Ui.SAFE_X);
         lp.rightMargin = Ui.px(Ui.SAFE_X);
