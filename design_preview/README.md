@@ -61,18 +61,35 @@ today, so every period can be reviewed without waiting for it.
 
 ## Figma
 
-File `7gFFvfdGdXJVLZnj18Zah4` (private; ask the owner for access). One page, laid out as a main column on the
-left and parked work on the right.
+File `7gFFvfdGdXJVLZnj18Zah4` (private; ask the owner for access). The page **Full design** (`0:1`) is the app's flow,
+one row (section) per step from top to bottom: the main screens on the left, details to the right (F49, 2026-11-04).
 
-| Section | What it is |
+| Section on Full design | What it is |
 |---|---|
-| 01 · Home | Home, resting and scrolled to Inputs / Shortcuts / Weather |
-| 02 · V1 — Lists-only Movies & TV Shows | The Movies and TV Shows pages for V1 |
-| 03 · Pick for me | Filter setup, then four recommendations |
-| 04 · Title preview | The original title card, superseded by 04b |
-| 04b · Title preview — Option C (chosen) | The title preview to build: Overview and Where to watch tabs |
-| 05 · Search | The full search mockup: empty, typing, results, no matches |
-| [Parked] … | Explore versions of Movies and TV Shows, title preview options A and B, earlier search concepts |
+| 01 · First run | The setup checklist, reusing Launcher settings' panes |
+| 02 · Home | Home, resting and scrolled to Inputs / Shortcuts / Weather |
+| 03 · Quick settings (the ⚙ in the top bar) | The quick-settings dropdown |
+| 04 · All Apps | A place for All Apps; no frame yet |
+| 05 · Movies & TV Shows | The Movies and TV Shows pages, with the smaller (C) cards |
+| 06 · Title preview | The title preview: Overview and Where to watch tabs (Option C) |
+| 07 · Search | Search: empty, typing, results, no matches |
+| 08 · Pick for me | Filter setup, then four recommendations |
+| 09 · Person page | A place for the person page; its options are on their own page for now |
+| 10 · Launcher settings | Launcher settings, split, with every pane |
+| 11 · Phone remote | The phone remote: the phone's page, the TV's pane and their states |
+| 12 · Loading, offline and errors | Loading, offline and error states |
+
+The other pages:
+
+| Page | What it is |
+|---|---|
+| Two regions, Person page | Options still open, or picked but not built yet |
+| parked | Explore versions of Movies and TV Shows, title preview options A and B, earlier search concepts |
+| Closed · … | Option pages after the pick (Phone remote F27, Library cards F40, Smaller cards F46), each with a note at the top naming the pick |
+| Closed · Superseded (from Full design) | Frames that a later pick replaced on Full design, among them V1's lists-only Movies & TV Shows and the old Prices cards |
+
+When a design is finished (picked and its build merged, or the project lead says it's final), its frames move to Full
+design's matching row: moved, never copied or deleted, so node ids stay the same.
 
 The prototype goes further than Figma in places. These exist only here: the filters drawer, the rent/buy dialog,
 the Episodes, Cast & crew and More like this tabs, the Inputs, Wi-Fi and quick-settings dropdowns, the person
