@@ -171,13 +171,16 @@ function Get-HomeNow { return ((Invoke-TvShell $HomeQuery) -split "`n" | Select-
 function Get-PackageOf([string]$Component) { return ($Component -split '/')[0] }
 
 # An app-op's mode for a package, or $null when the read failed or its answer is not one we know. Android answers
-# 'No operations.' for an app-op never set, which is 'default'; nothing else is taken to mean that.
+# 'No operations.' for an app-op never set, which is 'default'. Some builds add the op's own default mode on a second
+# line ('Default mode: default', TCL BeyondTV, Android 9); that mode is returned, so an undo that sets it puts the op
+# back to unset (Android drops an entry set to the op's default). Nothing else is taken to mean either.
 function Get-AppOpMode([string]$Package, [string]$Op) {
     $out = Invoke-TvShell "appops get $Package $Op"
     if ($script:AdbExit -ne 0) { return $null }
     $m = [regex]::Match($out, "\b${Op}: (allow|ignore|deny|default|foreground)\b")
     if ($m.Success) { return $m.Groups[1].Value }
-    if ($out.Trim() -eq 'No operations.') { return 'default' }
+    $unset = [regex]::Match($out.Trim(), '^No operations\.(\s*\n\s*Default mode: (allow|ignore|deny|default|foreground))?$')
+    if ($unset.Success) { if ($unset.Groups[2].Success) { return $unset.Groups[2].Value } else { return 'default' } }
     return $null
 }
 

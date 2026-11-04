@@ -74,6 +74,8 @@ function Shell([string]$c) {
         $v = $s.tcl_ops.PSObject.Properties[$Matches[1]]
         if ($null -eq $v) { $script:code = 255; return "Error: Unknown operation string: $($Matches[1])" }
         if ($v.Value -eq 'default') { return 'No operations.' }
+        # Never set, on a build that names the op's own default mode.
+        if ($v.Value -like 'unset-*') { return "No operations.`nDefault mode: $($v.Value.Substring(6))" }
         return "$($Matches[1]): $($v.Value); time=+1s ago"
     }
     if ($c -match '^appops set com\.hometv\.launcher (AUTO_START|APP_AUTO_START) (\w+)$') {
@@ -147,7 +149,7 @@ function Shell([string]$c) {
         if ($s.appops_get -eq 'fail') { $script:code = 1; return 'Error: java.lang.SecurityException: appops' }
         if ($s.appops_get -eq 'garbled') { return 'Operation REQUEST_INSTALL_PACKAGES not known here' }
         # Android names no mode for an app-op never set.
-        if ($s.install_grant -eq 'default') { return 'No operations.' }
+        if ($s.install_grant -eq 'default') { if ($s.appops_get -eq 'two_lines') { return "No operations.`nDefault mode: default" }; return 'No operations.' }
         return "REQUEST_INSTALL_PACKAGES: $($s.install_grant); time=+1m2s ago"
     }
     return ''
@@ -516,6 +518,16 @@ class FamilyInstallTest(unittest.TestCase):
         proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(end["install_grant"], "deny")
+
+    def test_an_unset_grant_with_its_default_mode_line_is_default(self):
+        # TCL BeyondTV, Android 9 (2026-11-04): "No operations." then "Default mode: default".
+        proc, end = self.run_installer(self.tv(appops_get="two_lines"))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "allow")
+        self.assertIn("undo appops set com.hometv.launcher REQUEST_INSTALL_PACKAGES default", (self.backup_dir() / "undo.txt").read_text())
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "default")
 
     def assert_unreadable_grant_left_alone(self, how):
         proc, end = self.run_installer(self.tv(install_grant="deny", appops_get=how))
@@ -893,6 +905,12 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(end["tcl_ops"], {"AUTO_START": "default"})
         restore = end["shell"][end["shell"].index("appops set com.hometv.launcher AUTO_START default"):]
         self.assertIn("appops write-settings", restore)
+
+    def test_an_unset_auto_start_whose_default_is_allow_is_left_alone(self):
+        proc, end = self.run_installer(self.tv(tcl_ops={"AUTO_START": "unset-allow"}), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertFalse([c for c in end["shell"] if "AUTO_START allow" in c or c == "appops write-settings"])
+        self.assertNotIn("AUTO_START", (self.backup_dir() / "undo.txt").read_text())
 
     def test_a_tv_without_auto_start_gets_no_app_op(self):
         proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Input")
