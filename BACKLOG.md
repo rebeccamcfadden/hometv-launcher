@@ -390,8 +390,8 @@ or `config.json` can set; upstream keeps it, with the screenshots, at
 options from it to bring back properly:
 
 - **`consume_volume_keys`** and **`gamepad_passthrough`**: still in the launcher (`config.xml`, and a pushed
-  `config.json`; both need `key_filter` and are off by default), described in `themes/README.md`'s Keys table, but
-  with no switch in Launcher settings and no screenshot here any more.
+  `config.json`; both need `key_filter` and are off by default), described in `themes/README.md`'s Keys table and,
+  since F36, in [docs/launcher.md › Remote keys](docs/launcher.md#remote-keys). No switch in Launcher settings.
 - **`screensaver`**: the clock screensaver went with the old Home in M1 (above). As an `app_keys` action,
   `screensaver` starts the TV's own screensaver only where the firmware has the system's "start now" shortcut.
 
