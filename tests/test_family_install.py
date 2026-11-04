@@ -74,6 +74,8 @@ function Shell([string]$c) {
         $v = $s.tcl_ops.PSObject.Properties[$Matches[1]]
         if ($null -eq $v) { $script:code = 255; return "Error: Unknown operation string: $($Matches[1])" }
         if ($v.Value -eq 'default') { return 'No operations.' }
+        # Never set, on a build that names the op's own default mode.
+        if ($v.Value -like 'unset-*') { return "No operations.`nDefault mode: $($v.Value.Substring(6))" }
         return "$($Matches[1]): $($v.Value); time=+1s ago"
     }
     if ($c -match '^appops set com\.hometv\.launcher (AUTO_START|APP_AUTO_START) (\w+)$') {
@@ -903,6 +905,12 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(end["tcl_ops"], {"AUTO_START": "default"})
         restore = end["shell"][end["shell"].index("appops set com.hometv.launcher AUTO_START default"):]
         self.assertIn("appops write-settings", restore)
+
+    def test_an_unset_auto_start_whose_default_is_allow_is_left_alone(self):
+        proc, end = self.run_installer(self.tv(tcl_ops={"AUTO_START": "unset-allow"}), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertFalse([c for c in end["shell"] if "AUTO_START allow" in c or c == "appops write-settings"])
+        self.assertNotIn("AUTO_START", (self.backup_dir() / "undo.txt").read_text())
 
     def test_a_tv_without_auto_start_gets_no_app_op(self):
         proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Input")
