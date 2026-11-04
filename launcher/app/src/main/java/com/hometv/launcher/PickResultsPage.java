@@ -29,7 +29,6 @@ final class PickResultsPage extends Screen {
     /** {@code .pick-cards}: four columns, 20 apart, across the title-safe width. */
     private static final int GAP = 20;
     private static final float TILE_W = (Ui.STAGE_W - 2f * Ui.SAFE_X - (PickRules.PICKS - 1) * GAP) / PickRules.PICKS;
-    private static final int ART_H = 243;
     /** F47: how long Trailer waits for a pick's details before it opens YouTube's search for the trailer. */
     static final long TRAILER_WAIT_MS = 3000;
 
@@ -339,44 +338,43 @@ final class PickResultsPage extends Screen {
     }
 
     /**
-     * {@code .pick-tile}: the art (243 tall, radius 16), the name with the service and "Included" or a price on the
-     * right, the meta and provenance lines, and the blurb under a rule, two lines at most. Focused: the 4 px ring on
-     * the art and the art scaled 1.03, as on the library card.
+     * F46 P1 (Rebecca, 2026-11-04, Figma 241:976): the C poster with its service pill; beside it the name (25 px, two
+     * lines), the list it comes from in an accent tag ("From My list"), year · length, age rating · score and the
+     * genres (18 px); under them a rule and three lines of overview. Focused: the 4 px ring on the poster and the
+     * poster scaled 1.03, as on the C card.
      */
     private View tile(Title t, int i) {
         LinearLayout tile = PickSetupPage.column(ctx);
-        RingFrame art = new RingFrame(ctx, Ui.RADIUS_L, false, Ui.BG_RAISED);
-        ImageView img = new ImageView(ctx);
-        art.content().addView(img, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-        Art.into(img, t.art, Ui.px(TILE_W), Ui.px(ART_H));
-        tile.addView(art, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.px(ART_H)));
+        LinearLayout top = Kit.unclip(new LinearLayout(ctx));
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        RingFrame art = Kit.posterWithPill(ctx, t, data);
+        top.addView(art, new LinearLayout.LayoutParams(Ui.px(Kit.POSTER_W), Ui.px(Kit.POSTER_H)));
 
-        Offer o = data.bestOffer(t);
-        LinearLayout row = new LinearLayout(ctx);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        TextView name = Ui.line(ctx, 25, Ui.TEXT_1, Ui.MEDIUM);
-        name.setGravity(Gravity.START);
+        LinearLayout info = new LinearLayout(ctx);
+        info.setOrientation(LinearLayout.VERTICAL);
+        TextView name = Ui.text(ctx, 25, Ui.TEXT_1, Ui.MEDIUM);
         name.setText(t.name);
-        row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        LinearLayout provider = new LinearLayout(ctx);
-        provider.setOrientation(LinearLayout.VERTICAL);
-        provider.setGravity(Gravity.END);
-        TextView service = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_2, Ui.REGULAR);
-        service.setText(o == null ? "" : data.table.name(o.service));
-        provider.addView(service);
-        TextView avail = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
-        avail.setText(PickRules.tileAvailability(o, data.services.subscribed()));
-        provider.addView(avail);
-        LinearLayout.LayoutParams plp = PickSetupPage.wrap();
-        plp.leftMargin = Ui.px(12);
-        row.addView(provider, plp);
-        tile.addView(row, PickSetupPage.below(10));
+        name.setMaxLines(2);
+        name.setEllipsize(TextUtils.TruncateAt.END);
+        info.addView(name);
+        TextView from = Ui.line(ctx, Ui.T_MIN, Ui.ACCENT, Ui.MEDIUM);
+        from.setText(TitleText.fromList(t, household));
+        from.setPadding(Ui.px(12), Ui.px(5), Ui.px(12), Ui.px(5));
+        from.setBackground(Ui.round(Ui.alpha(Ui.ACCENT, 0x24), Ui.RADIUS_PILL, Ui.alpha(Ui.ACCENT, 0x59), 1));
+        LinearLayout.LayoutParams flp = PickSetupPage.wrap();
+        flp.topMargin = Ui.px(10);
+        flp.bottomMargin = Ui.px(8);
+        info.addView(from, flp);
+        // The tag stays current after the title menu changes a list (Kit.refreshTitleCard).
+        tile.setTag(R.id.kit_from_list, from);
+        info.addView(small(TitleText.yearLength(t), Ui.TEXT_2), PickSetupPage.below(6));
+        info.addView(small(TitleText.ratingScore(t), Ui.TEXT_2), PickSetupPage.below(6));
+        info.addView(small(TitleText.genres(t), Ui.TEXT_3), PickSetupPage.below(6));
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        ilp.leftMargin = Ui.px(18);
+        top.addView(info, ilp);
+        tile.addView(top);
 
-        tile.addView(small(TitleText.meta(t), Ui.TEXT_2), PickSetupPage.below(4));
-        TextView lists = small(TitleText.provenance(t, household), Ui.TEXT_3);
-        tile.addView(lists, PickSetupPage.below(2));
-        tile.setTag(R.id.kit_provenance, lists);
         View rule = new View(ctx);
         rule.setBackgroundColor(Ui.LINE);
         LinearLayout.LayoutParams rulelp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -385,11 +383,10 @@ final class PickResultsPage extends Screen {
         tile.addView(rule, rulelp);
         TextView blurb = Ui.text(ctx, 21, Ui.TEXT_2, Ui.REGULAR);
         blurb.setText(t.synopsis);
-        blurb.setMaxLines(2);
+        blurb.setMaxLines(3);
         blurb.setEllipsize(TextUtils.TruncateAt.END);
         PickSetupPage.lineHeight(blurb, 21 * 1.45f);
         tile.addView(blurb, PickSetupPage.below(14));
-
         tile.setContentDescription(t.name);
         tile.setOnFocusChangeListener((v, focused) -> {
             art.setRing(focused);

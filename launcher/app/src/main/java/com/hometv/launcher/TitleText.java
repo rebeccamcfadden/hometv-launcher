@@ -45,6 +45,44 @@ final class TitleText {
         return t.genres.isEmpty() ? list : list + " · " + t.genres.get(0);
     }
 
+    /** F46 P1: Pick for me's list tag, "From My list"; "From Catalogue" for a title on no list. */
+    static String fromList(Title t, ListMembership lists) {
+        ShownList on = lists.firstListOf(t);
+        return "From " + (on == null ? "Catalogue" : on.name);
+    }
+
+    /** F46 P1: "2023 · 1h 46m" (a show: "2019 · 3 seasons"), whichever parts are known. */
+    static String yearLength(Title t) {
+        List<String> parts = new ArrayList<>(2);
+        if (t.year > 0) parts.add(String.valueOf(t.year));
+        if (t.isMovie() ? t.runtime > 0 : !t.seasons.isEmpty()) {
+            parts.add(t.isMovie() ? Offers.runtimeLabel(t.runtime) : seasons(t.seasons.size()));
+        }
+        return join(parts);
+    }
+
+    /** F46 P1: "PG-13 · 7.9/10", whichever parts are known. */
+    static String ratingScore(Title t) {
+        List<String> parts = new ArrayList<>(2);
+        if (!t.rating.isEmpty()) parts.add(t.rating);
+        if (t.score > 0 || t.detailed) parts.add(score(t.score) + "/10");
+        return join(parts);
+    }
+
+    /** F46 P1: the first two genres, "Drama · Romance". */
+    static String genres(Title t) {
+        return join(t.genres.size() > 2 ? t.genres.subList(0, 2) : t.genres);
+    }
+
+    private static String join(List<String> parts) {
+        StringBuilder b = new StringBuilder();
+        for (String p : parts) {
+            if (b.length() > 0) b.append(" · ");
+            b.append(p);
+        }
+        return b.toString();
+    }
+
     /**
      * The poster card's service line (F40): "Netflix · Included", "Apple TV Store · Rent 39 kr"; just the
      * availability when no service of the household's has the title, and nothing when there is neither.

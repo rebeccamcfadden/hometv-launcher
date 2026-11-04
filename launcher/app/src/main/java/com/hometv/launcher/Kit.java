@@ -299,13 +299,7 @@ final class Kit {
         RingFrame art = frame(ctx, POSTER_RADIUS);
         card.addView(art, new LinearLayout.LayoutParams(Ui.px(POSTER_W), Ui.px(POSTER_H)));
         FrameLayout content = art.content();
-        FrameLayout pill = new FrameLayout(ctx);
-        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
-        plp.leftMargin = Ui.px(8);
-        plp.topMargin = Ui.px(8);
-        plp.rightMargin = Ui.px(8);
-        content.addView(pill, plp);
+        FrameLayout pill = pillSlot(ctx, content);
 
         LinearLayout over = new LinearLayout(ctx);
         over.setOrientation(LinearLayout.VERTICAL);
@@ -336,6 +330,32 @@ final class Kit {
         return v;
     }
 
+    /** The pill's place on a poster: 8 px in from its top-left corner (F46). Empty until a pill is added. */
+    static FrameLayout pillSlot(Context ctx, FrameLayout poster) {
+        FrameLayout pill = new FrameLayout(ctx);
+        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
+        plp.leftMargin = Ui.px(8);
+        plp.topMargin = Ui.px(8);
+        plp.rightMargin = Ui.px(8);
+        poster.addView(pill, plp);
+        return pill;
+    }
+
+    /**
+     * F46 P1 (Pick for me): the C poster (195 × 293, radius 12) with the pill for the household's offer; the caller
+     * binds the poster ({@code Art.poster} into the frame's ImageView) and does the focus.
+     */
+    static RingFrame posterWithPill(Context ctx, Title t, Data data) {
+        RingFrame art = frame(ctx, POSTER_RADIUS);
+        FrameLayout slot = pillSlot(ctx, art.content());
+        Offer o = data.cardOffer(t);
+        String where = o == null ? "" : PriceCards.isPaid(o) ? data.table.storeName(o.service) : data.table.name(o.service);
+        CardPill pill = CardPill.of(o, where, data.region);
+        if (pill != null) slot.addView(servicePill(ctx, pill));
+        Art.poster((ImageView) art.content().getChildAt(0), t, Ui.px(POSTER_W), Ui.px(POSTER_H));
+        return art;
+    }
     /** A C card's views, so the grid can show a title's new state on the card it has (rebindLibraryCard). */
     private static final class MiniParts {
         final ImageView art;
@@ -434,6 +454,9 @@ final class Kit {
         Title t = titleOf(card);
         Object line = card == null ? null : card.getTag(R.id.kit_provenance);
         if (t != null && line instanceof TextView) ((TextView) line).setText(TitleText.provenance(t, data.household));
+        // F46 P1: Pick for me's "From My list" tag.
+        Object from = card == null ? null : card.getTag(R.id.kit_from_list);
+        if (t != null && from instanceof TextView) ((TextView) from).setText(TitleText.fromList(t, data.household));
     }
 
     /** The title a card was made for ({@link #titleCard}), or null. */

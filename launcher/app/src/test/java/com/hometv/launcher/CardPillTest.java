@@ -60,4 +60,22 @@ public class CardPillTest {
         assertEquals("0.0/10", TitleText.yearScore(t(0, 0, true)));
         assertEquals("", TitleText.yearScore(t(0, 0, false)));
     }
+
+    private static Title movie(int year, int runtime, String rating, double score, java.util.List<String> genres) {
+        return new Title("m", Kind.MOVIE, "M", year, genres, runtime, rating, score, null, null, null, null, null, null,
+                null, 0, 0, true, 0, null);
+    }
+
+    @Test
+    public void pickTilesLines() {
+        Title t = movie(2023, 106, "PG-13", 7.9, java.util.Arrays.asList("Drama", "Romance", "Comedy"));
+        assertEquals("2023 · 1h 46m", TitleText.yearLength(t));
+        assertEquals("PG-13 · 7.9/10", TitleText.ratingScore(t));
+        // Two genres at most.
+        assertEquals("Drama · Romance", TitleText.genres(t));
+        Title bare = movie(0, 0, "", 0, java.util.Collections.emptyList());
+        assertEquals("", TitleText.yearLength(bare));
+        assertEquals("0.0/10", TitleText.ratingScore(bare));
+        assertEquals("", TitleText.genres(bare));
+    }
 }
