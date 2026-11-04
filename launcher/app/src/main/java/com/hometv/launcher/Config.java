@@ -326,7 +326,7 @@ final class Config {
         animations = choices.getBoolean("animations", animations);
         // Motion from the quick-settings dropdown (MotionChoice): a saved choice wins over the switch; without one
         // they mean what they did before. reduced_motion stays this TV's own, and keeps Motion from being Full.
-        // A TV that starts at the light end (a low-RAM one) starts Motion at Reduced too.
+        // A TV that starts at the light end (a low-RAM one) starts Motion at Off.
         android.app.ActivityManager am = (android.app.ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
         boolean light = PerfChoices.light(lightDefaults, am != null && am.isLowRamDevice());
         MotionChoice motion = MotionChoice.resolve(choices.getString(MotionChoice.KEY, null), animations,

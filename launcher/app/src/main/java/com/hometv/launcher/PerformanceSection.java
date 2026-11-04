@@ -18,7 +18,7 @@ import java.util.List;
  * focus glow, the backdrop picture (Photo or the theme's plain colour) and the animated details (the Theme pane's old
  * Moving details). A Light mode button at the top (the project lead, 2026-11-01) sets every choice to its lightest,
  * Motion Off included; each stays a choice of its own afterwards. A TV that starts at the light end (Config#lightDefaults: low-RAM, or config's
- * light_defaults) starts with PerfChoices.LIGHT and Motion Reduced, and the pane says so; a choice saved here wins.
+ * light_defaults) starts with PerfChoices.LIGHT and Motion Off, and the pane says so; a choice saved here wins.
  *
  * <p>Motion keeps its rules: a TV whose config sets reduced_motion is never Full, so Full isn't offered there; with
  * Android's animations off, motion stays reduced whatever is chosen. Everything takes effect when Home is rebuilt, as

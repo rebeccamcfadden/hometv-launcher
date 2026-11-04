@@ -120,11 +120,14 @@ public class MotionChoiceTest {
     }
 
     @Test
-    public void aLightStartTvStartsAtReducedUntilAChoiceIsSaved() {
-        assertEquals(MotionChoice.REDUCED, MotionChoice.resolve(null, true, false, true));
+    public void aLightStartTvStartsAtOffUntilAChoiceIsSaved() {
+        assertEquals(MotionChoice.OFF, MotionChoice.resolve(null, true, false, true));
         assertEquals(MotionChoice.OFF, MotionChoice.resolve(null, false, false, true));
         assertEquals(MotionChoice.FULL, MotionChoice.resolve("full", true, false, true));
         assertEquals(MotionChoice.OFF, MotionChoice.resolve("off", true, false, true));
+        // Reduced, with its fades, only when someone picks it; and with reduced_motion as well.
+        assertEquals(MotionChoice.REDUCED, MotionChoice.resolve("reduced", true, false, true));
+        assertEquals(MotionChoice.OFF, MotionChoice.resolve(null, true, true, true));
         // reduced_motion still keeps a saved Full from being Full.
         assertEquals(MotionChoice.REDUCED, MotionChoice.resolve("full", true, true, true));
         // Not a light start: as before.

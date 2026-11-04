@@ -516,7 +516,7 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   start keeps, cost nothing visible next to that. Cold start was about 100 ms slower in these runs, not yet explained
   (Reduced motion shouldn't add to it; worth a trace).
   A low-RAM TV (`ActivityManager.isLowRamDevice()`, which the TCL reports) or one whose config.xml or config.json
-  sets `light_defaults` to on starts at the light end: no card shadows, Motion Reduced, no animated details; the focus
+  sets `light_defaults` to on starts at the light end: no card shadows, Motion Off (Reduced's fades cost frames there: Rebecca, 2026-11-04), no animated details; the focus
   glow (one tile) and the picture stay. The household's choices win; Follow theme and a theme push drop them.
 - **Focus glow:** checked on the TCL: a theme's glow shows in full on Home's Inputs and Shortcuts tiles, edges
   included.
