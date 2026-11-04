@@ -554,6 +554,8 @@ final class SearchPage extends Screen {
         View remembered = memory.get(GROUP_KEYBOARD);
         expanded = false;
         render(false);
+        // Back beside the keyboard, the results start from the top again, filter chips in view (F46 TV sweep).
+        scroll.scrollTo(0, 0);
         shell.focus(remembered != null && remembered.isAttachedToWindow() ? remembered : keyA);
     }
 

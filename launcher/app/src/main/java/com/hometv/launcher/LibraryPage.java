@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.Gravity;
@@ -61,6 +62,8 @@ final class LibraryPage extends Screen {
      * guide line (the sweep's finding 3). {@link #PAGE_END} is as tall, so the last row can scroll that far up.
      */
     private static final int SCROLL_PAD_BOTTOM = Kit.BOTTOM_FADE;
+    /** The fade at the scrolling box's top edge, shown once the page has scrolled. */
+    private static final int TOP_FADE = SCROLL_PAD;
     private static final int COLUMNS = 8;
     /** Rows whose art binds as the grid is built, before it is laid out: what the first screen shows. */
     private static final int FIRST_ART_ROWS = 2;
@@ -84,6 +87,7 @@ final class LibraryPage extends Screen {
     private int offsSeen = RECALL.offs();
 
     private final ViewGroup box;
+    private final View topFade;
     private final View pick;
     /** F14: the needs-a-TMDB-account state, in place of the page while TmdbGate says so. */
     private final FrameLayout gate;
@@ -164,7 +168,21 @@ final class LibraryPage extends Screen {
         FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
         blp.topMargin = Ui.px(SCROLL_TOP);
-        root.addView(box, blp);
+        // The page scrolls up to the box's top edge and no further: without the clip, what scrolled out (the chips'
+        // foot) showed in the gap between the nav and the box (F46 TV sweep, 2026-11-04). A focused item stays
+        // SCROLL_PAD inside the box, so its ring is never cut.
+        FrameLayout boxClip = new FrameLayout(ctx);
+        boxClip.setClipChildren(true);
+        boxClip.addView(box, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        // Once scrolled, the row cut by that edge fades out rather than ends in a hard line (as the bottom fade).
+        topFade = new View(ctx);
+        topFade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{Ui.alpha(Ui.BG, 0xF7), Ui.alpha(Ui.BG, 0xF7), Ui.alpha(Ui.BG, 0)}));
+        topFade.setAlpha(0f);
+        boxClip.addView(topFade, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                Ui.px(TOP_FADE)));
+        root.addView(boxClip, blp);
         gate = new FrameLayout(ctx);
         gate.setPadding(Ui.px(Ui.SAFE_X), Ui.px(40), Ui.px(Ui.SAFE_X), 0);
         gate.setVisibility(View.GONE);
@@ -243,7 +261,10 @@ final class LibraryPage extends Screen {
         col.addView(new View(ctx), new LinearLayout.LayoutParams(1, Ui.px(PAGE_END)));
         // F15 P1-2: the grid's art follows the screen. Scrolling moves the window at once; a new layout (a rebuilt
         // grid, the page shown again) works it out just before that layout is drawn, so cached art is in its frame.
-        box.setOnScrollChangeListener((v, x, y, oldX, oldY) -> updateArtWindow());
+        box.setOnScrollChangeListener((v, x, y, oldX, oldY) -> {
+            updateArtWindow();
+            topFade.setAlpha(y > 0 ? 1f : 0f);
+        });
         grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> queueArtWindow());
         root.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
