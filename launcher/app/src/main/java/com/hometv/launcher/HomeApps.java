@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * The installed apps the launcher can open, and Home's app row stored on the TV (AppRow is its pure logic). An app
@@ -54,13 +55,48 @@ final class HomeApps {
 
     /** Whether an app can be on the row or in All Apps: openable, not hidden and not this launcher. */
     boolean shown(String pkg) {
-        return !hidden.contains(pkg) && !pkg.equals(ctx.getPackageName()) && launchIntent(pkg) != null;
+        return !hidden.contains(pkg) && !pkg.equals(ctx.getPackageName()) && launchable(ctx).test(pkg);
+    }
+
+    /** One per process, so it outlives a recreate(); MainActivity's package receiver keeps it current. Main thread. */
+    private static Launchable launchable;
+
+    private static Launchable launchable(Context ctx) {
+        if (launchable == null) {
+            PackageManager pm = ctx.getApplicationContext().getPackageManager();
+            launchable = new Launchable(pkg -> launchIntent(pm, pkg) != null, pkg -> systemLabel(pm, pkg));
+        }
+        return launchable;
+    }
+
+    /** An app was installed, updated, enabled, disabled or removed. */
+    static void forget(Context ctx, String pkg) {
+        launchable(ctx).forget(pkg);
+    }
+
+    /** Apps may have changed while no receiver was listening, or a whole storage's apps came or went. */
+    static void forgetAll(Context ctx) {
+        launchable(ctx).forgetAll();
+    }
+
+    /** Tells l which app's launchability or name may have changed (null: any); Home listens while it is on screen. */
+    static void listen(Context ctx, Consumer<String> l) {
+        launchable(ctx).listen(l);
+    }
+
+    static void unlisten(Context ctx, Consumer<String> l) {
+        launchable(ctx).unlisten(l);
     }
 
     /** The row's full list (with apps not installed now), the household's once saved, else the seed. */
     List<String> full() {
         String text = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_ORDER, null);
         return AppRow.full(AppRow.decode(text), dockApps, this::shown);
+    }
+
+    /** Whether a change to pkg can change a row whose list is full (AppRow.affectsRow). */
+    boolean affectsRow(List<String> full, String pkg) {
+        return AppRow.affectsRow(full, dockApps, pkg);
     }
 
     List<String> visible() {
@@ -132,8 +168,10 @@ final class HomeApps {
     /** The app's name, or the one app_labels gives it. */
     String label(String pkg) {
         String own = labels.get(pkg);
-        if (own != null) return own;
-        PackageManager pm = ctx.getPackageManager();
+        return own != null ? own : launchable(ctx).label(pkg);
+    }
+
+    private static String systemLabel(PackageManager pm, String pkg) {
         try {
             ApplicationInfo info = pm.getApplicationInfo(pkg, 0);
             return pm.getApplicationLabel(info).toString();
@@ -149,7 +187,10 @@ final class HomeApps {
 
     /** The app's TV entry point, else its phone one; null when it has neither. */
     Intent launchIntent(String pkg) {
-        PackageManager pm = ctx.getPackageManager();
+        return launchIntent(ctx.getPackageManager(), pkg);
+    }
+
+    private static Intent launchIntent(PackageManager pm, String pkg) {
         Intent i = pm.getLeanbackLaunchIntentForPackage(pkg);
         return i != null ? i : pm.getLaunchIntentForPackage(pkg);
     }

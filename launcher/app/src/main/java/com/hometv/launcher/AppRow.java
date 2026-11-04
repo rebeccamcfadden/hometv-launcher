@@ -40,6 +40,14 @@ final class AppRow {
         return saved != null ? dedupe(saved) : seed(dockApps, shown);
     }
 
+    /**
+     * Whether a change to pkg (installed, enabled, disabled, removed; null: any app) can change the row: an app in its
+     * list, or one of dock_apps, which replaces the streaming seed once one of them can show.
+     */
+    static boolean affectsRow(List<String> full, List<String> dockApps, String pkg) {
+        return pkg == null || full.contains(pkg) || dockApps.contains(pkg);
+    }
+
     /** The most apps Home's row holds (design 02-home: seven tiles across the stage). */
     static final int MAX = 7;
 

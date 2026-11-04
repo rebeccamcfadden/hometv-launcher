@@ -25,6 +25,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 /**
  * Home (design_preview/src/screens/home.ts and the .home styles in screens.css; README, Home). Resting: the greeting,
@@ -100,6 +101,23 @@ final class HomePage extends Screen {
     private boolean hadInternet;
     /** The network came back: fetch the weather now rather than after WeatherStore's pause between tries. */
     private boolean retryWeather;
+    /**
+     * An app was installed, changed or removed while Home is on screen (the broadcast can land after the first frame
+     * back): the row is rebuilt only for an app in its list or in dock_apps (null: any app). Not mid-Move: the row
+     * catches up when Home next shows.
+     */
+    private final Consumer<String> appsChanged = pkg -> {
+        if (moving == null && affectsRow(pkg)) refreshApps(false);
+    };
+
+    private boolean affectsRow(String pkg) {
+        return apps.affectsRow(full, pkg);
+    }
+
+    /** The inputs' catch-up when Home shows again, after its first frame: TvInputManager's binder calls. */
+    private final Runnable inputsAfterFrame = () -> {
+        if (visible) refreshInputs();
+    };
 
     private final BroadcastReceiver clockReceiver = new BroadcastReceiver() {
         @Override
@@ -413,15 +431,28 @@ final class HomePage extends Screen {
     boolean onLongOk(View focused) {
         if (!(focused instanceof AppTile) || moving != null || focused.getParent() != appRow) return false;
         AppTile tile = (AppTile) focused;
+        String pkg = tile.pkg;
         List<MenuPanel.Row> rows = new ArrayList<>();
-        rows.add(new MenuPanel.Row(activity.getString(R.string.tile_move), 0, () -> pickUp(tile)));
-        rows.add(new MenuPanel.Row(activity.getString(R.string.library_remove_shortcut), 0, () -> remove(tile)));
-        Intent info = SystemSettings.appInfo(activity, tile.pkg);
+        // The row can be rebuilt while the menu is open (an app changed): act on the tile it has now, if any.
+        rows.add(new MenuPanel.Row(activity.getString(R.string.tile_move), 0, () -> {
+            AppTile now = tileOf(pkg);
+            if (now != null) pickUp(now);
+        }));
+        rows.add(new MenuPanel.Row(activity.getString(R.string.library_remove_shortcut), 0, () -> {
+            AppTile now = tileOf(pkg);
+            if (now != null) remove(now);
+        }));
+        Intent info = SystemSettings.appInfo(activity, pkg);
         if (info != null) {
             rows.add(new MenuPanel.Row(activity.getString(R.string.library_app_info), 0, () -> activity.start(info)));
         }
         shell.push(TileMenu.create(shell, tile, rows, hero));
         return true;
+    }
+
+    private AppTile tileOf(String pkg) {
+        View v = Focus.byKey(appRow, "app-" + pkg);
+        return v instanceof AppTile ? (AppTile) v : null;
     }
 
     // ---- Resting and scrolled ----------------------------------------------------------------------------------
@@ -864,10 +895,17 @@ final class HomePage extends Screen {
                 if (weatherStore != null) weatherStore.retry();
             }
             if (weatherStore != null) weatherStore.refresh();
+            // Launchable answers from memory, so the row is right in the first frame back without a binder call.
+            HomeApps.listen(activity, appsChanged);
             refreshApps(false);
-            refreshInputs();
+            // Posted from inside the traversal that draws that frame, so it runs once the frame is drawn, as
+            // MainActivity's refreshNav does.
+            content.removeCallbacks(inputsAfterFrame);
+            content.post(inputsAfterFrame);
         } else {
             activity.unregisterReceiver(clockReceiver);
+            HomeApps.unlisten(activity, appsChanged);
+            content.removeCallbacks(inputsAfterFrame);
             putDown();
         }
     }
