@@ -218,8 +218,15 @@ final class PersonPage extends Screen {
             portraitBox.removeAllViews();
             portraitBox.addView(portrait(person), matchParent());
         }
-        String dept = !c.department.isEmpty() ? c.department : person.role.isEmpty() ? ""
-                : PersonRules.departmentOf(person.role);
+        // Without TMDB's known-for job (the mock, or before the answer): the job they have most titles in. Not
+        // person.role, which for an actor is the character.
+        String dept = c.department;
+        if (dept.isEmpty()) {
+            for (String d : PersonRules.byDepartment(c.titles, c.roles, "").keySet()) {
+                dept = d;
+                break;
+            }
+        }
         String noun = jobNoun(dept);
         job.setText(noun.toUpperCase(Locale.getDefault()));
         job.setVisibility(noun.isEmpty() ? View.GONE : View.VISIBLE);
