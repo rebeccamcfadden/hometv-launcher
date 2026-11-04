@@ -208,5 +208,19 @@
         <receiver
             android:name=".Updates$StatusReceiver"
             android:exported="false" />
+
+        <!-- F36: the clock screensaver as the TV's own screensaver ("HomeTV Clock" in the TV's settings, or
+             `settings put secure screensaver_components com.hometv.launcher/.ClockDream` over adb). Exported only to
+             the system: BIND_DREAM_SERVICE is held by the system alone. Nothing changes until someone picks it. -->
+        <service
+            android:name=".ClockDream"
+            android:exported="true"
+            android:label="@string/dream_name"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

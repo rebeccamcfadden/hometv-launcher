@@ -41,6 +41,8 @@ final class SettingsSections {
         if (home != null) out.add(new HomeAppsSection(new HomeApps(home, config)));
         out.add(new ThemeSection());
         out.add(new PerformanceSection(config));
+        // F36: the clock screensaver, Off until the household picks a time.
+        out.add(new ScreensaverSection());
         out.add(new FeaturesSection());
         if (config.openOnStartChoice) out.add(new OpenOnStartSection());
         out.add(new DefaultHomeSection());

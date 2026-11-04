@@ -31,7 +31,7 @@ final class SettingsNav {
     static final List<Group> GROUPS = Collections.unmodifiableList(Arrays.asList(
             new Group("accounts", "account", "notes"),
             new Group("watch", "services", "stores", "keys", "features"),
-            new Group("look", "theme", "performance", "apps", "weather"),
+            new Group("look", "theme", "performance", "screensaver", "apps", "weather"),
             new Group("tv", "start", "home", "region", "remote", "tv", "about")));
 
     /** The sections in the order the list shows them (SettingsSection.id): the groups' in turn. */

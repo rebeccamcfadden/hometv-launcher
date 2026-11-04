@@ -448,7 +448,7 @@ on the right.
   in…", "Code expired", or the username), Phone notes (Off, On, or amber "3 not matched"). **What you watch:**
   Streaming services ("8 ticked"), Stores for rent and buy ("5 ticked"), API keys ("3 working", amber "1 refused"),
   Features ("4 of 5 on"). **Home & look:**
-  Theme (Midnight, or "Nature · Halloween"), Performance (Default, All on, or Custom), Home row apps (7), Weather (the
+  Theme (Midnight, or "Nature · Halloween"), Performance (Default, All on, or Custom), Screensaver (Off, or "15 min"; F36), Home row apps (7), Weather (the
   city). **This TV:** Open on start (Home), Default Home (On), Region (Sweden), Phone remote (Off, On or "2 phones";
   F27), TV settings, About (2.0.0). Values
   update live. Headings aren't focusable; ↑/↓ step over them. A section's name doesn't change with its group, so a path such as Launcher settings ›
@@ -691,6 +691,20 @@ picks another theme.
   end (no card shadows, Motion Reduced, no animated details; glow and picture on) until the household chooses, and the
   pane says so; config.xml or config.json `light_defaults` can set or stop that per TV. The prototype starts with
   everything on but animated details; it applies Motion and the backdrop, and saves the card shadows and glow, which it doesn't draw.
+- **Screensaver** (F36, no Figma frame; Rebecca chose this shape on 2026-11-04, and the launcher follows it): the old launcher's
+  clock screensaver back. "Clock screensaver", a line on what it does, then two rows laid out as Performance's:
+  **Start after** (Off / 5 min / 15 min / 30 min; **Off** to start, on every TV) and **Behind the clock** (Glow / Theme
+  picture / Black). Then **Show it now**, and a note that the TV's own screensaver setting can use the same clock
+  ("HomeTV Clock"). The section's value reads Off or the time. The screensaver: the time (150 px, the theme's display
+  face) with AM/PM and the date under it, on black. **Glow** puts a slow pool of colour behind the clock (five deep
+  colours, one step every minute over 8 s); **Theme picture** shows the theme's backdrop (a Seasonal picture follows
+  the date and the sun) darkened to 38 %; **Black** is plain black, for an OLED. Every minute the clock fades out
+  (0.9 s), moves to a new spot (10–90 % of the room each way) and fades in (1.2 s), and the glow follows it, so nothing
+  burns in; with Motion Off it just moves. It starts only on Home itself (no dropdown, popup or other page over it,
+  never over an app or Live TV), after Home has had no key for the chosen time. Any key wakes it (a phone remote's too), and that key is
+  swallowed, so it doesn't also act on Home: focus stays where it was. `?saver=fast` makes "5 min" 10 s and the move
+  every 8 s, to review it; Jump to › Screensaver shows it at once. `src/ui/screensaver.ts`; the launcher's `Screensaver`, `ClockScene` and
+  `ScreensaverSection` follow the same rules, and `ClockDream` is the same clock as the TV's own screensaver.
 - **Features** (F14, the project lead's decision 2026-11-01; no Figma frame): one build, with five features switched
   on or off at run time: TMDB account, Phone notes, Price lookup, Weather and Phone remote (her review of 2026-11-02
   took out Pick for me and Themes as switches, and renamed Prices; Phone remote came with F27). **Every feature starts
@@ -852,7 +866,7 @@ width with 243 px art.
 - **API keys:** the checks and the phone page's sending are mocked (`src/core/keys.ts`); the TV makes one real
   request per key. The port (8766, beside Phone notes' 8765) and the QR's address are the TV's own.
 - **Not designed yet:** hold-OK menus in Figma (the base uses them for tile Move / Remove / App info and a Settings
-  menu; the title menu is built here without a design), the screensaver, removing recent searches, voice search,
+  menu; the title menu is built here without a design), removing recent searches, voice search,
   progress on started titles, the Sort chip, a
   person page design, Search and Home's weather while loading, the Home row apps pane (built here without a design),
   and right-to-left layouts (the base supports Hebrew).

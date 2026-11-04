@@ -10,6 +10,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.media.tv.TvInputManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -108,6 +110,23 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private WeatherLayer weather;
     private Backdrops backdrops;
     private boolean backdropLoaded;
+    /** The activity's root view: the backdrop, the pages and the import pill, and the screensaver over them all. */
+    private FrameLayout root;
+    /** F36: the clock screensaver while it shows over Home; null otherwise (built fresh each time). */
+    private ClockScene saver;
+    /** The key that woke the screensaver: its repeats and its release are swallowed too, so it does nothing else. */
+    private int saverWakeKey = KeyEvent.KEYCODE_UNKNOWN;
+    /** That press's down time: a new press of the same key has a new one. */
+    private long saverWakeDownTime = -1;
+    /**
+     * onPause took the clock away. Before Android 10 a Home intent to Home in front pauses it first, so onNewIntent must
+     * still know the clock was up (cleared in onResume and onStop).
+     */
+    private boolean saverHiddenByPause;
+    /** Posted after the chosen idle time while Home is on top; any key or change of screen posts it again. */
+    private final Runnable saverDue = () -> {
+        if (Screensaver.mayStart(Screensaver.after(this), homeOnTop(), resumed, hasWindowFocus())) showScreensaver();
+    };
     private boolean started;
     /** Launcher settings' change count this Home was built with (see onResume). */
     private long settingsRevision;
@@ -389,6 +408,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         ApiKeys.get(this).addKeyListener(keyRefused);
 
         FrameLayout root = new FrameLayout(this);
+        this.root = root;
         root.setBackgroundColor(Ui.BG);
         backdrop = new ImageView(this);
         backdrop.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -414,7 +434,9 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         shell = new Shell(stage, this);
         shell.setOnShown(() -> {
             pill.atTop(shell.pillAtTop());
-            weather.setOnTop(shell.top() instanceof HomePage);
+            weather.setOnTop(shell.top() instanceof HomePage && saver == null);
+            // F36: the idle time starts again with each change of screen, and counts only while Home is on top.
+            armScreensaver();
         });
         // F3: holding OK on a title card, wherever one shows, opens the title menu.
         shell.setLongOk(v -> TitleMenu.open(this, v));
@@ -1034,6 +1056,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        // F36: the remote's Home (or a phone's) wakes the screensaver, and does nothing else.
+        boolean wasSaver = saver != null || saverHiddenByPause;
+        saverHiddenByPause = false;
+        hideScreensaver();
+        if (wasSaver && intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) return;
         if (openLauncherSettingsIfAsked(intent)) return;
         if (openFirstRunIfAsked(intent)) return;
         if (previewFallIfAsked(intent)) return;
@@ -1070,11 +1097,107 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        // F36: any key wakes the screensaver, and that key (its repeats and its release too) does nothing else.
+        if (saver != null && !Screensaver.isVolume(event.getKeyCode())) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                saverWakeKey = event.getKeyCode();
+                saverWakeDownTime = event.getDownTime();
+                hideScreensaver();
+            }
+            return true;
+        }
+        // The waking press's repeats and release, known by its down time; a new press has a new one.
+        if (Screensaver.isWakingPress(event.getKeyCode(), event.getDownTime(), saverWakeKey, saverWakeDownTime)) {
+            return true;
+        }
+        armScreensaver();
         // Any key stops the snow or rain before it is handled, so the frame it moves in has none to draw.
         if (event.getAction() == KeyEvent.ACTION_DOWN && weather != null) weather.onKey();
         if (handleSettingsKey(event)) return true;
         if (shell.dispatch(event)) return true;
         return super.dispatchKeyEvent(event);
+    }
+
+    // ---- F36: the clock screensaver ------------------------------------------------------------------------------
+
+    private boolean homeOnTop() {
+        return shell != null && shell.top() instanceof HomePage;
+    }
+
+    /**
+     * Starts the idle time again: the clock shows after Launcher settings › Screensaver's time with no key, while Home
+     * itself is on top with the window's focus (Screensaver.mayStart). Off, or anywhere else, nothing is posted.
+     */
+    private void armScreensaver() {
+        handler.removeCallbacks(saverDue);
+        if (saver != null) return;
+        Screensaver.After after = Screensaver.after(this);
+        if (Screensaver.mayStart(after, homeOnTop(), resumed, hasWindowFocus())) {
+            handler.postDelayed(saverDue, after.ms());
+        }
+    }
+
+    /**
+     * Shows the clock over everything: at the idle time over Home, or now from Launcher settings' Show it now. Theme
+     * picture draws a copy of Home's backdrop, which shares its bitmap, so nothing new is decoded.
+     */
+    void showScreensaver() {
+        handler.removeCallbacks(saverDue);
+        if (saver != null || root == null) return;
+        boolean still = MotionPrefs.load(this, config) == MotionChoice.OFF;
+        ClockScene scene = new ClockScene(this, still);
+        Screensaver.Back back = Screensaver.back(this);
+        scene.setBack(back);
+        if (back == Screensaver.Back.PICTURE) scene.setPicture(backdropCopy());
+        // A click (an air mouse) only wakes it too, rather than reaching a tile under it.
+        scene.setClickable(true);
+        scene.setOnClickListener(v -> hideScreensaver());
+        saver = scene;
+        // The key helpers see a key before Home: one they would act on only wakes the clock.
+        Screensaver.setShown(this::hideScreensaver);
+        root.addView(scene, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        // The snow or rain under it would only draw what nobody sees.
+        weather.setOnTop(false);
+        if (!still) {
+            scene.setAlpha(0f);
+            scene.animate().alpha(1f).setDuration(Screensaver.FADE_IN_MS).start();
+        }
+        scene.start();
+    }
+
+    /** Takes the clock away, with Home (or the page it was shown over) as it was, and starts the idle time again. */
+    private void hideScreensaver() {
+        if (saver == null) return;
+        ClockScene scene = saver;
+        saver = null;
+        Screensaver.setShown(null);
+        scene.stop();
+        scene.animate().cancel();
+        root.removeView(scene);
+        weather.setOnTop(homeOnTop());
+        armScreensaver();
+    }
+
+    /** Home's backdrop as it shows now, the picture over its sky, sharing their bitmaps; null with neither. */
+    private Drawable backdropCopy() {
+        List<Drawable> layers = new ArrayList<>();
+        for (Drawable d : new Drawable[]{backdrop.getBackground(),
+                backdrop.getDrawable()}) {
+            Drawable.ConstantState s = d == null ? null : d.getConstantState();
+            if (s != null) layers.add(s.newDrawable(getResources()).mutate());
+        }
+        if (layers.isEmpty()) return null;
+        return layers.size() == 1 ? layers.get(0) : new LayerDrawable(
+                layers.toArray(new Drawable[0]));
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // Quick settings or another window over Home: the clock goes, and waits for Home to have the focus again.
+        if (!hasFocus) hideScreensaver();
+        armScreensaver();
     }
 
     // ---- Lifecycle ----------------------------------------------------------------------------------------------
@@ -1106,6 +1229,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     protected void onResume() {
         super.onResume();
+        saverHiddenByPause = false;
         // Something changed in Launcher settings: rebuild with it, however the settings were left.
         if (Config.settingsChanged(settingsRevision, settingsRevision())) {
             recreate();
@@ -1120,6 +1244,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         }
         if (inputs.openOnStartIfDue()) return;
         resumed = true;
+        armScreensaver();
         // Once a day while Home shows; its own thread, and only a release build (or a debug build's test feed) checks.
         Updates.get(this).maybeCheck();
         stage.post(updateNotice);
@@ -1132,6 +1257,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onPause() {
         super.onPause();
         resumed = false;
+        // F36: never over an app or Live TV: the clock goes with Home, and the idle time stops.
+        saverHiddenByPause = saver != null;
+        hideScreensaver();
+        handler.removeCallbacks(saverDue);
         // Nothing of ours stays open over another app.
         shell.closeDialogs();
     }
@@ -1140,6 +1269,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStop() {
         super.onStop();
         started = false;
+        saverHiddenByPause = false;
         // F16: the keys page's server runs only while its pane is on screen, not with the launcher in the background.
         ApiKeys.get(this).setForeground(false);
         PhoneRemote.get(this).detach(remoteBridge);

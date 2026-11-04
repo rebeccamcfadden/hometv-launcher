@@ -241,6 +241,11 @@ final class PerformanceSection implements SettingsSection {
 
     /** A choice's row: its name over a line saying what it is, and the control on the right (Features uses it too). */
     static View row(Context ctx, int title, int sub, View control) {
+        return row(ctx, title, sub, control, CONTROL_W);
+    }
+
+    /** {@link #row} with its own control column width, for a pane whose widest control is wider (Screensaver). */
+    static View row(Context ctx, int title, int sub, View control, float controlW) {
         LinearLayout row = Kit.unclip(new LinearLayout(ctx));
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -266,7 +271,7 @@ final class PerformanceSection implements SettingsSection {
         column.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         column.addView(control, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(Ui.px(CONTROL_W),
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(Ui.px(controlW),
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         clp.leftMargin = Ui.px(16);
         row.addView(column, clp);

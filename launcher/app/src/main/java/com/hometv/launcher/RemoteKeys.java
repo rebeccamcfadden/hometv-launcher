@@ -203,8 +203,8 @@ final class RemoteKeys {
                         AudioManager.ADJUST_TOGGLE_MUTE, AudioManager.FLAG_SHOW_UI);
                 break;
             case "screensaver":
-                // The screensaver chosen in the TV's settings, through the system's "start now" shortcut. The
-                // launcher's own clock fallback went with the old Home (BACKLOG.md, V2).
+                // The screensaver chosen in the TV's settings, through the system's "start now" shortcut (which can
+                // be this launcher's HomeTV Clock, ClockDream; F36).
                 Intent dream = new Intent(Intent.ACTION_MAIN)
                         .setClassName("com.android.systemui", "com.android.systemui.Somnambulator");
                 if (ctx.getPackageManager().resolveActivity(dream, 0) != null) start(ctx, dream);

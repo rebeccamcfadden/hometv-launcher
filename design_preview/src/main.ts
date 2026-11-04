@@ -29,6 +29,7 @@ import { importPill } from './ui/importPill';
 import { updateNotice } from './ui/updateNotice';
 import { updates, UPDATE_STATES, type UpdateState } from './core/updates';
 import { remote } from './core/remote';
+import { initScreensaver, showScreensaver } from './ui/screensaver';
 
 // Launcher settings' Motion: the stage drops slides and scale-ups (Reduced) or every animation (Off).
 const stage = document.getElementById('stage')!;
@@ -62,6 +63,8 @@ app.init(stage, {
 });
 app.overlay(importPill());
 app.overlay(updateNotice());
+// F36: the clock screensaver watches Home for idle time, and wakes on any key. ?saver=fast shortens the waits.
+initScreensaver();
 // Holding OK on a title card, wherever one shows, opens the title menu (F3).
 app.longOk = titleMenu;
 // F27: the phone remote listens while it is on; the Features page or a reset switches it.
@@ -220,16 +223,25 @@ const jumps: [string, string, () => void][] = [
       app.push(launcherSettings());
     },
   ],
-  ...(['account', 'notes', 'services', 'stores', 'keys', 'weather', 'apps', 'theme', 'performance', 'features', 'region', 'remote', 'about'] as const).map(
+  ...(['account', 'notes', 'services', 'stores', 'keys', 'weather', 'apps', 'theme', 'performance', 'screensaver', 'features', 'region', 'remote', 'about'] as const).map(
     (id): [string, string, () => void] => [
       `settings-${id}`,
-      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', keys: 'API keys', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', features: 'Features', region: 'Region', remote: 'Phone remote', about: 'About (updates)' }[id]}`,
+      `Launcher settings · ${{ account: 'Account', notes: 'Phone notes', services: 'Streaming services', stores: 'Stores', keys: 'API keys', weather: 'Weather', apps: 'Home row apps', theme: 'Theme', performance: 'Performance', screensaver: 'Screensaver', features: 'Features', region: 'Region', remote: 'Phone remote', about: 'About (updates)' }[id]}`,
       () => {
         app.goTab('home');
         app.push(launcherSettings(id, { enter: true }));
       },
     ],
   ),
+  // F36: the clock screensaver over Home now (add ?saver=fast to see it move every 8 s).
+  [
+    'screensaver',
+    'Screensaver (clock) over Home',
+    () => {
+      app.goTab('home');
+      showScreensaver();
+    },
+  ],
   ['keys-page', 'API keys · open the phone page (new tab)', () => window.open(`./keys.html#${keys.code()}`, '_blank')],
   // F27: turns Phone remote on (it is off by default) and opens the phone page for this TV's code.
   [

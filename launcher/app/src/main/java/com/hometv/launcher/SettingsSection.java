@@ -10,7 +10,7 @@ import android.view.View;
  */
 interface SettingsSection {
     /**
-     * The settings.ts section id: account, notes, services, stores, keys, weather, apps, theme, performance, features,
+     * The settings.ts section id: account, notes, services, stores, keys, weather, apps, theme, performance, screensaver, features,
      * start, home, region, tv, about; and First run's own tabs tmdbKey and priceKeys (F16).
      */
     String id();

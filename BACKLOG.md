@@ -371,9 +371,6 @@ From the old launcher; not in V1 by decision.
 
 - Themes and wallpapers pushed as `config.json`. (M9 brought themes back as an on-TV choice in Launcher settings › Theme;
   see [Themes](#themes).)
-- The clock screensaver. Until it returns, a remote key mapped to `screensaver` (`app_keys`) starts the TV's own
-  screensaver only where the firmware has the system's "start now" shortcut; the launcher's clock fallback went
-  with the old Home in M1.
 - Module cards: the add-ons in `addons/` run as their own apps; see [Add-on cards on Home](#add-on-cards-on-home).
 - The Watch Next row.
 - Festivals, the sky and the lunar calendars.
@@ -387,13 +384,16 @@ From the old launcher; not in V1 by decision.
 F36 (the project lead, 2026-11-02, later). R1 removed `docs/switches.md`, the page of screenshots for each key a theme
 or `config.json` can set; upstream keeps it, with the screenshots, at
 [Gathin23/cleanyourtv › docs/switches.md](https://github.com/Gathin23/cleanyourtv/blob/eb0131a3/docs/switches.md). Three
-options from it to bring back properly:
+options from it to bring back properly (all three done by F36):
 
 - **`consume_volume_keys`** and **`gamepad_passthrough`**: still in the launcher (`config.xml`, and a pushed
   `config.json`; both need `key_filter` and are off by default), described in `themes/README.md`'s Keys table and,
   since F36, in [docs/launcher.md › Remote keys](docs/launcher.md#remote-keys). No switch in Launcher settings.
-- **`screensaver`**: the clock screensaver went with the old Home in M1 (above). As an `app_keys` action,
-  `screensaver` starts the TV's own screensaver only where the firmware has the system's "start now" shortcut.
+- **`screensaver`**: back in F36 (2026-11-04) as Launcher settings › Screensaver (Off by default) and the TV's own
+  screensaver "HomeTV Clock" (ClockDream), [docs/launcher.md](docs/launcher.md#launcher-settings). Upstream's
+  `home_idle_clock_minutes`, `clock_glow` and `clock_wallpaper` keys stay unread: the household picks on the TV.
+  As an `app_keys` action, `screensaver` still starts the TV's own screensaver, where the firmware has the
+  system's "start now" shortcut.
 
 ### Add-on cards on Home
 

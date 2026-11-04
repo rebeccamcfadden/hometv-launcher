@@ -4,14 +4,14 @@ import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { net } from '../core/net';
 import { theme } from '../core/theme';
-import { featureOn, settings, START_LABELS, type FeatureId, REGION_LABELS } from '../core/settings';
+import { featureOn, settings, START_LABELS, type FeatureId, REGION_LABELS, SCREENSAVER_AFTER_LABELS } from '../core/settings';
 import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
 import { accountPane } from './panes/account';
 import { notesPane } from './panes/notes';
 import { notes } from '../core/notes';
 import { appsPane } from './panes/apps';
-import { aboutPane, homePane, performancePane, startPane, tvPane } from './panes/misc';
+import { aboutPane, homePane, performancePane, screensaverPane, startPane, tvPane } from './panes/misc';
 import { featureBar, featureOffPane, featuresPane, featuresValue, SETUP_SECTION } from './panes/features';
 import type { Pane, PaneHost } from './panes/pane';
 import { regionPane } from './panes/region';
@@ -43,6 +43,7 @@ export type SectionId =
   | 'apps'
   | 'theme'
   | 'performance'
+  | 'screensaver'
   | 'features'
   | 'start'
   | 'region'
@@ -85,6 +86,8 @@ const SECTIONS: Section[] = [
   { id: 'apps', label: 'Home row apps', icon: 'apps', value: () => ({ text: String(settings.get().homeApps.length) }) },
   { id: 'theme', label: 'Theme', icon: 'palette', value: () => ({ text: theme.label() }) },
   { id: 'performance', label: 'Performance', icon: 'gauge', value: () => ({ text: performanceValue() }) },
+  // F36: the clock screensaver, off by default.
+  { id: 'screensaver', label: 'Screensaver', icon: 'clock', value: () => ({ text: SCREENSAVER_AFTER_LABELS[settings.get().screensaverAfter] }) },
   { id: 'features', label: 'Features', icon: 'list', value: () => ({ text: featuresValue() }) },
   { id: 'start', label: 'Open on start', icon: 'power', value: () => ({ text: START_LABELS[settings.get().openOnStart] }) },
   { id: 'region', label: 'Region', icon: 'pin', value: () => ({ text: REGION_LABELS[settings.get().region] }) },
@@ -104,7 +107,7 @@ const SECTIONS: Section[] = [
 const GROUPS: { title: string; items: SectionId[] }[] = [
   { title: 'Accounts', items: ['account', 'notes'] },
   { title: 'What you watch', items: ['services', 'stores', 'keys', 'features'] },
-  { title: 'Home & look', items: ['theme', 'performance', 'apps', 'weather'] },
+  { title: 'Home & look', items: ['theme', 'performance', 'screensaver', 'apps', 'weather'] },
   { title: 'This TV', items: ['start', 'home', 'region', 'remote', 'tv', 'about'] },
 ];
 
@@ -164,6 +167,7 @@ export function launcherSettings(initial: SectionId = 'account', opts: { enter?:
     apps: appsPane(host),
     theme: themePane(),
     performance: performancePane(host),
+    screensaver: screensaverPane(host),
     features: featuresPane(host),
     start: startPane(),
     region: regionPane(),

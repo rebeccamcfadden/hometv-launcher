@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -392,26 +393,61 @@ final class Backdrops {
                 new int[] {t.skyTop, t.skyMid, t.horizon});
     }
 
+    /**
+     * F36: the theme's picture as Home would show it now, for the clock screensaver away from Home (ClockDream):
+     * the part of the day's picture, or the sky with Performance's Plain colour, a theme with no picture or one not
+     * downloaded yet. Never downloads. Off the main thread: it decodes one screen-sized picture at most.
+     */
+    static Drawable still(Context ctx, Theme t, boolean plain) {
+        BackdropKeys.Key k = BackdropKeys.parse(t.backdrop);
+        if (k.kind == BackdropKeys.Kind.NONE) return null;
+        if (plain || k.kind == BackdropKeys.Kind.SKY) return sky(t);
+        DayPhase p = k.phased ? ThemeStore.phase(ctx, ZonedDateTime.now()) : DayPhase.DAY;
+        Drawable d;
+        switch (k.kind) {
+            case RES:
+                d = decodeRes(ctx.getResources(), k.name);
+                break;
+            case PIXEL:
+                d = decodePixel(ctx.getResources(), k.name, p);
+                break;
+            default:
+                File f = new File(ctx.getFilesDir(),
+                        BackdropKeys.cachePath(BackdropKeys.pick(k, LocalDateTime.now().getHour(), p)));
+                d = f.isFile() ? decodeFile(ctx.getResources(), f) : null;
+                break;
+        }
+        return d != null ? d : sky(t);
+    }
+
     // ---- Off the main thread -----------------------------------------------------------------------------------
 
     private Drawable decodeRes(String name) {
+        return decodeRes(activity.getResources(), name);
+    }
+
+    private static Drawable decodeRes(Resources res, String name) {
         int id = "bg_evening".equals(name) ? R.drawable.bg_evening : 0;
         if (id == 0) return null;
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inPreferredConfig = Bitmap.Config.RGB_565;
-        Bitmap b = BitmapFactory.decodeResource(activity.getResources(), id, o);
-        return b == null ? null : new BitmapDrawable(activity.getResources(), b);
+        Bitmap b = BitmapFactory.decodeResource(res, id, o);
+        return b == null ? null : new BitmapDrawable(res, b);
     }
 
     /** 160×90 pixels blown up to the screen, each one a sharp square: no filtering, no smoothing. */
     private Drawable decodePixel(String slug, DayPhase phase) {
+        return decodePixel(activity.getResources(), slug, phase);
+    }
+
+    private static Drawable decodePixel(Resources res, String slug, DayPhase phase) {
         int id = pixelDrawable(BackdropKeys.period(slug), phase);
         if (id == 0) return null;
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inScaled = false;
-        Bitmap b = BitmapFactory.decodeResource(activity.getResources(), id, o);
+        Bitmap b = BitmapFactory.decodeResource(res, id, o);
         if (b == null) return null;
-        BitmapDrawable d = new BitmapDrawable(activity.getResources(), b);
+        BitmapDrawable d = new BitmapDrawable(res, b);
         d.setFilterBitmap(false);
         d.setAntiAlias(false);
         d.setDither(false);
@@ -449,7 +485,11 @@ final class Backdrops {
     private Drawable decodeUrl(String path) {
         File f = file(path);
         if (!f.isFile() && !download(path, f)) return null;
-        Resources res = activity.getResources();
+        return decodeFile(activity.getResources(), f);
+    }
+
+    /** A downloaded picture, scaled down to the screen while decoding, as RGB_565; a bad file is deleted. */
+    private static Drawable decodeFile(Resources res, File f) {
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(f.getPath(), bounds);

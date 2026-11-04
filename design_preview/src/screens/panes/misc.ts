@@ -3,6 +3,9 @@ import { h, imgUrl } from '../../core/dom';
 import {
   BACKDROP_LABELS,
   MOTION_LABELS,
+  SCREENSAVER_AFTER,
+  SCREENSAVER_AFTER_LABELS,
+  SCREENSAVER_BACK_LABELS,
   settings,
   SHADOW_LABELS,
   START_LABELS,
@@ -10,8 +13,11 @@ import {
   type CardShadows,
   type Motion,
   type OpenOnStart,
+  type ScreensaverAfter,
+  type ScreensaverBack,
 } from '../../core/settings';
 import { icon, type IconName } from '../../ui/icons';
+import { showScreensaver } from '../../ui/screensaver';
 import { button, segmented } from '../../ui/widgets';
 import { confirmDialog } from '../confirm';
 import { placeholder } from '../placeholder';
@@ -139,6 +145,71 @@ export const performancePane = (host: PaneHost): Pane => ({
         'Snow, rain or leaves over Seasonal pictures while Home is idle',
         onOff('seg-details', () => settings.get().movingDetails, (movingDetails) => settings.set({ movingDetails })),
       ),
+    ),
+  ],
+});
+
+/**
+ * F36: Launcher settings › Screensaver, the old launcher's clock screensaver back (home_idle_clock_minutes,
+ * clock_glow and clock_wallpaper there). Off by default. Start after: how long Home sits untouched first; Behind the
+ * clock: Glow, the theme's picture darkened, or Black. Show it now tries it at once. The TV's own screensaver setting
+ * can use the same clock, as "HomeTV Clock". ↓ and → as in Performance: the two controls have different widths.
+ */
+export const screensaverPane = (host: PaneHost): Pane => ({
+  onKey(key: Key, focused: HTMLElement) {
+    if (key === 'right') {
+      const seg = focused.closest('.seg');
+      if (!seg) return false;
+      const opts = [...seg.querySelectorAll<HTMLElement>('.seg-opt')];
+      const next = opts[opts.indexOf(focused) + 1];
+      if (next?.dataset.key) host.focusKey(next.dataset.key);
+      return true;
+    }
+    if (key !== 'down') return false;
+    const s = settings.get();
+    const k = focused.dataset.key ?? '';
+    if (k.startsWith('seg-saver-after')) host.focusKey(`seg-saver-back-${s.screensaverBack}`);
+    else if (k.startsWith('seg-saver-back')) host.focusKey('saver-now');
+    else return false;
+    return true;
+  },
+  render: () => [
+    h('div.eyebrow', 'Screensaver'),
+    h('div.pane-title', 'Clock screensaver'),
+    h(
+      'div.pane-sub',
+      'The time and date drift slowly across a dark screen while nobody is using the TV. It starts only from Home, never over an app or Live TV, and any button brings Home back.',
+    ),
+    h(
+      'div.perf-rows',
+      perfRow(
+        'Start after',
+        'How long Home sits untouched first',
+        segmented<ScreensaverAfter>({
+          options: SCREENSAVER_AFTER.map((a) => [a, SCREENSAVER_AFTER_LABELS[a]]),
+          get: () => settings.get().screensaverAfter,
+          set: (screensaverAfter) => settings.set({ screensaverAfter }),
+          group: 'seg-saver-after',
+          small: true,
+          entry: true,
+        }),
+      ),
+      perfRow(
+        'Behind the clock',
+        'A slow colour glow, the theme’s picture darkened, or black (best for an OLED)',
+        segmented<ScreensaverBack>({
+          options: (Object.keys(SCREENSAVER_BACK_LABELS) as ScreensaverBack[]).map((b) => [b, SCREENSAVER_BACK_LABELS[b]]),
+          get: () => settings.get().screensaverBack,
+          set: (screensaverBack) => settings.set({ screensaverBack }),
+          group: 'seg-saver-back',
+          small: true,
+        }),
+      ),
+    ),
+    h('div.pane-actions', button('Show it now', { icon: 'clock', key: 'saver-now', onOk: () => showScreensaver() })),
+    h(
+      'div.pane-note',
+      'The TV’s own screensaver can be this clock too, wherever the TV is: choose “HomeTV Clock” under Screensaver in the TV’s settings.',
     ),
   ],
 });

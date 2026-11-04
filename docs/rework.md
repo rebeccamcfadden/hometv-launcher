@@ -160,7 +160,7 @@ emulator first, the real TV in a batch with the project lead.
 | 3 · Accounts | TMDB sign-in by QR, My list, Seen and Favorites synced, Household and Friends from TMDB lists, start empty instead of the mock seed | The first-run and sign-in designs |
 | 4 · On-TV settings | Weather city and unit, the new Launcher settings page, switching between saved Wi-Fi networks | The Launcher settings and picker designs |
 | 5 · Family install | Package rename, settings pushed at run time, a US region, signed releases, a Windows installer for non-technical households, in-app updates, debloat from a report ([BACKLOG.md](../BACKLOG.md#family-install)) | Nothing; the rename goes first |
-| Later | Two regions (SE and US) searched together, Explore pages, voice search, the screensaver, Retro themes and moving details, add-ons, Watch Next, more languages | A design or a decision |
+| Later | Two regions (SE and US) searched together, Explore pages, voice search, Retro themes and moving details, add-ons, Watch Next, more languages | A design or a decision |
 ## Milestones
 
 | | Scope | Done when |
