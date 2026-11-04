@@ -2,6 +2,7 @@ import { app, type Screen } from '../core/app';
 import { h, imgUrl, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { lists } from '../core/lists';
+import { net } from '../core/net';
 import { store } from '../core/store';
 import { TITLES } from '../data/catalog';
 import { availability, bestOffer, subscribedCount, isOwnIncluded, isIncludedOffer, offerLabel, paidAction } from '../data/offers';
@@ -247,6 +248,18 @@ function pickResults(s: PickState): Screen {
     replace(
       barActions,
       button('Title details', { group: 'bar', key: 'details', onOk: () => app.push(titlePreview(t)) }),
+      // F47: the trailer straight from here, as the preview's Trailer plays it; Back from YouTube comes back to these
+      // same picks, on this title's card.
+      button('Trailer', {
+        icon: 'trailer',
+        group: 'bar',
+        key: 'trailer',
+        onOk: () => {
+          const card = cards.querySelector<HTMLElement>(`[data-title="${t.id}"]`);
+          if (card) app.focus(card);
+          app.toast(net.isOffline() ? 'Offline: the trailer needs the internet' : `Opening the ${t.name} trailer on YouTube…`);
+        },
+      }),
       button(o && isIncludedOffer(o) ? `Open in ${name}` : o ? paidAction(o) : 'Unavailable', {
         icon: 'play',
         primary: true,

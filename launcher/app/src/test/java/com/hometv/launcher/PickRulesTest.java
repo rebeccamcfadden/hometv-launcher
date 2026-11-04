@@ -556,4 +556,45 @@ public class PickRulesTest {
         assertEquals("none shown: My list alone", Collections.singletonList("my"),
                 new ArrayList<>(PickRules.defaults(Kind.MOVIE, h).lists));
     }
+
+    /** F47: the setup's choices come back as they were after Android ended the process (MainActivity's place). */
+    @Test
+    public void restoredKeepsTheSetupsChoices() {
+        PickRules.State before = PickRules.defaults(Kind.SHOW, household);
+        before.source = PickRules.Source.SERVICES;
+        before.step(PickRules.RATING);
+        PickRules.State after = PickRules.restored(Kind.SHOW, before.source.name(), new ArrayList<>(before.lists),
+                before.values, household);
+        assertEquals(Kind.SHOW, after.kind);
+        assertEquals(PickRules.Source.SERVICES, after.source);
+        assertEquals(new ArrayList<>(before.lists), new ArrayList<>(after.lists));
+        assertEquals(Arrays.toString(before.values), Arrays.toString(after.values));
+    }
+
+    /** A list no longer offered is dropped; an unknown source and an option out of range fall back to the first. */
+    @Test
+    public void restoredDropsWhatIsNoLongerThere() {
+        String offered = PickRules.defaults(Kind.MOVIE, household).offered.get(0).key;
+        int[] values = new int[PickRules.IDS.length];
+        values[0] = 99;
+        values[1] = -1;
+        values[2] = 1;
+        PickRules.State s = PickRules.restored(Kind.MOVIE, "SOMEWHERE", Arrays.asList("tmdb-404", offered), values,
+                household);
+        assertEquals(PickRules.Source.LISTS, s.source);
+        assertEquals(Collections.singletonList(offered), new ArrayList<>(s.lists));
+        assertEquals(0, s.values[0]);
+        assertEquals(0, s.values[1]);
+        assertEquals(1, s.values[2]);
+    }
+
+    /** F47: the same picks in the same order, without the ones the catalogue doesn't know yet (a cold start). */
+    @Test
+    public void keptPicksKeepTheirOrderAndWaitForUnknownOnes() {
+        List<Title> all = catalog.all();
+        Title a = all.get(0), b = all.get(1), c = all.get(2);
+        List<String> ids = Arrays.asList(c.id, "tmdb-movie-0", a.id, b.id);
+        assertEquals(Arrays.asList(c.id, a.id, b.id), ids(PickRules.kept(ids, catalog::get)));
+        assertTrue(PickRules.kept(ids, id -> null).isEmpty());
+    }
 }

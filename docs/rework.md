@@ -110,7 +110,7 @@ before any scripted check.
 | Movies and TV Shows | Chips, the Filters drawer, both empty states; the grid scrolls smoothly with artwork |
 | Title preview | Every tab; Watch opens an installed service (Netflix, Prime Video, YouTube); the rent/buy dialog opens its app; Trailer opens YouTube; My list and Seen update the library |
 | Search | On-screen keyboard; typo tolerance; a Bluetooth or remote keyboard types, and Backspace goes back (full results → keyboard → Home), if one is at hand; leaving Search for another tab clears it |
-| Pick for me | Setup, Find 4 picks, Reroll, Adjust filters, Title details, Open in |
+| Pick for me | Setup, Find 4 picks, Reroll, Adjust filters, Title details, Trailer (F47), Open in |
 | Offline | Wi-Fi off: Home, the clock and the cached weather stay; every page still works; the Wi-Fi icon says offline |
 
 **Scripted, after the project lead's go:**
