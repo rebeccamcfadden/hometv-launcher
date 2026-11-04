@@ -27,7 +27,7 @@ public class ClockDream extends DreamService {
         setFullscreen(true);
         setScreenBright(false);
         Config cfg = Config.load(this);
-        Ui.init(this, cfg.reducedMotion());
+        Ui.init(this, cfg.motion);
         Theme theme = ThemeStore.current(this);
         Ui.apply(theme);
         ThemeFonts.apply(this, theme);
