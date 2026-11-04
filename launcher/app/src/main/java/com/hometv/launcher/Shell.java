@@ -53,6 +53,12 @@ final class Shell {
     private View okTarget;
     private boolean okLongTried;
     private boolean okHeld;
+    /**
+     * Whether the Back now being released was pressed here. An app the launcher opened (YouTube's TV app) may close on
+     * Back's press, and the release then reaches Home: on its own it must not act, or it would also close the page
+     * that app was opened from (F47: Pick for me's picks).
+     */
+    private boolean backPressed;
     private LongOk longOk;
     /** The key whose character a screen took as typing, so its key-up is taken too (M6). */
     private int typedKey = KeyEvent.KEYCODE_UNKNOWN;
@@ -356,7 +362,13 @@ final class Shell {
             return true;
         }
         if (code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE || code == KeyEvent.KEYCODE_BUTTON_B) {
-            if (!down && !e.isCanceled()) back();
+            if (down) {
+                if (e.getRepeatCount() == 0) backPressed = true;
+            } else {
+                boolean act = BackKey.acts(backPressed, e.isCanceled());
+                backPressed = false;
+                if (act) back();
+            }
             return true;
         }
         // A keyboard's Backspace is Back on every screen (app.ts onKeyDown), Search included: only its on-screen
