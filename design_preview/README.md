@@ -827,7 +827,8 @@ the titles the person appears in.
 
 ## Visual system
 
-From `src/styles/tokens.css`, taken from the Figma frames. This is Midnight, the default theme; `src/styles/themes.css`
+From `packages/core/src/tokens.css` (shared with HomeTV for Samsung), taken from the Figma frames. This is Midnight,
+the default theme; `src/styles/themes.css`
 overrides the same tokens for the others ([Theme](#theme)), so styles use tokens rather than literal colours, radii
 and line widths.
 
@@ -880,25 +881,26 @@ this tab is 305 px tall for them (the title, buttons and tabs sit higher on that
 
 | Path | What it is |
 |---|---|
+| `../packages/core/` | Logic shared with HomeTV for Samsung (types, services, search matching, the API keys' words, the tokens), imported as `@hometv/core/<file>`; `src/types.ts` and `src/data/services.ts` re-export it ([its README](../packages/core/README.md)) |
 | `src/core/app.ts` | Screen stack, layers, Back, keys, toasts, tab transition, stage scaling |
 | `src/core/focus.ts` | Spatial D-pad navigation; `data-group` remembers focus per row or grid |
-| `src/core/fuzzy.ts` | Search matching: subsequences with word-start and run bonuses; 1–2 typo tolerance for words of 4+ letters |
+| `src/core/fuzzy.ts` | Search over the mock catalogue; the matching (subsequences with word-start and run bonuses; 1–2 typo tolerance for words of 4+ letters) is in `packages/core` |
 | `src/core/store.ts` | Household state: My list, Seen, Favorites, recent searches, recently viewed |
 | `src/core/theme.ts` | The themes, the Seasonal periods by date, and what applies one to the page: `data-theme` and `data-period` on `<html>`, its fonts and its backdrop |
 | `src/core/account.ts` | The mocked TMDB sign-in and lists, behind the Account pane and the dev bar's Account menu |
 | `src/core/lists.ts` | The lists Movies, TV Shows and Pick for me show: My list, then the account's shown TMDB lists (or the mock Household and Friends before a sign-in) |
 | `src/core/notes.ts` | Phone notes: on/off, the pairing code, each list's last send, and the simulated import behind the import pill |
-| `src/core/keys.ts` | API keys (F16): each key's state and last four characters, the code, the mock check; shared with the phone page through localStorage |
+| `src/core/keys.ts` | API keys (F16): each key's state and last four characters, the code, the mock check; shared with the phone page through localStorage. The keys' words and rules are in `packages/core` |
 | `keys.html`, `src/keysPage.ts` | The phone and laptop page the API keys QR opens (a second Vite page) |
 | `compare.html` | F40: Movies or TV Shows with today's cards and with poster cards, side by side (a third Vite page) |
 | `src/core/remote.ts`, `src/core/remoteProtocol.ts` | Phone remote (F27): the TV's side (pairing code and lock, each phone's token, keys, typing, My list, search, what the TV shows) and the messages both sides share |
 | `remote.html`, `src/remotePage.ts`, `src/styles/remote.css` | The phone remote page (a fourth Vite page) |
 | `src/core/net.ts` | The simulated network and data state behind the dev bar's State menu |
-| `src/data/` | Mock catalogue, services (and the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |
+| `src/data/` | Mock catalogue, services (re-exported from `packages/core`: the services and stores to tick), weather places, and offer rules in kronor (`bestOffer`, `offersByService`, `cardLine`, `priceLines`, `cheapestStore`, `offersOf`) |
 | `src/screens/` | One module per screen; `dropdown.ts` holds the top-bar menus, `quickSettings.ts` the Settings icon's, `rent.ts` the rent/buy dialog, `settings.ts` Launcher settings, `setup.ts` First run |
 | `src/screens/panes/` | Launcher settings' panes, shared with First run: account, services and stores, weather, Home row apps, theme, and the rest |
 | `src/ui/` | Nav, buttons, chips, segmented controls, cards (and their skeletons), icons, and the look-alike QR |
-| `src/styles/` | `tokens.css` (the visual system, Midnight), `themes.css` (the other themes, from the Figma variables), `base.css`, `screens.css` |
+| `src/styles/` | `themes.css` (the other themes, from the Figma variables), `base.css`, `screens.css` |
 | `public/img/` | Artwork exported from the Figma file |
 
 In development builds, `window.app` exposes the screen stack and `window.net` the data state in the browser console

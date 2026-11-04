@@ -1,4 +1,4 @@
-import './styles/tokens.css';
+import '@hometv/core/tokens.css';
 import './styles/remote.css';
 import { CHANNEL, normalizeCode, TV_NAME, type PhoneMsg, type PhoneTitle, type RemoteKey, type TvMsg } from './core/remoteProtocol';
 import { icon } from './ui/icons';

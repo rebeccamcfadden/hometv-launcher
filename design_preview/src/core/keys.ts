@@ -1,44 +1,21 @@
 // API keys (F16): the TMDB, Watchmode and Movie of the Night keys a household makes for itself and enters from a phone
 // or a laptop. On the TV each key goes into private storage, is checked with one free request, and is never shown in
 // full again (only its last four characters). Here they are kept in localStorage, shared with the phone page
-// (keys.html) through the storage event, so a key "sent" from that page shows on the TV prototype at once.
+// (keys.html) through the storage event, so a key "sent" from that page shows on the TV prototype at once. What each
+// key is, its status words and the code's letters are in packages/core (shared with HomeTV for Samsung).
 
-export type KeyId = 'tmdb' | 'watchmode' | 'motn';
-/**
- * unset: no key; checking: the TV is asking the service; ok: it answered; bad: it refused the key; unreachable: the TV
- * couldn't reach it, so the key has never been checked (kept and tried again later, but not counted as working until
- * a check passes); built: the build's own key (tv.properties), which a key entered here replaces, and which Remove
- * takes away too. A key that once worked and then can't be reached stays ok.
- */
-export type KeyState = 'unset' | 'checking' | 'ok' | 'bad' | 'unreachable' | 'built';
+import {
+  keyStatus as coreKeyStatus,
+  keysValue,
+  newCode,
+  type KeyEntry,
+  type KeyId,
+  type KeyState,
+} from '@hometv/core/keys';
 
-export interface KeyInfo {
-  id: KeyId;
-  name: string;
-  /** What it is for, in a few words. */
-  use: string;
-  /** Whether the TV needs it: TMDB for titles; Watchmode for prices; Movie of the Night only backs Watchmode up. */
-  need: 'titles' | 'prices' | 'optional';
-  /** The free plan, as the key page says it. */
-  plan: string;
-}
+export { KEY_INFO, type KeyId, type KeyInfo, type KeyState } from '@hometv/core/keys';
 
-export const KEY_INFO: KeyInfo[] = [
-  { id: 'tmdb', name: 'TMDB', use: 'Movies, TV Shows and Search', need: 'titles', plan: 'Free for personal use' },
-  { id: 'watchmode', name: 'Watchmode', use: 'Rent and buy prices', need: 'prices', plan: 'Free: 2,500 credits a month' },
-  {
-    id: 'motn',
-    name: 'Movie of the Night',
-    use: 'More prices, when Watchmode has none',
-    need: 'optional',
-    plan: 'Free: 1,000 requests a month',
-  },
-];
-
-interface Entry {
-  state: KeyState;
-  /** The key's last four characters, the only part ever shown again. */
-  last4: string;
+interface Entry extends KeyEntry {
   /**
    * While checking: what the (mock) service answers, and when that shows. Kept with the key, so whichever tab is open
    * finishes the check (on the TV the TV itself checks); a key replaced or removed takes its pending answer with it.
@@ -54,9 +31,7 @@ interface Saved {
 }
 
 const STORE = 'hometv-preview-keys-v1';
-const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
-const newCode = () => Array.from({ length: 6 }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join('');
 const blank = (state: KeyState = 'unset'): Entry => ({ state, last4: '' });
 /** The prototype starts as the project lead's own build does: every key from tv.properties. */
 const defaults = (): Saved => ({
@@ -155,29 +130,9 @@ function mockCheck(id: KeyId, value: string): KeyState {
   return /^[A-Za-z0-9]{20,64}$/.test(value) ? 'ok' : 'bad';
 }
 
-/** Line under a key's name on the TV and on the phone page. */
+/** Line under a key's name on the TV and on the phone page (the words are in packages/core). */
 export function keyStatus(id: KeyId, e: Entry = data.keys[id]): { text: string; tone: 'good' | 'warn' | 'bad' | 'dim' } {
-  const info = KEY_INFO.find((k) => k.id === id)!;
-  switch (e.state) {
-    case 'ok':
-      return { text: `Works · ends ${e.last4}`, tone: 'good' };
-    case 'built':
-      return { text: 'Works · from this TV’s build', tone: 'good' };
-    case 'checking':
-      return { text: `Checking with ${info.name}…`, tone: 'dim' };
-    case 'unreachable':
-      return { text: `Kept, not checked yet: the TV couldn’t reach ${info.name}. It tries again later, or OK tries now.`, tone: 'warn' };
-    case 'bad':
-      return {
-        text:
-          id === 'tmdb'
-            ? 'TMDB refused it. Copy the API Read Access Token (the long one), all of it.'
-            : `${info.name} refused it. Copy the key again, all of it.`,
-        tone: 'bad',
-      };
-    default:
-      return { text: info.need === 'optional' ? 'Not set · optional' : 'Not set', tone: 'dim' };
-  }
+  return coreKeyStatus(id, e);
 }
 
 export const keys = {
@@ -242,22 +197,7 @@ export const keys = {
   tmdbReady: () => ['ok', 'built'].includes(data.keys.tmdb.state),
   pricesReady: () => ['ok', 'built'].includes(data.keys.watchmode.state),
   /** The section's value: "3 working", "Not set", "1 of 3 set", "1 not checked", "1 refused". */
-  value(only?: KeyId[]): { text: string; warn?: boolean } {
-    const ids = only ?? KEY_INFO.map((k) => k.id);
-    const states = ids.map((id) => data.keys[id].state);
-    const refused = states.filter((s) => s === 'bad').length;
-    if (refused) return { text: `${refused} refused`, warn: true };
-    if (states.includes('checking')) return { text: 'Checking…' };
-    const working = states.filter((s) => s === 'ok' || s === 'built').length;
-    const unchecked = states.filter((s) => s === 'unreachable').length;
-    const needed = ids.filter((id) => KEY_INFO.find((k) => k.id === id)!.need !== 'optional');
-    const missing = needed.filter((id) => data.keys[id].state === 'unset');
-    if (missing.length) {
-      return { text: missing.length === needed.length ? 'Not set' : `${working + unchecked} of ${ids.length} set`, warn: false };
-    }
-    if (unchecked) return { text: `${unchecked} not checked`, warn: true };
-    return { text: `${working} working` };
-  },
+  value: (only?: KeyId[]): { text: string; warn?: boolean } => keysValue(data.keys, only),
 };
 
 export type KeysPreset = 'built' | 'none' | 'entered' | 'refused';

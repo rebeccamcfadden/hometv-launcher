@@ -1,0 +1,17 @@
+{
+  "name": "@hometv/core",
+  "private": true,
+  "version": "0.1.0",
+  "description": "HomeTV logic shared by design_preview and HomeTV for Samsung: no DOM, no storage, no network.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
