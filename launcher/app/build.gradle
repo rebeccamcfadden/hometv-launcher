@@ -139,8 +139,8 @@ android {
         applicationId providers.gradleProperty('launcherApplicationId').getOrElse('com.hometv.launcher')
         minSdk 26
         targetSdk 34
-        versionCode 8
-        versionName '2.7'
+        versionCode 9
+        versionName '2.8'
 
         buildConfigField 'double', 'WEATHER_LATITUDE', weatherLatitude
         buildConfigField 'double', 'WEATHER_LONGITUDE', weatherLongitude
