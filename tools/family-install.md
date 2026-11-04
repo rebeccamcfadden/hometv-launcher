@@ -26,8 +26,11 @@ When SmartScreen or a browser blocks the download, the last resort, only with th
 fetch the same file from the tagged release in PowerShell and run it the same way:
 
 ```powershell
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 'Tls12'
 irm https://github.com/rebeccamcfadden/hometv-launcher/releases/download/<tag>/family-install.ps1 -OutFile family-install.ps1
 ```
+
+The first line is for Windows PowerShell 5.1, which may not offer TLS 1.2 on its own, and GitHub needs it.
 
 Don't pipe it into `iex`: when the script ends it would close the window, and the last message with it.
 
