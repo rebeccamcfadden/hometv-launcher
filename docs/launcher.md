@@ -39,7 +39,9 @@ The weather's default location and temperature unit come from `launcher/tv.prope
 changed on the TV too, in Launcher settings. The optional `weather_city` names the default location on the quick
 settings' Weather row ("New York · °C"); without it the row says Default. For the real catalogue, add your TMDB "API
 Read Access Token" there as `tmdb_api_key` (free for non-commercial use, from your account's API settings at
-themoviedb.org). Without it the launcher builds with the mock catalogue, which needs no network. The token ends up
+themoviedb.org). Without it, Movies, TV Shows and Search say they need a TMDB key until one goes in on the TV (below);
+a build for the emulator or tests can run on the mock catalogue instead, which needs no network, with
+`-PmockCatalogue=true`. The token ends up
 inside the APK you build, so keep that APK to yourself. Or leave the keys out and enter them on the TV: Launcher
 settings › API keys shows a QR that opens a page on a phone (or an address and a code for a laptop). The page says how
 to get each key, and the TV checks each one and keeps it in its own storage.

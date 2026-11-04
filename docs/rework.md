@@ -37,7 +37,7 @@ Settled with the project lead on 2026-10-28.
 | Typeface | Roboto, the system font; nothing bundled. Sizes and weights follow Figma, which uses Inter. Since M9 a theme may bring its own display and UI faces from Google Fonts, downloaded through Play services' font provider and kept on the TV; Roboto until they arrive and with the System font option. |
 | APK size | V1 (M0, 2026-10-29) dropped upstream's 512 KB gate: `ci.yml` only reported the size. Since V2 Phase 1 (2026-10-30) CI fails a release APK over 1,048,576 bytes (1 MB), at the project lead's decision; each PR still reports its size. |
 | Languages | English only. Launcher translations, RTL and the translated READMEs are dropped. |
-| Catalogue | Mock in V1, ported from `design_preview/src/data`, behind an interface a TMDB source can replace. Real in V2 Phase 1 (`TmdbCatalog`) when the build has a TMDB token; without one, the mock catalogue still builds and works offline. |
+| Catalogue | Mock in V1, ported from `design_preview/src/data`, behind an interface a TMDB source can replace. Real in V2 Phase 1 (`TmdbCatalog`) when the build has a TMDB token; without one, Movies, TV Shows and Search say they need a key (the project lead, 2026-11-04), and a build with `-PmockCatalogue=true` (the emulator, tests) runs on the mock catalogue, offline. |
 | Availability and prices | Mock in V1. Real in V2 Phase 2 with a TMDB token (see the V2 Phase 2 row). |
 | Watch on … | Opens the service's app. Opening the title itself is in the backlog. |
 | Watchlists | My list, Seen, Favorites, recent searches and recently viewed are stored on the TV. Household and Friends are mock placeholders; they will come from the project lead's TMDB lists (backlog). In V2, see Accounts, 2026-10-30. |

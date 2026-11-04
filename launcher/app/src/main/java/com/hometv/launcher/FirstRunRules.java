@@ -99,11 +99,11 @@ final class FirstRunRules {
     /**
      * Start's help once every row is done: it promises the lists in Movies and TV Shows only when TMDB account runs after
      * First run, that is, it is on and set up (otherwise it is switched off as First run ends, or already off), and the
-     * launcher has a TMDB key to show them with: a public release built without one (a family TV whose key isn't in
-     * yet) shows TmdbGate's "needs a TMDB key" there instead, though setUp counts it as set up.
+     * launcher has a TMDB key to show them with: a launcher without one (and not built with -PmockCatalogue=true) shows
+     * TmdbGate's "needs a TMDB key" there instead, though setUp counts it as set up.
      */
-    static boolean readyPromisesLists(boolean tmdbOn, boolean tmdbSetUp, boolean keylessRelease) {
-        return tmdbOn && tmdbSetUp && !keylessRelease;
+    static boolean readyPromisesLists(boolean tmdbOn, boolean tmdbSetUp, boolean needsKey) {
+        return tmdbOn && tmdbSetUp && !needsKey;
     }
 
     /** The feature whose setup that section is, or null. */

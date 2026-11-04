@@ -8,6 +8,11 @@ plugins {
 // A public release (Family install step 3, tools/release.ps1, -PpublicRelease=true) reads the committed example alone,
 // so the APK carries no keys and no household's place or shortcut, and can be downloaded by anyone; checked below.
 def publicRelease = providers.gradleProperty('publicRelease').getOrElse('false') == 'true'
+// The mock catalogue (design_preview's data) for a build without a TMDB key: only when asked for with
+// -PmockCatalogue=true (the emulator, tests, screenshots). Without it, a TV with no key says Movies, TV Shows and
+// Search need one (Rebecca, 2026-11-04), as a family TV always did. Never in a public release.
+def mockCatalogue = providers.gradleProperty('mockCatalogue').getOrElse('false') == 'true'
+if (mockCatalogue && publicRelease) throw new GradleException('mockCatalogue: not in a public release (-PpublicRelease=true)')
 def tvPropsFile = rootProject.file('tv.properties')
 if (publicRelease || !tvPropsFile.exists()) tvPropsFile = rootProject.file('tv.properties.example')
 def tvProps = new Properties()
@@ -46,7 +51,8 @@ weatherCity = weatherCity.collect { String ch ->
     int c = (ch as char) as int
     c < 0x80 ? ch : String.format('\\u%04X', c)
 }.join('')
-// Optional: TMDB's v4 read access token. Without one the launcher shows the mock catalogue (docs/rework.md). Only
+// Optional: TMDB's v4 read access token. Without one the launcher asks for a key on Movies, TV Shows and Search, or
+// runs on the mock catalogue with -PmockCatalogue=true (docs/rework.md). Only
 // the characters a token has, so it can't break the generated Java; the message never prints the value.
 def tmdbToken = tvProps.getProperty('tmdb_api_key', '').trim()
 if (tmdbToken && !(tmdbToken ==~ /[A-Za-z0-9._\-]+/)) {
@@ -155,6 +161,7 @@ android {
         // True only in a release build signed with the release key (below): the only APKs that can take an update from
         // a GitHub Release, so the only ones that may offer one. A public build without the key stays false.
         buildConfigField 'boolean', 'PUBLIC_RELEASE', 'false'
+        buildConfigField 'boolean', 'MOCK_CATALOGUE', mockCatalogue.toString()
         buildConfigField 'String', 'UPDATE_FEED', "\"${updateFeed}\""
         manifestPlaceholders = [updateFeedCleartext: updateFeedCleartext.toString()]
     }

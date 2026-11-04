@@ -173,7 +173,7 @@ public class FirstRunRulesTest {
         assertFalse(FirstRunRules.readyPromisesLists(true, false, false));
         assertFalse(FirstRunRules.readyPromisesLists(false, true, false));
         assertFalse(FirstRunRules.readyPromisesLists(false, false, false));
-        // A family TV's release without a key yet: Movies says it needs a key, whatever setUp says.
+        // No TMDB key yet (and no mock catalogue): Movies says it needs a key, whatever setUp says.
         assertFalse(FirstRunRules.readyPromisesLists(true, true, true));
     }
 
