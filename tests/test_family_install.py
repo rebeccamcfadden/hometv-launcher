@@ -147,7 +147,7 @@ function Shell([string]$c) {
         if ($s.appops_get -eq 'fail') { $script:code = 1; return 'Error: java.lang.SecurityException: appops' }
         if ($s.appops_get -eq 'garbled') { return 'Operation REQUEST_INSTALL_PACKAGES not known here' }
         # Android names no mode for an app-op never set.
-        if ($s.install_grant -eq 'default') { return 'No operations.' }
+        if ($s.install_grant -eq 'default') { if ($s.appops_get -eq 'two_lines') { return "No operations.`nDefault mode: default" }; return 'No operations.' }
         return "REQUEST_INSTALL_PACKAGES: $($s.install_grant); time=+1m2s ago"
     }
     return ''
@@ -516,6 +516,16 @@ class FamilyInstallTest(unittest.TestCase):
         proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(end["install_grant"], "deny")
+
+    def test_an_unset_grant_with_its_default_mode_line_is_default(self):
+        # TCL BeyondTV, Android 9 (2026-11-04): "No operations." then "Default mode: default".
+        proc, end = self.run_installer(self.tv(appops_get="two_lines"))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "allow")
+        self.assertIn("undo appops set com.hometv.launcher REQUEST_INSTALL_PACKAGES default", (self.backup_dir() / "undo.txt").read_text())
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["install_grant"], "default")
 
     def assert_unreadable_grant_left_alone(self, how):
         proc, end = self.run_installer(self.tv(install_grant="deny", appops_get=how))
