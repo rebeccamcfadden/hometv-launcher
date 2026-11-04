@@ -288,13 +288,25 @@ final class Ui {
 
     /** Focused first, then activated (the current page's nav item), then the resting look. */
     static StateListDrawable states(Drawable normal, Drawable activated, Drawable focused) {
-        StateListDrawable s = new StateListDrawable();
+        StateListDrawable s = new MotionStates();
         s.addState(new int[]{android.R.attr.state_focused}, focused);
         if (activated != null) s.addState(new int[]{android.R.attr.state_activated}, activated);
         s.addState(new int[]{}, normal);
-        s.setEnterFadeDuration((int) fadeMs(FAST_MS));
-        s.setExitFadeDuration((int) fadeMs(FAST_MS));
         return s;
+    }
+
+    /**
+     * Fades between its states for as long as the Motion in effect says at each change: Quick settings' Motion calls
+     * {@link #init} without rebuilding Home, so a duration taken when the drawable was built would go stale.
+     */
+    private static final class MotionStates extends StateListDrawable {
+        @Override
+        protected boolean onStateChange(int[] stateSet) {
+            int ms = (int) fadeMs(FAST_MS);
+            setEnterFadeDuration(ms);
+            setExitFadeDuration(ms);
+            return super.onStateChange(stateSet);
+        }
     }
 
     static ColorStateList colors(int normal, int activated, int focused) {
