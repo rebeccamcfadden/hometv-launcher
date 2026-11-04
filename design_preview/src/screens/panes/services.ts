@@ -31,7 +31,7 @@ export function servicesPane(host: PaneHost): Pane {
 
   const tile = (s: PickService & { regions: Region[] }, isEntry: boolean) => {
     const on = ticked().includes(s.id);
-    const only = on ? settings.get().onlyIn[s.id] : undefined;
+    const only = on && multiRegion() ? settings.get().onlyIn[s.id] : undefined;
     const el = focusable(
       h(
         'div.svc-tile',

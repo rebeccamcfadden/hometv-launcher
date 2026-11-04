@@ -8,14 +8,19 @@ import { DEFAULT_PRICE_SOURCE, HOME_APPS, PRICE_SOURCE, SERVICES } from './servi
 /** "39 kr". */
 export const kr = (n: number) => `${n} kr`;
 
-/** The country an offer is in (Sweden for the mock's own offers). */
-export const regionOf = (o: Offer): Region => o.region ?? 'se';
+/**
+ * The country an offer is in: its own with several regions shown (Sweden for the mock's own offers); with one, the
+ * TV's, whose store ticks and settings apply to every offer as before.
+ */
+export const regionOf = (o: Offer): Region => (multiRegion() ? (o.region ?? 'se') : settings.get().region);
 
 /** Whether more than one region is shown (Two regions): offers then carry their flags. */
-export const multiRegion = () => settings.get().alsoRegions.length > 0;
+export function multiRegion() {
+  return settings.get().alsoRegions.length > 0;
+}
 
 /** An amount in the offer's currency: "39 kr" in Sweden, "$3.99" in the US. */
-export const money = (n: number, o?: Offer) => (o && regionOf(o) === 'us' ? `$${n.toFixed(2)}` : kr(n));
+export const money = (n: number, o?: Offer) => (o && multiRegion() && regionOf(o) === 'us' ? `$${n.toFixed(2)}` : kr(n));
 
 const QUALITIES: Quality[] = ['SD', 'HD', '4K'];
 
@@ -58,7 +63,11 @@ export function paidAction(o: Offer): string {
 export const isSubscribed = (id: ServiceId, region?: Region) =>
   !!SERVICES[id].free ||
   pickServices().some(
-    (p) => p.catalog === id && settings.get().services.includes(p.id) && (!region || !settings.get().onlyIn[p.id] || settings.get().onlyIn[p.id] === region),
+    // "Only in …" counts only while several regions are shown, the only time it can be set or cleared.
+    (p) =>
+      p.catalog === id &&
+      settings.get().services.includes(p.id) &&
+      (!region || !multiRegion() || !settings.get().onlyIn[p.id] || settings.get().onlyIn[p.id] === region),
   );
 
 /** How many services are ticked, for "All 8 services". */
