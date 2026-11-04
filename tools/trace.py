@@ -33,6 +33,7 @@ import time
 PACKAGE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
 COMPONENT = re.compile(r"^[A-Za-z][A-Za-z0-9_.]*/[A-Za-z0-9_.$]+$")
 REMOTE = "/data/misc/perfetto-traces/cleanyourtv.pftrace"   # the folder perfetto may write to on Android 9 and 10
+PULLABLE = "/data/local/tmp/cleanyourtv.pftrace"   # where adb may read it from
 NAV_KEYS = ("RIGHT RIGHT RIGHT LEFT LEFT LEFT DOWN RIGHT DOWN LEFT DOWN UP "
             "UP RIGHT UP LEFT DOWN DOWN RIGHT RIGHT UP UP UP LEFT").split()
 START_MARGIN_S = 3    # recording starts in the background; give it time before the first step
@@ -155,8 +156,14 @@ def record_one(dev, setup, steps, package, out_path, run_shell=None):
         if run_shell(alive).strip() != "running":
             break
         time.sleep(1)
-    dev.pull(REMOTE, out_path, transport_timeout_s=300.0, read_timeout_s=300.0)
-    run_shell(f"rm -f {REMOTE}")
+    # Android 9's SELinux refuses adb's file transfer from perfetto's folder (TCL BeyondTV), but the shell may read it:
+    # copy it out first, and pull from perfetto's folder only when the copy fails.
+    # Both copies go whatever happens, so a failed pull leaves no trace on the TV.
+    try:
+        copied = run_shell(f"cp {REMOTE} {PULLABLE} && echo copied").strip().endswith("copied")
+        dev.pull(PULLABLE if copied else REMOTE, out_path, transport_timeout_s=300.0, read_timeout_s=300.0)
+    finally:
+        run_shell(f"rm -f {REMOTE} {PULLABLE}")
     size = os.path.getsize(out_path)
     if size == 0:
         os.remove(out_path)
