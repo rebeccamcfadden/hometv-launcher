@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher settings › Screensaver (ScreensaverSection, ClockDream; F36, Rebecca chose the prototype's shape 2026-11-04). -->
+<resources>
+    <string name="settings_screensaver">Screensaver</string>
+    <string name="saver_title">Clock screensaver</string>
+    <string name="saver_sub">The time and date drift slowly across a dark screen while nobody is using the TV. It starts only from Home, never over an app or Live TV, and any button brings Home back.</string>
+    <string name="saver_after">Start after</string>
+    <string name="saver_after_sub">How long Home sits untouched first</string>
+    <string name="saver_off">Off</string>
+    <string name="saver_minutes">%d min</string>
+    <string name="saver_back">Behind the clock</string>
+    <string name="saver_back_sub">A slow colour glow, the theme’s picture darkened, or black (best for an OLED)</string>
+    <string name="saver_back_glow">Glow</string>
+    <string name="saver_back_picture">Theme picture</string>
+    <string name="saver_back_black">Black</string>
+    <string name="saver_show_now">Show it now</string>
+    <string name="saver_system_note">The TV’s own screensaver can be this clock too, wherever the TV is: choose “HomeTV Clock” under Screensaver in the TV’s settings.</string>
+    <!-- The name in the TV's own screensaver list (ClockDream). -->
+    <string name="dream_name">HomeTV Clock</string>
+</resources>

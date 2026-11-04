@@ -54,7 +54,7 @@ public class SettingsNavTest {
     @Test
     public void theSectionsAreInGroupingAsOrder() {
         assertEquals(Arrays.asList("account", "notes", "services", "stores", "keys", "features", "theme",
-                "performance", "apps", "weather", "start", "home", "region", "remote", "tv",
+                "performance", "screensaver", "apps", "weather", "start", "home", "region", "remote", "tv",
                 "about"), SettingsNav.ORDER);
         List<String> groups = new ArrayList<>();
         for (SettingsNav.Group g : SettingsNav.GROUPS) groups.add(g.key);

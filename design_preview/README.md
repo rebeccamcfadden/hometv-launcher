@@ -691,7 +691,7 @@ picks another theme.
   end (no card shadows, Motion Reduced, no animated details; glow and picture on) until the household chooses, and the
   pane says so; config.xml or config.json `light_defaults` can set or stop that per TV. The prototype starts with
   everything on but animated details; it applies Motion and the backdrop, and saves the card shadows and glow, which it doesn't draw.
-- **Screensaver** (F36, no Figma frame; built here for the project lead to see before the launcher): the old launcher's
+- **Screensaver** (F36, no Figma frame; Rebecca chose this shape on 2026-11-04, and the launcher follows it): the old launcher's
   clock screensaver back. "Clock screensaver", a line on what it does, then two rows laid out as Performance's:
   **Start after** (Off / 5 min / 15 min / 30 min; **Off** to start, on every TV) and **Behind the clock** (Glow / Theme
   picture / Black). Then **Show it now**, and a note that the TV's own screensaver setting can use the same clock
@@ -866,7 +866,7 @@ width with 243 px art.
 - **API keys:** the checks and the phone page's sending are mocked (`src/core/keys.ts`); the TV makes one real
   request per key. The port (8766, beside Phone notes' 8765) and the QR's address are the TV's own.
 - **Not designed yet:** hold-OK menus in Figma (the base uses them for tile Move / Remove / App info and a Settings
-  menu; the title menu is built here without a design), the screensaver (built here, F36), removing recent searches, voice search,
+  menu; the title menu is built here without a design), removing recent searches, voice search,
   progress on started titles, the Sort chip, a
   person page design, Search and Home's weather while loading, the Home row apps pane (built here without a design),
   and right-to-left layouts (the base supports Hebrew).

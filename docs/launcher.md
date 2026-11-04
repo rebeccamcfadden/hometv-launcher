@@ -25,7 +25,7 @@ The TV needs Android 8.0 (API 26) or newer. `minSdk` is a compile-time floor in
 | **Phone remote** | Optional, off unless turned on: a phone on the home Wi-Fi as a remote and keyboard for the launcher's own screens, and to add the title on the TV, or one searched for, to My list. Each phone pairs with a code and can be forgotten; HTTPS with a certificate the TV makes. See [phone-remote.md](phone-remote.md). |
 | **Themes** | Launcher settings › Theme. Classic: Midnight (the default), Daylight, OLED Black, High Contrast, Cinema and Landscapes. Seasonal, following the date from Snow to Christmas and the sun from dawn to night: Vector art and 8-bit. A theme changes colours, type, corners, shading and the picture behind Home; layout and data stay the same. Screenshots of each: [themes/README.md](../themes/README.md). |
 | **Remote keys** | Keeps the Input, YouTube and gear buttons working after the stock launcher is gone ([below](#remote-keys)). |
-| **Left for V2** | Wallpapers pushed as `config.json`, the clock screensaver, module cards and add-ons, Watch Next, festivals and the sky: [BACKLOG.md](../BACKLOG.md#left-for-v2). |
+| **Left for V2** | Wallpapers pushed as `config.json`, module cards and add-ons, Watch Next, festivals and the sky: [BACKLOG.md](../BACKLOG.md#left-for-v2). |
 
 ## Build it yourself
 
@@ -100,6 +100,12 @@ closes. The sections, top to bottom:
   and animated details (off to start: snow, rain or autumn leaves over a Seasonal picture, by the weather at the Weather
   place or the season, while Home is idle for 3 s). A low-RAM TV starts with the lighter choices (no card shadows, Motion Reduced), as does any TV
   whose `light_defaults` says `on`. Pushing or resetting a `config.json` clears the choices.
+- **Screensaver**: the clock screensaver, Off to start. **Start after** (Off, 5, 15 or 30 min) is how long Home sits
+  with no key before the time and date drift across a dark screen; it starts only on Home itself, never over an app,
+  Live TV or a menu, and any button brings Home back without doing anything else. **Behind the clock**: a slow colour
+  glow, the theme's picture darkened, or black (for an OLED). Every minute the clock moves, so nothing burns in.
+  **Show it now** tries it. The TV's own screensaver can be the same clock anywhere: choose **HomeTV Clock** in the
+  TV's Screensaver settings, or `settings put secure screensaver_components com.hometv.launcher/.ClockDream`.
 - **Open on start**, only with `open_on_start_choice`: Home, or an app that opens instead of Home the first time Home
   comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
 - **Default Home** says whether this launcher is Home and opens Android's home picker; **TV settings** opens the TV's
