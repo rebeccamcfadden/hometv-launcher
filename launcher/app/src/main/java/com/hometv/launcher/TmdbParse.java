@@ -23,8 +23,8 @@ final class TmdbParse {
 
     /** How many of the cast and the crew a title keeps for Cast &amp; crew. */
     static final int CAST_MAX = 15, CREW_MAX = 6;
-    /** How many titles a person page lists. */
-    static final int KNOWN_FOR_MAX = 30;
+    /** How many titles a person page lists: every one (Rebecca, 2026-11-04 19:11); a number here caps it again. */
+    static final int PERSON_TITLES_MAX = Integer.MAX_VALUE;
 
     /** Talk shows, news and reality TV: a person's appearances there are not what they are known for. */
     private static final int[] NOT_KNOWN_FOR = {10767, 10763, 10764};
@@ -162,7 +162,7 @@ final class TmdbParse {
     }
 
     /**
-     * /person/{id} with combined_credits: the person with their photo, and up to 30 titles they are known for, most
+     * /person/{id} with combined_credits: the person with their photo, and every title they are known for, most
      * voted first, leaving out talk shows, news, reality TV and appearances as themselves. Also their biography,
      * birth date and place, the job they are known for, and what they did on each of those titles (the character,
      * or the crew job; the character is "" when TMDB has none).
@@ -187,7 +187,7 @@ final class TmdbParse {
             Title t = summary(c, null);
             if (t == null) continue;
             if (!out.containsKey(t.id)) {
-                if (out.size() == KNOWN_FOR_MAX) continue;
+                if (out.size() == PERSON_TITLES_MAX) continue;
                 out.put(t.id, t);
             }
             List<Catalog.Role> r = roles.get(t.id);

@@ -93,7 +93,7 @@ interface Catalog {
 
     /** What a person is in or made, and their photo. */
     default void person(Person p, Consumer<Credits> done) {
-        done.accept(new Credits(p, PreviewRules.titlesFor(p.name, all())));
+        done.accept(Credits.fromCatalogue(p, PreviewRules.titlesFor(p.name, all())));
     }
 
     /** Titles and people the network finds for a query. The mock catalogue has no more than it holds, so never. */
@@ -186,6 +186,23 @@ interface Catalog {
                 copy.put(e.getKey(), Collections.unmodifiableList(new ArrayList<>(e.getValue())));
             }
             this.roles = Collections.unmodifiableMap(copy);
+        }
+
+        /**
+         * A person from the catalogue alone (the mock, or before TMDB answers): no facts, and what they did on each
+         * title from its cast (Acting, the character) and crew (the job's department, the job).
+         */
+        static Credits fromCatalogue(Person p, List<Title> titles) {
+            Map<String, List<Role>> roles = new LinkedHashMap<>();
+            for (Title t : titles) {
+                List<Role> r = new ArrayList<>();
+                for (Person c : t.cast) if (c.name.equals(p.name)) r.add(new Role("Acting", c.role));
+                for (Person c : t.crew) {
+                    if (c.name.equals(p.name)) r.add(new Role(PersonRules.departmentOf(c.role), c.role));
+                }
+                if (!r.isEmpty()) roles.put(t.id, r);
+            }
+            return new Credits(p, titles, "", "", "", "", roles);
         }
 
         /** The same person and facts with other titles (a catalogue swaps in the copies it already knows). */
