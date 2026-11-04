@@ -99,7 +99,7 @@ $ChecklistNotes = [ordered]@{
 $ConfigDir = "/sdcard/Android/data/$Launcher/files"
 $ThemeUri = "content://$Launcher.theme"
 # The remote-button keys a list's config.json may carry for that TV (themes/README.md); nothing else of it comes along.
-$KeyConfigKeys = @('input_key_keycodes', 'app_keys', 'settings_key_keycodes', 'settings_key_panel')
+$KeyConfigKeys = @('input_key_keycodes', 'app_keys', 'settings_key_keycodes', 'settings_key_panel', 'handle_view_inputs')
 # Which of the launcher's helpers answers each button (docs/TROUBLESHOOTING.md, "Accessibility helper enabled").
 $ButtonHelpers = [ordered]@{ 'Home' = 'HomeKeyService'; 'Input' = 'InputKeyService'; 'Settings' = 'HomeKeyService' }
 $script:ListNames = @()
@@ -465,6 +465,8 @@ function Invoke-Restore {
         # settings prints nothing useful either: read the value back.
         if ($ok -and $command -match '^settings put secure (\S+) (\S+)$') { $ok = (Get-SecureSetting $Matches[1]) -eq $Matches[2] }
         if ($ok -and $command -match '^settings delete secure (\S+)$') { $ok = (Get-SecureSetting $Matches[1]) -eq 'null' }
+        # The config.json the install wrote must be gone: its commands print nothing either way.
+        if ($command -match '^rm -f \S+/config\.json; content delete ') { $ok = -not (Test-ConfigOnTv) }
         if (-not $ok) { $failed += $command }
     }
     $homeNow = Get-HomeNow
@@ -716,9 +718,27 @@ function Test-Button([string]$Name, [string]$Question) {
 
 function Get-SecureSetting([string]$Name) { return (Invoke-TvShell "settings get secure $Name").Trim() }
 
+# The two accessibility settings as they are, or $null when a read fails or names something unexpected: then nothing is
+# changed, since an undo couldn't put them back.
+function Read-HelperSettings {
+    $enabled = Get-SecureSetting 'accessibility_enabled'
+    if ($script:AdbExit -ne 0 -or $enabled -notmatch '^(0|1|null)$') { return $null }
+    $list = Get-SecureSetting 'enabled_accessibility_services'
+    if ($script:AdbExit -ne 0) { return $null }
+    $parts = @()
+    if ($list -ne 'null' -and $list -ne '') { $parts = @($list -split ':' | Where-Object { $_ }) }
+    if (@($parts | Where-Object { $_ -notmatch '^[A-Za-z][A-Za-z0-9_.]*/[A-Za-z0-9_.$]+$' }).Count -gt 0) { return $null }
+    return @{ Enabled = $enabled; List = $parts }
+}
+
 # The undo of a secure setting: put back what it was, or delete it when it was never set.
 function Add-SettingUndo([string]$Name, [string]$Was) {
     if ($Was -eq '' -or $Was -eq 'null') { Add-Undo "settings delete secure $Name" } else { Add-Undo "settings put secure $Name $Was" }
+}
+
+function Add-HelperUndo([hashtable]$Was) {
+    Add-SettingUndo 'accessibility_enabled' $Was.Enabled
+    Add-SettingUndo 'enabled_accessibility_services' $(if ($Was.List.Count -gt 0) { $Was.List -join ':' } else { 'null' })
 }
 
 function Get-HelperList {
@@ -749,13 +769,19 @@ function Set-HelperList([string[]]$List, [bool]$Rebind) {
     }
 }
 
+# Whether the launcher has a config.json on the TV: through its provider, or where tools/theme.ps1 puts it.
+function Test-ConfigOnTv {
+    $read = Invoke-TvShell "content read --uri $ThemeUri/config.json"
+    if ($script:AdbExit -eq 0 -and $read.TrimStart().StartsWith('{')) { return $true }
+    $listed = Invoke-TvShell "ls $ConfigDir/config.json"
+    return ($script:AdbExit -eq 0 -and $listed -match 'config\.json' -and $listed -notmatch '(?i)no such file|denied|error')
+}
+
 # A config.json for the launcher, with only the remote-button keys of the picked list's config.json, plus
 # restore_key_services once a helper is on. Written only when the TV has none (a theme's stays as it is); its undo
-# removes it. Returns whether it is on the TV.
+# removes it, and -Restore checks it is gone. Returns whether it is on the TV.
 function Write-LauncherConfig([System.Collections.Specialized.OrderedDictionary]$Config) {
-    $listed = Invoke-TvShell "ls $ConfigDir/config.json"
-    $read = Invoke-TvShell "content read --uri $ThemeUri/config.json"
-    if (($script:AdbExit -eq 0 -and $read.TrimStart().StartsWith('{')) -or ($listed -match 'config\.json' -and $listed -notmatch '(?i)no such file|denied|error')) {
+    if (Test-ConfigOnTv) {
         Say ('The launcher already has a config.json on this TV (a theme), so it was left as it is. The person helping you can add these to it: ' +
             (@($Config.Keys) -join ', ') + '.')
         return $false
@@ -766,7 +792,7 @@ function Write-LauncherConfig([System.Collections.Specialized.OrderedDictionary]
     $staged = '/data/local/tmp/hometv-config.json'
     [void](Invoke-Adb @('-s', $script:Serial, 'push', $local, $staged))
     if ($script:AdbExit -ne 0) { Say 'Could not copy the button settings to the TV; the person helping you can push them later (tools/theme.ps1).'; return $false }
-    Add-Undo "rm -f $ConfigDir/config.json; content delete --uri $ThemeUri/config.json >/dev/null 2>&1; echo removed"
+    Add-Undo "rm -f $ConfigDir/config.json; content delete --uri $ThemeUri/config.json >/dev/null 2>&1"
     # As tools/theme.ps1 puts a file: through the launcher's provider first (the file is then the launcher's own), else cp.
     # Android 8 and 9 have no content write: they print Unsupported operation and exit 0.
     [void](Invoke-TvShell ("mkdir -p $ConfigDir 2>/dev/null; rm -f $ConfigDir/config.json 2>/dev/null; " +
@@ -780,6 +806,21 @@ function Write-LauncherConfig([System.Collections.Specialized.OrderedDictionary]
         return $false
     }
     return $true
+}
+
+# Home reads a new config.json once restarted (tools/theme.ps1). The force stop takes the launcher's helpers off the
+# enabled list, so the caller writes the list again after.
+function Restart-Launcher {
+    [void](Invoke-TvShell "am force-stop $Launcher")
+    [void](Invoke-TvShell 'am start -a android.intent.action.MAIN -c android.intent.category.HOME')
+    Start-Sleep -Seconds 2
+}
+
+# Each button is tested from where it does something: Home from Settings, Input and Settings from the home screen.
+function Show-Before([string]$Button) {
+    if ($Button -eq 'Home') { [void](Invoke-TvShell 'am start -a android.settings.SETTINGS') }
+    else { [void](Invoke-TvShell 'am start -a android.intent.action.MAIN -c android.intent.category.HOME') }
+    Start-Sleep -Seconds 1
 }
 
 # Returns the helpers left on (their class names).
@@ -803,17 +844,14 @@ function Set-RemoteButtons([string]$Mode) {
 
     Say 'Now the remote. Use the real remote for this: the TV cannot press its own buttons the way the remote does.'
     Say 'Some remotes'' buttons only worked through the old home screen; the HomeTV Launcher has a helper for each.'
-    # Something in front, so the Home button has somewhere to come back from.
-    [void](Invoke-TvShell 'am start -a android.settings.SETTINGS')
     $questions = [ordered]@{
         'Home' = 'Settings is open on the TV. Press the remote''s Home button: does the HomeTV home screen come back?'
-        'Input' = 'Press the remote''s Input (or Source) button: does a list of the TV''s inputs (HDMI and the like) show? Then press Back.'
-        'Settings' = 'Press the remote''s Settings (gear) button: does a settings menu show? (If the remote has none, answer yes.) Then press Back.'
+        'Input' = 'The HomeTV home screen is showing. Press the remote''s Input (or Source) button: does a list of the TV''s inputs (HDMI and the like) show? Then press Back.'
+        'Settings' = 'The HomeTV home screen is showing. Press the remote''s Settings (gear) button: does a settings menu show? (If the remote has none, answer yes.) Then press Back.'
     }
     $failed = @()
-    foreach ($b in $questions.Keys) { if (-not (Test-Button $b $questions[$b])) { $failed += $b } }
+    foreach ($b in $questions.Keys) { Show-Before $b; if (-not (Test-Button $b $questions[$b])) { $failed += $b } }
     $services = @($failed | ForEach-Object { $ButtonHelpers[$_] } | Select-Object -Unique)
-    $on = @()
     if ($services.Count -eq 0) {
         Say 'Every button works: no helper is needed.'
     } else {
@@ -826,8 +864,17 @@ function Set-RemoteButtons([string]$Mode) {
             $services = @()
         }
     }
+    if ($services.Count -gt 0) { $config['restore_key_services'] = $true }
+    if ($config.Count -eq 0) { return @() }
+
+    # Read before anything changes: what the undo puts back. A list that can't be read is never overwritten.
+    $was = Read-HelperSettings
+    if ($null -eq $was) {
+        Say 'Could not read the TV''s accessibility settings, so no helper was turned on and no button settings were written. Tell the person helping you.'
+        return @()
+    }
+    $oursBefore = @($was.List | Where-Object { $_ -like "$Launcher/*" })
     if ($services.Count -gt 0) {
-        $config['restore_key_services'] = $true
         # Lets Home put the helpers back after a force stop or an update (restore_key_services, themes/README.md).
         $perm = 'android.permission.WRITE_SECURE_SETTINGS'
         if ((Invoke-TvShell "dumpsys package $Launcher") -notmatch "$([regex]::Escape($perm)): granted=true") {
@@ -835,15 +882,23 @@ function Set-RemoteButtons([string]$Mode) {
             [void](Invoke-TvShell "pm grant $Launcher $perm")
         }
     }
-    if ($config.Count -gt 0) { [void](Write-LauncherConfig $config) }
-    if ($services.Count -eq 0) { return @() }
+    $wroteConfig = [bool](Write-LauncherConfig $config)
+    if ($services.Count -eq 0) {
+        # Restarted so the launcher reads the new keys (handle_view_inputs, for one); a helper it had goes back on.
+        if ($wroteConfig) {
+            if ($oursBefore.Count -gt 0) { Add-HelperUndo $was }
+            Restart-Launcher
+            if ($oursBefore.Count -gt 0) { Set-HelperList $was.List $true }
+        }
+        return @()
+    }
 
     # TCL's TclAppBoot binds an app's helper only with the AUTO_START app-op (AUTO_START or APP_AUTO_START, by build),
     # and drops the grant at the next restart unless written to disk. TVs that don't know these ops are left alone.
     $ops = [ordered]@{}
     foreach ($op in 'AUTO_START', 'APP_AUTO_START') {
-        $was = Get-AppOpMode $Launcher $op
-        if ($null -ne $was -and $was -ne 'allow') { $ops[$op] = $was }
+        $opMode = Get-AppOpMode $Launcher $op
+        if ($null -ne $opMode -and $opMode -ne 'allow') { $ops[$op] = $opMode }
     }
     if ($ops.Count -gt 0) {
         # -Restore runs the undo lines from the bottom up, so this one writes the modes it put back to disk, last.
@@ -855,11 +910,10 @@ function Set-RemoteButtons([string]$Mode) {
         [void](Invoke-TvShell 'appops write-settings')
     }
 
-    $before = @(Get-HelperList)
-    Add-SettingUndo 'accessibility_enabled' (Get-SecureSetting 'accessibility_enabled')
-    Add-SettingUndo 'enabled_accessibility_services' $(if ($before.Count -gt 0) { $before -join ':' } else { 'null' })
-    $list = @($before)
-    $rebind = $false
+    Add-HelperUndo $was
+    if ($wroteConfig) { Restart-Launcher }
+    $list = @($was.List)
+    $rebind = $wroteConfig -and $oursBefore.Count -gt 0
     foreach ($svc in $services) {
         if (Test-HelperListed $list $svc) { $rebind = $true } else { $list += "$Launcher/.$svc" }
     }
@@ -874,9 +928,8 @@ function Set-RemoteButtons([string]$Mode) {
 
     # Again, with the helper on. A helper that didn't help goes back off: it would only cost.
     Say 'The helper is on. Try those buttons again.'
-    [void](Invoke-TvShell 'am start -a android.settings.SETTINGS')
     $stillFailing = @()
-    foreach ($b in $failed) { if (-not (Ask-YesNo "Again: $($questions[$b])" $true)) { $stillFailing += $b } }
+    foreach ($b in $failed) { Show-Before $b; if (-not (Ask-YesNo "Again: $($questions[$b])" $true)) { $stillFailing += $b } }
     $useless = @($on | Where-Object { $svc = $_; @($failed | Where-Object { $ButtonHelpers[$_] -eq $svc -and $stillFailing -notcontains $_ }).Count -eq 0 })
     if ($useless.Count -gt 0) {
         Say "Still not working: $($stillFailing -join ', '). That helper goes back off; tell the person helping you ($($useless -join ', '))."
