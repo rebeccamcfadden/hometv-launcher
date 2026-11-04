@@ -757,6 +757,18 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.disables(end), [TVLAUNCHER, "com.example.bloat1"])
 
+    def test_a_model_written_quoted_or_in_backticks_counts(self):
+        examples = self.base / "examples"
+        for name, header in {"quoted": '# A set (ro.product.model="Test TV", board x)\n',
+                             "spaced": '# A set (ro.product.model = "Test TV")\n',
+                             "ticks": "# A set (`ro.product.model` Test TV)\n"}.items():
+            (examples / name).mkdir(parents=True)
+            (examples / name / "debloat.txt").write_text(header + "com.example.x\n", encoding="utf-8")
+        proc, end = self.run_installer(self.tv(), "-ListsFrom", str(examples))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        for name in ("quoted", "spaced", "ticks"):
+            self.assertIn(f"  {name}", proc.stdout)
+
     def test_a_reinstall_with_a_list_records_home_for_restore(self):
         state = self.debloat_tv(disabled=[TVLAUNCHER], preferred=OURS)
         state["packages"] = state["packages"] + ["com.hometv.launcher"]

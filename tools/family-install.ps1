@@ -535,7 +535,8 @@ function Find-ListsForModel([string]$Dir, [hashtable]$Tv) {
         $header = @(Get-Content -LiteralPath $file -TotalCount 40 | ForEach-Object { $_ } | Where-Object { $_ -match '^\s*#' })
         $text = $header -join "`n"
         if ($text -notmatch (& $word $model)) { continue }
-        $declared = $text -match ('ro\.product\.model[\s:=]+' + [regex]::Escape($model) + '(?![A-Za-z0-9])')
+        # Written plain, quoted or in backticks: ro.product.model BeyondTV, ro.product.model="AI PONT", `ro.product.model` X.
+        $declared = $text -match ('ro\.product\.model`?[\s:=]+["''`]?' + [regex]::Escape($model) + '(?![A-Za-z0-9])')
         $sameBuild = $build -and $text -match (& $word $build)
         if (-not ($declared -or $sameBuild)) { continue }
         $score = 0
