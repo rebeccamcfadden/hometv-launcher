@@ -212,13 +212,14 @@
          remote's Input button does is unchanged. Can also be set with "show_inputs_pill" in a pushed config.json. -->
     <bool name="show_inputs_pill">true</bool>
 
-    <!-- Animations on. Launcher settings can turn them off on the TV; off, the launcher moves as with
-         reduced_motion. -->
+    <!-- Animations on. Launcher settings can turn them off on the TV; off is Motion Off: nothing moves or
+         fades. -->
     <bool name="animations">true</bool>
 
     <!-- Reduced motion: for TVs whose GPU cannot keep up (MediaTek MT5895 on Android 10 is the known case).
-         true makes every transition and focus change instant. Set it here or with "reduced_motion": true in a
-         pushed config.json; false keeps the normal motion. -->
+         true keeps Motion from being Full: it starts at Reduced (fades only: nothing slides, rises or scales up),
+         and Off stays a choice on the TV. Set it here or with "reduced_motion": true in a pushed config.json; false
+         keeps the normal motion. -->
     <bool name="reduced_motion">false</bool>
 
     <!-- Where Launcher settings › Performance starts on this TV: "on" starts at the light end (no card shadows,
