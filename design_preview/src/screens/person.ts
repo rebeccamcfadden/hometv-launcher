@@ -1,7 +1,7 @@
 import { app, type Screen } from '../core/app';
 import { h, initials } from '../core/dom';
 import { titlesForPerson } from '../core/fuzzy';
-import { button, smallCard } from '../ui/widgets';
+import { button, miniCard } from '../ui/widgets';
 import { titlePreview } from './preview';
 
 /** Stub person page: enough to follow the flow from Cast & crew or a People search result. */
@@ -18,7 +18,7 @@ export function personScreen(name: string): Screen {
     h('div.row-label.person-known', `Known for · ${titles.length} title${titles.length === 1 ? '' : 's'} in the catalogue`),
     h(
       'div.person-grid',
-      titles.map((t, i) => smallCard(t, { group: 'known', key: `p-${t.id}`, isDefault: i === 0, onOk: () => app.push(titlePreview(t)) })),
+      titles.map((t, i) => miniCard(t, { group: 'known', key: `p-${t.id}`, isDefault: i === 0, onOk: () => app.push(titlePreview(t)) })),
     ),
   );
   return { label: name, el, defaultFocus: () => el.querySelector<HTMLElement>('.person-grid [data-focus]') ?? back };

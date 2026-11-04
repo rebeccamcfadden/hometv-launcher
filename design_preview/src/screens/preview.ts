@@ -22,7 +22,7 @@ import {
 import { SERVICES } from '../data/services';
 import type { Title } from '../types';
 import { icon, type IconName } from '../ui/icons';
-import { button, chip, personCard, smallCard, smallCardSkeleton } from '../ui/widgets';
+import { button, chip, personCard, miniCard, miniCardSkeleton } from '../ui/widgets';
 import { personScreen } from './person';
 import { rentDialog } from './rent';
 
@@ -58,7 +58,7 @@ const SKELETONS: Record<string, () => HTMLElement> = {
       'div.pv-row',
       [0, 1, 2, 3, 4, 5].map(() => h('div.person', h('div.person-portrait.is-skeleton'), sk(120, 20, 'margin-top:14px'), sk(90, 18, 'margin-top:8px'))),
     ),
-  'More like this': () => h('div.pv-row', [0, 1, 2, 3, 4].map(() => smallCardSkeleton())),
+  'More like this': () => h('div.pv-row', [0, 1, 2, 3, 4, 5, 6].map(() => miniCardSkeleton())),
 };
 
 /**
@@ -273,7 +273,7 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
       h(
         'div.pv-row',
         { 'data-scroll': 'x', 'data-scroll-pad': 0 },
-        similar(t).map((o, i) => smallCard(o, { group: 'similar', key: `sim-${o.id}`, isDefault: i === 0, onOk: () => app.push(titlePreview(o)) })),
+        similar(t).map((o, i) => miniCard(o, { group: 'similar', key: `sim-${o.id}`, isDefault: i === 0, onOk: () => app.push(titlePreview(o)) })),
       );
 
     const episodesWrap = h('div.pv-episodes');
@@ -386,6 +386,8 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
       active = name;
       tabEls.forEach((el) => el.classList.toggle('is-active', el.textContent === name));
       replace(content, renderTab(name));
+      // F46: More like this holds C cards, taller than the other tabs: the title, buttons and tabs move up for it.
+      content.classList.toggle('pv-content--cards', name === 'More like this');
     }
     setTab(active);
 

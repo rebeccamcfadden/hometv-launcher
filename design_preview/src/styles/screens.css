@@ -289,6 +289,11 @@
   grid-template-columns: repeat(6, 268px);
   gap: 40px 24px;
 }
+/* F46: C cards, eight across the same 1728 px. */
+.lib-grid--mini {
+  grid-template-columns: repeat(8, 195px);
+  gap: 32px 24px;
+}
 .card--poster .card-art {
   aspect-ratio: 2 / 3;
 }
@@ -661,6 +666,10 @@
 }
 .pv-content {
   height: 220px;
+}
+/* F46: More like this's C cards (293 px), with room for the focus ring; the body grows upward from its foot. */
+.pv-content--cards {
+  height: 305px;
 }
 .pv-overview {
   display: flex;
@@ -1153,8 +1162,9 @@
 }
 .results-grid {
   display: grid;
-  grid-template-columns: repeat(6, 271px);
-  gap: 30px 20px;
+  /* F46: C cards, eight across when expanded; beside the keyboard six show and the rest run off the edge. */
+  grid-template-columns: repeat(8, 195px);
+  gap: 32px 24px;
   padding-bottom: 140px;
 }
 .results-empty {
@@ -1310,7 +1320,8 @@
 .person-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 30px 20px;
+  /* F46: C cards, eight across. */
+  gap: 32px 24px;
 }
 
 /* ===== V2 · Loading, offline and errors (design 06-states A) ===== */
@@ -3368,4 +3379,23 @@
 }
 .rem-phone.is-live .rem-phone-sub {
   color: var(--good);
+}
+/* F46: a person among Search's C cards: their round portrait in the poster's box, the name and "Person" at its foot. */
+.card--mini.card--person .card-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.card--mini.card--person .person-cap {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 14px;
+  text-align: center;
+}
+.card--mini.card--person .card-name {
+  font-size: 20px;
+  font-weight: 600;
+  white-space: normal;
 }

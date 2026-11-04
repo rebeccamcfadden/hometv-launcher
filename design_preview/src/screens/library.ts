@@ -6,7 +6,7 @@ import { TITLES } from '../data/catalog';
 import { subscribedCount } from '../data/offers';
 import type { Kind, Title } from '../types';
 import { icon } from '../ui/icons';
-import { button, chip, guide, libraryCard, libraryCardSkeleton, navBar, posterCard, posterCardSkeleton } from '../ui/widgets';
+import { button, chip, guide, libraryCard, libraryCardSkeleton, miniCard, miniCardSkeleton, navBar, posterCard, posterCardSkeleton } from '../ui/widgets';
 import { cards } from '../core/cards';
 import { activeCount, applyFilters, defaultFilters, filterDefs, summary } from './filterDefs';
 import { filtersDrawer } from './filters';
@@ -76,7 +76,8 @@ export function libraryScreen(kind: Kind): Screen {
   const render = () => {
     // F40: the dev bar's Cards menu picks landscape (today) or poster cards.
     const style = cards.get();
-    grid.classList.toggle('lib-grid--poster', style !== 'landscape');
+    grid.classList.toggle('lib-grid--poster', style === 'poster' || style === 'poster-compact');
+    grid.classList.toggle('lib-grid--mini', style === 'mini');
     // F14: TMDB account off or not signed in: the page is the empty state alone, and nothing is fetched.
     const tmdb = tmdbReady();
     tmdbOff.paint();
@@ -209,8 +210,8 @@ export function libraryScreen(kind: Kind): Screen {
       // The page's shape at once: skeleton cards, none focusable, so focus waits on the list chips.
       replace(
         grid,
-        Array.from({ length: style === 'landscape' ? 8 : 12 }, () =>
-          style === 'landscape' ? libraryCardSkeleton() : posterCardSkeleton(style === 'poster-compact'),
+        Array.from({ length: style === 'landscape' ? 8 : style === 'mini' ? 16 : 12 }, () =>
+          style === 'landscape' ? libraryCardSkeleton() : style === 'mini' ? miniCardSkeleton() : posterCardSkeleton(style === 'poster-compact'),
         ),
       );
     } else if (!inChosen.length) {
@@ -245,6 +246,7 @@ export function libraryScreen(kind: Kind): Screen {
         grid,
         shown.map((t, i) => {
           const opts = { group: 'grid', key: `t-${t.id}`, isDefault: i === 0, onOk: () => app.push(titlePreview(t)) };
+          if (style === 'mini') return miniCard(t, opts);
           return style === 'landscape' ? libraryCard(t, opts) : posterCard(t, { ...opts, compact: style === 'poster-compact' });
         }),
       );

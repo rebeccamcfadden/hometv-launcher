@@ -717,4 +717,86 @@ body.no-devbar #devbar {
 #stage[data-motion='off'] .saver-clock {
   animation: none;
   transition: none;
+/* ---- F46: the C card (miniCard) and its service pill ---- */
+.card--mini {
+  flex: none;
+  width: 195px;
+}
+.card--mini .card-art {
+  width: 195px;
+  height: 293px;
+  border-radius: 12px;
+}
+.card--mini .card-art > img {
+  object-position: 50% 40%;
+}
+.svc-pill {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  max-width: calc(100% - 16px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(9, 14, 21, 0.86);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  color: #f4f5f7;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+}
+.pill-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+.pill-ico--incl {
+  background: var(--good);
+  color: #0b1a10;
+}
+.pill-ico--paid {
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.pill-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Focused: the name and "year · score" on a dark fade at the poster's foot. */
+.mini-focus {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 56px 12px 12px;
+  background: linear-gradient(rgba(5, 8, 12, 0), rgba(5, 8, 12, 0.92) 55%);
+  color: #f4f5f7;
+  opacity: 0;
+  transition: opacity var(--fast) ease;
+}
+.card--mini.is-focused .mini-focus {
+  opacity: 1;
+}
+.mini-name {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mini-meta {
+  margin-top: 4px;
+  font-size: 18px;
+  color: #adb5c0;
 }

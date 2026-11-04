@@ -6,7 +6,8 @@ import { net } from '../core/net';
 import { availability, cardLine, cardOffer, runtimeLabel } from '../data/offers';
 import { posterImg } from '../data/posters';
 import { SERVICES } from '../data/services';
-import type { Title } from '../types';
+import type { Offer, Title } from '../types';
+import { settings } from '../core/settings';
 import { icon, type IconName } from './icons';
 import { inputsMenu, topBarButton, wifiMenu } from '../screens/dropdown';
 import { settingsMenu } from '../screens/quickSettings';
@@ -197,6 +198,47 @@ export const posterCardSkeleton = (compact = false) =>
     h('div.sk', { style: 'width:140px;height:18px;margin-top:8px' }),
     compact ? null : h('div.sk', { style: 'width:210px;height:18px;margin-top:6px' }),
   );
+
+/**
+ * F46 (Rebecca, 2026-11-04 09:57, Figma "Smaller cards (F46)" option C, node 232:931): the title card on every page
+ * with title cards. Only the poster (195 × 293, radius 12), and on its top-left corner the service pill
+ * ({@link servicePill}). Focused: the accent ring, a slight scale-up, and the name (two lines at most) with
+ * "year · score" on a dark fade at the poster's foot. Nothing under the poster; the rest is in the title preview.
+ * `name` replaces the shown name (Search's highlighted match).
+ */
+export function miniCard(t: Title, opts: FocusOpts & { name?: Node | string } = {}): HTMLElement {
+  const pill = servicePill(cardOffer(t));
+  return focusable(
+    h(
+      'div.card.card--mini',
+      { 'data-title': t.id },
+      h(
+        'div.card-art',
+        posterImg(t),
+        pill,
+        h('div.mini-focus', h('div.mini-name', opts.name ?? t.name), h('div.mini-meta', `${t.year} · ${t.score.toFixed(1)}/10`)),
+      ),
+    ),
+    opts,
+  );
+}
+
+/** A C card's shape while it loads: the poster only. */
+export const miniCardSkeleton = () => h('div.card.card--mini.card--skeleton', h('div.card-art.sk-art'));
+
+/**
+ * F46: the pill on a C card (and Pick for me's P1 poster): the service or store's name in words (Rebecca, 09:40) after
+ * a round icon, a dark tick on green for Included or Free, or the region's currency (kr in Sweden, $ in the US) for rent
+ * or buy. No price: grids never fetch prices; the title preview has them. None when the household has no offer.
+ */
+export function servicePill(o: Offer | undefined): HTMLElement | null {
+  if (!o) return null;
+  const paid = o.type === 'rent' || o.type === 'buy';
+  const mark = paid
+    ? h('span.pill-ico.pill-ico--paid', settings.get().region === 'us' ? '$' : 'kr')
+    : h('span.pill-ico.pill-ico--incl', { html: icon('check', 18) });
+  return h('div.svc-pill', mark, h('span.pill-name', SERVICES[o.service].name));
+}
 
 /** The smaller card used by Search and the title preview's rows. */
 export function smallCard(t: Title, opts: FocusOpts & { name?: Node | string } = {}): HTMLElement {
