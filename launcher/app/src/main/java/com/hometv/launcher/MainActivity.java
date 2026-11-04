@@ -110,6 +110,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private ClockScene saver;
     /** The key that woke the screensaver: its repeats and its release are swallowed too, so it does nothing else. */
     private int saverWakeKey = KeyEvent.KEYCODE_UNKNOWN;
+    /** That press's down time: a new press of the same key has a new one. */
+    private long saverWakeDownTime = -1;
     /**
      * onPause took the clock away. Before Android 10 a Home intent to Home in front pauses it first, so onNewIntent must
      * still know the clock was up (cleared in onResume and onStop).
@@ -1049,15 +1051,14 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (saver != null && !Screensaver.isVolume(event.getKeyCode())) {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 saverWakeKey = event.getKeyCode();
+                saverWakeDownTime = event.getDownTime();
                 hideScreensaver();
             }
             return true;
         }
-        if (saverWakeKey != KeyEvent.KEYCODE_UNKNOWN && event.getKeyCode() == saverWakeKey) {
-            boolean fresh = event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0;
-            // A new press of the same key is a key of its own (its release may never have come).
-            if (event.getAction() == KeyEvent.ACTION_UP || fresh) saverWakeKey = KeyEvent.KEYCODE_UNKNOWN;
-            if (!fresh) return true;
+        // The waking press's repeats and release, known by its down time; a new press has a new one.
+        if (Screensaver.isWakingPress(event.getKeyCode(), event.getDownTime(), saverWakeKey, saverWakeDownTime)) {
+            return true;
         }
         armScreensaver();
         // Any key stops the snow or rain before it is handled, so the frame it moves in has none to draw.

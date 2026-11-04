@@ -102,30 +102,40 @@ public class ScreensaverTest {
                 woken[0]++;
                 Screensaver.setShown(null);
             });
-            // The press wakes the clock and is swallowed, then its repeats and its release.
-            assertTrue(Screensaver.helperKey(yellow, down, 0));
+            // With both helpers bound each sees the same press: both copies of the DOWN, its repeat and both UPs
+            // are swallowed, and the clock wakes once.
+            assertTrue(Screensaver.helperKey(yellow, down, 1000));
+            assertTrue(Screensaver.helperKey(yellow, down, 1000));
             assertEquals(1, woken[0]);
-            assertTrue(Screensaver.helperKey(yellow, down, 1));
-            assertTrue(Screensaver.helperKey(yellow, up, 0));
-            // The next press of it is the button again.
-            assertFalse(Screensaver.helperKey(yellow, down, 0));
-            assertFalse(Screensaver.helperKey(yellow, up, 0));
+            assertTrue(Screensaver.helperKey(yellow, down, 1000));
+            assertTrue(Screensaver.helperKey(yellow, up, 1000));
+            assertTrue(Screensaver.helperKey(yellow, up, 1000));
+            // The next press of it (a new down time) is the button again, for both helpers.
+            assertFalse(Screensaver.helperKey(yellow, down, 2000));
+            assertFalse(Screensaver.helperKey(yellow, down, 2000));
+            assertFalse(Screensaver.helperKey(yellow, up, 2000));
             // Volume works over the clock and leaves it up.
             Screensaver.setShown(() -> woken[0]++);
-            assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_VOLUME_UP, down, 0));
+            assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_VOLUME_UP, down, 3000));
             assertEquals(1, woken[0]);
         } finally {
             Screensaver.setShown(null);
-            Screensaver.helperKey(yellow, up, 0);
         }
     }
 
     @Test
     public void noClockNoChange() {
-        assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.ACTION_DOWN, 0));
-        assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.ACTION_UP, 0));
+        assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.ACTION_DOWN, 5000));
+        assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.ACTION_UP, 5000));
     }
 
+    @Test
+    public void homeKnowsTheWakingPressByItsDownTime() {
+        int ok = android.view.KeyEvent.KEYCODE_DPAD_CENTER;
+        assertTrue(Screensaver.isWakingPress(ok, 7000, ok, 7000));
+        assertFalse(Screensaver.isWakingPress(ok, 8000, ok, 7000));
+        assertFalse(Screensaver.isWakingPress(android.view.KeyEvent.KEYCODE_BACK, 7000, ok, 7000));
+    }
     @Test
     public void theClockIsLightWhateverTheTheme() {
         // Daylight's text-1 is #111821: on black it would be 1.2:1. The clock keeps Midnight's light text.

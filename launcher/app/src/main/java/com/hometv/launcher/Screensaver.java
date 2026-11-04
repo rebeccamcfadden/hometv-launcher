@@ -120,8 +120,12 @@ final class Screensaver {
 
     /** Wakes the clock over Home; set by MainActivity while it shows, null otherwise. Main thread only. */
     private static Runnable wake;
-    /** The key a helper woke the clock with: its repeats and its release are swallowed too. */
-    private static int helperWakeKey = KeyEvent.KEYCODE_UNKNOWN;
+    /**
+     * The press that woke the clock, by key code and its down time: every helper's copy of it (with both helpers
+     * bound, each sees the same press), its repeats and its release are swallowed. A new press has a new down time.
+     */
+    private static int wakeCode = KeyEvent.KEYCODE_UNKNOWN;
+    private static long wakeDownTime = -1;
 
     /** MainActivity: the clock shows over Home (with how to wake it), or not (null). */
     static void setShown(Runnable wakeIt) {
@@ -130,31 +134,35 @@ final class Screensaver {
 
     /**
      * Called first by a key helper. While the clock shows, a key the helper would act on (an app button, Input, the
-     * gear) only wakes it; the press, its repeats and its release are swallowed here. Volume keys are left alone, as
-     * Home leaves them. True when the helper must stop.
+     * gear) only wakes it; that press, every helper's copy of it, its repeats and its release are swallowed here.
+     * Volume keys are left alone, as Home leaves them. True when the helper must stop.
      */
     static boolean helperKey(KeyEvent e) {
-        return helperKey(e.getKeyCode(), e.getAction(), e.getRepeatCount());
+        return helperKey(e.getKeyCode(), e.getAction(), e.getDownTime());
     }
 
-    static boolean helperKey(int code, int action, int repeat) {
+    static boolean helperKey(int code, int action, long downTime) {
         if (isVolume(code)) return false;
         if (wake != null) {
             if (action == KeyEvent.ACTION_DOWN) {
-                helperWakeKey = code;
                 Runnable w = wake;
                 wake = null;
                 w.run();
             }
+            // An UP alone (its DOWN came before the clock) is swallowed too; only a DOWN names the waking press.
+            if (action == KeyEvent.ACTION_DOWN) {
+                wakeCode = code;
+                wakeDownTime = downTime;
+            }
             return true;
         }
-        if (helperWakeKey == KeyEvent.KEYCODE_UNKNOWN || code != helperWakeKey) return false;
-        boolean fresh = action == KeyEvent.ACTION_DOWN && repeat == 0;
-        // A new press of the same key is a key of its own (its release may never have come).
-        if (action == KeyEvent.ACTION_UP || fresh) helperWakeKey = KeyEvent.KEYCODE_UNKNOWN;
-        return !fresh;
+        return code == wakeCode && downTime == wakeDownTime;
     }
 
+    /** Whether e is the press that woke the clock, or its repeat or release (MainActivity's own check). */
+    static boolean isWakingPress(int code, long downTime, int wokenCode, long wokenDownTime) {
+        return code == wokenCode && downTime == wokenDownTime;
+    }
     /** Volume and mute change the sound over the clock and leave it showing. */
     static boolean isVolume(int code) {
         return code == KeyEvent.KEYCODE_VOLUME_UP || code == KeyEvent.KEYCODE_VOLUME_DOWN
