@@ -169,7 +169,8 @@ Launcher
   `longitude` and `temperature_unit` in `launcher/tv.properties`, copied from `tv.properties.example`
   before the build). The movie and show data comes from TMDB: ask me whether I have a TMDB read access
   token (`tmdb_api_key` in `tv.properties`, free, ends up inside the APK, so the APK stays mine); without
-  one the launcher builds with a mock catalogue and works offline. Rent and buy prices take two more free
+  one, Movies, TV Shows and Search ask for a key, which can go in later on the TV (Launcher settings ›
+  API keys). Rent and buy prices take two more free
   keys, `watchmode_api_key` and `movie_of_the_night_api_key`, which are optional. Never commit
   `tv.properties`.
 - Home must keep working with the network off: the weather and the catalogue are fetched now and then and
