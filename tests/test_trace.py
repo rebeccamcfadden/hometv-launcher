@@ -160,6 +160,16 @@ class RecordTest(unittest.TestCase):
         size, _ = self.record(SelinuxDevice(), [], ["sleep 1"])
         self.assertEqual(size, len(b"trace"))
 
+    def test_a_failed_pull_still_removes_both_copies_from_the_tv(self):
+        class FailingPullDevice(FakeDevice):
+            def pull(self, remote, local, transport_timeout_s=None, read_timeout_s=None):
+                raise RuntimeError("Command failed: open failed: Permission denied")
+
+        device = FailingPullDevice()
+        with self.assertRaises(RuntimeError):
+            self.record(device, [], ["sleep 1"])
+        self.assertEqual(device.calls[-1], ("shell", f"rm -f {trace.REMOTE} {trace.PULLABLE}"))
+
     def test_pulls_from_perfettos_folder_when_the_copy_fails(self):
         class NoCopyDevice(FakeDevice):
             def shell(self, command, read_timeout_s=None):

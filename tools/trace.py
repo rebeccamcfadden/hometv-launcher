@@ -158,9 +158,12 @@ def record_one(dev, setup, steps, package, out_path, run_shell=None):
         time.sleep(1)
     # Android 9's SELinux refuses adb's file transfer from perfetto's folder (TCL BeyondTV), but the shell may read it:
     # copy it out first, and pull from perfetto's folder only when the copy fails.
-    copied = run_shell(f"cp {REMOTE} {PULLABLE} && echo copied").strip().endswith("copied")
-    dev.pull(PULLABLE if copied else REMOTE, out_path, transport_timeout_s=300.0, read_timeout_s=300.0)
-    run_shell(f"rm -f {REMOTE} {PULLABLE}")
+    # Both copies go whatever happens, so a failed pull leaves no trace on the TV.
+    try:
+        copied = run_shell(f"cp {REMOTE} {PULLABLE} && echo copied").strip().endswith("copied")
+        dev.pull(PULLABLE if copied else REMOTE, out_path, transport_timeout_s=300.0, read_timeout_s=300.0)
+    finally:
+        run_shell(f"rm -f {REMOTE} {PULLABLE}")
     size = os.path.getsize(out_path)
     if size == 0:
         os.remove(out_path)
