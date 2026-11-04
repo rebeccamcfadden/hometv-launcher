@@ -84,6 +84,29 @@ public class TmdbParseTest {
     }
 
     @Test
+    public void trailerPrefersTheOfficialTrailerOverSpecialCuts() throws Exception {
+        // The Fault in Our Stars (TMDB 222935), as TMDB lists its trailers on 2026-11-04: the annotated cut came first,
+        // and YouTube played it on the TV (F47).
+        JSONObject videos = new JSONObject("{\"results\":["
+                + "{\"site\":\"YouTube\",\"type\":\"Trailer\",\"official\":true,\"key\":\"3Ixw15DE-xY\",\"name\":\"Annotated Footnotes Trailer\"},"
+                + "{\"site\":\"YouTube\",\"type\":\"Trailer\",\"official\":true,\"key\":\"C99rqP-lMjM\",\"name\":\"Extended Trailer\"},"
+                + "{\"site\":\"YouTube\",\"type\":\"Trailer\",\"official\":true,\"key\":\"9ItBvH5J6ss\",\"name\":\"Official Trailer\"}]}");
+        assertEquals("9ItBvH5J6ss", TmdbParse.trailer(videos));
+        // No "Official Trailer": a plain trailer before the special cuts, in TMDB's order.
+        assertEquals("finalTrlr1", TmdbParse.trailer(new JSONObject("{\"results\":["
+                + "{\"site\":\"YouTube\",\"type\":\"Trailer\",\"official\":true,\"key\":\"teaserTr01\",\"name\":\"Teaser Trailer\"},"
+                + "{\"site\":\"YouTube\",\"type\":\"Trailer\",\"official\":true,\"key\":\"finalTrlr1\",\"name\":\"Final Trailer\"},"
+                + "{\"site\":\"YouTube\",\"type\":\"Trailer\",\"official\":true,\"key\":\"trailer2xx\",\"name\":\"Trailer 2\"}]}")));
+        // An official special cut still beats a fan's "Official Trailer".
+        assertEquals("extendedOK", TmdbParse.trailer(new JSONObject("{\"results\":["
+                + "{\"site\":\"YouTube\",\"type\":\"Trailer\",\"official\":false,\"key\":\"fanUpload1\",\"name\":\"Official Trailer\"},"
+                + "{\"site\":\"YouTube\",\"type\":\"Trailer\",\"official\":true,\"key\":\"extendedOK\",\"name\":\"Extended Trailer\"}]}")));
+        assertEquals(0, TmdbParse.trailerNameRank("Official Trailer #2"));
+        assertEquals(1, TmdbParse.trailerNameRank(""));
+        assertEquals(2, TmdbParse.trailerNameRank("Official Teaser Trailer"));
+    }
+
+    @Test
     public void showDetails() {
         Title t = TmdbParse.details(fixture("tv.json"), Kind.SHOW, Region.SE);
         assertEquals("tv:95396", t.id);
