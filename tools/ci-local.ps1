@@ -101,8 +101,11 @@ try {
             $coreFail = 'packages/core: node not found (needs Node 22.18 or newer)'
         } else {
             Push-Location "$dir\packages\core"; $cout = & npm test 2>&1; $c = $LASTEXITCODE; Pop-Location
-            $passed = ($cout | Select-String '(?:^|\s)pass (\d+)\s*$' | Select-Object -Last 1).Matches.Groups[1].Value
-            if ($c -eq 0) { $core = "core $passed tests pass" } else { $coreFail = "packages/core tests failed (npm test exited $c)" }
+            if ($c -ne 0) { $coreFail = "packages/core tests failed (npm test exited $c)" }
+            else {
+                $m = $cout | Select-String '(?:^|\s)pass (\d+)\s*$' | Select-Object -Last 1
+                $core = if ($m) { "core $($m.Matches[0].Groups[1].Value) tests pass" } else { 'core tests pass' }
+            }
         }
     }
     if ($coreFail) { Post python failure $coreFail; $cout | Select-Object -Last 25 }
