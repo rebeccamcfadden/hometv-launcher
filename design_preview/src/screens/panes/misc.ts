@@ -306,7 +306,7 @@ export const aboutPane = (host: PaneHost): Pane => ({
     return [
       h('div.eyebrow', 'About'),
       h('div.pane-title', 'HomeTV Launcher'),
-      h('div.kvs', h('div.kv', h('span', 'Version'), h('b', `${CURRENT_VERSION} (build 8)`)), h('div.kv', h('span', 'Catalogue cached'), h('b', '1,240 titles · 86 MB'))),
+      h('div.kvs', h('div.kv', h('span', 'Version'), h('b', `${CURRENT_VERSION} (build 9)`)), h('div.kv', h('span', 'Catalogue cached'), h('b', '1,240 titles · 86 MB'))),
       h(
         'div.about-updates',
         h('div.perf-title', 'Updates'),

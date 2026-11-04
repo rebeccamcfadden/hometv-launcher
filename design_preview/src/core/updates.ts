@@ -23,15 +23,15 @@ export type UpdateState =
 export const UPDATE_STATES: [UpdateState, string][] = [
   ['own', 'own build (no check)'],
   ['current', 'up to date'],
-  ['available', '2.8 available'],
-  ['downloading', 'downloading 2.8 (after Install)'],
-  ['nogrant', '2.8 available, no permission'],
-  ['noscreen', '2.8 available, no permission screen'],
+  ['available', '2.9 available'],
+  ['downloading', 'downloading 2.9 (after Install)'],
+  ['nogrant', '2.9 available, no permission'],
+  ['noscreen', '2.9 available, no permission screen'],
   ['failed', 'check failed'],
 ];
 
-export const CURRENT_VERSION = '2.7';
-export const NEW_VERSION = '2.8';
+export const CURRENT_VERSION = '2.8';
+export const NEW_VERSION = '2.9';
 
 interface Saved {
   state: UpdateState;
