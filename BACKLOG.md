@@ -807,7 +807,9 @@ In order, one PR each:
      stock launcher (`com.cvte.tv.launcher.*`) enabled unless the `examples/` list for that exact board disables
      it: it sets the new Home with `set-home-activity`, reboots once, and confirms Home and ADB came back before
      anything else (#741);
-   - picks the key helpers by brand, and on a CVTE board only in a later pass, after that reboot;
+   - turns on a remote-key helper only for a button that fails a press on the real remote, after saying what it
+     can cost (Rebecca, 2026-11-03: the need follows the model and firmware, not the brand), and on a CVTE board only
+     in a later pass, after that reboot;
    - helps them make their own TMDB, Watchmode and Movie of the Night keys: opens each sign-up page, gives the text for
      TMDB's app form, and checks each key with a test call. For re-runs it keeps them in one file in their Windows
      profile, encrypted with DPAPI (current user only), and never in plain text. A key never appears in full on
@@ -824,7 +826,8 @@ In order, one PR each:
    and debugging off with the port check.
    Changed: the last-resort command fetches the file with `irm -OutFile` and runs it, since `| iex` closes the window
    at the end; keys go in on the TV (F16), so the installer keeps none. The updates grant (step 5) and the debloat
-   (step 6) are built too. Still to come: key helpers by brand.
+   (step 6) are built too, and so are the key helpers (4b): a press test of Home, Input and Settings on the real remote.
+   Still to come: a run of the installer on a real TV.
 5. **In-app updates.** The launcher reads the latest GitHub Release once a day while Home shows, downloads the APK,
    and Android asks to install it; shown in Launcher settings › About. Needs `REQUEST_INSTALL_PACKAGES` (justified in
    the PR) and "install unknown apps" for the launcher, which the installer grants with `appops` while ADB is on and

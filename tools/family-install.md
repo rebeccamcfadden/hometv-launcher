@@ -68,11 +68,30 @@ In this order, and it stops at the first step that fails, saying what was and wa
    to the stock launcher and says so. If even that fails, it points at `-Restore`.
 7. **Updates.** It allows the launcher to "install unknown apps" (`appops set com.hometv.launcher REQUEST_INSTALL_PACKAGES allow`, its undo line first) and reads it back, so a release's in-app update can ask the person to install it. The undo puts back the mode it found, and `-Restore` reads it back. An allow already given is left alone, and so is a setting that cannot be read. A TV that refuses only gets a note: About shows how to allow it.
 8. **Debloat** (Family install step 6). A release carries `debloat-lists.zip`, the `examples/` lists of its own commit, checked against the SHA-256 stamped into the installer. After the backup, the installer lists the ones whose header names the TV's model as a word: a suggestion only, since one model often has lists from different countries and firmware. The person helping picks one by name on the call, or none (the project lead's choice, 2026-11-02); with none, or with `-NoPrompt`, nothing beyond the home screen is switched off, and `report.txt` is for making a list. `-List <file>` takes a list directly (one made from a report). The list is read before anything connects, and one naming a non-package or an Android core package stops the run with nothing changed (`tools/disable.ps1`'s check, in the same words). After the handover, PROMPT.md's checklist runs first: streaming apps, the voice assistant, casting, mirroring and firmware updates on the list stay on unless the person says no one uses them. A package counts as one by its name, or by what the list's own comments say it is (its heading and its line); a test holds every shipped list to that. Then `tools/disable.sh`'s guards, with no overrides: never the app that owns Home; setupwraith only when it doesn't own the Wi-Fi; never an app that asks for `TV_INPUT_HARDWARE` or that opens the inputs or Settings; each of those checks is judged on its own answer, and if one fails, nothing from the list is switched off. What is left is listed once, and switched off only on a yes (the default is no; `-SwitchOffList` answers yes for a helper who has read the list). On a CVTE board its own launcher (`com.cvte.tv.launcher.*`) is never switched off from here: only that exact board's list may, by hand (#741). Then five at a time, one package per call, each undo line written first (and on a reinstall a line that puts Home back on HomeTV, so `-Restore` ends there). After each batch Home must resolve to HomeTV and a Home press must show it; if not, that batch is switched back on (each checked), HomeTV is set as Home again and checked, and the rest is left, or the run stops with `-Restore` if Home doesn't come back.
-9. **First run**, after a fresh install only: the last command it sends the TV opens First run
+9. **The remote's buttons** (Family install step 4b; Rebecca's choice (a), 2026-11-03). Once the stock launcher is off,
+   some remotes' Home, Input or Settings button does nothing, and which ones follows the model and firmware, not the
+   brand. So it asks the person to press each of the three on the real remote (a key sent over ADB skips the helpers,
+   so only a real press tells), each from where it does something: Home from Settings, Input and Settings from the
+   home screen. A helper goes on only for a button that failed:
+   `InputKeyService` for Input, `HomeKeyService` for Home and Settings. First it says what a helper can cost (on some
+   TVs a held button stops repeating, so volume moves one step per press: `docs/devices/tcl-55p71b-g09-key-repeat.md`)
+   and has them hold volume up to see how it behaves now, then asks. With a yes it first reads the TV's two
+   accessibility settings; if either can't be read or looks wrong, it changes nothing and says so. Then it grants `WRITE_SECURE_SETTINGS` and
+   writes `restore_key_services` into the launcher's `config.json`, so Home puts the helpers back after a force stop or
+   an update, and restarts Home so the launcher reads it; on TCL firmware it allows the `AUTO_START` app-op and writes it to disk, as `build-and-install` does; then
+   it adds the helper to `enabled_accessibility_services`, keeping any other service there. Each of these has its undo
+   line first. Then they press the buttons again: a helper that didn't help goes back off, and if holding volume up no
+   longer ramps, they choose between the buttons and the steady volume. A list picked in step 8 brings its folder's
+   remote-button keys along (`input_key_keycodes`, `app_keys`, `settings_key_keycodes`, `settings_key_panel`,
+   `handle_view_inputs`; nothing else of that `config.json`), and a release bundles each list's `config.json` for that. The `config.json` is written
+   only when the TV has none: a theme's stays as it is, and the run says which keys to add to it. On a CVTE board no
+   helper goes on in the pass that moved Home (#741): run the installer again once the TV has restarted onto HomeTV.
+   `-BrokenButtons` answers "no" for the buttons a helper already knows fail.
+10. **First run**, after a fresh install only: the last command it sends the TV opens First run
    (`com.hometv.launcher.action.FIRST_RUN`), as `build-and-install` does, and nothing presses Home after it. First
    run shows by itself on the first Home start after an install, and the guard's checks would end it. The person goes
    through it before debugging goes off.
-10. **Debugging off.** It walks them through revoking the authorisations, switching debugging off and restarting the
+11. **Debugging off.** It walks them through revoking the authorisations, switching debugging off and restarting the
    TV. Only a refused connection on the debugging port counts as off: no answer at all (a TV that is off, or out of
    reach) is "not confirmed". Wireless debugging gets a new port after a restart, so for that the person reads it on
    the TV and says it is Off.
@@ -80,13 +99,11 @@ In this order, and it stops at the first step that fails, saying what was and wa
 It runs its own adb server (port 5038), so another `adb` on the laptop is left alone, and stops it however the run
 ends.
 
-It never uninstalls anything, disables nothing but the stock launcher (and setupwraith on Google TV) and what a `-List` names, allows nothing but the launcher's own updates, asks for
+It never uninstalls anything, disables nothing but the stock launcher (and setupwraith on Google TV) and what a `-List` names, allows nothing but the launcher's own updates and, for a button that failed, its key helpers, asks for
 no API keys (they go in on the TV: Launcher settings > API keys, or First run), starts no transcript and sends nothing
 anywhere but the TV.
 
 Every run also writes `report.txt` in the backup folder: the TV's make, model, Android version and firmware build and its packages, and no serial, address, account or network name. The person helping makes a list from it.
-
-Not in it yet: the remote-key helpers by brand.
 
 ## Exit codes
 
@@ -104,7 +121,7 @@ With debugging on again, from the backup folder it wrote:
 powershell -ExecutionPolicy Bypass -File family-install.ps1 -Restore "$env:USERPROFILE\HomeTV\backups\<model>-<time>"
 ```
 
-It runs `undo.txt`'s lines from the bottom up: the stock launcher is enabled again and given Home back. The launcher
+It runs `undo.txt`'s lines from the bottom up: the stock launcher is enabled again and given Home back. A key helper, its settings and the `config.json` it wrote go too; each setting is read back, and the `config.json` must be gone. The launcher
 itself stays installed. Then it checks that Home is on the stock launcher again; if an undo line failed or Home is
 elsewhere, it lists what is left and exits 1, and debugging stays on until that is sorted. A TV on Wireless debugging
 gets a new port after a restart, so pass the current one with `-TvHost` and `-AdbPort`.
@@ -119,6 +136,7 @@ gets a new port after a restart, so pass the current one with `-TvHost` and `-Ad
 | `-DownloadFrom` | A folder (a USB stick) with the release's APK, instead of GitHub; the APK is still checked |
 | `-List` | A debloat list to apply after the handover (step 8 above) |
 | `-SwitchOffList` | Answer yes to the debloat's "Switch these off?" (its default is no) |
+| `-BrokenButtons` | The remote's buttons that do nothing, when you already know, separated by commas: `Home,Input,Settings` (step 9 above) |
 | `-ListsFrom` | Testing, in the repository's copy only: a folder of lists (`examples`) to suggest from |
 | `-Restore` | Undo an install from its backup folder |
 | `-NoPrompt` | Every question takes its default, and the pauses are skipped |

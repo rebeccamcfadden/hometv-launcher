@@ -60,11 +60,43 @@ function Shell([string]$c) {
     if ($c -eq 'pm list packages' -or $c -eq 'pm list packages -f') { return ((@($s.packages) | ForEach-Object { "package:$_" }) -join "`n") }
     if ($c -eq 'pm list packages -d') { return ((@($s.disabled) | ForEach-Object { "package:$_" }) -join "`n") }
     if ($c -like 'settings list *') { return 'name=value' }
+    if ($c -match '^settings get secure ' -and $s.secure_read_fails) { $script:code = 1; return 'Error: java.lang.SecurityException: settings' }
+    if ($c -eq 'am force-stop com.hometv.launcher') {
+        # Android takes a force-stopped app's accessibility services off the enabled list.
+        $v = $s.secure.PSObject.Properties['enabled_accessibility_services']
+        if ($null -ne $v -and $v.Value) { $v.Value = ((@($v.Value -split ':') | Where-Object { $_ -and $_ -notlike 'com.hometv.launcher/*' }) -join ':') }
+        return ''
+    }
+    if ($c -match '^settings get secure (\S+)$') { $v = $s.secure.PSObject.Properties[$Matches[1]]; if ($null -eq $v -or $null -eq $v.Value) { return 'null' }; return "$($v.Value)" }
+    if ($c -match '^settings put secure (\S+) (.*)$') { $val = $Matches[2]; if ($val -eq "''") { $val = '' }; if (-not $s.secure_refused) { $s.secure | Add-Member -Force NoteProperty $Matches[1] $val }; return '' }
+    if ($c -match '^settings delete secure (\S+)$') { if (-not $s.secure_refused) { $s.secure.PSObject.Properties.Remove($Matches[1]) }; return 'Deleted 1 rows' }
+    if ($c -match '^appops get com\.hometv\.launcher (AUTO_START|APP_AUTO_START)$') {
+        $v = $s.tcl_ops.PSObject.Properties[$Matches[1]]
+        if ($null -eq $v) { $script:code = 255; return "Error: Unknown operation string: $($Matches[1])" }
+        if ($v.Value -eq 'default') { return 'No operations.' }
+        return "$($Matches[1]): $($v.Value); time=+1s ago"
+    }
+    if ($c -match '^appops set com\.hometv\.launcher (AUTO_START|APP_AUTO_START) (\w+)$') {
+        if ($null -ne $s.tcl_ops.PSObject.Properties[$Matches[1]]) { $s.tcl_ops.($Matches[1]) = $Matches[2] }; return ''
+    }
+    if ($c -eq 'pm grant com.hometv.launcher android.permission.WRITE_SECURE_SETTINGS') { $s.wss_granted = $true; return '' }
+    if ($c -eq 'pm revoke com.hometv.launcher android.permission.WRITE_SECURE_SETTINGS') { $s.wss_granted = $false; return '' }
+    if ($c -eq 'ls /sdcard/Android/data/com.hometv.launcher/files/config.json') {
+        if ($s.config_on_tv) { return '/sdcard/Android/data/com.hometv.launcher/files/config.json' }
+        $script:code = 1; return 'ls: /sdcard/Android/data/com.hometv.launcher/files/config.json: No such file or directory'
+    }
+    if ($c -eq 'content read --uri content://com.hometv.launcher.theme/config.json' -or $c -eq 'cat /sdcard/Android/data/com.hometv.launcher/files/config.json') {
+        if ($s.config_on_tv) { return $s.config_on_tv }
+        return 'Error while accessing provider:com.hometv.launcher.theme java.io.FileNotFoundException'
+    }
+    if ($c -like 'mkdir -p /sdcard/Android/data/com.hometv.launcher/files*content write*') { $s.config_on_tv = $s.staged_config; return '' }
+    if ($c -like 'rm -f /sdcard/Android/data/com.hometv.launcher/files/config.json; content delete*') { if (-not $s.config_delete_fails) { $s.config_on_tv = $null }; return '' }
     if ($c -match '^dumpsys package (\S+)$') {
         $p = $Matches[1]
         # A failing dump answers with an error and exit 0, as a busy package service does.
         if ($s.hw_fails) { return "Error: Can't find service: package" }
         $perm = if (@($s.tv_hw) -contains $p) { "      android.permission.TV_INPUT_HARDWARE`n" } else { '' }
+        if ($p -eq 'com.hometv.launcher' -and $s.wss_granted) { $perm += "      android.permission.WRITE_SECURE_SETTINGS: granted=true`n" }
         return "Packages:`n  Package [$p] (1a2b3c):`n    requested permissions:`n      android.permission.INTERNET`n$perm    install permissions:`n"
     }
     if ($c -like 'cmd package query-activities --brief -a android.intent.action.VIEW*') {
@@ -132,7 +164,7 @@ switch ($a[0]) {
         $seq = @($s.auth_sequence)
         if ($seq.Count -gt 0 -and $null -ne $seq[0]) { $out = $seq[0]; $s.auth_sequence = @($seq | Select-Object -Skip 1) } else { $out = $s.auth }
     }
-    'push' { $s.pushed = $true; $out = '1 file pushed' }
+    'push' { $s.pushed = $true; if ($a[1] -like '*.json') { $s.staged_config = [IO.File]::ReadAllText($a[1]) }; $out = '1 file pushed' }
     'reboot' { $s.reboots = [int]$s.reboots + 1 }
     'pair' { $out = 'Successfully paired' }
     'shell' { $out = Shell $a[1] }
@@ -241,6 +273,11 @@ class StaticTest(unittest.TestCase):
                     if not any(p.search(code) for p in patterns) and not any(p.search(note) for p in note_patterns):
                         missed.setdefault(code, path.parent.name)
         self.assertEqual(missed, {}, "household apps the checklist would not ask about")
+
+    def test_release_bundles_each_lists_config(self):
+        text = RELEASE.read_text(encoding="utf-8")
+        self.assertIn('"$($list.Name)/config.json"', text)
+
     def test_never_uninstalls(self):
         self.assertNotRegex(self.text, r"pm uninstall|'uninstall'|\buninstall-")
 
@@ -278,6 +315,8 @@ class FamilyInstallTest(unittest.TestCase):
             "wifi": "", "log": [], "shell": [], "reboots": 0, "pushed": False,
             "tv_hw": [], "input_apps": [], "settings_apps": [], "hw_fails": False, "handlers_fail": False,
             "front_when_disabled": None,
+            "secure": {}, "secure_refused": False, "secure_read_fails": False, "config_delete_fails": False, "tcl_ops": {}, "wss_granted": False, "config_on_tv": None,
+            "staged_config": None,
             "refuse_disable": [], "enable_fails": False, "install_grant": "default", "appops_refused": False, "appops_get": None, "set_home_once": False, "set_home_used": False,
         }
         state.update(overrides)
@@ -769,6 +808,200 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertIn("ro.product.model=Test TV", report)
         self.assertIn(TVLAUNCHER, report)
         self.assertNotIn("SERIAL12345", report)
+
+    # ---- The remote's buttons (step 4b) ----
+
+    def helpers(self, end):
+        return end["secure"].get("enabled_accessibility_services")
+
+    def undo(self):
+        return (self.backup_dir() / "undo.txt").read_text()
+
+    def test_buttons_that_work_need_no_helper(self):
+        proc, end = self.run_installer(self.tv())
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("Every button works", proc.stdout)
+        self.assertIsNone(self.helpers(end))
+        self.assertFalse(end["wss_granted"])
+        self.assertIsNone(end["config_on_tv"])
+
+    def test_a_broken_input_button_gets_its_helper_with_an_undo(self):
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.helpers(end), "com.hometv.launcher/.InputKeyService")
+        self.assertEqual(end["secure"]["accessibility_enabled"], "1")
+        self.assertTrue(end["wss_granted"])
+        self.assertEqual(json.loads(end["config_on_tv"]), {"restore_key_services": True})
+        self.assertIn("one step per press", proc.stdout, "what a helper can cost is said before it goes on")
+        undo = self.undo()
+        for line in ("undo settings delete secure enabled_accessibility_services",
+                     "undo settings delete secure accessibility_enabled",
+                     "undo pm revoke com.hometv.launcher android.permission.WRITE_SECURE_SETTINGS"):
+            self.assertIn(line, undo)
+        shell = end["shell"]
+        helper_on = self.index(shell, "settings put secure enabled_accessibility_services")
+        # After the handover, after the config.json it reads, and before First run, which stays last.
+        self.assertLess(self.index(shell, "cmd package set-home-activity"), helper_on)
+        self.assertLess(self.index(shell, "mkdir -p /sdcard/Android/data/com.hometv.launcher/files"), helper_on)
+        self.assertIn("action.FIRST_RUN", shell[-1])
+
+    def test_home_and_settings_share_one_helper(self):
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Home,Settings")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.helpers(end), "com.hometv.launcher/.HomeKeyService")
+
+    def test_other_helpers_stay_listed_and_restore_puts_the_list_back(self):
+        state = self.tv(secure={"enabled_accessibility_services": "com.other/.Reader", "accessibility_enabled": "1"})
+        proc, end = self.run_installer(state, "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(self.helpers(end), "com.other/.Reader:com.hometv.launcher/.InputKeyService")
+        self.assertIn("undo settings put secure enabled_accessibility_services com.other/.Reader", self.undo())
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["secure"], {"enabled_accessibility_services": "com.other/.Reader", "accessibility_enabled": "1"})
+        self.assertFalse(end["wss_granted"])
+        self.assertIsNone(end["config_on_tv"])
+        self.assertEqual(end["disabled"], [])
+
+    def test_restore_reports_a_helper_list_it_could_not_put_back(self):
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        end["secure_refused"] = True
+        end["secure"]["enabled_accessibility_services"] = "x/.Y"
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("settings delete secure accessibility_enabled", proc.stdout.split("not complete")[-1])
+
+    def test_tcl_auto_start_is_allowed_and_written_with_an_undo(self):
+        proc, end = self.run_installer(self.tv(tcl_ops={"AUTO_START": "default"}), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["tcl_ops"], {"AUTO_START": "allow"})
+        self.assertIn("appops write-settings", end["shell"])
+        self.assertLess(self.index(end["shell"], "appops write-settings"),
+                        self.index(end["shell"], "settings put secure enabled_accessibility_services"))
+        undo = self.undo().splitlines()
+        self.assertIn("undo appops set com.hometv.launcher AUTO_START default", undo)
+        self.assertNotIn("APP_AUTO_START", "\n".join(undo))
+        # -Restore runs from the bottom up: the modes go back first, then they are written to disk (or a restart undoes them).
+        self.assertLess(undo.index("undo appops write-settings"), undo.index("undo appops set com.hometv.launcher AUTO_START default"))
+
+    def test_restore_writes_the_auto_start_it_put_back_to_disk(self):
+        proc, end = self.run_installer(self.tv(tcl_ops={"AUTO_START": "default"}), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["tcl_ops"], {"AUTO_START": "default"})
+        restore = end["shell"][end["shell"].index("appops set com.hometv.launcher AUTO_START default"):]
+        self.assertIn("appops write-settings", restore)
+
+    def test_a_tv_without_auto_start_gets_no_app_op(self):
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertFalse([c for c in end["shell"] if "AUTO_START allow" in c or c == "appops write-settings"])
+
+    def test_cvte_turns_on_no_helper_in_the_pass_that_moves_home(self):
+        state = self.tv(packages=[CVTE_LAUNCHER, "com.cvte.tv.setting", "com.android.settings", "com.android.vending",
+                                  "com.google.android.gms"],
+                        claims=[f"{CVTE_LAUNCHER}/.HomeActivity"], preferred=f"{CVTE_LAUNCHER}/.HomeActivity")
+        proc, end = self.run_installer(state, "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["secure"], {})
+        self.assertIn("run this installer again", proc.stdout)
+
+    def test_a_lists_button_keys_come_along_and_nothing_else(self):
+        folder = self.base / "test-tv"
+        folder.mkdir()
+        (folder / "debloat.txt").write_text("# Test TV\ncom.example.bloat1  # why\n", encoding="utf-8")
+        (folder / "config.json").write_text(json.dumps({"dock_apps": ["com.netflix.ninja"], "settings_key_keycodes": [83],
+                                                        "app_keys": ["4062:com.netflix.ninja"], "wallpaper": "x.jpg"}), encoding="utf-8")
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(folder / "debloat.txt"), "-BrokenButtons", "Settings")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(json.loads(end["config_on_tv"]), {"app_keys": ["4062:com.netflix.ninja"], "settings_key_keycodes": [83],
+                                                           "restore_key_services": True})
+
+    def test_a_lists_button_keys_come_along_without_a_helper(self):
+        folder = self.base / "test-tv"
+        folder.mkdir()
+        (folder / "debloat.txt").write_text("# Test TV\ncom.example.bloat1\n", encoding="utf-8")
+        (folder / "config.json").write_text(json.dumps({"input_key_keycodes": [170]}), encoding="utf-8")
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(folder / "debloat.txt"))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(json.loads(end["config_on_tv"]), {"input_key_keycodes": [170]})
+        self.assertIsNone(self.helpers(end))
+
+    def test_restore_reports_a_config_it_could_not_remove(self):
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        end["config_delete_fails"] = True
+        proc, end = self.run_script(INSTALLER, end, "-Restore", str(self.backup_dir()))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("config.json", proc.stdout.split("not complete")[-1])
+
+    def test_unreadable_accessibility_settings_change_nothing(self):
+        proc, end = self.run_installer(self.tv(secure_read_fails=True), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("Could not read the TV's accessibility settings", proc.stdout)
+        self.assertFalse([c for c in end["shell"] if c.startswith("settings put") or c.startswith("settings delete")])
+        self.assertFalse(end["wss_granted"])
+        self.assertIsNone(end["config_on_tv"])
+        self.assertNotIn("secure", self.undo())
+
+    def test_a_helper_list_that_looks_wrong_changes_nothing(self):
+        state = self.tv(secure={"enabled_accessibility_services": "Error: null object", "accessibility_enabled": "1"})
+        proc, end = self.run_installer(state, "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["secure"]["enabled_accessibility_services"], "Error: null object")
+        self.assertIn("Could not read the TV's accessibility settings", proc.stdout)
+
+    def test_handle_view_inputs_comes_along_and_home_restarts_to_read_it(self):
+        folder = self.base / "hisense"
+        folder.mkdir()
+        (folder / "debloat.txt").write_text("# Test TV\ncom.example.bloat1\n", encoding="utf-8")
+        (folder / "config.json").write_text(json.dumps({"hidden_apps": ["x.y"], "handle_view_inputs": True}), encoding="utf-8")
+        proc, end = self.run_installer(self.debloat_tv(), "-List", str(folder / "debloat.txt"), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(json.loads(end["config_on_tv"]), {"handle_view_inputs": True, "restore_key_services": True})
+        shell = end["shell"]
+        restart = self.index(shell, "am force-stop com.hometv.launcher")
+        self.assertLess(self.index(shell, "mkdir -p /sdcard/Android/data/com.hometv.launcher/files"), restart)
+        self.assertLess(restart, self.index(shell, "settings put secure enabled_accessibility_services com.hometv"))
+        self.assertEqual(self.helpers(end), "com.hometv.launcher/.InputKeyService")
+
+    def test_a_restart_for_new_keys_puts_our_helper_back(self):
+        folder = self.base / "keys"
+        folder.mkdir()
+        (folder / "debloat.txt").write_text("# Test TV\ncom.example.bloat1\n", encoding="utf-8")
+        (folder / "config.json").write_text(json.dumps({"input_key_keycodes": [170]}), encoding="utf-8")
+        ours = "com.other/.Reader:com.hometv.launcher/.InputKeyService"
+        state = self.debloat_tv(secure={"enabled_accessibility_services": ours, "accessibility_enabled": "1"})
+        proc, end = self.run_installer(state, "-List", str(folder / "debloat.txt"))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("am force-stop com.hometv.launcher", end["shell"])
+        self.assertEqual(self.helpers(end), ours)
+        self.assertIn(f"undo settings put secure enabled_accessibility_services {ours}", self.undo())
+
+    def test_each_button_is_tested_from_its_own_screen(self):
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Settings")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        shell = end["shell"]
+        step = shell[self.index(shell, "am start -a android.settings.SETTINGS"):]
+        home = "am start -a android.intent.action.MAIN -c android.intent.category.HOME"
+        # Home from Settings once; Input and Settings from Home; the restart for the new config; Settings again from Home.
+        self.assertEqual([c for c in step if c in (home, "am start -a android.settings.SETTINGS")],
+                         ["am start -a android.settings.SETTINGS", home, home, home, home])
+
+    def test_an_unknown_broken_button_changes_nothing(self):
+        proc, end = self.run_installer(self.tv(), "-BrokenButtons", "Home,Mute")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("not: Mute", proc.stdout)
+        self.assert_tv_untouched(end)
+
+    def test_a_config_already_on_the_tv_is_left_alone(self):
+        proc, end = self.run_installer(self.tv(config_on_tv='{"dock_apps": []}'), "-BrokenButtons", "Input")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(end["config_on_tv"], '{"dock_apps": []}')
+        self.assertIn("already has a config.json", proc.stdout)
+        self.assertEqual(self.helpers(end), "com.hometv.launcher/.InputKeyService")
 
     def lists_zip(self, folder, lists):
         path = folder / "debloat-lists.zip"
