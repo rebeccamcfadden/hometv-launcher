@@ -247,6 +247,18 @@ milestones: [docs/rework.md](docs/rework.md).
   pill's states (drawn with a temporary local hook that was not kept).
 - **Still to come:** a Figma design for the pane; whether a send whose list is hidden in Choose lists should show it
   again (it does now).
+### Phone remote without the warning
+- **Planned, not built** (F44; the project lead, 2026-11-03: plan it, build later). Today each phone sees the browser's
+  "connection not private" warning once, because the TV makes its own certificate
+  ([docs/phone-remote.md](docs/phone-remote.md)). The plan, the Plex way: a project domain, a name per TV that points
+  at its home address (`192-168-1-50.<tv id>.tv.hometv.example`), and a real certificate per TV from a small service
+  the project runs, with the key kept on the TV and served on a second port (Android 8 to 10 can't pick a certificate
+  by name). Off by default; the pane always offers the plain address, and the TV goes back to today's certificate
+  whenever the name doesn't open (routers with rebinding protection, the service's DNS down). Every TV would have to
+  trust whoever controls the domain's DNS. About 110 to 160 USD a year (a domain and two small servers) and 8 to 10
+  builder-days; Let's Encrypt's 50 new certificates a week per domain is the ceiling. The service would learn each
+  TV's id, its house's public address and, from DNS, when the TV is used. Details, costs, privacy and the decisions to
+  take first: [docs/specs/phone-remote-certificates.md](docs/specs/phone-remote-certificates.md).
 ### Household seed
 - **V1:** on the first run, My list, Seen, Favorites, recent searches and recently viewed started from the
   prototype's mock seed (`design_preview/src/core/store.ts`).
