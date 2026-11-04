@@ -71,8 +71,7 @@ milestones: [docs/rework.md](docs/rework.md).
   the next page is asked for and merged in (`SearchPages`, `Catalog.Found.merge`), up to five pages (100 results
   before the art and photo filter), each cached an hour like the first. Checked with unit tests; a run on a signed-in
   TV is wanted (the emulator has no TMDB sign-in).
-- **Still to do:** TMDB's language following the TV's; the full
-  filmography and a person page design (see From M5).
+- **Still to do:** TMDB's language following the TV's.
 
 ### Streaming availability and prices
 - **V1:** mock: which service has a title, "Included", and the rent and buy prices. Still so without a TMDB token
@@ -593,9 +592,10 @@ A theme changes colours, type, corners, shading, overlays and the backdrop; layo
   links. An episode card opens the show's best offer, not that episode.
 - **Rent/buy dialog:** Rent and Buy open the store's app; nothing is paid or recorded in the launcher, and the
   dialog doesn't know whether the rental happened.
-- **Person page:** the prototype's stub ("Person · not designed yet"), now with the TMDB photo over the initials and
-  up to 30 titles they are best known for (TMDB's combined credits, most voted first, without talk shows, news,
-  reality TV and appearances as themselves). Wanted: a design, and the full filmography.
+- **Person page:** Rebecca's pick B (2026-11-04): TMDB's photo, job, birth date and place and biography on the left;
+  every title in TMDB's combined credits on the right (most voted first, without talk shows, news, reality TV and
+  appearances as themselves), rows built as they scroll. The mock catalogue has no biographies. Not yet: what they
+  did on each title shown on its card (the roles are parsed, for the job chips), and TV episode credits.
 - **Cast portraits:** TMDB's photos over the initials (V2 Phase 1); the prototype shows initials only.
 - **Watched episodes:** worked out from the mock next episode (`Title.nextSeason`/`nextEpisode`); nothing records
   what was watched. Mark seen marks the whole title only.

@@ -135,8 +135,11 @@ final class PersonPage extends Screen {
         sortButton = Kit.button(ctx, sortLabel(), R.drawable.ic_ui_sort, Kit.SMALL, false, null, KEY_SORT, false,
                 v -> openSort());
         bar.addView(sortButton, wrap());
-        main.addView(bar, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+        FrameLayout.LayoutParams barLp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        barLp.leftMargin = Ui.px(RING);
+        barLp.rightMargin = Ui.px(RING);
+        main.addView(bar, barLp);
 
         box = ScrollBox.vertical(ctx, 40, Kit.BOTTOM_FADE);
         LinearLayout col = Kit.unclip(new LinearLayout(ctx));
@@ -151,12 +154,17 @@ final class PersonPage extends Screen {
         FrameLayout.LayoutParams boxLp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
         boxLp.topMargin = Ui.px(82);
-        boxLp.leftMargin = -Ui.px(RING);
-        boxLp.rightMargin = -Ui.px(RING);
-        main.addView(box, boxLp);
-        FrameLayout.LayoutParams mainLp = new FrameLayout.LayoutParams(Ui.px(GRID_W),
+        // Rows scrolled up stop at the box's top edge rather than draw over the chips; the column's top padding
+        // and ScrollBox's pad leave a focused card's ring inside it.
+        FrameLayout clip = new FrameLayout(ctx);
+        clip.setClipChildren(true);
+        clip.addView(box, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        main.addView(clip, boxLp);
+        // RING wider on each side than the grid, so a focused card's ring at either edge stays inside it.
+        FrameLayout.LayoutParams mainLp = new FrameLayout.LayoutParams(Ui.px(GRID_W + 2 * RING),
                 ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END);
-        mainLp.rightMargin = Ui.px(Ui.SAFE_X);
+        mainLp.rightMargin = Ui.px(Ui.SAFE_X - RING);
         mainLp.topMargin = Ui.px(TOP);
         page.addView(main, mainLp);
 
