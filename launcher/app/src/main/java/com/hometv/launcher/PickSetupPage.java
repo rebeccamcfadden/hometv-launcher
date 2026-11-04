@@ -2,6 +2,7 @@ package com.hometv.launcher;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -46,11 +48,49 @@ final class PickSetupPage extends Screen {
     private final View find;
     private final Runnable onCatalog;
 
+    private static final String SAVED_KIND = "kind";
+    private static final String SAVED_SOURCE = "source";
+    private static final String SAVED_LISTS = "lists";
+    private static final String SAVED_VALUES = "values";
+
     static PickSetupPage create(MainActivity activity, Kind kind) {
         return new PickSetupPage(activity, activity, activity, kind, new Random());
     }
 
     PickSetupPage(Context ctx, NavBar.Host host, Router router, Kind kind, Random random) {
+        this(ctx, host, router, kind, null, random);
+    }
+
+    /**
+     * F47: the setup page as {@link #saved} described it, for MainActivity's place (F26) after Android ended the
+     * process while a trailer played; null when the Bundle doesn't describe one.
+     */
+    static PickSetupPage reopen(MainActivity activity, Bundle in) {
+        Kind kind = null;
+        for (Kind k : Kind.values()) if (k.name().equals(in.getString(SAVED_KIND))) kind = k;
+        if (kind == null) return null;
+        PickRules.State state = PickRules.restored(kind, in.getString(SAVED_SOURCE),
+                in.getStringArrayList(SAVED_LISTS), in.getIntArray(SAVED_VALUES), household(activity.data()));
+        return new PickSetupPage(activity, activity, activity, kind, state, new Random());
+    }
+
+    /** F47: the page's choices, for MainActivity's place (F26). */
+    Bundle saved() {
+        Bundle out = new Bundle();
+        out.putString(SAVED_KIND, state.kind.name());
+        out.putString(SAVED_SOURCE, state.source.name());
+        out.putStringArrayList(SAVED_LISTS, new ArrayList<>(state.lists));
+        out.putIntArray(SAVED_VALUES, state.values.clone());
+        return out;
+    }
+
+    /** F47: its results page with the picks that were showing ({@code ids}) and the bar's pick, not a new roll. */
+    PickResultsPage results(List<String> ids, String barId) {
+        return new PickResultsPage(ctx, host, router, state.copy(), household, random, ids, barId);
+    }
+
+    private PickSetupPage(Context ctx, NavBar.Host host, Router router, Kind kind, PickRules.State initial,
+                          Random random) {
         super(ctx.getString(R.string.pick_title), Kit.unclip(Pages.page(ctx, host, tabOf(kind))), Layer.PAGE);
         this.ctx = ctx;
         this.host = host;
@@ -58,7 +98,7 @@ final class PickSetupPage extends Screen {
         this.data = router.data();
         this.random = random;
         this.household = household(data);
-        this.state = PickRules.defaults(kind, household);
+        this.state = initial != null ? initial : PickRules.defaults(kind, household);
         this.listChips = new View[state.offered.size()];
         FrameLayout page = (FrameLayout) view;
 

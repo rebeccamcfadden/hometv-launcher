@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -18,8 +19,9 @@ import java.util.Set;
 /**
  * Pick for me's results (design_preview/src/screens/pick.ts, pickResults; .pick-results styles in screens.css). A page
  * pushed over the setup page: up to four random matches with a blurb each, Reroll and Adjust filters (Back to the
- * setup), and a bar under the tiles for the focused pick with Title details and Open in its service. Each roll
- * counts the matches again, so a title marked seen meanwhile drops out.
+ * setup), and a bar under the tiles for the focused pick with Title details, Trailer (F47: YouTube straight from here)
+ * and Open in its service. Each roll counts the matches again, so a title marked seen meanwhile drops out. The picks
+ * showing are kept across a trip to another app, also when Android ends the process (MainActivity's place, F26).
  */
 final class PickResultsPage extends Screen {
     private static final String GROUP_PICKS = "picks";
@@ -28,6 +30,8 @@ final class PickResultsPage extends Screen {
     private static final int GAP = 20;
     private static final float TILE_W = (Ui.STAGE_W - 2f * Ui.SAFE_X - (PickRules.PICKS - 1) * GAP) / PickRules.PICKS;
     private static final int ART_H = 243;
+    /** F47: how long Trailer waits for a pick's details before it opens YouTube's search for the trailer. */
+    static final long TRAILER_WAIT_MS = 3000;
 
     private final Context ctx;
     private final Router router;
@@ -41,12 +45,28 @@ final class PickResultsPage extends Screen {
     private final TextView empty;
     private final LinearLayout bar;
     private final TextView barTitle, barNote;
-    private final View adjust, reroll, details, open;
+    private final View adjust, reroll, details, trailer, open;
     private List<Title> picks = new ArrayList<>();
     private Title current;
+    /** F47: the Trailer press waiting for its title's details (TMDB's trailer id); a newer press or a pick moves on. */
+    private int trailerAsk;
+    /** F47: the ids of kept picks still to show or fill in after a restore (null once all are in, or after Reroll). */
+    private List<String> kept;
+    /** F47: the pick the bar showed before a restore, until it arrives. */
+    private String barId;
+    private final Runnable onCatalog;
 
     PickResultsPage(Context ctx, NavBar.Host host, Router router, PickRules.State state, PickRules.Household household,
                     Random random) {
+        this(ctx, host, router, state, household, random, null, null);
+    }
+
+    /**
+     * {@code keptIds}: F47, the picks that were showing before Android ended the process (MainActivity's place, F26),
+     * shown again rather than a new roll; null rolls as usual. {@code barId}: the pick the bar showed then.
+     */
+    PickResultsPage(Context ctx, NavBar.Host host, Router router, PickRules.State state, PickRules.Household household,
+                    Random random, List<String> keptIds, String barId) {
         super(ctx.getString(R.string.pick_results_label),
                 Kit.unclip(Pages.page(ctx, host, PickSetupPage.tabOf(state.kind))), Layer.PAGE);
         this.ctx = ctx;
@@ -113,6 +133,11 @@ final class PickResultsPage extends Screen {
         LinearLayout.LayoutParams dlp = PickSetupPage.wrap();
         dlp.leftMargin = Ui.px(14);
         bar.addView(details, dlp);
+        trailer = Kit.button(ctx, ctx.getString(R.string.preview_trailer), R.drawable.ic_ui_trailer, Kit.NORMAL, false,
+                GROUP_BAR, "trailer", false, v -> trailer());
+        LinearLayout.LayoutParams tlp = PickSetupPage.wrap();
+        tlp.leftMargin = Ui.px(14);
+        bar.addView(trailer, tlp);
         open = Kit.button(ctx, "", R.drawable.ic_ui_play, Kit.PRIMARY, false, GROUP_BAR, "open", true, v -> open());
         LinearLayout.LayoutParams olp = PickSetupPage.wrap();
         olp.leftMargin = Ui.px(14);
@@ -123,7 +148,65 @@ final class PickResultsPage extends Screen {
         page.addView(Kit.guide(ctx, ctx.getString(data.catalog.isRemote() ? R.string.prices_pick_guide
                         : R.string.pick_results_guide_left),
                 ctx.getString(R.string.pick_results_guide_right)));
-        roll();
+        // On a cold start the catalogue learns the lists' titles after Home has drawn: kept picks fill in as they
+        // arrive (the catalogue holds this listener weakly).
+        onCatalog = () -> {
+            if (kept != null) showKept();
+        };
+        data.catalog.addListener(onCatalog);
+        // A Trailer press still waiting for its details is dropped when another app (or a system dialog) takes the
+        // screen, so coming back can't start YouTube unasked.
+        ViewTreeObserver.OnWindowFocusChangeListener lostFocus = hasFocus -> {
+            if (!hasFocus) trailerAsk++;
+        };
+        view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                v.getViewTreeObserver().addOnWindowFocusChangeListener(lostFocus);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                trailerAsk++;
+                v.getViewTreeObserver().removeOnWindowFocusChangeListener(lostFocus);
+            }
+        });
+        if (keptIds != null) {
+            kept = new ArrayList<>(keptIds);
+            this.barId = barId;
+            // Picks outside the lists' titles (My services) aren't asked for by anyone else after a restart.
+            data.catalog.want(kept);
+            showKept();
+        } else {
+            roll();
+        }
+    }
+
+    /** F47: the id of the pick the bar shows, for MainActivity's place (F26); null with no picks. */
+    String barId() {
+        return current != null ? current.id : barId;
+    }
+
+    /** F47: the ids of the picks showing, in order, for MainActivity's place (F26). */
+    ArrayList<String> ids() {
+        if (kept != null) return new ArrayList<>(kept);
+        ArrayList<String> out = new ArrayList<>();
+        for (Title t : picks) out.add(t.id);
+        return out;
+    }
+
+    /**
+     * The kept picks as the catalogue knows them now, redrawn when any of them arrived or got its details; done once all
+     * are in with their details. Focus follows Comeback's pending key.
+     */
+    private void showKept() {
+        List<Title> have = PickRules.kept(kept, data.catalog::get);
+        if (PickRules.keptDone(kept, have)) kept = null;
+        if (PickRules.sameTitles(have, picks)) return;
+        picks = have;
+        draw(PickRules.matches(state, data.catalog.all(), household, data.services.subscribed(),
+                data.services.installed()).size());
+        if (router.shell().top() == this) router.shell().refocus();
     }
 
     @Override
@@ -155,11 +238,19 @@ final class PickResultsPage extends Screen {
 
     /** Draws a new set of picks: never the same four again while there are more. */
     private void roll() {
-        Set<ServiceId> subscribed = data.services.subscribed();
-        List<Title> matches = PickRules.matches(state, data.catalog.all(), household, subscribed,
+        kept = null;
+        barId = null;
+        trailerAsk++;
+        List<Title> matches = PickRules.matches(state, data.catalog.all(), household, data.services.subscribed(),
                 data.services.installed());
         picks = PickRules.roll(matches, picks, random);
-        int n = PickRules.pickCount(matches.size());
+        draw(matches.size());
+    }
+
+    /** The tiles for {@link #picks}, the context line and Reroll's count of {@code matches}. */
+    private void draw(int matches) {
+        Set<ServiceId> subscribed = data.services.subscribed();
+        int n = PickRules.pickCount(matches);
         context.setText(PickRules.resultsContext(picks.size(), state, subscribed.size()));
         Kit.setLabel(reroll, PickRules.rerollLabel(n));
         cards.removeAllViews();
@@ -172,7 +263,12 @@ final class PickResultsPage extends Screen {
         cards.setVisibility(any ? View.VISIBLE : View.GONE);
         empty.setVisibility(any ? View.GONE : View.VISIBLE);
         bar.setVisibility(any ? View.VISIBLE : View.GONE);
-        if (any) showInBar(picks.get(0));
+        // Kept picks arriving one by one redraw the tiles: the bar stays on its pick (and a waiting Trailer with it).
+        Title stay = null;
+        String want = current != null ? current.id : barId;
+        for (Title p : picks) if (p.id.equals(want)) stay = p;
+        if (stay != null) current = stay;
+        if (any) showInBar(stay != null ? stay : picks.get(0));
     }
 
     private View firstTile() {
@@ -180,6 +276,8 @@ final class PickResultsPage extends Screen {
     }
 
     private void showInBar(Title t) {
+        // Another pick in the bar: a Trailer press still waiting for the last one's details doesn't open.
+        if (t != current) trailerAsk++;
         current = t;
         Offer o = data.bestOffer(t);
         Set<ServiceId> subscribed = data.services.subscribed();
@@ -189,11 +287,52 @@ final class PickResultsPage extends Screen {
     }
 
     /**
+     * F47: the pick's trailer in YouTube straight from here, as the preview's Trailer plays it (Router.openTrailer).
+     * Focus goes to the pick's tile first, so Back from YouTube lands on the title that played, among the same picks
+     * (F26 keeps this page, and MainActivity's place keeps it when Android ends the process). A pick's details, with
+     * TMDB's trailer id, may not be in yet: they are asked for, and after {@link #TRAILER_WAIT_MS} without them the
+     * trailer opens anyway, as YouTube's search for it.
+     */
+    private void trailer() {
+        Title t = current;
+        if (t == null) return;
+        View tile = tileOf(t);
+        if (tile != null) router.shell().focus(tile);
+        if (!StateUi.online(ctx)) {
+            router.toast(ctx.getString(R.string.states_trailer_offline));
+            return;
+        }
+        int ask = ++trailerAsk;
+        if (t.detailed) {
+            router.openTrailer(t);
+            return;
+        }
+        data.catalog.details(t, d -> playIfStill(ask, d));
+        view.postDelayed(() -> playIfStill(ask, t), TRAILER_WAIT_MS);
+    }
+
+    /**
+     * The trailer asked for by press {@code ask}, unless the household has moved on: another pick, Reroll, Open, Back,
+     * or another app in front (the window lost focus), where YouTube must not start over it.
+     */
+    private void playIfStill(int ask, Title t) {
+        if (ask != trailerAsk) return;
+        trailerAsk++;
+        if (router.shell().top() == this && view.hasWindowFocus()) router.openTrailer(t);
+    }
+
+    private View tileOf(Title t) {
+        int i = picks.indexOf(t);
+        return i >= 0 && i < cards.getChildCount() ? cards.getChildAt(i) : null;
+    }
+
+    /**
      * Opens the pick's service when it is included. A rental or purchase goes to the title preview instead, whose
      * rent and buy dialog asks before leaving the launcher (README, Product decisions), as the prototype's bar does.
      */
     private void open() {
         if (current == null) return;
+        trailerAsk++;
         Offer o = data.bestOffer(current);
         if (o != null && data.isIncluded(o)) router.watch(current, o);
         else router.openTitle(current);
@@ -257,7 +396,8 @@ final class PickResultsPage extends Screen {
             float s = Ui.focusScale(focused, 1.03f);
             art.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
         });
-        return Kit.titleCard(Focus.make(tile, GROUP_PICKS, "pk-" + i, i == 0, v -> router.openTitle(t)), t);
+        // Keyed by the title, so a kept focus (F26/F47) finds it even while other kept picks are still to arrive.
+        return Kit.titleCard(Focus.make(tile, GROUP_PICKS, "pk-" + t.id, i == 0, v -> router.openTitle(t)), t);
     }
 
     private TextView small(CharSequence text, int color) {

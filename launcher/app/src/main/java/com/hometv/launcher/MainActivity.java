@@ -77,6 +77,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private static final String PLACE_FOCUS = "focus";
     private static final String PLACE_PAGE = "page";
     private static final String PLACE_OVER = "over";
+    /** F47: Pick for me's setup over the page, and its results' picks and focus when they showed too. */
+    private static final String PLACE_PICK = "pick";
+    private static final String PLACE_PICKS = "picks";
+    private static final String PLACE_PICKS_FOCUS = "picksFocus";
+    /** F47: the pick the results bar showed: the bar's buttons' keys alone don't say which pick they act on. */
+    private static final String PLACE_PICKS_BAR = "picksBar";
     private static final String MENU_INPUTS = "Inputs";
     private static final String MENU_NETWORK = "Wi-Fi";
     private static final String MENU_QUICK = "Quick settings";
@@ -897,7 +903,10 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         }
     }
 
-    /** F26: the nav's page with its focus and choices, and the title previews straight over it (KEY_PLACE). */
+    /**
+     * F26: the nav's page with its focus and choices, Pick for me's pages over it (F47: its choices, and the same picks
+     * with their focus), and the title previews over those (KEY_PLACE).
+     */
     private void savePlace(Bundle out) {
         List<Screen> stack = shell.screens();
         if (stack.isEmpty() || stack.get(0).tab == null) return;
@@ -911,8 +920,19 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         Bundle state = new Bundle();
         page.save(state);
         place.putBundle(PLACE_PAGE, state);
+        int i = 1;
+        if (i < stack.size() && stack.get(i) instanceof PickSetupPage) {
+            place.putBundle(PLACE_PICK, ((PickSetupPage) stack.get(i++)).saved());
+            if (i < stack.size() && stack.get(i) instanceof PickResultsPage) {
+                Screen results = stack.get(i++);
+                place.putStringArrayList(PLACE_PICKS, ((PickResultsPage) results).ids());
+                place.putString(PLACE_PICKS_BAR, ((PickResultsPage) results).barId());
+                place.putString(PLACE_PICKS_FOCUS, results.pendingFocusKey != null ? results.pendingFocusKey
+                        : results.lastFocusKey);
+            }
+        }
         ArrayList<Bundle> over = new ArrayList<>();
-        for (int i = 1; i < stack.size() && stack.get(i) instanceof TitlePreview; i++) {
+        for (; i < stack.size() && stack.get(i) instanceof TitlePreview; i++) {
             over.add(((TitlePreview) stack.get(i)).saved());
         }
         place.putParcelableArrayList(PLACE_OVER, over);
@@ -942,17 +962,47 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         page.lastFocusKey = focus;
         shell.goTab(tab, false);
         if (focus != null && !focus.equals(Focus.key(shell.focused()))) page.pendingFocusKey = focus;
+        boolean pick = restorePick(place, page, focus);
         ArrayList<Bundle> over = place.getParcelableArrayList(PLACE_OVER);
         if (over == null || over.isEmpty()) return true;
-        // The item focused may not be there yet (a search result TMDB sends again): Back from the preview looks for it
-        // once more, rather than staying on the page's first item.
-        page.lastFocus = null;
-        page.lastFocusKey = focus;
+        if (!pick) {
+            // The item focused may not be there yet (a search result TMDB sends again): Back from the preview looks
+            // for it once more, rather than staying on the page's first item.
+            page.lastFocus = null;
+            page.lastFocusKey = focus;
+        }
         for (Bundle b : over) {
             TitlePreview preview = TitlePreview.reopen(this, this, b);
             if (preview == null) break;
             shell.push(preview);
         }
+        return true;
+    }
+
+    /**
+     * F47: Pick for me's setup page as the place kept it, and its results with the same picks (not a new roll) and the
+     * pick that was focused, which may arrive after the page (a cold start: Comeback's pending focus). False when the
+     * place has no Pick for me.
+     */
+    private boolean restorePick(Bundle place, Screen page, String pageFocus) {
+        Bundle saved = place.getBundle(PLACE_PICK);
+        PickSetupPage setup = saved == null ? null : PickSetupPage.reopen(this, saved);
+        if (setup == null) return false;
+        page.lastFocus = null;
+        page.lastFocusKey = pageFocus;
+        shell.push(setup);
+        ArrayList<String> ids = place.getStringArrayList(PLACE_PICKS);
+        if (ids == null) return true;
+        PickResultsPage results = setup.results(ids, place.getString(PLACE_PICKS_BAR));
+        String focus = place.getString(PLACE_PICKS_FOCUS);
+        // Before the push, so it focuses the pick at once when the catalogue already has it...
+        results.lastFocusKey = focus;
+        shell.push(results);
+        if (focus != null && !focus.equals(Focus.key(shell.focused()))) results.pendingFocusKey = focus;
+        // ...and after, since the push focused whatever was there (Adjust filters while the kept picks are still to
+        // arrive): Back from a preview over it looks for the pick again.
+        results.lastFocus = null;
+        results.lastFocusKey = focus;
         return true;
     }
 

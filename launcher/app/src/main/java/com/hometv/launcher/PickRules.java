@@ -236,6 +236,53 @@ final class PickRules {
         return picks;
     }
 
+    /**
+     * F47: the setup's choices as they were before Android ended the process (MainActivity's place, F26), on the lists
+     * the household offers now. A list no longer offered is dropped, an unknown source is {@link Source#LISTS}, and a
+     * value out of range is its field's first option.
+     */
+    static State restored(Kind kind, String source, List<String> lists, int[] values, ListMembership household) {
+        State s = new State(kind, household.chipLists());
+        for (Source src : Source.values()) if (src.name().equals(source)) s.source = src;
+        Set<String> offered = new HashSet<>();
+        for (ShownList l : s.offered) offered.add(l.key);
+        if (lists != null) for (String key : lists) if (offered.contains(key)) s.lists.add(key);
+        for (int f = 0; values != null && f < Math.min(values.length, s.values.length); f++) {
+            s.values[f] = values[f] >= 0 && values[f] < OPTIONS[f].length ? values[f] : 0;
+        }
+        return s;
+    }
+
+    /**
+     * F47: the picks kept across a trip to another app, by id, as the catalogue knows them now, in their order. Titles
+     * it doesn't know yet (a cold start, before the lists load) are left out until they arrive.
+     */
+    static List<Title> kept(List<String> ids, java.util.function.Function<String, Title> get) {
+        List<Title> out = new ArrayList<>();
+        for (String id : ids) {
+            Title t = get.apply(id);
+            if (t != null) out.add(t);
+        }
+        return out;
+    }
+
+    /**
+     * F47: whether every kept pick is in with its details, so the page can stop listening for them. Until then a later,
+     * detailed copy of a title replaces the summary drawn first.
+     */
+    static boolean keptDone(List<String> ids, List<Title> have) {
+        if (have.size() != ids.size()) return false;
+        for (Title t : have) if (!t.detailed) return false;
+        return true;
+    }
+
+    /** Whether two lists hold the very same title objects in the same order (a detailed copy is a new object). */
+    static boolean sameTitles(List<Title> a, List<Title> b) {
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) if (a.get(i) != b.get(i)) return false;
+        return true;
+    }
+
     // ---- Lines on the setup card and the results page ------------------------------------------------------------
 
     /** "Everything included on your 7 services", or the chosen lists joined with " + ", or "No lists". */
