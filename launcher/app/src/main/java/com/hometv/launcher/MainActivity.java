@@ -110,6 +110,11 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private ClockScene saver;
     /** The key that woke the screensaver: its repeats and its release are swallowed too, so it does nothing else. */
     private int saverWakeKey = KeyEvent.KEYCODE_UNKNOWN;
+    /**
+     * onPause took the clock away. Before Android 10 a Home intent to Home in front pauses it first, so onNewIntent must
+     * still know the clock was up (cleared in onResume and onStop).
+     */
+    private boolean saverHiddenByPause;
     /** Posted after the chosen idle time while Home is on top; any key or change of screen posts it again. */
     private final Runnable saverDue = () -> {
         if (Screensaver.mayStart(Screensaver.after(this), homeOnTop(), resumed, hasWindowFocus())) showScreensaver();
@@ -1000,7 +1005,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         // F36: the remote's Home (or a phone's) wakes the screensaver, and does nothing else.
-        boolean wasSaver = saver != null;
+        boolean wasSaver = saver != null || saverHiddenByPause;
+        saverHiddenByPause = false;
         hideScreensaver();
         if (wasSaver && intent != null && intent.hasCategory(Intent.CATEGORY_HOME)) return;
         if (openLauncherSettingsIfAsked(intent)) return;
@@ -1166,6 +1172,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     protected void onResume() {
         super.onResume();
+        saverHiddenByPause = false;
         // Something changed in Launcher settings: rebuild with it, however the settings were left.
         if (Config.settingsChanged(settingsRevision, settingsRevision())) {
             recreate();
@@ -1194,6 +1201,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         super.onPause();
         resumed = false;
         // F36: never over an app or Live TV: the clock goes with Home, and the idle time stops.
+        saverHiddenByPause = saver != null;
         hideScreensaver();
         handler.removeCallbacks(saverDue);
         // Nothing of ours stays open over another app.
@@ -1204,6 +1212,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     protected void onStop() {
         super.onStop();
         started = false;
+        saverHiddenByPause = false;
         // F16: the keys page's server runs only while its pane is on screen, not with the launcher in the background.
         ApiKeys.get(this).setForeground(false);
         PhoneRemote.get(this).detach(remoteBridge);

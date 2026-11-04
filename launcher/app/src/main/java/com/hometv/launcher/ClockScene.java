@@ -128,7 +128,9 @@ final class ClockScene extends FrameLayout {
         if (running) return;
         running = true;
         handler.removeCallbacksAndMessages(null);
-        handler.post(tick);
+        // The text first, so the layout before the first placement measures the real clock.
+        tick();
+        handler.postDelayed(tick, Screensaver.toNextMinute(System.currentTimeMillis()));
         clock.setAlpha(still ? 1f : 0f);
         // Placed once laid out, so the clock's size is known.
         post(() -> {
