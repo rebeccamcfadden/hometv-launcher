@@ -121,6 +121,8 @@ function personPage(p: PersonPageData): Screen {
                 if (s === sort) return;
                 sort = s;
                 render();
+                // The menu has closed and focused the old Sort button, which render() just replaced.
+                app.refocus();
               },
             })),
           ),

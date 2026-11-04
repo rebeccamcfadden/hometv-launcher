@@ -14,9 +14,11 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The person page, Rebecca's pick B (2026-11-04 18:55; Figma "Person page" 266:704; design_preview/src/screens/person.ts),
@@ -59,6 +61,12 @@ final class PersonPage extends Screen {
     private final LinearLayout grid;
     private final ViewTreeObserver.OnPreDrawListener windowBeforeDraw;
     private boolean windowQueued;
+    /** How many titles' details are asked for at a time (see {@link #wantNextBatch}). */
+    private static final int WANT_BATCH = 20;
+    private final List<String> wanting = new ArrayList<>();
+    private final Set<String> asked = new HashSet<>();
+    /** Held here: the catalogue holds its listeners weakly. */
+    private final Runnable onCatalog;
 
     private Person person;
     private Catalog.Credits credits;
@@ -201,7 +209,17 @@ final class PersonPage extends Screen {
         });
 
         show(Catalog.Credits.fromCatalogue(p, PreviewRules.titlesFor(p.name, data.catalog.all())), false);
-        data.catalog.person(p, c -> show(c, true));
+        data.catalog.person(p, c -> {
+            show(c, true);
+            wantNextBatch();
+        });
+        // Titles' details arriving: the chips' counts, the pills and the next batch. Focus and scroll stay.
+        onCatalog = () -> {
+            if (shell.top() != this) return;
+            refresh();
+            shell.refocus();
+        };
+        data.catalog.addListener(onCatalog);
     }
 
     @Override
@@ -263,6 +281,15 @@ final class PersonPage extends Screen {
 
     /** The chips with their counts, Sort's label and the grid, for the filter and sort in force. */
     private void render() {
+        render(false);
+    }
+
+    /**
+     * The chips with their counts, Sort's label and the grid. {@code inPlace} (newly loaded details, or back from a
+     * title): chips keep their views when the same chips show, and a grid with the same titles in the same order
+     * rebinds its built cards rather than being rebuilt, so focus and scroll stay.
+     */
+    private void render(boolean inPlace) {
         List<Title> all = credits.titles;
         List<Title> included = new ArrayList<>(), paid = new ArrayList<>();
         for (Title t : all) {
@@ -271,21 +298,94 @@ final class PersonPage extends Screen {
             (PriceCards.isPaid(o) ? paid : included).add(t);
         }
         Map<String, List<Title>> jobs = jobs();
-        chips.removeAllViews();
-        chip("all", ctx.getString(R.string.person_all, all.size()));
-        if (!included.isEmpty()) chip("included", ctx.getString(R.string.person_included, included.size()));
-        if (!paid.isEmpty()) chip("paid", ctx.getString(R.string.person_paid, paid.size()));
+        List<String[]> specs = new ArrayList<>();
+        specs.add(new String[]{"all", ctx.getString(R.string.person_all, all.size())});
+        if (!included.isEmpty()) {
+            specs.add(new String[]{"included", ctx.getString(R.string.person_included, included.size())});
+        }
+        if (!paid.isEmpty()) specs.add(new String[]{"paid", ctx.getString(R.string.person_paid, paid.size())});
         if (jobs.size() > 1) {
             for (Map.Entry<String, List<Title>> e : jobs.entrySet()) {
-                chip("job:" + e.getKey(), ctx.getString(R.string.person_job_chip, department(e.getKey()),
-                        e.getValue().size()));
+                specs.add(new String[]{"job:" + e.getKey(), ctx.getString(R.string.person_job_chip,
+                        department(e.getKey()), e.getValue().size())});
             }
+        }
+        // A filter whose chip went away (its titles moved elsewhere) goes back to All.
+        boolean filterShown = false;
+        for (String[] s : specs) filterShown |= s[0].equals(filter);
+        if (!filterShown) filter = "all";
+        if (!(inPlace && relabelChips(specs))) {
+            chips.removeAllViews();
+            for (String[] s : specs) chip(s[0], s[1]);
         }
         List<Title> chosen = filter.equals("included") ? included : filter.equals("paid") ? paid
                 : filter.startsWith("job:") ? jobs.get(filter.substring(4)) : all;
         if (chosen == null) chosen = all;
         Kit.setLabel(sortButton, sortLabel());
-        fill(PersonRules.sorted(chosen, sort, Locale.getDefault()));
+        List<Title> next = PersonRules.sorted(chosen, sort, Locale.getDefault());
+        if (inPlace && ArtWindow.sameIds(shown, next)) rebind(next);
+        else fill(next);
+    }
+
+    /** The same chips as now: their labels updated in place. False when the chips differ. */
+    private boolean relabelChips(List<String[]> specs) {
+        if (chips.getChildCount() != specs.size()) return false;
+        for (int i = 0; i < specs.size(); i++) {
+            if (!("person-" + specs.get(i)[0]).equals(Focus.key(chips.getChildAt(i)))) return false;
+        }
+        for (int i = 0; i < specs.size(); i++) Kit.setLabel(chips.getChildAt(i), specs.get(i)[1]);
+        return true;
+    }
+
+    /** The grid's titles with their new details, on the cards already built (pill, name, year and score). */
+    private void rebind(List<Title> titles) {
+        shown = titles;
+        for (int r = 0; r < grid.getChildCount(); r++) {
+            View row = grid.getChildAt(r);
+            if (!(row instanceof ViewGroup)) continue;
+            ViewGroup cards = (ViewGroup) row;
+            for (int c = 0; c < cards.getChildCount(); c++) {
+                int i = r * PersonRules.COLUMNS + c;
+                if (i < titles.size()) Kit.rebindLibraryCard(cards.getChildAt(c), titles.get(i), data);
+            }
+        }
+    }
+
+    /**
+     * TMDB's person answer lists titles without their offers: their details load in batches of {@link #WANT_BATCH},
+     * the next once the last has arrived, so a long career doesn't queue hundreds of requests at once.
+     */
+    private void wantNextBatch() {
+        for (String id : wanting) if (data.catalog.pending(id)) return;
+        wanting.clear();
+        for (Title t : credits.titles) {
+            if (wanting.size() == WANT_BATCH) break;
+            Title known = data.catalog.get(t.id);
+            if ((known == null || !known.detailed) && !data.catalog.failed(t.id) && asked.add(t.id)) {
+                wanting.add(t.id);
+            }
+        }
+        if (!wanting.isEmpty()) data.catalog.want(wanting);
+    }
+
+    /** Newly loaded details (or back from a title): the catalogue's current copies, shown in place. */
+    private void refresh() {
+        List<Title> current = new ArrayList<>(credits.titles.size());
+        boolean changed = false;
+        for (Title t : credits.titles) {
+            Title known = data.catalog.get(t.id);
+            Title use = known != null ? known : t;
+            changed |= use != t;
+            current.add(use);
+        }
+        if (changed) credits = credits.withTitles(current);
+        render(true);
+        wantNextBatch();
+    }
+
+    @Override
+    void onShow() {
+        refresh();
     }
 
     private void chip(String id, String label) {
