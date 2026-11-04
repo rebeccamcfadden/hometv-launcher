@@ -31,6 +31,8 @@ export const SERVICES: Record<ServiceId, Service> = {
   // US stores (F12): Fandango at Home (formerly Vudu) and Google TV, which sells films in the US.
   fandango: { id: 'fandango', name: 'Fandango at Home', store: true },
   googletv: { id: 'googletv', name: 'Google TV', store: true },
+  // Two regions: a US-only subscription with titles in the mock (Moon).
+  hulu: { id: 'hulu', name: 'Hulu', store: false },
 };
 
 export const appName = (id: ServiceId) => SERVICES[id].app ?? SERVICES[id].name;
@@ -81,7 +83,7 @@ export const US_PICK_SERVICES: PickService[] = [
   { id: 'prime', name: 'Prime Video', mark: 'prime video', weight: 600, installed: true, catalog: 'prime' },
   { id: 'disney', name: 'Disney+', mark: 'Disney+', weight: 400, installed: true, catalog: 'disney' },
   { id: 'max', name: 'HBO Max', mark: 'HBO max', weight: 700, installed: true, catalog: 'max' },
-  { id: 'hulu', name: 'Hulu', mark: 'hulu', weight: 700, installed: true },
+  { id: 'hulu', name: 'Hulu', mark: 'hulu', weight: 700, installed: true, catalog: 'hulu' },
   { id: 'peacock', name: 'Peacock', mark: 'Peacock', weight: 700, installed: false, free: 'Free tier' },
   { id: 'paramountplus', name: 'Paramount+', mark: 'Paramount+', weight: 600, installed: false },
   { id: 'appletvplus', name: 'Apple TV', mark: 'Apple TV', weight: 500, installed: true, catalog: 'appletvplus' },

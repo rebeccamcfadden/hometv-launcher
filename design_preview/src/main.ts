@@ -5,7 +5,7 @@ import './styles/screens.css';
 import { ACCOUNT_STATES, account, type AccountState } from './core/account';
 import { app } from './core/app';
 import { DATA_STATES, net, type DataState } from './core/net';
-import { settings } from './core/settings';
+import { setAlsoRegion, settings } from './core/settings';
 import { settingsMenu } from './screens/quickSettings';
 import { store } from './core/store';
 import { PHASE_LABELS, PHASES, type Phase } from './core/daylight';
@@ -23,6 +23,7 @@ import { launcherSettings } from './screens/settings';
 import { setupScreen } from './screens/setup';
 import { allAppsScreen } from './screens/allApps';
 import { titleMenu } from './screens/titleMenu';
+import { serviceRegionMenu } from './screens/panes/services';
 import { notes } from './core/notes';
 import { keys, KEYS_PRESETS, type KeysPreset } from './core/keys';
 import { importPill } from './ui/importPill';
@@ -67,7 +68,7 @@ app.overlay(updateNotice());
 // F36: the clock screensaver watches Home for idle time, and wakes on any key. ?saver=fast shortens the waits.
 initScreensaver();
 // Holding OK on a title card, wherever one shows, opens the title menu (F3).
-app.longOk = titleMenu;
+app.longOk = (el) => titleMenu(el) || serviceRegionMenu(el);
 // F27: the phone remote listens while it is on; the Features page or a reset switches it.
 remote.init();
 settings.on(() => remote.sync());
@@ -243,6 +244,16 @@ const jumps: [string, string, () => void][] = [
       },
     ],
   ),
+  // Two regions (2026-11-04): Launcher settings › Region › Also show, the other country on or off (?jump=two-regions).
+  [
+    'two-regions',
+    'Two regions · also show the other country (on/off)',
+    () => {
+      const other = settings.get().region === 'se' ? 'us' : 'se';
+      setAlsoRegion(other, !settings.get().alsoRegions.includes(other));
+      app.toast(settings.get().alsoRegions.length ? `Also showing ${other === 'us' ? 'the United States' : 'Sweden'}` : 'One region again');
+    },
+  ],
   // F36: the clock screensaver over Home now (add ?saver=fast to see it move every 8 s).
   [
     'screensaver',

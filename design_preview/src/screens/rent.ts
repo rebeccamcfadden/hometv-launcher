@@ -1,7 +1,7 @@
 import { app, type Screen } from '../core/app';
 import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
-import { cheapest, cheapestStore, kr, offersByService, qualitiesOf, type ServiceOffers } from '../data/offers';
+import { cheapest, money, qualitiesOf, regionOf, type ServiceOffers } from '../data/offers';
 import { appName, SERVICES } from '../data/services';
 import type { Offer, OfferType, Quality, Title } from '../types';
 import { button, chip } from '../ui/widgets';
@@ -17,12 +17,14 @@ function fourKNote(s: ServiceOffers): string | null {
   if (!diffs.length) return null;
   const lo = Math.min(...diffs);
   const hi = Math.max(...diffs);
-  return `4K costs ${lo === hi ? lo : `${lo}–${hi}`} kr more here`;
+  const o = s.rent ?? s.buy;
+  const unit = o && regionOf(o) === 'us' ? (n: number) => `$${n.toFixed(2)}` : (n: number) => `${n}`;
+  return `4K costs ${lo === hi ? unit(lo) : `${unit(lo)}–${unit(hi)}`}${o && regionOf(o) === 'us' ? '' : ' kr'} more here`;
 }
 
 /**
  * The rent/buy dialog (07-prices A): the store's name, an HD/4K switch when it prices both, two big price buttons,
- * Cancel, and a line that says payment finishes in the store's app, naming a cheaper store when there is one. A
+ * Cancel, and a line that says payment finishes in the store's app. A
  * store with no price has the same buttons without amounts; its app shows the price.
  */
 export function rentDialog(t: Title, s: ServiceOffers): Screen {
@@ -42,7 +44,7 @@ export function rentDialog(t: Title, s: ServiceOffers): Screen {
     const amount = quality ? o.prices?.[quality] : undefined;
     const season = o.seasonal ? ' a season' : '';
     const k = `${type === 'rent' ? 'Rent' : 'Buy'}${season}${quality ? ` · ${quality}` : ''}`;
-    const v = amount !== undefined ? kr(amount) : quality ? '–' : 'Price in the app';
+    const v = amount !== undefined ? money(amount, o) : quality ? '–' : 'Price in the app';
     const d =
       type === 'rent'
         ? '48 hours to finish once started'
@@ -90,22 +92,8 @@ export function rentDialog(t: Title, s: ServiceOffers): Screen {
     ) as [OfferType, Offer][];
     replace(prices, shown.map(([type, o], i) => priceButton(type, o, i === 0)));
 
-    // A cheaper offer elsewhere, of the type that decided Cheapest (rent against rent, buy against buy; decided
-    // 2026-10-31): "SF Anytime has it for 39 kr (HD)." or "… for 129 kr to buy (HD)."
-    const all = offersByService(t);
-    const best = cheapestStore(all);
-    const bestOffers = all.find((x) => x.service === best);
-    const byRent = bestOffers?.rent !== undefined && cheapest(bestOffers.rent) !== undefined;
-    const theirs = byRent ? bestOffers?.rent : bestOffers?.buy;
-    const ours = byRent ? s.rent : s.buy;
-    const here = ours && cheapest(ours);
-    const there = theirs && cheapest(theirs);
-    const q = theirs?.prices && (Object.keys(theirs.prices) as Quality[]).find((x) => theirs.prices?.[x] === there);
-    const cheaper =
-      best && best !== s.service && there !== undefined && (here === undefined || there < here)
-        ? ` ${SERVICES[best].name} has it for ${kr(there)}${byRent ? '' : ' to buy'}${q ? ` (${q})` : ''}.`
-        : '';
-    replace(detail, `Payment finishes in the ${app_} app.${cheaper}`);
+    // No "cheaper elsewhere" line (Rebecca, 2026-11-04 18:39): Where to watch lists the stores in price order.
+    replace(detail, `Payment finishes in the ${app_} app.`);
   };
   paint();
 

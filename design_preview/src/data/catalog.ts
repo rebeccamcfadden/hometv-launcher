@@ -327,6 +327,33 @@ export const TITLES: Title[] = [
     art: 'fallout.jpg', offers: [sub('viaplay')], seasons: seasons([10, 14], 43), next: { season: 1, episode: 1 } }),
 ];
 
+// Two regions (BACKLOG.md › Two regions, Rebecca 2026-11-04): what a handful of titles have in the US, in dollars, so
+// the flags, the merged Where to watch cards and the region chips have something to show. Shown only when the US is one
+// of several regions (Launcher settings › Region › Also show); the mock's own offers above are Sweden's.
+const us = (o: Offer): Offer => ({ ...o, region: 'us' });
+const usStores = (r: number, b: number): Offer[] => [
+  us(rent('appletv', { HD: r, '4K': r + 1 })),
+  us(buy('appletv', { HD: b, '4K': b + 5 })),
+  us(rent('amazonvideo', { HD: r })),
+  us(rent('fandango', { HD: r - 1 })),
+  us(buy('fandango', { HD: b - 5 })),
+];
+const US_OFFERS: Record<string, Offer[]> = {
+  arrival: [us(sub('netflix')), ...usStores(3.99, 14.99)],
+  moon: [us(sub('hulu')), ...usStores(3.99, 14.99)],
+  dune: [us(sub('max')), ...usStores(5.99, 19.99)],
+  'knives-out': [us(sub('prime')), ...usStores(3.99, 12.99)],
+  'past-lives': [us(sub('max'))],
+  severance: [us(sub('appletvplus'))],
+  interstellar: [us(sub('prime')), ...usStores(3.99, 9.99)],
+  'carnival-row': [us(sub('prime'))],
+  'mrs-maisel': [us(sub('prime'))],
+  'the-arrival-1996': usStores(2.99, 9.99),
+  'carnival-of-souls': [us(rent('googletv', { HD: 2.99 })), us(buy('googletv', { HD: 7.99 }))],
+  'carnivale': [us(sub('max'))],
+};
+for (const t of TITLES) t.offers.push(...(US_OFFERS[t.id] ?? []));
+
 export const byId = new Map(TITLES.map((t) => [t.id, t]));
 
 export function getTitle(id: string): Title {

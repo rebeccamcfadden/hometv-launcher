@@ -736,6 +736,24 @@
   box-shadow: var(--focus-ring);
   transform: scale(1.03);
 }
+/* Two regions: a line per country on a Where to watch card, the flag first and always in the same spot. */
+.region-lines {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  color: var(--text-2);
+}
+.rl b {
+  color: var(--text-1);
+  font-weight: 600;
+}
 .pv-episodes {
   display: flex;
   gap: 28px;
@@ -3553,4 +3571,28 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Two regions: a service tile's flags (bottom-left of its wordmark), a dimmed one for a country it is kept out of, the
+   "Only in …" line, and a store row's flags after its name. */
+.stile {
+  position: relative;
+}
+.stile-flags {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+}
+.flag.is-dim {
+  opacity: 0.3;
+}
+.stile-only {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.lr-flags {
+  margin-left: 12px;
+  vertical-align: -2px;
 }

@@ -138,6 +138,16 @@ one option for each (2026-10-30). The prototype builds these:
   search, availability, prices, artwork and cast. Analytics and telemetry are not.
 - **Prices are in Swedish kronor** (V2 region SE), per store and per picture quality, as the launcher's real data has
   them. A store that no price source prices still shows, as "Rent · Buy" without an amount; its app shows the price.
+  Where to watch has no Cheapest tag, green price or "cheaper elsewhere" line (Rebecca, 2026-11-04): its stores are
+  in price order.
+- **Two regions** (Rebecca, 2026-11-04; Figma page "Two regions"; plan in `work\two-regions-plan.md`), off by default:
+  Launcher settings › Region › **Also show** adds the other country (the dev bar's Jump to › Two regions toggles it).
+  A few titles then have US offers too, in dollars (`US_OFFERS` in `src/data/catalog.ts`). Search's C cards show the
+  title's countries as flags in the poster's bottom-right corner, with a chip per country beside Included only;
+  Where to watch has one card per service, a line per country with its flag first; Streaming services and Stores
+  list every chosen country's services, one tile or row each with all its flags. A ticked service is Included in
+  every country it has; hold OK on it for "Only Sweden" or "Only United States". The Watch button prefers the TV's
+  own country.
 - **Service names follow current branding:** "HBO Max"; Apple's subscription is "Apple TV" and its store the
   "Apple TV Store" (which opens in the Apple TV app); Amazon's store is "Amazon Video" (in the Prime Video app) and
   Viaplay's the "Viaplay Store".
