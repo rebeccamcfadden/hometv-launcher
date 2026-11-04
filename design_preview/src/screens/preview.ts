@@ -16,10 +16,12 @@ import {
   offersOf,
   paidAction,
   priceLines,
+  regionOf,
   runtimeLabel,
   watchable,
   type ServiceOffers,
 } from '../data/offers';
+import { settings } from '../core/settings';
 import { SERVICES } from '../data/services';
 import type { Title } from '../types';
 import { icon, type IconName } from '../ui/icons';
@@ -165,7 +167,9 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
     const content = h('div.pv-content');
 
     const overview = () => {
-      const rents = offersOf(t).filter((o) => o.type === 'rent').map(cheapest).filter((p): p is number => p !== undefined);
+      // The cheapest rental in the TV's own country, in its money: amounts in different currencies don't compare.
+      const rentOffers = offersOf(t).filter((o) => o.type === 'rent' && cheapest(o) !== undefined && regionOf(o) === settings.get().region);
+      const cheapestRent = rentOffers.reduce<typeof rentOffers[number] | undefined>((a, o) => (!a || cheapest(o)! < cheapest(a)! ? o : a), undefined);
       const included = offer && isIncludedOffer(offer);
       const lead = t.crew[0];
       return h(
@@ -177,7 +181,7 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
             'div.pv-fact',
             included ? h('span.badge', offer.type === 'free' ? 'Free' : 'Included') : null,
             h('span', included ? `on ${svcName}` : offer ? `${offer.type === 'rent' ? 'Rent' : 'Buy'} on ${svcName}` : 'Not on your services'),
-            rents.length && included ? h('span.muted', `· Rent from ${kr(Math.min(...rents))} elsewhere`) : null,
+            cheapestRent && included ? h('span.muted', `· Rent from ${money(cheapest(cheapestRent)!, cheapestRent)} elsewhere`) : null,
           ),
           t.cast.length ? h('div.pv-fact', h('span.muted', 'Starring'), t.cast.slice(0, 3).map((c) => c.name).join(', ')) : null,
           lead ? h('div.pv-fact', h('span.muted', lead.role), t.crew.filter((c) => c.role === lead.role).map((c) => c.name).join(', ')) : null,
@@ -209,7 +213,9 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
                   : ro.rent || ro.buy
                     ? h('span', amount(ro.rent, 'Rent'), ro.rent && ro.buy ? ' · ' : null, amount(ro.buy, 'Buy'))
                     : h('span', 'Subscription');
-              return h('div.rl', flag(ro.region), what);
+              // A show's prices are for one season, as the one-country card says.
+              const perSeason = !(ro.included || ro.free) && (ro.rent?.seasonal || ro.buy?.seasonal) ? h('span.q', 'per season') : null;
+              return h('div.rl', flag(ro.region), what, perSeason);
             }),
           ),
         ];

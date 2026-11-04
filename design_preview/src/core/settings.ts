@@ -260,6 +260,24 @@ export function setAlsoRegion(r: Region, on: boolean) {
   if (r === data.region) return;
   const also = data.alsoRegions.filter((x) => x !== r);
   settings.set({ alsoRegions: on ? [...also, r] : also });
+  reconcileStores();
+}
+
+/**
+ * One tick per store across the chosen countries (the Stores pane shows one row for it): when countries are combined,
+ * a store listed in several takes the tick it has in the first of them (the TV's own when it lists the store), so the
+ * row and the prices shown agree.
+ */
+function reconcileStores() {
+  const regions = chosenRegions();
+  if (regions.length < 2) return;
+  const ids = new Set(regions.flatMap((r) => PICKS[r].stores.map((s) => s.id)));
+  for (const id of ids) {
+    const listed = regions.filter((r) => PICKS[r].stores.some((s) => s.id === id));
+    if (listed.length < 2) continue;
+    const on = storeTicked(id, listed[0]);
+    if (listed.some((r) => storeTicked(id, r) !== on)) setStoreTicked(id, on);
+  }
 }
 
 /** Hold OK on a ticked service (pick (c)): keep it to one country, or (null) every country it has. */
@@ -283,6 +301,7 @@ export function setRegion(r: Region) {
   delete other[r];
   // The new main region can't also be an extra one.
   settings.set({ region: r, stores, otherRegion: other, alsoRegions: data.alsoRegions.filter((x) => x !== r && x !== data.region).concat(data.alsoRegions.includes(r) ? [data.region] : []) });
+  reconcileStores();
 }
 
 export const REGION_LABELS: Record<Region, string> = { se: 'Sweden', us: 'United States' };
@@ -364,3 +383,6 @@ export function deg(c: number): string {
   return `${Math.round(u === 'f' ? (c * 9) / 5 + 32 : c)}°`;
 }
 export const unitSuffix = () => `°${(data.unit === 'tv' ? TV_UNIT : data.unit).toUpperCase()}`;
+
+// Ticks saved before stores were reconciled (an earlier visit) agree again from the start.
+reconcileStores();

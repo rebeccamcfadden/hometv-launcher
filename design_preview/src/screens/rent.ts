@@ -1,7 +1,7 @@
 import { app, type Screen } from '../core/app';
 import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
-import { cheapest, money, qualitiesOf, regionOf, type ServiceOffers } from '../data/offers';
+import { cheapest, money, qualitiesOf, type ServiceOffers } from '../data/offers';
 import { appName, SERVICES } from '../data/services';
 import type { Offer, OfferType, Quality, Title } from '../types';
 import { button, chip } from '../ui/widgets';
@@ -18,8 +18,10 @@ function fourKNote(s: ServiceOffers): string | null {
   const lo = Math.min(...diffs);
   const hi = Math.max(...diffs);
   const o = s.rent ?? s.buy;
-  const unit = o && regionOf(o) === 'us' ? (n: number) => `$${n.toFixed(2)}` : (n: number) => `${n}`;
-  return `4K costs ${lo === hi ? unit(lo) : `${unit(lo)}–${unit(hi)}`}${o && regionOf(o) === 'us' ? '' : ' kr'} more here`;
+  // The same money as the price buttons (money): dollars only for a US offer while several countries are shown.
+  const dollars = !!o && money(1, o).startsWith('$');
+  const unit = dollars ? (n: number) => `$${n.toFixed(2)}` : (n: number) => `${n}`;
+  return `4K costs ${lo === hi ? unit(lo) : `${unit(lo)}–${unit(hi)}`}${dollars ? '' : ' kr'} more here`;
 }
 
 /**
