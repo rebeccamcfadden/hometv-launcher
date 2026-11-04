@@ -15,13 +15,13 @@ import java.util.Locale;
 /**
  * The person page stub (design_preview/src/screens/person.ts; screens.css .person-page), pushed from Cast &amp; crew
  * or Search: a Back button, a large portrait with initials (and their TMDB photo over them once it loads), "Person ·
- * not designed yet" over the name, and the titles the person is known for as small cards, six to a row. The titles
+ * not designed yet" over the name, and the titles the person is known for as C cards (F46), eight to a row. The titles
  * the catalogue already knows show at once; TMDB's list of their best-known titles replaces them when it arrives.
  * OK on a card opens its preview over this page; Back returns to where the page came from. First focus is the first
  * card, or Back when there is none.
  */
 final class PersonPage extends Screen {
-    private static final int COLUMNS = 6;
+    private static final int COLUMNS = 8;
 
     private final Context ctx;
     private final Router router;
@@ -133,12 +133,12 @@ final class PersonPage extends Screen {
                 row = Kit.unclip(new LinearLayout(ctx));
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 LinearLayout.LayoutParams rlp = wrap();
-                rlp.topMargin = i == 0 ? 0 : Ui.px(30);
+                rlp.topMargin = i == 0 ? 0 : Ui.px(32);
                 grid.addView(row, rlp);
             }
             View card = Kit.smallCard(ctx, t, null, data, "known", "p-" + t.id, i == 0, v -> router.openTitle(t));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(card.getLayoutParams());
-            lp.leftMargin = row.getChildCount() == 0 ? 0 : Ui.px(20);
+            lp.leftMargin = row.getChildCount() == 0 ? 0 : Ui.px(24);
             row.addView(card, lp);
             cards.add(card);
         }

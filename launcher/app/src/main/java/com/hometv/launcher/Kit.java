@@ -5,6 +5,7 @@ import android.content.res.ColorStateList;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.PaintDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
@@ -258,109 +259,167 @@ final class Kit {
 
     // ---- Cards ----------------------------------------------------------------------------------------------------
 
-    /** The Movies and TV Shows card's size (F40): a 2:3 poster, six across the 1728 px grid. */
-    static final int POSTER_W = 268, POSTER_H = 402;
+    /**
+     * The title card's size (F46, Rebecca 2026-11-04, Figma "Smaller cards (F46)" option C): a 2:3 poster, eight across
+     * the 1728 px grid, radius 12.
+     */
+    static final int POSTER_W = 195, POSTER_H = 293;
+    static final float POSTER_RADIUS = 12;
+    /** The focused card's name and line, light on the dark fade over any poster, whatever the theme. */
+    private static final int ON_POSTER_1 = 0xFFF4F5F7, ON_POSTER_2 = 0xFFADB5C0;
 
     /**
-     * The library card from Movies and TV Shows ({@code .card--poster}, F40, Rebecca 2026-11-02, Figma "Library cards
-     * (F40)" option A): the title's poster, 268 × 402 with radius 16 (its backdrop, cropped, when it has none); the
-     * name (22 px, medium); the service and "Included" or a price on one line ("Netflix · Included"), from the
-     * household's services and stores only ({@link Data#cardOffer}; just the availability when none has it); the meta
-     * line and the provenance line. Focused: the accent ring on the poster and the poster scaled 1.03; the text stays.
+     * The title card on Movies and TV Shows (F46 option C; design_preview ui/widgets.ts miniCard): the poster only,
+     * its backdrop cropped when it has none, and on its top-left corner the service pill ({@link CardPill}) for the
+     * household's own offer ({@link Data#cardOffer}). Nothing under the poster. Focused: the accent ring, the poster
+     * scaled 1.03, and the name (two lines at most) with "year · score" on a dark fade at its foot. The grid binds the
+     * poster only near the screen ({@link #libraryArt}), unless {@code withArt}.
      */
     static View libraryCard(Context ctx, Title t, Data data, String group, String key, boolean isDefault,
                             View.OnClickListener onOk, boolean withArt) {
-        LinearLayout card = card(ctx, POSTER_W);
-        RingFrame art = frame(ctx, Ui.RADIUS_L);
-        card.addView(art, new LinearLayout.LayoutParams(Ui.px(POSTER_W), Ui.px(POSTER_H)));
-        TextView name = Ui.line(ctx, 22, Ui.TEXT_1, Ui.MEDIUM);
-        name.setGravity(Gravity.START);
-        card.addView(name, below(12));
-        TextView service = textLine(ctx, "", Ui.TEXT_2);
-        card.addView(service, below(4));
-        TextView meta = textLine(ctx, "", Ui.TEXT_2);
-        card.addView(meta, below(4));
-        TextView lists = textLine(ctx, "", Ui.TEXT_3);
-        card.addView(lists, below(2));
-        card.setTag(R.id.kit_provenance, lists);
-        LibraryParts parts = new LibraryParts((ImageView) art.content().getChildAt(0), name, service, meta, lists);
-        card.setTag(R.id.kit_library_parts, parts);
-        View v = focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name);
-        fill(v, parts, t, data);
+        View v = miniCard(ctx, t, null, data, group, key, isDefault, onOk);
         if (withArt) libraryArt(v, true);
         return v;
     }
 
-    /** A library card's views, so the grid can show a title's new state on the card it has (rebindLibraryCard). */
-    private static final class LibraryParts {
+    /**
+     * The same C card for Search, the title preview's More like this and the person page, its poster bound at once;
+     * {@code nameOverride} is Search's highlighted match ({@link #highlight}), shown when the card is focused.
+     */
+    static View smallCard(Context ctx, Title t, CharSequence nameOverride, Data data, String group, String key,
+                          boolean isDefault, View.OnClickListener onOk) {
+        View v = miniCard(ctx, t, nameOverride, data, group, key, isDefault, onOk);
+        libraryArt(v, true);
+        return v;
+    }
+
+    private static View miniCard(Context ctx, Title t, CharSequence nameOverride, Data data, String group, String key,
+                                 boolean isDefault, View.OnClickListener onOk) {
+        LinearLayout card = card(ctx, POSTER_W);
+        RingFrame art = frame(ctx, POSTER_RADIUS);
+        card.addView(art, new LinearLayout.LayoutParams(Ui.px(POSTER_W), Ui.px(POSTER_H)));
+        FrameLayout content = art.content();
+        FrameLayout pill = new FrameLayout(ctx);
+        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
+        plp.leftMargin = Ui.px(8);
+        plp.topMargin = Ui.px(8);
+        plp.rightMargin = Ui.px(8);
+        content.addView(pill, plp);
+
+        LinearLayout over = new LinearLayout(ctx);
+        over.setOrientation(LinearLayout.VERTICAL);
+        over.setPadding(Ui.px(12), Ui.px(56), Ui.px(12), Ui.px(12));
+        over.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0x0005080C, 0xEB05080C, 0xEB05080C}));
+        TextView name = Ui.text(ctx, 20, ON_POSTER_1, Ui.BOLD);
+        name.setMaxLines(2);
+        name.setEllipsize(TextUtils.TruncateAt.END);
+        over.addView(name);
+        TextView meta = Ui.line(ctx, Ui.T_MIN, ON_POSTER_2, Ui.REGULAR);
+        meta.setGravity(Gravity.START);
+        over.addView(meta, below(4));
+        over.setAlpha(0f);
+        content.addView(over, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
+
+        MiniParts parts = new MiniParts((ImageView) content.getChildAt(0), name, meta, pill, nameOverride);
+        card.setTag(R.id.kit_library_parts, parts);
+        card.setOnFocusChangeListener((v, focused) -> {
+            art.setRing(focused);
+            float s = focused ? 1.03f : 1f;
+            art.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
+            over.animate().alpha(focused ? 1f : 0f).setDuration(Ui.ms(Ui.FAST_MS)).start();
+        });
+        View v = Focus.make(card, group, key, isDefault, onOk);
+        fill(v, parts, t, data);
+        return v;
+    }
+
+    /** A C card's views, so the grid can show a title's new state on the card it has (rebindLibraryCard). */
+    private static final class MiniParts {
         final ImageView art;
-        final TextView name, service, meta, lists;
+        final TextView name, meta;
+        final FrameLayout pill;
+        final CharSequence nameOverride;
         /** The art is bound (libraryArt): the grid binds it only near the screen. */
         boolean artOn;
 
-        LibraryParts(ImageView art, TextView name, TextView service, TextView meta, TextView lists) {
+        MiniParts(ImageView art, TextView name, TextView meta, FrameLayout pill, CharSequence nameOverride) {
             this.art = art;
             this.name = name;
-            this.service = service;
             this.meta = meta;
-            this.lists = lists;
+            this.pill = pill;
+            this.nameOverride = nameOverride;
         }
     }
 
-    private static void fill(View card, LibraryParts p, Title t, Data data) {
+    private static void fill(View card, MiniParts p, Title t, Data data) {
         Offer o = data.cardOffer(t);
-        p.name.setText(t.name);
         String where = o == null ? "" : PriceCards.isPaid(o) ? data.table.storeName(o.service) : data.table.name(o.service);
-        String avail = Offers.availability(o, data.services.subscribed());
-        p.service.setText(TitleText.serviceLine(where, avail));
-        p.meta.setText(TitleText.meta(t));
-        p.lists.setText(TitleText.provenance(t, data.household));
-        card.setContentDescription(t.name);
+        CardPill pill = CardPill.of(o, where, data.region);
+        p.name.setText(p.nameOverride != null ? p.nameOverride : t.name);
+        p.meta.setText(TitleText.yearScore(t));
+        p.pill.removeAllViews();
+        if (pill != null) p.pill.addView(servicePill(card.getContext(), pill));
+        card.setContentDescription(pill == null ? t.name : t.name + ", " + pill.spoken());
         titleCard(card, t);
     }
 
     /**
-     * Shows t on a library card made for an earlier state of the same title (details, a price, a season arrived),
-     * without building it again; its poster follows if it is bound, and is left alone when the picture is the same.
+     * {@code .svc-pill}: the mark (a 26 px circle: a dark tick on green, or the currency on 18% white) and the name
+     * (18 px, medium), on a dark fill at 86% with a 12% white line.
+     */
+    static View servicePill(Context ctx, CardPill p) {
+        LinearLayout row = new LinearLayout(ctx);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(Ui.px(4), Ui.px(4), Ui.px(10), Ui.px(4));
+        row.setBackground(Ui.round(0xDB090E15, Ui.RADIUS_PILL, 0x1FFFFFFF, 1));
+        FrameLayout mark = new FrameLayout(ctx);
+        mark.setBackground(Ui.oval(p.paid ? 0x2EFFFFFF : Ui.GOOD));
+        if (p.paid) {
+            TextView cur = Ui.line(ctx, Ui.T_MIN, ON_POSTER_1, Ui.BOLD);
+            cur.setText(p.currency);
+            cur.setGravity(Gravity.CENTER);
+            mark.addView(cur, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+        } else {
+            ImageView tick = Ui.icon(ctx, R.drawable.ic_ui_check, 18, 0xFF0B1A10);
+            mark.addView(tick, new FrameLayout.LayoutParams(Ui.px(18), Ui.px(18), Gravity.CENTER));
+        }
+        row.addView(mark, new LinearLayout.LayoutParams(Ui.px(26), Ui.px(26)));
+        TextView name = Ui.line(ctx, Ui.T_MIN, ON_POSTER_1, Ui.MEDIUM);
+        name.setText(p.name);
+        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        nlp.leftMargin = Ui.px(6);
+        row.addView(name, nlp);
+        return row;
+    }
+
+    /**
+     * Shows t on a C card made for an earlier state of the same title (details, a price, a season arrived), without
+     * building it again; its poster follows if it is bound, and is left alone when the picture is the same.
      */
     static void rebindLibraryCard(View card, Title t, Data data) {
         Object tag = card.getTag(R.id.kit_library_parts);
-        if (!(tag instanceof LibraryParts)) return;
-        LibraryParts p = (LibraryParts) tag;
+        if (!(tag instanceof MiniParts)) return;
+        MiniParts p = (MiniParts) tag;
         fill(card, p, t, data);
         if (p.artOn) Art.poster(p.art, t, Ui.px(POSTER_W), Ui.px(POSTER_H));
     }
 
-    /** Binds a library card's poster (near the screen) or lets go of it (far off: the bitmap stays in Art's cache). */
+    /** Binds a C card's poster (near the screen) or lets go of it (far off: the bitmap stays in Art's cache). */
     static void libraryArt(View card, boolean on) {
         Object tag = card.getTag(R.id.kit_library_parts);
         Title t = titleOf(card);
-        if (!(tag instanceof LibraryParts) || t == null || ((LibraryParts) tag).artOn == on) return;
-        LibraryParts p = (LibraryParts) tag;
+        if (!(tag instanceof MiniParts) || t == null || ((MiniParts) tag).artOn == on) return;
+        MiniParts p = (MiniParts) tag;
         p.artOn = on;
         if (on) Art.poster(p.art, t, Ui.px(POSTER_W), Ui.px(POSTER_H));
         else Art.clear(p.art);
     }
-    /**
-     * The smaller card of Search and the title preview's rows ({@code .card--small}): 271 wide, art 152 with radius
-     * 14, the name (22 px) or {@code nameOverride} (Search's highlighted match, see {@link #highlight}), "Movie · 2016"
-     * and the card line ({@link Data#offerLine}, the household's services and stores only). Focused like the library
-     * card.
-     */
-    static View smallCard(Context ctx, Title t, CharSequence nameOverride, Data data, String group, String key,
-                          boolean isDefault, View.OnClickListener onOk) {
-        LinearLayout card = card(ctx, 271);
-        RingFrame art = art(ctx, t, 271, 152, 14);
-        card.addView(art, new LinearLayout.LayoutParams(Ui.px(271), Ui.px(152)));
-        TextView name = Ui.line(ctx, 22, Ui.TEXT_1, Ui.MEDIUM);
-        name.setText(nameOverride != null ? nameOverride : t.name);
-        name.setGravity(Gravity.START);
-        card.addView(name, below(12));
-        card.addView(textLine(ctx, TitleText.kindYear(t), Ui.TEXT_2), below(4));
-        card.addView(textLine(ctx, data.offerLine(t), Ui.TEXT_3), below(2));
-        return titleCard(focusCard(card, art, 1.03f, group, key, isDefault, onOk, t.name), t);
-    }
-
     /** Marks v as a card for t, so holding OK on it opens the title menu (TitleMenu). Returns v. */
     static View titleCard(View v, Title t) {
         v.setTag(R.id.kit_title, t);

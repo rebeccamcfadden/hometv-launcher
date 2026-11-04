@@ -49,10 +49,11 @@ final class SearchPage extends Screen {
     private static final int VIEW_LEFT_EXPANDED = Ui.SAFE_X - VIEW_PAD;
     private static final int KEY = 56;
     private static final int KEY_GAP = 8;
-    private static final int CARD_W = 271;
-    private static final int COLUMNS = 6;
-    private static final int COLUMN_GAP = 20;
-    private static final int ROW_GAP = 30;
+    /** F46: C cards, eight across on the full results (six in view beside the keyboard), as Movies and TV Shows. */
+    private static final int CARD_W = Kit.POSTER_W;
+    private static final int COLUMNS = 8;
+    private static final int COLUMN_GAP = 24;
+    private static final int ROW_GAP = 32;
     /**
      * While typing, the preview shows a little over two rows of the grid and can't be focused, so it builds only
      * the first rows; the full results build every card. Keeps each key press light on a 1 GB TV.
@@ -677,11 +678,12 @@ final class SearchPage extends Screen {
                     ctx.getString(R.string.states_search_nothing_note), wifi), below(0));
             body.setPadding(0, 0, 0, Ui.px(120));
         } else if (query.isEmpty()) {
-            // A fresh install starts with every list empty (V2 Phase 3): no heading over an empty row.
+            // F46 (Rebecca, 2026-11-04): Browse by genre first, then the title rows. A fresh install starts with every
+            // list empty (V2 Phase 3): no heading over an empty row.
+            body.addView(genreRow());
             addViewed();
             List<Title> mine = ids(data.household.myListIds());
             if (!mine.isEmpty()) body.addView(titleRow(R.string.search_from_my_list, mine, "mine"));
-            body.addView(genreRow());
             body.setPadding(0, 0, 0, Ui.px(120));
         } else if (!hasMatches) {
             TextView title = Ui.line(ctx, 34, Ui.TEXT_1, Ui.REGULAR);
@@ -978,6 +980,8 @@ final class SearchPage extends Screen {
             chips.addView(c, gapBefore(chips.getChildCount() == 0 ? 0 : 12));
         }
         row.addView(chips);
+        // The title rows under it start where Kit.row's own rows would.
+        row.setPadding(0, 0, 0, Ui.px(34));
         return row;
     }
 
@@ -1017,7 +1021,7 @@ final class SearchPage extends Screen {
         }
     }
 
-    /** {@code .results-grid}: six 271 px columns, 20 px apart, rows 30 px apart. */
+    /** {@code .results-grid} (F46): C cards, eight columns of 195 px, 24 px apart, rows 32 px apart. */
     private View grid(List<SearchIndex.Hit> items) {
         LinearLayout grid = Kit.unclip(new LinearLayout(ctx));
         grid.setOrientation(LinearLayout.VERTICAL);
@@ -1049,31 +1053,36 @@ final class SearchPage extends Screen {
     }
 
     /**
-     * A person among the results ({@code .card--small.card--person}): the small card's 271 × 152 art box with the
-     * round portrait in its middle (initials, and their photo over them when TMDB has one), the highlighted name,
-     * "Person" and how many titles they are in.
+     * A person among the results (F46, {@code .card--mini.card--person}): a box the C card's size with the round
+     * portrait in its middle (initials, and their photo over them when TMDB has one), and the highlighted name with
+     * "Person" at its foot.
      */
     private View personCard(SearchIndex.Hit hit, CharSequence name, String key, boolean isDefault) {
         LinearLayout card = Kit.unclip(new LinearLayout(ctx));
         card.setOrientation(LinearLayout.VERTICAL);
-        RingFrame art = new RingFrame(ctx, 14, false, Ui.BG_RAISED);
+        RingFrame art = new RingFrame(ctx, Kit.POSTER_RADIUS, false, Ui.BG_RAISED);
         RingFrame portrait = Kit.portrait(ctx, hit.label, hit.person.photo, 104, 32);
         art.content().addView(portrait, new FrameLayout.LayoutParams(Ui.px(104), Ui.px(104), Gravity.CENTER));
-        card.addView(art, new LinearLayout.LayoutParams(Ui.px(CARD_W), Ui.px(152)));
-        TextView n = Ui.line(ctx, 22, Ui.TEXT_1, Ui.MEDIUM);
+        LinearLayout cap = new LinearLayout(ctx);
+        cap.setOrientation(LinearLayout.VERTICAL);
+        cap.setGravity(Gravity.CENTER_HORIZONTAL);
+        cap.setPadding(Ui.px(12), 0, Ui.px(12), Ui.px(14));
+        TextView n = Ui.text(ctx, 20, Ui.TEXT_1, Ui.BOLD);
         n.setText(name);
-        n.setGravity(Gravity.START);
-        card.addView(n, below(12));
+        n.setGravity(Gravity.CENTER_HORIZONTAL);
+        n.setMaxLines(2);
+        n.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        cap.addView(n);
         TextView meta = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_2, Ui.REGULAR);
         meta.setText(R.string.search_person);
-        meta.setGravity(Gravity.START);
-        card.addView(meta, below(4));
+        meta.setGravity(Gravity.CENTER_HORIZONTAL);
+        cap.addView(meta, below(2));
+        art.content().addView(cap, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
+        card.addView(art, new LinearLayout.LayoutParams(Ui.px(CARD_W), Ui.px(Kit.POSTER_H)));
         int count = hit.titles == null ? 0 : hit.titles.size();
-        TextView sub = Ui.line(ctx, Ui.T_MIN, Ui.TEXT_3, Ui.REGULAR);
-        sub.setText(ctx.getResources().getQuantityString(R.plurals.search_person_titles, count, count));
-        sub.setGravity(Gravity.START);
-        card.addView(sub, below(2));
-        card.setContentDescription(hit.label);
+        card.setContentDescription(hit.label + ", " + ctx.getString(R.string.search_person) + ", "
+                + ctx.getResources().getQuantityString(R.plurals.search_person_titles, count, count));
         card.setOnFocusChangeListener((v, focused) -> {
             art.setRing(focused);
             float s = Ui.focusScale(focused, 1.03f);
@@ -1081,7 +1090,6 @@ final class SearchPage extends Screen {
         });
         return Focus.make(card, GROUP_GRID, key, isDefault, v -> openPerson(hit.person));
     }
-
     // ---- Layout helpers -------------------------------------------------------------------------------------------
 
     private static LinearLayout.LayoutParams below(float top) {

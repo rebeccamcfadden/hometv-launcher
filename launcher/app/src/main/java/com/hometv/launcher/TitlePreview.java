@@ -38,6 +38,11 @@ final class TitlePreview extends Screen {
             G_SIMILAR = "similar", G_SEASONS = "seasons", G_EPISODES = "episodes";
     static final String KEY_WATCH = "watch";
     private static final float WIDTH = 1728, HEIGHT = 900, TOP = 90, CONTENT_HEIGHT = 220;
+    /**
+     * F46: More like this holds C cards (293 tall) with room for the focus ring: its area is taller, and the body grows
+     * up from the popup's foot, so the title, buttons and tabs sit higher on that tab (Figma 241:865).
+     */
+    private static final float CARDS_CONTENT_HEIGHT = 305;
     /** Room around a row's items for the ring and scale-up, which the row clips at (screens.css .pv-row). */
     private static final float ROOM = Kit.RING_ROOM;
     /** How far a row may run below the content area, into the popup's 44 px bottom padding. */
@@ -418,7 +423,7 @@ final class TitlePreview extends Screen {
                 for (int i = 0; i < 6; i++) items.add(StateUi.personSkeleton(ctx));
                 break;
             case MORE:
-                for (int i = 0; i < 5; i++) items.add(StateUi.smallCardSkeleton(ctx));
+                for (int i = 0; i < 7; i++) items.add(StateUi.smallCardSkeleton(ctx));
                 break;
             default:
                 return StateUi.overviewSkeleton(ctx);
@@ -777,6 +782,12 @@ final class TitlePreview extends Screen {
             // Landing on a tab shows it, after its focus event went out: say again that it is now the selected one.
             if (on) v.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_SELECTED);
         }
+        ViewGroup.LayoutParams clp = content.getLayoutParams();
+        int h = Ui.px(tab == Tab.MORE ? CARDS_CONTENT_HEIGHT : CONTENT_HEIGHT);
+        if (clp != null && clp.height != h) {
+            clp.height = h;
+            content.setLayoutParams(clp);
+        }
         content.removeAllViews();
         seasonChips.clear();
         seasonNumbers.clear();
@@ -1110,8 +1121,8 @@ final class TitlePreview extends Screen {
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        // Small cards (about 228 tall) run past the 220 px area, as in the prototype, into the popup's bottom
-        // padding: the deeper bottom margin only lets the box measure that tall.
+        // A row's cards may run past its area into the popup's bottom padding: the deeper bottom margin only lets the
+        // box measure that tall.
         lp.setMargins(-room, -room, -room, -room - Ui.px(OVERHANG));
         box.setLayoutParams(lp);
         return box;

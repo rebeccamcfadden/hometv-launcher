@@ -61,6 +61,17 @@ final class TitleText {
         return t.year > 0 ? kind + " · " + t.year : kind;
     }
 
+    /**
+     * F46: the focused C card's line, "2024 · 8.5/10" (design_preview miniCard); either part alone when the other isn't
+     * known yet, and empty with neither.
+     */
+    static String yearScore(Title t) {
+        String year = t.year > 0 ? String.valueOf(t.year) : "";
+        String score = t.score > 0 || t.detailed ? score(t.score) + "/10" : "";
+        if (year.isEmpty()) return score;
+        return score.isEmpty() ? year : year + " · " + score;
+    }
+
     /** Up to two initials, upper case, for a portrait without a photo: "Amy Adams" gives "AA". */
     static String initials(String name) {
         StringBuilder out = new StringBuilder(2);
