@@ -81,6 +81,8 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     private static final String PLACE_PICK = "pick";
     private static final String PLACE_PICKS = "picks";
     private static final String PLACE_PICKS_FOCUS = "picksFocus";
+    /** F47: the pick the results bar showed: the bar's buttons' keys alone don't say which pick they act on. */
+    private static final String PLACE_PICKS_BAR = "picksBar";
     private static final String MENU_INPUTS = "Inputs";
     private static final String MENU_NETWORK = "Wi-Fi";
     private static final String MENU_QUICK = "Quick settings";
@@ -924,6 +926,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
             if (i < stack.size() && stack.get(i) instanceof PickResultsPage) {
                 Screen results = stack.get(i++);
                 place.putStringArrayList(PLACE_PICKS, ((PickResultsPage) results).ids());
+                place.putString(PLACE_PICKS_BAR, ((PickResultsPage) results).barId());
                 place.putString(PLACE_PICKS_FOCUS, results.pendingFocusKey != null ? results.pendingFocusKey
                         : results.lastFocusKey);
             }
@@ -990,7 +993,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         shell.push(setup);
         ArrayList<String> ids = place.getStringArrayList(PLACE_PICKS);
         if (ids == null) return true;
-        PickResultsPage results = setup.results(ids);
+        PickResultsPage results = setup.results(ids, place.getString(PLACE_PICKS_BAR));
         String focus = place.getString(PLACE_PICKS_FOCUS);
         // Before the push, so it focuses the pick at once when the catalogue already has it...
         results.lastFocusKey = focus;

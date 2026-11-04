@@ -266,6 +266,23 @@ final class PickRules {
         return out;
     }
 
+    /**
+     * F47: whether every kept pick is in with its details, so the page can stop listening for them. Until then a later,
+     * detailed copy of a title replaces the summary drawn first.
+     */
+    static boolean keptDone(List<String> ids, List<Title> have) {
+        if (have.size() != ids.size()) return false;
+        for (Title t : have) if (!t.detailed) return false;
+        return true;
+    }
+
+    /** Whether two lists hold the very same title objects in the same order (a detailed copy is a new object). */
+    static boolean sameTitles(List<Title> a, List<Title> b) {
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) if (a.get(i) != b.get(i)) return false;
+        return true;
+    }
+
     // ---- Lines on the setup card and the results page ------------------------------------------------------------
 
     /** "Everything included on your 7 services", or the chosen lists joined with " + ", or "No lists". */

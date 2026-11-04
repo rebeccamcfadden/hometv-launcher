@@ -597,4 +597,28 @@ public class PickRulesTest {
         assertEquals(Arrays.asList(c.id, a.id, b.id), ids(PickRules.kept(ids, catalog::get)));
         assertTrue(PickRules.kept(ids, id -> null).isEmpty());
     }
+
+    /** Kept picks are done only when all are in and each has its details; a summary keeps the page listening. */
+    @Test
+    public void keptPicksAreDoneOnlyWhenAllAreDetailed() {
+        Title a = catalog.all().get(0), b = catalog.all().get(1);
+        Title.Draft d = new Title.Draft(b);
+        d.detailed = false;
+        Title summary = d.build();
+        d.detailed = true;
+        Title detailed = d.build();
+        List<String> ids = Arrays.asList(a.id, b.id);
+        assertFalse(PickRules.keptDone(ids, Collections.singletonList(a)));
+        assertFalse(PickRules.keptDone(ids, Arrays.asList(withDetails(a), summary)));
+        assertTrue(PickRules.keptDone(ids, Arrays.asList(withDetails(a), detailed)));
+        // A detailed copy is a new object: the page redraws with it.
+        assertFalse(PickRules.sameTitles(Arrays.asList(a, summary), Arrays.asList(a, detailed)));
+        assertTrue(PickRules.sameTitles(Arrays.asList(a, summary), Arrays.asList(a, summary)));
+    }
+
+    private static Title withDetails(Title t) {
+        Title.Draft d = new Title.Draft(t);
+        d.detailed = true;
+        return d.build();
+    }
 }

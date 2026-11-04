@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -49,21 +50,23 @@ final class PickResultsPage extends Screen {
     private Title current;
     /** F47: the Trailer press waiting for its title's details (TMDB's trailer id); a newer press or a pick moves on. */
     private int trailerAsk;
-    /** F47: the ids of kept picks still to show after a restore (null once all are in, or after Reroll). */
+    /** F47: the ids of kept picks still to show or fill in after a restore (null once all are in, or after Reroll). */
     private List<String> kept;
+    /** F47: the pick the bar showed before a restore, until it arrives. */
+    private String barId;
     private final Runnable onCatalog;
 
     PickResultsPage(Context ctx, NavBar.Host host, Router router, PickRules.State state, PickRules.Household household,
                     Random random) {
-        this(ctx, host, router, state, household, random, null);
+        this(ctx, host, router, state, household, random, null, null);
     }
 
     /**
      * {@code keptIds}: F47, the picks that were showing before Android ended the process (MainActivity's place, F26),
-     * shown again rather than a new roll; null rolls as usual.
+     * shown again rather than a new roll; null rolls as usual. {@code barId}: the pick the bar showed then.
      */
     PickResultsPage(Context ctx, NavBar.Host host, Router router, PickRules.State state, PickRules.Household household,
-                    Random random, List<String> keptIds) {
+                    Random random, List<String> keptIds, String barId) {
         super(ctx.getString(R.string.pick_results_label),
                 Kit.unclip(Pages.page(ctx, host, PickSetupPage.tabOf(state.kind))), Layer.PAGE);
         this.ctx = ctx;
@@ -151,12 +154,37 @@ final class PickResultsPage extends Screen {
             if (kept != null) showKept();
         };
         data.catalog.addListener(onCatalog);
+        // A Trailer press still waiting for its details is dropped when another app (or a system dialog) takes the
+        // screen, so coming back can't start YouTube unasked.
+        ViewTreeObserver.OnWindowFocusChangeListener lostFocus = hasFocus -> {
+            if (!hasFocus) trailerAsk++;
+        };
+        view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+                v.getViewTreeObserver().addOnWindowFocusChangeListener(lostFocus);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                trailerAsk++;
+                v.getViewTreeObserver().removeOnWindowFocusChangeListener(lostFocus);
+            }
+        });
         if (keptIds != null) {
             kept = new ArrayList<>(keptIds);
+            this.barId = barId;
+            // Picks outside the lists' titles (My services) aren't asked for by anyone else after a restart.
+            data.catalog.want(kept);
             showKept();
         } else {
             roll();
         }
+    }
+
+    /** F47: the id of the pick the bar shows, for MainActivity's place (F26); null with no picks. */
+    String barId() {
+        return current != null ? current.id : barId;
     }
 
     /** F47: the ids of the picks showing, in order, for MainActivity's place (F26). */
@@ -167,11 +195,14 @@ final class PickResultsPage extends Screen {
         return out;
     }
 
-    /** The kept picks the catalogue knows now; done once all of them are in. Focus follows Comeback's pending key. */
+    /**
+     * The kept picks as the catalogue knows them now, redrawn when any of them arrived or got its details; done once all
+     * are in with their details. Focus follows Comeback's pending key.
+     */
     private void showKept() {
         List<Title> have = PickRules.kept(kept, data.catalog::get);
-        if (have.size() == kept.size()) kept = null;
-        if (have.size() == picks.size() && kept != null) return;
+        if (PickRules.keptDone(kept, have)) kept = null;
+        if (PickRules.sameTitles(have, picks)) return;
         picks = have;
         draw(PickRules.matches(state, data.catalog.all(), household, data.services.subscribed(),
                 data.services.installed()).size());
@@ -208,6 +239,7 @@ final class PickResultsPage extends Screen {
     /** Draws a new set of picks: never the same four again while there are more. */
     private void roll() {
         kept = null;
+        barId = null;
         trailerAsk++;
         List<Title> matches = PickRules.matches(state, data.catalog.all(), household, data.services.subscribed(),
                 data.services.installed());
@@ -233,7 +265,8 @@ final class PickResultsPage extends Screen {
         bar.setVisibility(any ? View.VISIBLE : View.GONE);
         // Kept picks arriving one by one redraw the tiles: the bar stays on its pick (and a waiting Trailer with it).
         Title stay = null;
-        for (Title p : picks) if (current != null && p.id.equals(current.id)) stay = p;
+        String want = current != null ? current.id : barId;
+        for (Title p : picks) if (p.id.equals(want)) stay = p;
         if (stay != null) current = stay;
         if (any) showInBar(stay != null ? stay : picks.get(0));
     }

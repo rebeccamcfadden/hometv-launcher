@@ -84,9 +84,9 @@ final class PickSetupPage extends Screen {
         return out;
     }
 
-    /** F47: its results page with the picks that were showing ({@code ids}), not a new roll. */
-    PickResultsPage results(List<String> ids) {
-        return new PickResultsPage(ctx, host, router, state.copy(), household, random, ids);
+    /** F47: its results page with the picks that were showing ({@code ids}) and the bar's pick, not a new roll. */
+    PickResultsPage results(List<String> ids, String barId) {
+        return new PickResultsPage(ctx, host, router, state.copy(), household, random, ids, barId);
     }
 
     private PickSetupPage(Context ctx, NavBar.Host host, Router router, Kind kind, PickRules.State initial,
