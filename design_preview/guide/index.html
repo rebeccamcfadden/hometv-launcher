@@ -76,8 +76,8 @@
 
       <section>
         <h2><span class="num">3</span>Download the installer</h2>
-        <p><a class="download" id="download" href="https://github.com/rebeccamcfadden/hometv-launcher/releases/latest/download/family-install.ps1" aria-disabled="true">Download the installer</a></p>
-        <p class="note" id="download-note">The first release is on its way: this button works once it's published.</p>
+        <p><a class="download" id="download" aria-disabled="true" role="link" tabindex="-1">Download the installer</a></p>
+        <p class="note" id="download-note">Not available yet: the first release is on its way.</p>
         <details>
           <summary>Check the download (optional)</summary>
           <p class="note">On the <a href="https://github.com/rebeccamcfadden/hometv-launcher/releases/latest">release page</a>, open <code>SHA256SUMS</code>. In PowerShell, <code>Get-FileHash .\family-install.ps1</code> must print the same code it lists for <code>family-install.ps1</code>.</p>
@@ -115,10 +115,10 @@
         <ul>
           <li>The installer stops with a plain message saying what was changed (usually nothing). Send the last lines in the window to the person helping you.</li>
           <li><b>To undo it:</b> switch debugging on again and run, with your backup folder (the installer tells you where it is):
-            <div class="cmd"><code id="undo">powershell -ExecutionPolicy Bypass -File .\family-install.ps1 -Restore "$HOME\HomeTV\backups\&lt;your TV&gt;-&lt;date&gt;"</code><button data-copy="undo">Copy</button></div>
+            <div class="cmd"><code id="undo">cd $HOME\Downloads; powershell -ExecutionPolicy Bypass -File .\family-install.ps1 -Restore "$HOME\HomeTV\backups\&lt;your TV&gt;-&lt;date&gt;"</code><button data-copy="undo">Copy</button></div>
           </li>
           <li><b>If Windows won't let you download the file at all</b>, the person helping you may ask you to paste this into PowerShell instead:
-            <div class="cmd"><code id="fetch">cd $HOME\Downloads; irm https://github.com/rebeccamcfadden/hometv-launcher/releases/latest/download/family-install.ps1 -OutFile family-install.ps1; powershell -ExecutionPolicy Bypass -File .\family-install.ps1</code><button data-copy="fetch">Copy</button></div>
+            <div class="cmd"><code id="fetch">cd $HOME\Downloads; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 'Tls12'; irm https://github.com/rebeccamcfadden/hometv-launcher/releases/latest/download/family-install.ps1 -OutFile family-install.ps1; powershell -ExecutionPolicy Bypass -File .\family-install.ps1</code><button data-copy="fetch">Copy</button></div>
           </li>
         </ul>
       </section>
