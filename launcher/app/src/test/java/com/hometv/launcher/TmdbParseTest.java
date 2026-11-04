@@ -162,6 +162,37 @@ public class TmdbParseTest {
     }
 
     @Test
+    public void personHasTheirFactsAndWhatTheyDidOnEachTitle() {
+        Catalog.Credits c = TmdbParse.credits(fixture("person.json"), new Person("Amy Adams", "", 9273, null));
+        assertEquals("Amy Lou Adams is an American actress.", c.biography);
+        assertEquals("1974-08-20", c.birthday);
+        assertEquals("Vicenza, Veneto, Italy", c.birthplace);
+        assertEquals("Acting", c.department);
+        // Enchanted: acted in and produced, cast first; a crew-only title has its job.
+        assertEquals(2, c.roles.get("movie:4523").size());
+        assertEquals("Acting", c.roles.get("movie:4523").get(0).department);
+        assertEquals("Giselle", c.roles.get("movie:4523").get(0).what);
+        assertEquals("Production", c.roles.get("movie:4523").get(1).department);
+        assertEquals("Producer", c.roles.get("movie:4523").get(1).what);
+        assertEquals("Producer", c.roles.get("movie:5000").get(0).what);
+        // Only the titles kept have roles; left-out ones (talk shows, as herself) don't.
+        assertEquals(4, c.roles.size());
+        assertTrue(c.withTitles(c.titles).roles.containsKey("tv:2316"));
+    }
+
+    @Test
+    public void personWithoutFactsGivesEmptyStrings() throws Exception {
+        Catalog.Credits c = TmdbParse.credits(new JSONObject("{\"id\": 1, \"biography\": null}"),
+                new Person("X", "", 1, null));
+        assertEquals("", c.biography);
+        assertEquals("", c.birthday);
+        assertEquals("", c.birthplace);
+        assertEquals("", c.department);
+        assertTrue(c.roles.isEmpty());
+        assertTrue(c.titles.isEmpty());
+    }
+
+    @Test
     public void missingFieldsGiveEmptyValues() throws Exception {
         Title t = TmdbParse.details(new JSONObject("{\"id\": 5}"), Kind.MOVIE, Region.SE);
         assertEquals("movie:5", t.id);
