@@ -702,9 +702,9 @@ picks another theme.
   (0.9 s), moves to a new spot (10–90 % of the room each way) and fades in (1.2 s), and the glow follows it, so nothing
   burns in; with Motion Off it just moves. It starts only on Home itself (no dropdown, popup or other page over it,
   never over an app or Live TV), after Home has had no key for the chosen time. Any key wakes it (a phone remote's too), and that key is
-  swallowed, so it doesn't also act on Home: focus stays where it was. ?saver=fast makes "5 min" 10 s and the move
-  every 8 s, to review it; Jump to › Screensaver shows it at once. src/ui/screensaver.ts; the launcher's own will
-  follow the same rules, and also register as a system screensaver the TV can start anywhere.
+  swallowed, so it doesn't also act on Home: focus stays where it was. `?saver=fast` makes "5 min" 10 s and the move
+  every 8 s, to review it; Jump to › Screensaver shows it at once. `src/ui/screensaver.ts`; the launcher's `Screensaver`, `ClockScene` and
+  `ScreensaverSection` follow the same rules, and `ClockDream` is the same clock as the TV's own screensaver.
 - **Features** (F14, the project lead's decision 2026-11-01; no Figma frame): one build, with five features switched
   on or off at run time: TMDB account, Phone notes, Price lookup, Weather and Phone remote (her review of 2026-11-02
   took out Pick for me and Themes as switches, and renamed Prices; Phone remote came with F27). **Every feature starts
