@@ -321,7 +321,7 @@ final class Kit {
         card.setTag(R.id.kit_library_parts, parts);
         card.setOnFocusChangeListener((v, focused) -> {
             art.setRing(focused);
-            float s = focused ? 1.03f : 1f;
+            float s = Ui.focusScale(focused, 1.03f);
             art.animate().scaleX(s).scaleY(s).setDuration(Ui.ms(Ui.FAST_MS)).setInterpolator(Ui.EASE).start();
             over.animate().alpha(focused ? 1f : 0f).setDuration(Ui.ms(Ui.FAST_MS)).start();
         });
