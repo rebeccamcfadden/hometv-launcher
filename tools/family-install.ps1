@@ -124,8 +124,15 @@ function Say([string]$Text) { Write-Host $Text }
 function Step([string]$Text) { Write-Host ''; Write-Host "== $Text" -ForegroundColor Cyan }
 function Stop-Install([string]$Text, [int]$Code = 1) { throw [InstallStop]::new($Text, $Code) }
 
+# Keys pressed while the installer was busy (an extra Enter) would answer the next question: drop them first. Fails
+# quietly when there is no console to read (input redirected).
+function Clear-TypedAhead {
+    try { while ([Console]::KeyAvailable) { [void][Console]::ReadKey($true) } } catch { }
+}
+
 function Ask-YesNo([string]$Question, [bool]$Default) {
     if ($NoPrompt) { return $Default }
+    Clear-TypedAhead
     $hint = if ($Default) { '[Y/n]' } else { '[y/N]' }
     while ($true) {
         $answer = "$(Read-Host "$Question $hint")".Trim().ToLowerInvariant()
@@ -138,11 +145,13 @@ function Ask-YesNo([string]$Question, [bool]$Default) {
 
 function Ask-Text([string]$Question, [string]$Default = '') {
     if ($NoPrompt) { return $Default }
+    Clear-TypedAhead
     return "$(Read-Host $Question)".Trim()
 }
 
 function Wait-Done([string]$Text) {
     if ($NoPrompt) { return }
+    Clear-TypedAhead
     [void](Read-Host "$Text Press Enter when that is done")
 }
 
@@ -507,32 +516,53 @@ function Get-CheckedLists {
     return $out
 }
 
-# The lists whose header (the comment lines at the top) names this model as a word: a suggestion only, since one
-# model often has lists from different countries and firmware, and another household's choices aren't theirs.
-function Find-ListsForModel([string]$Dir, [string]$Model) {
-    if (-not $Dir -or -not $Model -or -not (Test-Path -LiteralPath $Dir)) { return @() }
-    $word = '(?<![A-Za-z0-9])' + [regex]::Escape($Model) + '(?![A-Za-z0-9])'
-    $found = @()
+# The lists that best match this TV, at most three, best first: a suggestion only, since one model name often covers
+# lists from different countries and firmware, and another household's choices aren't theirs. A list counts only when
+# its header (the comment lines at the top) says the model outright (`ro.product.model <model>`) or names it alongside
+# this TV's firmware build. The TV's own software version (ro.build.version.incremental, such as AP03) ranks highest;
+# Android's build (often one for every TV of an Android version), the device name, the Android version and the model
+# on the first line rank them after
+# (the project lead's (a), tightened 2026-11-04 after twelve lists named one TCL model).
+function Find-ListsForModel([string]$Dir, [hashtable]$Tv) {
+    $model = "$($Tv.Model)"
+    if (-not $Dir -or -not $model -or -not (Test-Path -LiteralPath $Dir)) { return @() }
+    $word = { param($w) '(?<![A-Za-z0-9])' + [regex]::Escape($w) + '(?![A-Za-z0-9])' }
+    $build = (("$($Tv.Build)" -split '\s+') | Select-Object -First 1)
+    $scored = @()
     foreach ($folder in Get-ChildItem -LiteralPath $Dir -Directory | Sort-Object Name) {
         $file = Join-Path $folder.FullName 'debloat.txt'
         if (-not (Test-Path -LiteralPath $file)) { continue }
         $header = @(Get-Content -LiteralPath $file -TotalCount 40 | ForEach-Object { $_ } | Where-Object { $_ -match '^\s*#' })
-        if (($header -join "`n") -match $word) { $found += $folder.Name }
+        $text = $header -join "`n"
+        if ($text -notmatch (& $word $model)) { continue }
+        $declared = $text -match ('ro\.product\.model[\s:=]+' + [regex]::Escape($model) + '(?![A-Za-z0-9])')
+        $sameBuild = $build -and $text -match (& $word $build)
+        if (-not ($declared -or $sameBuild)) { continue }
+        $score = 0
+        if ($declared) { $score += 2 }
+        if ($sameBuild) { $score += 1 }
+        $sw = "$($Tv.Software)"
+        if ($sw.Length -ge 3 -and $sw -match '[A-Za-z]' -and $text -match (& $word $sw)) { $score += 2 }
+        if ($Tv.Device -and $Tv.Device -ne $model -and $text -match (& $word "$($Tv.Device)")) { $score += 1 }
+        if ($Tv.Android -and $text -match ('Android(\s+TV)?\s+' + [regex]::Escape("$($Tv.Android)") + '(?![0-9.])')) { $score += 1 }
+        if ($header.Count -gt 0 -and $header[0] -match (& $word $model)) { $score += 1 }
+        $scored += [pscustomobject]@{ Name = $folder.Name; Score = $score }
     }
-    return $found
+    return @($scored | Sort-Object @{ Expression = 'Score'; Descending = $true }, Name | Select-Object -First 3 | ForEach-Object { $_.Name })
 }
 
 # Step 6, option (a) (the project lead, 2026-11-02): suggests the lists that name this model, and the person helping
 # picks one by name on the call, or none. Without a pick nothing beyond the home screen is switched off; the report is
 # for making a list.
-function Select-DebloatList([string]$Model) {
+function Select-DebloatList([hashtable]$Tv) {
     if (-not $script:ListsDir) { return }
-    $suggested = @(Find-ListsForModel $script:ListsDir $Model)
+    $Model = "$($Tv.Model)"
+    $suggested = @(Find-ListsForModel $script:ListsDir $Tv)
     Step 'Debloat lists'
     if ($suggested.Count -eq 0) {
-        Say "No list in this release names the model $Model. Nothing beyond the home screen will be switched off; report.txt in the backup folder is for making one."
+        Say "No list in this release matches this TV ($Model). Nothing beyond the home screen will be switched off; report.txt in the backup folder is for making one."
     } else {
-        Say "Lists in this release that name the model ${Model}:"
+        Say "The lists in this release that best match this TV ($Model), best first:"
         foreach ($s in $suggested) { Say "  $s" }
         Say 'Each is another household''s choices: the person helping you picks one with you, or none.'
     }
@@ -954,9 +984,11 @@ function Set-RemoteButtons([string]$Mode) {
 # ---- The install ---------------------------------------------------------------------------------------------------
 function Invoke-Install {
     Step 'HomeTV Launcher installer'
-    Say 'This puts the HomeTV Launcher on an Android TV or Google TV on this network and makes it the home screen.'
-    Say 'It works on Android TV and Google TV sets and boxes. It cannot work on Samsung, LG or Fire TV.'
-    Say "It backs the TV up to this laptop first, and every step can be undone. It takes about 15 minutes. Files go to $WorkDir."
+    Say 'This puts the HomeTV Launcher on your TV and makes it the home screen. It takes about 15 minutes.'
+    Say 'It works on Android TV and Google TV. It cannot work on Samsung, LG or Fire TV.'
+    Say 'You need: this laptop on the same Wi-Fi as the TV, and the TV remote.'
+    Say 'Nothing on the TV changes until you say yes. It saves a backup first, and every step can be undone.'
+    Say "Its files go to $WorkDir."
 
     New-Item -ItemType Directory -Force $WorkDir | Out-Null
     Step 'Checking the downloads'
@@ -968,18 +1000,21 @@ function Invoke-Install {
     Step 'Getting the TV ready'
     # Asked before debugging goes on: some boxes switch a USB network adapter off the moment USB debugging is on
     # (docs/TROUBLESHOOTING.md), and then the laptop can't reach the TV at all.
-    Say 'Some TVs cut power to their USB ports while debugging is on, so a USB stick, speaker or adapter there stops working until the end.'
-    $usbThings = Ask-Text 'What is plugged into the TV''s USB ports? (Enter for nothing)'
+    Say 'Good to know: while this runs, some TVs switch off their USB ports, so a USB stick or speaker there may stop until the end.'
+    $usbThings = ''
     $usbEthernet = Ask-YesNo 'Does the TV''s network cable go into a USB adapter, rather than straight into the TV?' $false
     if ($usbEthernet) {
         Say 'Some boxes switch that adapter off as soon as USB debugging is on, and then this laptop cannot reach the TV.'
         Say 'So first connect the TV to Wi-Fi too: Settings > Network & Internet > your Wi-Fi network. Use the Wi-Fi address below.'
         Wait-Done 'Connect the TV to Wi-Fi.'
     }
-    Say 'On the TV, with the remote:'
-    Say '  1. Settings > Device Preferences (or System) > About: press OK on "Build" 7 times, until it says you are a developer.'
-    Say '  2. Go back to Device Preferences (or System) > Developer options.'
-    Say '  3. Turn on "USB debugging". If you also see "Network debugging" or "ADB debugging", turn that on too.'
+    Say 'On the TV, with the remote, switch on Developer options:'
+    Say '  Android TV: Settings > Device Preferences > About, then press OK on "Build" 7 times.'
+    Say '  Google TV:  Settings > System > About, then press OK on "Android TV OS build" 7 times.'
+    Say '  The TV says "You are now a developer".'
+    Say 'Then go back one step and open "Developer options". Turn on "USB debugging", and also'
+    Say '"Network debugging" (or "ADB debugging") if you see it.'
+    Say 'Last, find the TV''s address: Settings > Network & Internet > your network shows an IP address, like 192.168.1.50.'
     Wait-Done 'Do that now.'
     if ($usbEthernet) {
         Say 'Do the whole install in one go: the adapter may only come back once debugging is off again at the end.'
@@ -1042,7 +1077,10 @@ function Invoke-Install {
         Copy-Item -Force -LiteralPath $PSCommandPath -Destination (Join-Path $WorkDir 'family-install.ps1')
     }
     Write-Report $backup $packages $disabledBefore
-    if ($script:ListNames.Count -eq 0) { Select-DebloatList $model }
+    if ($script:ListNames.Count -eq 0) {
+        Select-DebloatList @{ Model = $model; Build = (Get-Prop 'ro.build.display.id'); Device = (Get-Prop 'ro.product.device'); Android = $android
+            Software = (Get-Prop 'ro.build.version.incremental') }
+    }
     Say "Saved in $backup"
 
     # ---- Which launcher hands over Home (launcher/build-and-install.sh's rules) ------------------------------------
@@ -1097,7 +1135,8 @@ function Invoke-Install {
         $alsoDisable = @($SetupWraith)
     }
 
-    if (-not (Ask-YesNo 'Ready to install the HomeTV Launcher and make it the home screen?' $true)) {
+    $ready = if ($mode -eq 'reinstall') { 'Update the HomeTV Launcher on this TV now?' } else { 'Ready to install the HomeTV Launcher and make it the home screen?' }
+    if (-not (Ask-YesNo $ready $true)) {
         Stop-Install 'Stopped. Nothing was changed.' 0
     }
 
@@ -1223,7 +1262,7 @@ function Invoke-Install {
     Say '  3. Restart the TV (hold the remote''s power button > Restart, or unplug it for 10 seconds).'
     [void](Invoke-Adb @('disconnect', $script:Serial))
     if ($script:OwnServer) { [void](Invoke-Adb @('kill-server')) }
-    Wait-Done 'Do that now, and wait until the TV shows the HomeTV home screen.'
+    Wait-Done 'Do that now. Once the TV has restarted and shows the HomeTV home screen,'
     if ($usbEthernet) { Wait-Done 'Unplug the USB network adapter and plug it back in, then check the TV is on the cable again.' }
     # Only a refused connection proves the port is closed; a TV that is off or out of reach doesn't answer either.
     while ($true) {
@@ -1231,7 +1270,7 @@ function Invoke-Install {
         if ($state -eq 'closed') { Say "Debugging is off: the TV refuses connections on port $AdbPort."; break }
         if ($state -eq 'open') { Say "The TV still answers on port ${AdbPort}: debugging is still on." }
         else { Say "Could not check port $AdbPort on the TV (no answer): is it on, and on this network?" }
-        if (-not (Ask-YesNo 'Check the steps above on the TV, then check again?' $false)) {
+        if (-not (Ask-YesNo 'Check the steps above on the TV. Once it shows the home screen again, check again?' $false)) {
             if ($state -eq 'open') {
                 Stop-Install 'The launcher is installed, but debugging is still on. Switch it off in Developer options and restart the TV.' 2
             }
