@@ -820,10 +820,27 @@ settings."; on the right a help pane for the focused row.
   it) to show the move out.
 - Dev bar: Jump to → All Apps, or All Apps › TV Utilities.
 
+### Person page
+
+Rebecca's pick B (2026-11-04 18:55; Figma "Person page", node 266:704), opened from Cast & crew or a person in Search:
+
+- **Left, fixed:** Back, the round portrait (initials in the prototype), what they do over their name (Actor,
+  Director, from TMDB's known-for job), born when and where, and the first six lines of their biography. **Read more**
+  (only when there's more) opens all of it in a dialog; Close or Back returns.
+- **Right:** their titles as C cards, five across, scrolling under the chips. Chips: **All**, **On your services**
+  (included for the household), **Rent or buy**, and one per job when they have more than one (Acting, Directing,
+  Writing); a chip with nothing in it is left out. **Sort**: Best known (TMDB's vote count on the TV, the score here),
+  Newest first, A–Z.
+- **D-pad:** the grid stops at its right edge and foot; Left from its first column goes to Read more (else Back); Up
+  from its first row to the chips. Down above a shorter last row lands on its last card.
+- **Data:** src/data/people.ts has short biographies, written for this prototype, for a few of the catalogue's
+  people; anyone else shows only their name, job and titles, as a person with no TMDB biography does. Dev bar: Jump to
+  → Person · Denis Villeneuve (two jobs), Person · Ana de Armas (a short bio, no Read more), Person · a long career
+  (a made-up person lent 24 catalogue titles, to show the grid scrolling).
+
 ### Stubs
 
-Weather, Open-source licences and the person page are placeholders. The person page lists
-the titles the person appears in.
+Weather and Open-source licences are placeholders.
 
 ## Visual system
 
@@ -873,8 +890,8 @@ this tab is 305 px tall for them (the title, buttons and tabs sit higher on that
   request per key. The port (8766, beside Phone notes' 8765) and the QR's address are the TV's own.
 - **Not designed yet:** hold-OK menus in Figma (the base uses them for tile Move / Remove / App info and a Settings
   menu; the title menu is built here without a design), removing recent searches, voice search,
-  progress on started titles, the Sort chip, a
-  person page design, Search and Home's weather while loading, the Home row apps pane (built here without a design),
+  progress on started titles, the Sort chip,
+  Search and Home's weather while loading, the Home row apps pane (built here without a design),
   and right-to-left layouts (the base supports Hebrew).
 
 ## Prototype code
