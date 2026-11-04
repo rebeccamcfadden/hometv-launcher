@@ -531,7 +531,7 @@ function update() {
   const hint = el('div.hint', el('i.dot.dot--accent'), `On the TV: ${tv.screen} · ${tv.typing ? 'buttons and typing' : 'buttons only'}`);
   slots.top.replaceChildren(
     t ? card(t) : hint,
-    el('button.link', { onclick: openSheet }, el('span', { html: icon('search', 16) }), 'Something else? Search to add'),
+    el('button.link', { onclick: openSheet }, el('span', { html: icon('search', 16) }), 'Something else? Search to add to My list'),
   );
   if (typing) {
     if (mainMode !== 'typing' || !fieldEl || !slots.main.contains(fieldEl)) slots.main.replaceChildren(typingPanel());

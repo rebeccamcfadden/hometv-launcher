@@ -1463,7 +1463,7 @@
           : el('div.hint', el('i.dot.dot--warn'), 'On the TV: Another app · only Home works here');
         slots.top.replaceChildren(
           t ? card(t) : hint,
-          el('button.link', { onclick: openSheet }, el('span', { html: svgIcon('search', 16) }), 'Something else? Search to add'),
+          el('button.link', { onclick: openSheet }, el('span', { html: svgIcon('search', 16) }), 'Something else? Search to add to My list'),
         );
         if (typing) {
           if (mainMode !== 'typing' || !fieldEl || !slots.main.contains(fieldEl)) slots.main.replaceChildren(typingPanel());

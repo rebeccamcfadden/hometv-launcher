@@ -258,6 +258,11 @@ milestones: [docs/rework.md](docs/rework.md).
   builder-days; Let's Encrypt's 50 new certificates a week per domain is the ceiling. The service would learn each
   TV's id, its house's public address and, from DNS, when the TV is used. Details, costs, privacy and the decisions to
   take first: [docs/specs/phone-remote-certificates.md](docs/specs/phone-remote-certificates.md).
+### Phone remote, V2
+- **Back burner** (the project lead, 2026-11-04 19:19, hands-on with an iPhone: "good enough for V1"). The TV is slow
+  for a moment after Enter on the phone's keyboard, while Search shows its full results. The phone sends Enter right
+  after the last text (`remote_page.html`, `sendEnter`), so the time is the TV's: Search's results grid, its posters
+  and the TMDB search. To measure on the TV first (`tools/trace.py` around `/api/enter`) before changing anything.
 ### Household seed
 - **V1:** on the first run, My list, Seen, Favorites, recent searches and recently viewed started from the
   prototype's mock seed (`design_preview/src/core/store.ts`).
