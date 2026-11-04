@@ -36,8 +36,9 @@ server (every key press over the internet). Only this one gives a padlock with n
    certificate. The QR opens the name on the second port:
    `https://192-168-1-50.k7qm4pxtj2ab3cde.tv.hometv.example:8771/remote#<code>`. The pane always shows the plain
    address as well, for when the name doesn't open.
-7. Before the certificate runs out, the TV asks again (step 5). Whenever the name doesn't work, the TV goes back to the
-   address and its own certificate: the warning once, as today.
+7. Before the certificate runs out, the TV asks again, this time with the signed request alone (the attestation is
+   checked only the first time). Whenever the name can't work, the TV goes back to the address and its own
+   certificate: the warning once, as today.
 
 ## The pieces
 
@@ -106,10 +107,21 @@ The service issues only when all of these hold:
 2. The id is the first 16 characters of the base-32 SHA-256 of **the request's own** public key.
 3. The request names exactly `*.<that id>.tv.hometv.example`, and nothing else.
 4. The signed request carries a fresh time and a random number the service hasn't seen (the attestation can't: its
-   challenge is fixed when the key is made), and the attestation is for the request's key.
+   challenge is fixed when the key is made).
+5. The first time an id asks (**enrolment**): the attestation is for the request's key and passes the checks under
+   Let's Encrypt's limits below. The service then writes the id down, with the date.
+6. Later (**renewal**): the id is one the service enrolled. No attestation: the signed request is the proof, since only
+   the key behind the id can sign it.
 
 With those checks a copied request, or a request with someone else's public key, only gets a certificate that the
 real TV alone can use.
+
+Attestation is only checked at enrolment because it can't be renewed. It is made when the key is made, and on newer
+devices (Remote Key Provisioning) its certificates are short-lived, so a chain checked months later would fail even
+though the key still works. If the service ever loses its list of enrolled ids, or a TV's enrolment is refused, the
+TV makes a new key with a fresh attestation, and so a new id and name: phones that used the old name pair again on
+the new one (see "When the name doesn't open"). The service's only table is that list: id, public key, enrolment
+date, last renewal.
 
 Certificates get shorter: Let's Encrypt goes from 90 days to 64, then 45 days by 2028, and a check of a name then lasts
 only 7 hours. So the TV renews about every 30 days, starting at two thirds of the certificate's life, and tries again
@@ -148,15 +160,31 @@ The name fails to open in several cases, and then the remote doesn't open at all
 - The phone may ask a different DNS server than the TV (one the router hands out over IPv6, for example), or the
   project's DNS servers may be down.
 
-So the TV looks up its own name through the router **each time the pane shows the QR**. If the answer isn't its
-address, the QR opens the address instead (today's port, its own certificate, the warning once), and the pane says why:
-"Your router blocks the no-warning address. Phones see a warning once." When the check passes, the pane still shows
-the plain address under the QR: "If it doesn't open on a phone, use this instead." The setup page names the router
-settings that let it through: a Fritz!Box rebind exception for `tv.hometv.example`, dnsmasq's `rebind-domain-ok`,
-pfSense's private-domain setting.
+So **each time the pane shows the QR**, the TV checks three things, and the QR opens the name only when all three
+hold:
 
-A phone that opened the name before and saved it to its home screen keeps that name. If the name stops working there
-(new router, the project's DNS gone), the phone needs the plain address once, from the pane.
+1. It has a certificate from the service that is valid now (and not about to run out).
+2. Its second port is open, with that certificate.
+3. Its own name, looked up through the router, answers its address.
+
+Otherwise the QR opens the address (today's port, its own certificate, the warning once), and the pane says which
+one failed, because each has its own fix:
+
+- No certificate yet, or it ran out: "No-warning address not ready: the HomeTV service can't be reached. Phones see a
+  warning once." (The TV keeps trying each day.)
+- The second port couldn't open: "No-warning address not available: another app holds its port."
+- The name answers something else, or nothing: "Your router blocks the no-warning address. Phones see a warning once."
+  The setup page names the router settings that let it through: a Fritz!Box rebind exception for `tv.hometv.example`,
+  dnsmasq's `rebind-domain-ok`, pfSense's private-domain setting.
+
+When all three pass, the pane still shows the plain address under the QR: "If it doesn't open on a phone, use this
+instead."
+
+The name and the plain address are two different sites to the phone's browser, and the browser keeps the phone's
+pairing per site. So a phone that paired on the name and then has to use the address (new router, the TV's
+certificate ran out, the project's DNS gone) **pairs again** there with the code (the QR carries it, as now), and
+saves the address to its home screen in place of the old shortcut, which keeps opening the name and failing. The
+pane's lines and docs/phone-remote.md say so. Going back to the name later is the same: pair once more there.
 
 ## What the project must run and pay for
 
@@ -166,8 +194,9 @@ A phone that opened the name before and saved it to its home screen keeps that n
 | Two small servers on two hosts: each runs the DNS server, one also the certificate service | about 4 to 6 USD a month each |
 | Someone who keeps it running: the domain, the servers' updates, the Let's Encrypt account and its limit, a look when it fails | time, for as long as TVs use it |
 
-About 110 to 160 USD a year. If the project ever stops: the TVs see their name fail at the next QR check and go back
-to the address and the warning; phones that saved the name need the address once.
+About 110 to 160 USD a year. If the project ever stops: each TV's QR goes back to the address once its certificate
+runs out or its name stops answering; phones that saved the name pair again on the address and save a new shortcut
+(see "When the name doesn't open").
 
 ## Privacy
 
