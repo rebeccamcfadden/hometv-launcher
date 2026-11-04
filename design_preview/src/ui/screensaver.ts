@@ -173,6 +173,11 @@ export function initScreensaver() {
     true,
   );
   window.addEventListener('pointerdown', () => (lastInput = Date.now()), true);
+  // Time in a hidden tab isn't idle time on Home: it starts again when the tab shows, and a clock up goes away.
+  document.addEventListener('visibilitychange', () => {
+    lastInput = Date.now();
+    if (document.visibilityState !== 'visible') hide();
+  });
   // A phone remote's button (F27) is a key too: it holds the clock off, and the one that wakes it is swallowed.
   app.beforePress = () => {
     lastInput = Date.now();

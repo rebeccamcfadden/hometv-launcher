@@ -81,18 +81,20 @@ final class ClockScene extends FrameLayout {
         LinearLayout row = new LinearLayout(ctx);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.BOTTOM);
-        time = Ui.text(ctx, 150, Ui.TEXT_1, Ui.display(LIGHT));
+        time = Ui.text(ctx, 150, Screensaver.TEXT_1, Ui.display(LIGHT));
         time.setSingleLine(true);
         row.addView(time);
-        ampm = Ui.text(ctx, 44, Ui.TEXT_2, Ui.REGULAR);
+        ampm = Ui.text(ctx, 44, Screensaver.TEXT_2, Ui.REGULAR);
         ampm.setSingleLine(true);
         LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         alp.leftMargin = Ui.px(20);
         alp.bottomMargin = Ui.px(14);
         row.addView(ampm, alp);
-        clock.addView(row);
-        date = Ui.text(ctx, 34, Ui.TEXT_2, Ui.REGULAR);
+        // Its own width: a vertical LinearLayout's default would squeeze it to the date's width.
+        clock.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        date = Ui.text(ctx, 34, Screensaver.TEXT_2, Ui.REGULAR);
         date.setSingleLine(true);
         LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);

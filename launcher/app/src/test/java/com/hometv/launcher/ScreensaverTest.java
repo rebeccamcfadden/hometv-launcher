@@ -91,4 +91,45 @@ public class ScreensaverTest {
         assertNull(ScreensaverSection.below("perf-motion"));
         assertNull(ScreensaverSection.below(null));
     }
+
+    @Test
+    public void overTheClockAHelpersButtonOnlyWakesIt() {
+        int yellow = android.view.KeyEvent.KEYCODE_PROG_YELLOW;
+        int down = android.view.KeyEvent.ACTION_DOWN, up = android.view.KeyEvent.ACTION_UP;
+        int[] woken = {0};
+        try {
+            Screensaver.setShown(() -> {
+                woken[0]++;
+                Screensaver.setShown(null);
+            });
+            // The press wakes the clock and is swallowed, then its repeats and its release.
+            assertTrue(Screensaver.helperKey(yellow, down, 0));
+            assertEquals(1, woken[0]);
+            assertTrue(Screensaver.helperKey(yellow, down, 1));
+            assertTrue(Screensaver.helperKey(yellow, up, 0));
+            // The next press of it is the button again.
+            assertFalse(Screensaver.helperKey(yellow, down, 0));
+            assertFalse(Screensaver.helperKey(yellow, up, 0));
+            // Volume works over the clock and leaves it up.
+            Screensaver.setShown(() -> woken[0]++);
+            assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_VOLUME_UP, down, 0));
+            assertEquals(1, woken[0]);
+        } finally {
+            Screensaver.setShown(null);
+            Screensaver.helperKey(yellow, up, 0);
+        }
+    }
+
+    @Test
+    public void noClockNoChange() {
+        assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.ACTION_DOWN, 0));
+        assertFalse(Screensaver.helperKey(android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.ACTION_UP, 0));
+    }
+
+    @Test
+    public void theClockIsLightWhateverTheTheme() {
+        // Daylight's text-1 is #111821: on black it would be 1.2:1. The clock keeps Midnight's light text.
+        assertEquals(0xFFF4F5F7, Screensaver.TEXT_1);
+        assertEquals(0xFFADB5C0, Screensaver.TEXT_2);
+    }
 }

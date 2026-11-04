@@ -1046,7 +1046,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         // F36: any key wakes the screensaver, and that key (its repeats and its release too) does nothing else.
-        if (saver != null) {
+        if (saver != null && !Screensaver.isVolume(event.getKeyCode())) {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 saverWakeKey = event.getKeyCode();
                 hideScreensaver();
@@ -1098,7 +1098,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         Screensaver.Back back = Screensaver.back(this);
         scene.setBack(back);
         if (back == Screensaver.Back.PICTURE) scene.setPicture(backdropCopy());
+        // A click (an air mouse) only wakes it too, rather than reaching a tile under it.
+        scene.setClickable(true);
+        scene.setOnClickListener(v -> hideScreensaver());
         saver = scene;
+        // The key helpers see a key before Home: one they would act on only wakes the clock.
+        Screensaver.setShown(this::hideScreensaver);
         root.addView(scene, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         // The snow or rain under it would only draw what nobody sees.
@@ -1115,6 +1120,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         if (saver == null) return;
         ClockScene scene = saver;
         saver = null;
+        Screensaver.setShown(null);
         scene.stop();
         scene.animate().cancel();
         root.removeView(scene);
