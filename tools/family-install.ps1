@@ -113,6 +113,7 @@ $script:ListsDir = $null
 $script:Adb = $null
 $script:Serial = $null
 $script:UndoFile = $null
+$script:AddressShown = $false
 
 class InstallStop : System.Exception {
     [int]$Code
@@ -377,7 +378,9 @@ function Connect-Tv {
     $tvHost = $TvHost
     while (-not $tvHost) {
         if ($NoPrompt) { Stop-Install 'No TV address: pass -TvHost.' }
-        Say "The TV's address: on the TV, Settings > Network & Internet > your network shows its IP address, like 192.168.1.50."
+        if (-not $script:AddressShown) {
+            Say "The TV's address: on the TV, Settings > Network & Internet > your network shows its IP address, like 192.168.1.50."
+        }
         $tvHost = Ask-Text "Type the TV's IP address"
     }
     Say 'Watch the TV while the laptop connects: it asks "Allow USB debugging?". Tick "Always allow from this computer", then choose OK.'
@@ -563,17 +566,17 @@ function Select-DebloatList([hashtable]$Tv) {
     if (-not $script:ListsDir) { return }
     $Model = "$($Tv.Model)"
     $suggested = @(Find-ListsForModel $script:ListsDir $Tv)
-    Step 'Debloat lists'
+    Step 'Apps to switch off'
     if ($suggested.Count -eq 0) {
-        Say "No list in this release matches this TV ($Model). Nothing beyond the home screen will be switched off; report.txt in the backup folder is for making one."
+        Say "There is no ready-made list of apps to switch off for this TV ($Model), so only the home screen changes."
     } else {
-        Say "The lists in this release that best match this TV ($Model), best first:"
+        Say "Ready-made lists of apps to switch off, from other households with a TV like this one ($Model), best first:"
         foreach ($s in $suggested) { Say "  $s" }
-        Say 'Each is another household''s choices: the person helping you picks one with you, or none.'
+        Say 'Using one is optional: with none, only the home screen changes.'
     }
     if ($NoPrompt) { return }
     while ($true) {
-        $name = Ask-Text 'Type the name of the list to use (the person helping you knows it), or press Enter for none'
+        $name = Ask-Text 'If someone gave you a list name, type it here. Otherwise just press Enter'
         if (-not $name) { Say 'No list: nothing beyond the home screen will be switched off.'; return }
         $file = Join-Path (Join-Path $script:ListsDir $name) 'debloat.txt'
         if ($name -match '^[A-Za-z0-9._-]+$' -and (Test-Path -LiteralPath $file)) {
@@ -1020,6 +1023,7 @@ function Invoke-Install {
     Say 'Then go back one step and open "Developer options". Turn on "USB debugging", and also'
     Say '"Network debugging" (or "ADB debugging") if you see it.'
     Say 'Last, find the TV''s address: Settings > Network & Internet > your network shows an IP address, like 192.168.1.50.'
+    $script:AddressShown = $true
     Wait-Done 'Do that now.'
     if ($usbEthernet) {
         Say 'Do the whole install in one go: the adapter may only come back once debugging is off again at the end.'
@@ -1114,7 +1118,6 @@ function Invoke-Install {
     } else {
         Stop-Install "Home belongs to '$homeNow', which this installer does not know. Nothing was changed. Send that line to the person helping you."
     }
-    if ($stock) { Say "Stock home screen: $stock" }
     $stockHome = $null
     if ($stock) { $stockHome = ((Invoke-TvShell "$HomeQuery $stock") -split "`n" | Select-Object -Last 1).Trim() }
 
@@ -1151,8 +1154,9 @@ function Invoke-Install {
     if ($script:AdbExit -ne 0) { Stop-Install "Could not copy the launcher to the TV: $pushed. Nothing was changed." }
     $installed = Invoke-TvShell 'pm install -r /data/local/tmp/hometv.apk'
     [void](Invoke-TvShell 'rm -f /data/local/tmp/hometv.apk')
-    Say $installed
-    if ($installed -notmatch 'Success') {
+    if ($installed -match 'Success') { Say 'Installed.' }
+    else {
+        Say "The TV said: $installed"
         if ($installed -match 'INSTALL_FAILED_UPDATE_INCOMPATIBLE') {
             Stop-Install 'A HomeTV Launcher signed with another key is already on this TV, so this one cannot replace it. Nothing else was changed; tell the person helping you (never uninstall it yourself: its lists would go).'
         }
@@ -1204,11 +1208,10 @@ function Invoke-Install {
         foreach ($pkg in $toDisable) {
             Add-Undo "pm enable --user 0 $pkg"
             $out = Invoke-TvShell "pm disable-user --user 0 $pkg"
-            Say $out
             # Judged by the package's state too: some firmware prints nothing, or an error, and changes nothing.
             $off = @((Invoke-TvShell 'pm list packages -d') -split "`n" | ForEach-Object { $_.Trim() -replace '^package:', '' })
             if ($out -notmatch 'new state: disabled' -or $off -notcontains $pkg) {
-                & $rollback "The TV refused to switch off $pkg, which has to be off for the HomeTV Launcher to be Home."
+                & $rollback "The TV refused to switch off $pkg, which has to be off for the HomeTV Launcher to be Home (it said: $out)."
             }
         }
         [void](Invoke-TvShell "cmd package set-home-activity --user 0 $LauncherHome")
@@ -1255,7 +1258,7 @@ function Invoke-Install {
     if ($packages -notcontains $Launcher) {
         [void](Invoke-TvShell "am start -a com.hometv.launcher.action.FIRST_RUN -n $LauncherHome")
         Step 'First run'
-        Say 'First run is open on the TV: it sets up the weather, your streaming services, the apps on Home and your keys.'
+        Say 'First run is open on the TV: it asks what Home should show, your country, and the streaming services and stores you use.'
         Wait-Done 'Go through it now with the remote, before debugging goes off.'
     }
 
@@ -1267,7 +1270,7 @@ function Invoke-Install {
     Say '  3. Restart the TV (hold the remote''s power button > Restart, or unplug it for 10 seconds).'
     [void](Invoke-Adb @('disconnect', $script:Serial))
     if ($script:OwnServer) { [void](Invoke-Adb @('kill-server')) }
-    Wait-Done 'Do that now. Once the TV has restarted and shows the HomeTV home screen,'
+    Wait-Done 'Do that now, and wait until the TV has restarted and shows the HomeTV home screen.'
     if ($usbEthernet) { Wait-Done 'Unplug the USB network adapter and plug it back in, then check the TV is on the cable again.' }
     # Only a refused connection proves the port is closed; a TV that is off or out of reach doesn't answer either.
     while ($true) {
@@ -1275,7 +1278,8 @@ function Invoke-Install {
         if ($state -eq 'closed') { Say "Debugging is off: the TV refuses connections on port $AdbPort."; break }
         if ($state -eq 'open') { Say "The TV still answers on port ${AdbPort}: debugging is still on." }
         else { Say "Could not check port $AdbPort on the TV (no answer): is it on, and on this network?" }
-        if (-not (Ask-YesNo 'Check the steps above on the TV. Once it shows the home screen again, check again?' $false)) {
+        # Enter checks again: stopping here leaves debugging on, so it takes a typed n. -NoPrompt can't loop, so it stops.
+        if ($NoPrompt -or -not (Ask-YesNo 'Do the steps above on the TV again. Once it shows the home screen, check again?' $true)) {
             if ($state -eq 'open') {
                 Stop-Install 'The launcher is installed, but debugging is still on. Switch it off in Developer options and restart the TV.' 2
             }

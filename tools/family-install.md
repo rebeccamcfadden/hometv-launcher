@@ -99,7 +99,8 @@ In this order, and it stops at the first step that fails, saying what was and wa
    through it before debugging goes off.
 11. **Debugging off.** It walks them through revoking the authorisations, switching debugging off and restarting the
    TV. Only a refused connection on the debugging port counts as off: no answer at all (a TV that is off, or out of
-   reach) is "not confirmed". Wireless debugging gets a new port after a restart, so for that the person reads it on
+   reach) is "not confirmed". Until it is off, Enter checks again; stopping takes a typed n (and `-NoPrompt` stops
+   at once), which exits 2. Wireless debugging gets a new port after a restart, so for that the person reads it on
    the TV and says it is Off.
 
 It runs its own adb server (port 5038), so another `adb` on the laptop is left alone, and stops it however the run
