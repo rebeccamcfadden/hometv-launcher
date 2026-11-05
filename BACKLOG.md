@@ -877,6 +877,40 @@ In order, one PR each:
 - **Ruled out:** an own `.wgt` through Tizen Studio (a certificate per TV's DUID, which expires) and Samsung's store.
   Fallback: a Google TV Streamer on the Samsung's HDMI, running this launcher.
 
+## Ideas from AeroTizen
+
+F48 (the project lead, 2026-11-04): three ideas from [AeroTizen](https://github.com/helalaou/AeroTizen), a home
+screen for Samsung TVs (MIT), for later; no timing. Only the ideas come from it, not its code. Each needs a design
+first and is off by default. Costs are rough: **S** about a day or less, **M** a few days.
+
+### Cards per row, square or wide
+
+- **Idea:** 3, 4 or 5 apps a row, and square or wide app cards.
+- **Now:** Home's app row has 7 tiles (`HomePage.APP_COLUMNS`) and All Apps 6 a row (`AllAppsPage.COLUMNS`), both
+  fixed in code; `config.xml`'s old `columns` is no longer read. Cards are always wide banners.
+- **Wanted:** a setting under Theme or Home row apps for the number a row and the card shape. Square cards need
+  the app's icon when it has no square art.
+- **Cost:** S.
+
+### Rename inputs, hide empty ports
+
+- **Idea:** each input can get the household's own name, and HDMI ports with nothing plugged in can be hidden.
+- **Now:** the Inputs dropdown and Home's Inputs row list the HDMI ports under the TV's names, with CEC devices
+  named on their port ([docs/launcher.md](docs/launcher.md)). A name given to a port or device in the TV's own
+  Settings › Inputs is already shown (`TvInputs`, `loadCustomLabel`), and inputs hidden there are left out.
+- **Wanted:** rename an input from the launcher's own menu, and a switch to hide ports where nothing is connected.
+  Off until set. Its design decides which name wins when the TV's Settings and the launcher both have one.
+- **Cost:** S-M. `TvInputs` already reads whether a port is connected (`getInputState`), but not every set reports
+  it truthfully: check on the real TV first.
+
+### Fireplace tile
+
+- **Idea:** a tile that plays a fireplace video, with sound and its own volume.
+- **Wanted:** a tile in All Apps (or Home's row if the household adds it) that opens a full-screen fireplace;
+  Back stops it. Nothing plays until it is opened, so it keeps the rule against autoplaying video on 1 GB TVs.
+- **Cost:** S-M. Needs a video with a licence that allows it, small enough for the APK limit, or fetched once and
+  cached.
+
 ## Not designed yet
 
 From the spec's open questions ([design_preview/README.md](design_preview/README.md)). Each needs a design before
