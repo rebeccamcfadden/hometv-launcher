@@ -261,8 +261,9 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
         @Override
         public void search(String query, java.util.function.Consumer<List<Title>> done) {
-            // No TMDB key: no catalogue to search, and never the mock one's titles (a -PmockCatalogue=true build aside).
-            if (TmdbGate.need(data.accounts) == TmdbGate.Need.KEY) {
+            // No TMDB key, or TMDB account switched off: no catalogue to search, and never the mock one's titles (a
+            // -PmockCatalogue=true build aside).
+            if (!PhoneRemoteKeys.searches(data.catalog.isRemote(), BuildConfig.MOCK_CATALOGUE)) {
                 done.accept(java.util.Collections.emptyList());
                 return;
             }
