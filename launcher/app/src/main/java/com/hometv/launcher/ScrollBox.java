@@ -28,6 +28,15 @@ final class ScrollBox {
     /** What both boxes do: scroll so a descendant is in view. */
     interface Box {
         void reveal(View descendant);
+
+        /** Stops a running scroll and jumps to the start, so the animation can't carry the box off it again. */
+        void toStart();
+    }
+
+    /** {@link Box#toStart()} for a box made here; a plain view just scrolls to 0, 0. */
+    static void toStart(View box) {
+        if (box instanceof Box) ((Box) box).toStart();
+        else if (box != null) box.scrollTo(0, 0);
     }
 
     static ViewGroup vertical(Context ctx, float padDesign) {
@@ -139,6 +148,12 @@ final class ScrollBox {
             anim = scroll(null, getScrollY(), to, a -> scrollTo(getScrollX(), (Integer) a.getAnimatedValue()));
         }
 
+        @Override
+        public void toStart() {
+            stop();
+            scrollTo(getScrollX(), 0);
+        }
+
         private void stop() {
             if (anim != null) anim.cancel();
             anim = null;
@@ -180,6 +195,12 @@ final class ScrollBox {
                 return;
             }
             anim = scroll(null, getScrollX(), to, a -> scrollTo((Integer) a.getAnimatedValue(), getScrollY()));
+        }
+
+        @Override
+        public void toStart() {
+            stop();
+            scrollTo(0, getScrollY());
         }
 
         private void stop() {
