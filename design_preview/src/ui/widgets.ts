@@ -3,7 +3,8 @@ import { h, imgUrl, initials } from '../core/dom';
 import { focusable, type FocusOpts } from '../core/focus';
 import { lists } from '../core/lists';
 import { net } from '../core/net';
-import { availability, cardLine, cardOffer, runtimeLabel } from '../data/offers';
+import { availability, cardLine, cardOffer, multiRegion, regionOf, regionsOfTitle, runtimeLabel } from '../data/offers';
+import { flags } from './flags';
 import { posterImg } from '../data/posters';
 import { SERVICES } from '../data/services';
 import type { Offer, Title } from '../types';
@@ -216,6 +217,9 @@ export function miniCard(t: Title, opts: FocusOpts & { name?: Node | string } = 
         'div.card-art',
         posterImg(t),
         pill,
+        // Two regions (Search option C, Rebecca 18:28): the countries the title can be watched in, in the poster's
+        // bottom-right corner, clear of the pill. One region: none, as before.
+        multiRegion() && regionsOfTitle(t).length ? flags(regionsOfTitle(t), '.card-flags') : null,
         h('div.mini-focus', h('div.mini-name', opts.name ?? t.name), h('div.mini-meta', `${t.year} · ${t.score.toFixed(1)}/10`)),
       ),
     ),
@@ -235,7 +239,7 @@ export function servicePill(o: Offer | undefined): HTMLElement | null {
   if (!o) return null;
   const paid = o.type === 'rent' || o.type === 'buy';
   const mark = paid
-    ? h('span.pill-ico.pill-ico--paid', settings.get().region === 'us' ? '$' : 'kr')
+    ? h('span.pill-ico.pill-ico--paid', (multiRegion() ? regionOf(o) : settings.get().region) === 'us' ? '$' : 'kr')
     : h('span.pill-ico.pill-ico--incl', { html: icon('check', 18) });
   return h('div.svc-pill', mark, h('span.pill-name', SERVICES[o.service].name));
 }

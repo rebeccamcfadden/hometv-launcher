@@ -4,7 +4,7 @@ import { h, replace } from '../core/dom';
 import { focusable } from '../core/focus';
 import { net } from '../core/net';
 import { theme } from '../core/theme';
-import { featureOn, settings, START_LABELS, type FeatureId, REGION_LABELS, SCREENSAVER_AFTER_LABELS } from '../core/settings';
+import { featureOn, pickStores, settings, START_LABELS, storeTicked, type FeatureId, REGION_LABELS, SCREENSAVER_AFTER_LABELS } from '../core/settings';
 import { placeById } from '../data/places';
 import { icon, type IconName } from '../ui/icons';
 import { accountPane } from './panes/account';
@@ -67,7 +67,7 @@ const SECTIONS: Section[] = [
   { id: 'notes', label: 'Phone notes', icon: 'phone', value: () => notes.value(), feature: 'notes' },
   { id: 'services', label: 'Streaming services', icon: 'tv', value: () => ({ text: `${settings.get().services.length} ticked` }) },
   // The project lead, 2026-11-02: with Price lookup off, Stores says so (F16's price keys page will too).
-  { id: 'stores', label: 'Stores for rent and buy', icon: 'cart', value: () => ({ text: `${settings.get().stores.length} ticked` }), feature: 'prices' },
+  { id: 'stores', label: 'Stores for rent and buy', icon: 'cart', value: () => ({ text: `${pickStores().filter((x) => x.regions.some((r) => storeTicked(x.id, r))).length} ticked` }), feature: 'prices' },
   // F16: the household's own keys, from a phone or a laptop. Not behind Price lookup as a whole: the TMDB key is the
   // catalogue's; only the price keys wait behind an empty state while Price lookup is off.
   {
@@ -90,7 +90,7 @@ const SECTIONS: Section[] = [
   { id: 'screensaver', label: 'Screensaver', icon: 'clock', value: () => ({ text: SCREENSAVER_AFTER_LABELS[settings.get().screensaverAfter] }) },
   { id: 'features', label: 'Features', icon: 'list', value: () => ({ text: featuresValue() }) },
   { id: 'start', label: 'Open on start', icon: 'power', value: () => ({ text: START_LABELS[settings.get().openOnStart] }) },
-  { id: 'region', label: 'Region', icon: 'pin', value: () => ({ text: REGION_LABELS[settings.get().region] }) },
+  { id: 'region', label: 'Region', icon: 'pin', value: () => ({ text: [settings.get().region, ...settings.get().alsoRegions].map((r) => REGION_LABELS[r]).join(' + ') }) },
   { id: 'home', label: 'Default Home', icon: 'home', value: () => ({ text: 'On' }) },
   // F27: its pane has its own On/Off (Figma option A), so it isn't hidden behind a feature-off pane.
   { id: 'remote', label: 'Phone remote', icon: 'phone', value: () => remote.value() },

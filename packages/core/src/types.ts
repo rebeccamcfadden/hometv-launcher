@@ -14,7 +14,8 @@ export type ServiceId =
   | 'amazonvideo'
   | 'rakuten'
   | 'fandango'
-  | 'googletv';
+  | 'googletv'
+  | 'hulu';
 
 /** sub = included with a subscription the household has. */
 export type OfferType = 'sub' | 'free' | 'rent' | 'buy';
@@ -35,6 +36,11 @@ export interface Offer {
   seasonal?: boolean;
   /** Subscription and free offers: the picture quality, e.g. "4K · HDR". */
   quality?: string;
+  /**
+   * Two or more regions (BACKLOG.md › Two regions): the country the offer is in; Sweden when unset (the mock's own
+   * offers). Prices are in its currency: kronor in Sweden, dollars in the US.
+   */
+  region?: 'se' | 'us';
 }
 
 export type ListId = 'my' | 'household' | 'friends';

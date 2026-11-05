@@ -8,21 +8,25 @@ import {
   attribution,
   bestOffer,
   cheapest,
-  cheapestStore,
   isIncludedOffer,
   kr,
+  money,
+  multiRegion,
   offersByService,
   offersOf,
   paidAction,
   priceLines,
+  regionOf,
   runtimeLabel,
   watchable,
   type ServiceOffers,
 } from '../data/offers';
+import { settings } from '../core/settings';
 import { SERVICES } from '../data/services';
 import type { Title } from '../types';
 import { icon, type IconName } from '../ui/icons';
 import { button, chip, personCard, miniCard, miniCardSkeleton } from '../ui/widgets';
+import { flag } from '../ui/flags';
 import { personScreen } from './person';
 import { rentDialog } from './rent';
 
@@ -163,7 +167,9 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
     const content = h('div.pv-content');
 
     const overview = () => {
-      const rents = offersOf(t).filter((o) => o.type === 'rent').map(cheapest).filter((p): p is number => p !== undefined);
+      // The cheapest rental in the TV's own country, in its money: amounts in different currencies don't compare.
+      const rentOffers = offersOf(t).filter((o) => o.type === 'rent' && cheapest(o) !== undefined && regionOf(o) === settings.get().region);
+      const cheapestRent = rentOffers.reduce<typeof rentOffers[number] | undefined>((a, o) => (!a || cheapest(o)! < cheapest(a)! ? o : a), undefined);
       const included = offer && isIncludedOffer(offer);
       const lead = t.crew[0];
       return h(
@@ -175,7 +181,7 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
             'div.pv-fact',
             included ? h('span.badge', offer.type === 'free' ? 'Free' : 'Included') : null,
             h('span', included ? `on ${svcName}` : offer ? `${offer.type === 'rent' ? 'Rent' : 'Buy'} on ${svcName}` : 'Not on your services'),
-            rents.length && included ? h('span.muted', `· Rent from ${kr(Math.min(...rents))} elsewhere`) : null,
+            cheapestRent && included ? h('span.muted', `· Rent from ${money(cheapest(cheapestRent)!, cheapestRent)} elsewhere`) : null,
           ),
           t.cast.length ? h('div.pv-fact', h('span.muted', 'Starring'), t.cast.slice(0, 3).map((c) => c.name).join(', ')) : null,
           lead ? h('div.pv-fact', h('span.muted', lead.role), t.crew.filter((c) => c.role === lead.role).map((c) => c.name).join(', ')) : null,
@@ -183,26 +189,43 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
       );
     };
 
-    // Where to watch (07-prices A): one card per service, included ones first, then the stores, cheapest first and
-    // tagged; a line per picture quality, a 4K line only when it costs more. A store no source priced reads
+    // Where to watch (07-prices A): one card per service, included ones first, then the stores, cheapest first; a line per picture quality, a 4K line only when it costs more. A store no source priced reads
     // "Rent · Buy". The sources are credited under the row.
-    const serviceCard = (s: ServiceOffers, isCheapest: boolean, isDefault: boolean) => {
+    const serviceCard = (s: ServiceOffers, isDefault: boolean) => {
       const name = SERVICES[s.service].name;
       let body: (HTMLElement | null)[];
-      if (watchable(s)) {
+      if (multiRegion()) {
+        // Two regions (Where to watch option A as revised, Rebecca 18:28): one card per service, a line per country,
+        // the flag always first and in the same spot; then "Included" (or "Free") as a pill, or the prices in that
+        // country's currency.
+        body = [
+          h(
+            'div.region-lines',
+            s.regions.map((ro) => {
+              const amount = (o: typeof ro.rent, verb: string) => {
+                if (!o) return null;
+                const n = cheapest(o);
+                return [verb, ' ', n === undefined ? null : h('b', money(n, o))];
+              };
+              const what =
+                ro.included || ro.free
+                  ? h('span.badge', ro.free ? 'Free' : 'Included')
+                  : ro.rent || ro.buy
+                    ? h('span', amount(ro.rent, 'Rent'), ro.rent && ro.buy ? ' · ' : null, amount(ro.buy, 'Buy'))
+                    : h('span', 'Subscription');
+              // A show's prices are for one season, as the one-country card says.
+              const perSeason = !(ro.included || ro.free) && (ro.rent?.seasonal || ro.buy?.seasonal) ? h('span.q', 'per season') : null;
+              return h('div.rl', flag(ro.region), what, perSeason);
+            }),
+          ),
+        ];
+      } else if (watchable(s)) {
         body = [h('div.service-offer', s.included ? 'With your subscription' : 'Free with ads'), h('div.service-detail', s.quality)];
       } else {
         const lines = priceLines(s);
         const seasonal = !!(s.rent?.seasonal || s.buy?.seasonal);
-        // The cheapest store's deciding price, rent before buy, is the green one.
-        const green = isCheapest ? (s.rent && cheapest(s.rent)) ?? (s.buy && cheapest(s.buy)) : undefined;
-        const greenType = isCheapest ? (s.rent && cheapest(s.rent) !== undefined ? 'rent' : 'buy') : null;
-        let greened = false;
-        const amount = (type: 'rent' | 'buy', n: number) => {
-          const isGreen = !greened && type === greenType && n === green;
-          if (isGreen) greened = true;
-          return h(`b${isGreen ? '.cheap' : ''}`, kr(n));
-        };
+        // No Cheapest tag or green price (Rebecca, 2026-11-04 18:39): the stores are in price order already.
+        const amount = (_type: 'rent' | 'buy', n: number) => h('b', kr(n));
         body = lines.length
           ? [
               h(
@@ -234,7 +257,7 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
           h(
             'div.service-head',
             h('span.service-name', name),
-            watchable(s) ? h('span.badge', s.free ? 'Free' : 'Included') : isCheapest ? h('span.tag-best', 'Cheapest') : null,
+            watchable(s) && !multiRegion() ? h('span.badge', s.free ? 'Free' : 'Included') : null,
           ),
           body,
         ),
@@ -249,11 +272,10 @@ export function titlePreview(t: Title, opts: { moreLike?: boolean } = {}): Scree
 
     const whereToWatch = () => {
       const list = offersByService(t);
-      const best = cheapestStore(list);
       return h(
         'div.pv-where',
         list.length
-          ? h('div.pv-row', { 'data-scroll': 'x', 'data-scroll-pad': 0 }, list.map((s, i) => serviceCard(s, s.service === best, i === 0)))
+          ? h('div.pv-row', { 'data-scroll': 'x', 'data-scroll-pad': 0 }, list.map((s, i) => serviceCard(s, i === 0)))
           : h('div.pv-empty', 'Not available to stream, rent or buy here.'),
         h('div.pv-credit', `${attribution(t)}${net.isOffline() ? ` · Saved ${SAVED_AT}, prices may be out of date` : ''}`),
       );

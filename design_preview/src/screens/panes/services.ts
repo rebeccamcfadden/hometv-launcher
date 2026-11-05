@@ -1,9 +1,13 @@
 import { app } from '../../core/app';
 import { h } from '../../core/dom';
 import { focusable } from '../../core/focus';
-import { settings, pickServices, pickStores } from '../../core/settings';
+import { app as app_ } from '../../core/app';
+import { REGION_LABELS, settings, pickServices, pickStores, setOnlyIn, setStoreTicked, storeTicked, type Region } from '../../core/settings';
+import { multiRegion } from '../../data/offers';
 import { appName, SERVICES, type PickService } from '../../data/services';
+import { flag } from '../../ui/flags';
 import { icon } from '../../ui/icons';
+import { dropdown } from '../dropdown';
 import { paneHeadCount, type Pane, type PaneHost } from './pane';
 
 // The region's (F12): read each time, since the region can change while the page is open.
@@ -25,17 +29,33 @@ export function servicesPane(host: PaneHost): Pane {
   const ticked = () => settings.get().services;
   const moreTicked = () => MORE_().some((s) => ticked().includes(s.id));
 
-  const tile = (s: PickService, isEntry: boolean) => {
+  const tile = (s: PickService & { regions: Region[] }, isEntry: boolean) => {
     const on = ticked().includes(s.id);
+    const only = on && multiRegion() ? settings.get().onlyIn[s.id] : undefined;
     const el = focusable(
       h(
         'div.svc-tile',
+        { 'data-svc': s.id },
         h(
           `div.stile${on ? '.is-on' : ''}`,
           h('span.mark', { style: `font-weight:${s.weight}` }, s.mark),
           h(`div.tick${on ? '' : '.is-off'}`, on ? { html: icon('check', 20) } : null),
+          // Two regions (pick (c), Rebecca 18:28): one tile per service with all its countries' flags; a service kept
+          // to one country dims the others' flags.
+          multiRegion()
+            ? h(
+                'span.flags.stile-flags',
+                { 'aria-label': `${s.name} in ${s.regions.map((r) => REGION_LABELS[r]).join(' and ')}` },
+                s.regions.map((r) => {
+                  const f = flag(r);
+                  if (only && only !== r) f.classList.add('is-dim');
+                  return f;
+                }),
+              )
+            : null,
         ),
         h('div.stile-cap', h('span', s.name), caption(s)),
+        only ? h('div.stile-only', `Only in ${REGION_LABELS[only]}`) : null,
       ),
       {
         group: 'svc',
@@ -79,7 +99,9 @@ export function servicesPane(host: PaneHost): Pane {
           'Streaming services',
           'What does the household pay for?',
           `${n} of ${all.length} ticked`,
-          'Titles on ticked services show as Included. Installed apps were ticked to start with.',
+          multiRegion()
+            ? 'Titles on ticked services show as Included in every country the service has. Hold OK on one that only works at home to keep it to one country.'
+            : 'Titles on ticked services show as Included. Installed apps were ticked to start with.',
         ),
         h('div.tgrid', MAIN_().map((s, i) => tile(s, i === 0)), moreTile()),
         shown ? [h('div.grp-h', 'More services'), h('div.tgrid', MORE_().map((s) => tile(s, false)))] : null,
@@ -95,23 +117,26 @@ export function servicesPane(host: PaneHost): Pane {
 export function storesPane(): Pane {
   return {
     render() {
-      const ticked = settings.get().stores;
+      // Two regions: one row per store, with every chosen country's flag; a tick counts in each of them.
+      const isOn = (s: ReturnType<typeof pickStores>[number]) =>
+        s.regions.some((r) => storeTicked(s.id, r));
+      const n = pickStores().filter(isOn).length;
       return [
         ...paneHeadCount(
           'Stores for rent and buy',
           'Where may we show prices from?',
-          `${ticked.length} of ${pickStores().length} ticked`,
+          `${n} of ${pickStores().length} ticked`,
           'Prices in Where to watch and on cards come from ticked stores. Renting or buying opens the store’s app.',
         ),
         h(
           'div.store-rows',
           pickStores().map((s, i) => {
-            const on = ticked.includes(s.id);
+            const on = isOn(s);
             const el = focusable(
               h(
                 'div.lrow.lrow--svc',
                 h(`div.cbox${on ? '.is-on' : ''}`, { html: icon('check', 22) }),
-                h('div.lr-main', h('div.lr-title', SERVICES[s.id].name)),
+                h('div.lr-main', h('div.lr-title', SERVICES[s.id].name, multiRegion() ? h('span.flags.lr-flags', s.regions.map(flag)) : null)),
                 h('span.opens', `Opens in the ${appName(s.id)} app`),
                 h(`span.hint${s.installed ? '.hint--good' : ''}`, s.installed ? 'Installed' : 'No app'),
               ),
@@ -119,7 +144,7 @@ export function storesPane(): Pane {
                 group: 'stores',
                 key: `store-${s.id}`,
                 isDefault: i === 0,
-                onOk: () => settings.set({ stores: on ? ticked.filter((x) => x !== s.id) : [...ticked, s.id] }),
+                onOk: () => setStoreTicked(s.id, !on),
               },
             );
             if (i === 0) el.dataset.entry = '';
@@ -128,11 +153,41 @@ export function storesPane(): Pane {
         ),
         h(
           'div.pane-note',
-          settings.get().region === 'us'
-            ? 'Prices are in dollars and may differ in the store.'
-            : 'Prices are in kronor and may differ in the store. Google Play isn’t sold in Sweden.',
+          multiRegion()
+            ? 'Each country’s prices are in its own currency, kronor or dollars, and may differ in the store.'
+            : settings.get().region === 'us'
+              ? 'Prices are in dollars and may differ in the store.'
+              : 'Prices are in kronor and may differ in the store. Google Play isn’t sold in Sweden.',
         ),
       ];
     },
   };
+}
+
+/**
+ * Two regions, pick (c) (Rebecca, 2026-11-04 18:28): hold OK on a ticked service in several countries to keep it to one
+ * (a subscription that doesn't travel). Every country it has is the default. Offered on any page through app.longOk.
+ */
+export function serviceRegionMenu(el: HTMLElement): boolean {
+  const id = el.dataset.svc;
+  if (!id || !multiRegion() || !settings.get().services.includes(id)) return false;
+  const s = pickServices().find((x) => x.id === id);
+  if (!s || s.regions.length < 2) return false;
+  const only = settings.get().onlyIn[id];
+  const choose = (r: Region | null) => {
+    menu.close();
+    setOnlyIn(id, r);
+    app_.toast(r ? `${s.name} counts as Included only in ${REGION_LABELS[r]}` : `${s.name} counts as Included in every country it has`);
+  };
+  const menu = dropdown(
+    `${s.name} is included in`,
+    el,
+    [
+      { label: 'Every country it has', checked: !only, stay: true, onOk: () => choose(null) },
+      ...s.regions.map((r) => ({ label: `Only ${REGION_LABELS[r]}`, checked: only === r, stay: true, onOk: () => choose(r) })),
+    ],
+    { onCard: true },
+  );
+  app_.push(menu);
+  return true;
 }

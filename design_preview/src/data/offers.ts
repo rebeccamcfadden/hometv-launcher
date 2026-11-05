@@ -1,5 +1,5 @@
 import type { Offer, OfferType, Quality, ServiceId, Title } from '../types';
-import { featureOn, settings, pickServices, pickStores } from '../core/settings';
+import { chosenRegions, featureOn, settings, pickServices, pickStores, storeTicked, type Region } from '../core/settings';
 import { DEFAULT_PRICE_SOURCE, HOME_APPS, PRICE_SOURCE, SERVICES } from './services';
 
 // Offer rules. Prices are Swedish kronor, as the launcher's real catalogue has them (V2 Phase 2): a rent or buy
@@ -7,6 +7,20 @@ import { DEFAULT_PRICE_SOURCE, HOME_APPS, PRICE_SOURCE, SERVICES } from './servi
 
 /** "39 kr". */
 export const kr = (n: number) => `${n} kr`;
+
+/**
+ * The country an offer is in: its own with several regions shown (Sweden for the mock's own offers); with one, the
+ * TV's, whose store ticks and settings apply to every offer as before.
+ */
+export const regionOf = (o: Offer): Region => (multiRegion() ? (o.region ?? 'se') : settings.get().region);
+
+/** Whether more than one region is shown (Two regions): offers then carry their flags. */
+export function multiRegion() {
+  return settings.get().alsoRegions.length > 0;
+}
+
+/** An amount in the offer's currency: "39 kr" in Sweden, "$3.99" in the US. */
+export const money = (n: number, o?: Offer) => (o && multiRegion() && regionOf(o) === 'us' ? `$${n.toFixed(2)}` : kr(n));
 
 const QUALITIES: Quality[] = ['SD', 'HD', '4K'];
 
@@ -25,7 +39,7 @@ export const isFrom = (o: Offer) => !!o.seasonal || new Set(amounts(o)).size > 1
 export function priceLabel(o: Offer): string | undefined {
   const min = cheapest(o);
   if (min === undefined) return undefined;
-  return isFrom(o) ? `from ${kr(min)}` : kr(min);
+  return isFrom(o) ? `from ${money(min, o)}` : money(min, o);
 }
 
 const verb = (type: OfferType) => (type === 'rent' ? 'Rent' : 'Buy');
@@ -42,9 +56,19 @@ export function paidAction(o: Offer): string {
   return `${verb(o.type)} on ${SERVICES[o.service].name}${p ? ` · ${p}` : ''}`;
 }
 
-/** The household has the service: ticked in Launcher settings (free YouTube always counts). */
-export const isSubscribed = (id: ServiceId) =>
-  !!SERVICES[id].free || pickServices().some((p) => p.catalog === id && settings.get().services.includes(p.id));
+/**
+ * The household has the service: ticked in Launcher settings (free YouTube always counts). In {@code region}, a service
+ * kept to one country (hold OK, "Only in …") counts only there.
+ */
+export const isSubscribed = (id: ServiceId, region?: Region) =>
+  !!SERVICES[id].free ||
+  pickServices().some(
+    // "Only in …" counts only while several regions are shown, the only time it can be set or cleared.
+    (p) =>
+      p.catalog === id &&
+      settings.get().services.includes(p.id) &&
+      (!region || !multiRegion() || !settings.get().onlyIn[p.id] || settings.get().onlyIn[p.id] === region),
+  );
 
 /** How many services are ticked, for "All 8 services". */
 export const subscribedCount = () => settings.get().services.length;
@@ -55,9 +79,25 @@ export const subscribedCount = () => settings.get().services.length;
  * where.
  */
 export const offersOf = (t: Title) =>
-  t.offers
-    .filter((o) => !SERVICES[o.service].store || SERVICES[o.service].free || settings.get().stores.includes(o.service))
+  regionalOffers(t)
+    .filter((o) => !SERVICES[o.service].store || SERVICES[o.service].free || storeTicked(o.service, regionOf(o)))
     .map((o) => (featureOn('prices') || !o.prices ? o : unpriced(o)));
+
+/**
+ * The title's offers in the regions shown. One region: the mock's own offers, as before (the prototype's titles keep
+ * their Swedish offers whichever region the TV is in). Two: each chosen region's offers, the TV's own first.
+ */
+function regionalOffers(t: Title): Offer[] {
+  if (!multiRegion()) return t.offers.filter((o) => !o.region);
+  const regions = chosenRegions();
+  return regions.flatMap((r) => t.offers.filter((o) => regionOf(o) === r));
+}
+
+/** The regions a title can be watched in among those shown, in the chosen order (its card's flags). */
+export function regionsOfTitle(t: Title): Region[] {
+  const have = new Set(offersOf(t).map(regionOf));
+  return chosenRegions().filter((r) => have.has(r));
+}
 
 /** One price-less copy per offer, so an offer stays the same object between calls. */
 const unpricedCopies = new WeakMap<Offer, Offer>();
@@ -67,7 +107,7 @@ function unpriced(o: Offer): Offer {
   return c;
 }
 
-export const isIncludedOffer = (o: Offer) => o.type === 'free' || (o.type === 'sub' && isSubscribed(o.service));
+export const isIncludedOffer = (o: Offer) => o.type === 'free' || (o.type === 'sub' && isSubscribed(o.service, regionOf(o)));
 
 /** A catalogue service the household ticked in the Streaming services pane. */
 const isTicked = (id: ServiceId) =>
@@ -88,7 +128,7 @@ export const cardOffersOf = (t: Title) =>
       ? isTicked(o.service)
       : o.type === 'free'
         ? isInstalled(o.service) || isTicked(o.service)
-        : settings.get().stores.includes(o.service),
+        : storeTicked(o.service, regionOf(o)),
   );
 
 /** "Included only" in Movies and TV Shows, Pick for me and Search: the cards' rule ({@link cardOffersOf}). */
@@ -116,8 +156,22 @@ export function cardOffer(t: Title): Offer | undefined {
   return bestOf(cardOffersOf(t));
 }
 
+/**
+ * Included first, then the cheapest rental, then the cheapest purchase; the TV's own region before the others (Rebecca,
+ * 18:00: the Watch button prefers the main region), since kronor and dollars can't be compared.
+ */
 function bestOf(offers: Offer[]): Offer | undefined {
-  return offers.find(isIncludedOffer) ?? cheapestOf(offers, 'rent') ?? cheapestOf(offers, 'buy');
+  for (const r of multiRegion() ? chosenRegions() : [undefined]) {
+    const mine = r ? offers.filter((o) => regionOf(o) === r) : offers;
+    const o = mine.find(isIncludedOffer);
+    if (o) return o;
+  }
+  for (const r of multiRegion() ? chosenRegions() : [undefined]) {
+    const mine = r ? offers.filter((o) => regionOf(o) === r) : offers;
+    const o = cheapestOf(mine, 'rent') ?? cheapestOf(mine, 'buy');
+    if (o) return o;
+  }
+  return undefined;
 }
 
 /** The library card's second provider line: "Included", "Free", "Rent 39 kr", "Buy from 99 kr" or just "Rent". */
@@ -144,12 +198,12 @@ export function cardLine(t: Title): string {
   const o = bestOf(offers);
   if (!o) return '';
   if (isIncludedOffer(o)) return offerLabel(o);
-  const stores = new Set(offers.filter((x) => x.type === o.type).map((x) => x.service)).size;
+  const stores = new Set(offers.filter((x) => x.type === o.type && regionOf(x) === regionOf(o)).map((x) => x.service)).size;
   const min = cheapest(o);
   const count = stores > 1 ? ` · ${stores} stores` : '';
-  if (o.seasonal) return `${verb(o.type)} a season${min === undefined ? '' : ` from ${kr(min)}`}${count}`;
+  if (o.seasonal) return `${verb(o.type)} a season${min === undefined ? '' : ` from ${money(min, o)}`}${count}`;
   if (stores === 1) return offerLabel(o);
-  return `${verb(o.type)}${min === undefined ? '' : ` from ${kr(min)}`}${count}`;
+  return `${verb(o.type)}${min === undefined ? '' : ` from ${money(min, o)}`}${count}`;
 }
 
 /** One entry per service, with its rent and buy offers merged: the title preview's Where to watch cards. */
@@ -161,6 +215,20 @@ export interface ServiceOffers {
   buy?: Offer;
   /** Subscription and free offers: the picture quality ("4K · HDR"). */
   quality: string;
+  /**
+   * Two regions: the service's offers in each country, the TV's own first (one Where to watch card, a line per
+   * country with its flag). The fields above are the TV's own region's, else the first region's.
+   */
+  regions: RegionOffers[];
+}
+
+/** A service's offers in one country. */
+export interface RegionOffers {
+  region: Region;
+  included: boolean;
+  free: boolean;
+  rent?: Offer;
+  buy?: Offer;
 }
 
 export const watchable = (s: ServiceOffers) => s.included || s.free;
@@ -178,17 +246,31 @@ function storeRank(s: ServiceOffers): [number, number] {
 export function offersByService(t: Title): ServiceOffers[] {
   const map = new Map<ServiceId, ServiceOffers>();
   for (const o of offersOf(t)) {
-    const e = map.get(o.service) ?? { service: o.service, included: false, free: false, quality: o.quality ?? '' };
-    if (o.type === 'sub' && isSubscribed(o.service)) e.included = true;
-    if (o.type === 'free') e.free = true;
-    if (o.type === 'rent') e.rent = o;
-    if (o.type === 'buy') e.buy = o;
+    const e = map.get(o.service) ?? { service: o.service, included: false, free: false, quality: o.quality ?? '', regions: [] };
+    const reg = regionOf(o);
+    let ro = e.regions.find((x) => x.region === reg);
+    if (!ro) e.regions.push((ro = { region: reg, included: false, free: false }));
+    if (o.type === 'sub' && isIncludedOffer(o)) ro.included = true;
+    if (o.type === 'free') ro.free = true;
+    if (o.type === 'rent') ro.rent = o;
+    if (o.type === 'buy') ro.buy = o;
+    // The card's own fields are its first region's (the TV's own when it has it): sorting and the rent dialog use them.
+    const first = e.regions[0];
+    e.included = first.included;
+    e.free = first.free;
+    e.rent = first.rent;
+    e.buy = first.buy;
+    if (e.regions.some((x) => x.included || x.free) && !first.included && !first.free) e.included = true;
     map.set(o.service, e);
   }
   const all = [...map.values()];
   const inc = all.filter(watchable);
+  // Two regions: the TV's own region's stores first, in price order; then the other countries' (kronor and dollars
+  // can't be compared). One region: every store is the TV's.
+  const main = settings.get().region;
+  const away = (s: ServiceOffers) => (multiRegion() && s.regions[0]?.region !== main ? 1 : 0);
   const stores = all.filter((s) => !watchable(s)).map((s, i) => ({ s, i, r: storeRank(s) }));
-  stores.sort((a, b) => a.r[0] - b.r[0] || a.r[1] - b.r[1] || a.i - b.i);
+  stores.sort((a, b) => away(a.s) - away(b.s) || a.r[0] - b.r[0] || a.r[1] - b.r[1] || a.i - b.i);
   const sorted = stores.map((x) => x.s);
   // A tie on the deciding price goes to a store whose app is on the TV (decided 2026-10-31).
   const lead = sorted[0];

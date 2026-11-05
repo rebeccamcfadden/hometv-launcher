@@ -6,7 +6,9 @@ import { lists } from '../core/lists';
 import { net } from '../core/net';
 import { store } from '../core/store';
 import { byId, TITLES } from '../data/catalog';
-import { isOwnIncluded } from '../data/offers';
+import { isOwnIncluded, multiRegion, regionsOfTitle } from '../data/offers';
+import { chosenRegions, REGION_LABELS, type Region } from '../core/settings';
+import { flag } from '../ui/flags';
 import type { Title } from '../types';
 import { icon } from '../ui/icons';
 import { button, chip, miniCard, navBar, rowOf } from '../ui/widgets';
@@ -31,6 +33,8 @@ export function searchScreen(): Screen {
   let query = '';
   let expanded = false;
   let filter: Filter = 'all';
+/** Two regions (Search option C, Rebecca 18:28): a chip per country beside Included only narrows to titles there. */
+let regionFilter: Region | null = null;
   let hasMatches = false;
 
   // ---- search bar ----
@@ -236,10 +240,12 @@ export function searchScreen(): Screen {
           : [];
       const all: Hit[] = [...r.titles, ...genreTitles, ...r.people];
       const items = all.filter((x) => {
-        if (filter === 'all') return true;
+        if (filter === 'all' && !(regionFilter && multiRegion())) return true;
         if (filter === 'person') return x.kind === 'person';
         if (x.kind === 'person') return false;
+        if (regionFilter && multiRegion() && !regionsOfTitle(x.title!).includes(regionFilter)) return false;
         if (filter === 'included') return isOwnIncluded(x.title!);
+        if (filter === 'all') return true;
         return x.title!.kind === filter;
       });
       replace(
@@ -261,11 +267,28 @@ export function searchScreen(): Screen {
                 },
               }),
             ),
+            // One chip per country shown, with its flag: OK narrows to titles there, OK again shows every country.
+            multiRegion()
+              ? chosenRegions().map((r) => {
+                  const c = chip(REGION_LABELS[r], {
+                    selected: regionFilter === r,
+                    group: 'filters',
+                    key: `rf-region-${r}`,
+                    onOk: () => {
+                      regionFilter = regionFilter === r ? null : r;
+                      render();
+                    },
+                  });
+                  c.classList.add('chip--flag');
+                  c.prepend(flag(r));
+                  return c;
+                })
+              : null,
           ),
         ),
         items.length
           ? h('div.results-grid', items.map(resultCard))
-          : h('div.nm-note.results-empty', `Nothing under “${FILTERS.find((x) => x[0] === filter)?.[1]}”. Try All.`),
+          : h('div.nm-note.results-empty', `Nothing under “${[FILTERS.find((x) => x[0] === filter)?.[1], regionFilter && multiRegion() ? REGION_LABELS[regionFilter] : null].filter(Boolean).join(' · ')}”. Try All.`),
       );
     }
 
@@ -340,6 +363,7 @@ export function searchScreen(): Screen {
     onLeave() {
       query = '';
       filter = 'all';
+    regionFilter = null;
       expanded = false;
       snap = true;
       screen.memory?.clear();

@@ -1,4 +1,4 @@
-import { HOME_APPS, SE_PICK_SERVICES, SE_PICK_STORES, US_PICK_SERVICES, US_PICK_STORES } from '../data/services';
+import { HOME_APPS, SE_PICK_SERVICES, SE_PICK_STORES, US_PICK_SERVICES, US_PICK_STORES, type PickService } from '../data/services';
 import type { ServiceId } from '../types';
 import type { ThemeId } from './theme';
 import type { Moved } from './tvUtilities';
@@ -30,6 +30,16 @@ interface Saved {
   stores: ServiceId[];
   /** The other region's store ticks, kept while it isn't the TV's, as the launcher keeps them (ServiceChoices). */
   otherRegion: Partial<Record<Region, { stores: ServiceId[] }>>;
+  /**
+   * Two regions (Rebecca, 2026-11-04): more countries shown with the TV's own, each offer with its flag. None by
+   * default, so no TV changes.
+   */
+  alsoRegions: Region[];
+  /**
+   * A ticked service kept to one country (Rebecca's pick (c), 18:28: hold OK on it): its titles count as Included
+   * only there. Unset, a ticked service is Included in every country it has.
+   */
+  onlyIn: Record<string, Region>;
   /** The weather place (data/places.ts id) and the places picked before it, newest first. */
   place: string;
   recentPlaces: string[];
@@ -89,6 +99,8 @@ const defaults = (): Saved => ({
   region: 'se',
   ...ticksFor('se'),
   otherRegion: {},
+  alsoRegions: [],
+  onlyIn: {},
   place: DEFAULT_PLACE,
   recentPlaces: ['malmo'],
   unit: 'tv',
@@ -125,6 +137,8 @@ function load(): Saved {
       // Time of day (F29): anything but Day or Night, an older or odd value, follows the sun, as ThemeStore reads it.
       if (saved.timeOfDay !== 'day' && saved.timeOfDay !== 'night') saved.timeOfDay = 'sun';
       if (saved.region !== 'us') saved.region = 'se';
+      saved.alsoRegions = (Array.isArray(saved.alsoRegions) ? saved.alsoRegions : []).filter((r) => (r === 'se' || r === 'us') && r !== saved.region);
+      if (!saved.onlyIn || typeof saved.onlyIn !== 'object') saved.onlyIn = {};
       if (saved.appLogos !== 'minimal') saved.appLogos = 'full';
       if (!['off', '5', '15', '30'].includes(saved.screensaverAfter)) saved.screensaverAfter = 'off';
       if (!['glow', 'picture', 'black'].includes(saved.screensaverBack)) saved.screensaverBack = 'glow';
@@ -178,14 +192,101 @@ export const settings = {
  * doesn't list, behind More services, as the launcher lists them (ServicePicks.listed): ticks are the household's in
  * any region.
  */
-export const pickServices = () => {
-  const own = PICKS[data.region].services;
+export const pickServices = (): (PickService & { regions: Region[] })[] => {
+  if (data.alsoRegions.length) return mergedServices();
+  const own = PICKS[data.region].services.map((s) => ({ ...s, regions: [data.region] }));
   const others = (Object.keys(PICKS) as Region[]).filter((r) => r !== data.region).flatMap((r) => PICKS[r].services);
   const extra = others.filter((s, i) => data.services.includes(s.id) && !own.some((o) => o.id === s.id) && others.findIndex((x) => x.id === s.id) === i);
-  return [...own, ...extra.map((s) => ({ ...s, more: true }))];
+  return [...own, ...extra.map((s) => ({ ...s, more: true, regions: regionsOf(s.id) }))];
 };
-/** The TV's region's stores for rent and buy. */
-export const pickStores = () => PICKS[data.region].stores;
+/** The TV's region's stores for rent and buy; with more regions, every chosen region's, one row each with its flags. */
+export const pickStores = (): { id: ServiceId; installed: boolean; regions: Region[] }[] => {
+  if (!data.alsoRegions.length) return PICKS[data.region].stores.map((s) => ({ ...s, regions: [data.region] }));
+  const out: { id: ServiceId; installed: boolean; regions: Region[] }[] = [];
+  for (const r of chosenRegions())
+    for (const s of PICKS[r].stores) {
+      const have = out.find((x) => x.id === s.id);
+      if (have) have.regions.push(r);
+      else out.push({ ...s, regions: [r] });
+    }
+  return out;
+};
+
+/** The TV's region first, then the ones added with Also show. */
+export const chosenRegions = (): Region[] => [data.region, ...data.alsoRegions.filter((r) => r !== data.region)];
+
+/** The chosen regions a service is in (by its Streaming services id). */
+const regionsOf = (id: string): Region[] => chosenRegions().filter((r) => PICKS[r].services.some((s) => s.id === id));
+
+/**
+ * Two regions: every chosen region's services, one tile each, in the TV's region's order then the others' new ones; a
+ * service in several regions is one tile with all its flags (Rebecca, 17:58). More services as the TV's region has it.
+ */
+function mergedServices(): (PickService & { regions: Region[] })[] {
+  const out: (PickService & { regions: Region[] })[] = [];
+  for (const r of chosenRegions())
+    for (const s of PICKS[r].services) {
+      const have = out.find((x) => x.id === s.id);
+      if (have) {
+        have.regions.push(r);
+        if (!s.more) have.more = false;
+      } else out.push({ ...s, regions: [r] });
+    }
+  return [...out.filter((s) => !s.more), ...out.filter((s) => s.more)];
+}
+
+/** Whether a store is ticked in a region: each region keeps its own store ticks (ServiceChoices, Region.key). */
+export function storeTicked(id: ServiceId, r: Region): boolean {
+  if (r === data.region) return data.stores.includes(id);
+  return (data.otherRegion[r]?.stores ?? ticksFor(r).stores).includes(id);
+}
+
+/** Ticks or unticks a store in every chosen region that lists it (one row in the Stores pane). */
+export function setStoreTicked(id: ServiceId, on: boolean) {
+  const other = { ...data.otherRegion };
+  let stores = data.stores;
+  for (const r of chosenRegions()) {
+    if (!PICKS[r].stores.some((s) => s.id === id)) continue;
+    const cur = r === data.region ? stores : (other[r]?.stores ?? ticksFor(r).stores);
+    const next = on ? [...cur.filter((x) => x !== id), id] : cur.filter((x) => x !== id);
+    if (r === data.region) stores = next;
+    else other[r] = { stores: next };
+  }
+  settings.set({ stores, otherRegion: other });
+}
+
+/** Also show (Launcher settings › Region): adds or removes a country shown with the TV's own. */
+export function setAlsoRegion(r: Region, on: boolean) {
+  if (r === data.region) return;
+  const also = data.alsoRegions.filter((x) => x !== r);
+  settings.set({ alsoRegions: on ? [...also, r] : also });
+  reconcileStores();
+}
+
+/**
+ * One tick per store across the chosen countries (the Stores pane shows one row for it): when countries are combined,
+ * a store listed in several takes the tick it has in the first of them (the TV's own when it lists the store), so the
+ * row and the prices shown agree.
+ */
+function reconcileStores() {
+  const regions = chosenRegions();
+  if (regions.length < 2) return;
+  const ids = new Set(regions.flatMap((r) => PICKS[r].stores.map((s) => s.id)));
+  for (const id of ids) {
+    const listed = regions.filter((r) => PICKS[r].stores.some((s) => s.id === id));
+    if (listed.length < 2) continue;
+    const on = storeTicked(id, listed[0]);
+    if (listed.some((r) => storeTicked(id, r) !== on)) setStoreTicked(id, on);
+  }
+}
+
+/** Hold OK on a ticked service (pick (c)): keep it to one country, or (null) every country it has. */
+export function setOnlyIn(id: string, r: Region | null) {
+  const onlyIn = { ...data.onlyIn };
+  if (r) onlyIn[id] = r;
+  else delete onlyIn[id];
+  settings.set({ onlyIn });
+}
 
 /**
  * Sets the region (F12): its stores take the place of the other region's, whose ticks are kept for when the TV goes
@@ -198,7 +299,9 @@ export function setRegion(r: Region) {
   const other = { ...data.otherRegion, [data.region]: { stores: data.stores } };
   const stores = other[r]?.stores ?? ticksFor(r).stores;
   delete other[r];
-  settings.set({ region: r, stores, otherRegion: other });
+  // The new main region can't also be an extra one.
+  settings.set({ region: r, stores, otherRegion: other, alsoRegions: data.alsoRegions.filter((x) => x !== r && x !== data.region).concat(data.alsoRegions.includes(r) ? [data.region] : []) });
+  reconcileStores();
 }
 
 export const REGION_LABELS: Record<Region, string> = { se: 'Sweden', us: 'United States' };
@@ -280,3 +383,6 @@ export function deg(c: number): string {
   return `${Math.round(u === 'f' ? (c * 9) / 5 + 32 : c)}°`;
 }
 export const unitSuffix = () => `°${(data.unit === 'tv' ? TV_UNIT : data.unit).toUpperCase()}`;
+
+// Ticks saved before stores were reconciled (an earlier visit) agree again from the start.
+reconcileStores();

@@ -788,6 +788,34 @@ body.no-devbar #devbar {
 .card--mini.is-focused .mini-focus {
   opacity: 1;
 }
+/* Two regions (Figma "Two regions", Search option C): the title's countries, stacked in the poster's bottom-right corner
+   on the pill's dark glass, above the focused fade; the focused name keeps clear of them. */
+.flag {
+  display: inline-block;
+  flex: none;
+  width: 27px;
+  height: 18px;
+  line-height: 0;
+}
+.flags {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.card-flags {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+  flex-direction: column;
+  padding: 5px;
+  border-radius: 8px;
+  background: rgba(9, 14, 21, 0.86);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.card-art:has(.card-flags) .mini-focus {
+  padding-right: 52px;
+}
 .mini-name {
   font-size: 20px;
   font-weight: 600;
@@ -801,4 +829,11 @@ body.no-devbar #devbar {
   margin-top: 4px;
   font-size: 18px;
   color: #adb5c0;
+}
+
+/* Two regions: a country chip in Search's filters, its flag before the name. */
+.chip--flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
