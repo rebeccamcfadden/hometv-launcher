@@ -93,7 +93,7 @@ and look it up again, and None of these; drawn as the confirm dialog, with no de
 
 ### V2 designs
 
-The V2 screens with no Figma frame yet were drawn as HTML mockups (rendered at 1920×1080) and the project lead chose
+The V2 screens that had no Figma frame then were drawn as HTML mockups (rendered at 1920×1080) and the project lead chose
 one option for each (2026-10-30). The prototype builds these:
 
 | Design | What it is | Here |
@@ -300,7 +300,7 @@ the one beside it when the change took the card off the page (a title removed fr
   scrolls with focus, and back on All lists it returns to its start.
   A list hidden while chosen falls back to All lists. Up from any chip, and Right from the last one, goes to
   **Pick for me**, so it comes before the nav and instead of the grid.
-- An eight-column grid of **C cards** (F46, Rebecca 2026-11-04 09:57, Figma "Smaller cards (F46)" option C, node
+- An eight-column grid of **C cards** (F46, Rebecca 2026-11-04 09:57, Figma "Closed · Smaller cards (F46)" option C, node
   232:931; the same card on every page with title cards): the title's TMDB poster, 195 × 293, radius 12
   (`src/data/posters.ts`; a title with none, or a poster that can't load, shows its landscape art cropped), and on its
   top-left corner the **service pill**: the service or store's name in words after a round icon, a dark tick on green
@@ -594,7 +594,7 @@ ever inside an APK. Never typed on the TV.
 
 #### Phone remote
 
-F27 with F39's Add to My list (Figma page "Phone remote (F27)", the project lead's picks of 2026-11-02: phone layout A,
+F27 with F39's Add to My list (Figma page "Closed · Phone remote (F27)", the project lead's picks of 2026-11-02: phone layout A,
 pane A, Home sign B, Add to My list C; plan and decisions in the rework's F27 notes). A phone on the home Wi-Fi drives
 this launcher: arrows, OK, Back, Home and typing, and adds titles to My list. The TV serves the page itself over HTTPS
 (a self-signed certificate made on the TV: each phone warns once), with the pairing code in the QR link's
