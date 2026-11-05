@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -389,18 +390,34 @@ final class TmdbParse {
         return null;
     }
 
-    /** The YouTube id of the title's trailer: an official one first, else any; null when there is none. */
+    /**
+     * The YouTube id of the title's trailer; null when there is none. Official trailers first, then the rest; within
+     * each, one named "Official Trailer" first, then other trailers, and cuts such as Extended, Annotated, Footnotes or
+     * Teaser last (The Fault in Our Stars lists its "Annotated Footnotes Trailer" first, F47 on the TV 2026-11-04).
+     * TMDB's order within a tier.
+     */
     static String trailer(JSONObject videos) {
         JSONArray results = videos == null ? null : videos.optJSONArray("results");
-        String any = null;
+        String best = null;
+        int bestRank = Integer.MAX_VALUE;
         for (int i = 0; results != null && i < results.length(); i++) {
             JSONObject v = results.optJSONObject(i);
             if (v == null || !"YouTube".equals(v.optString("site")) || !"Trailer".equals(v.optString("type"))) continue;
             String key = v.optString("key", "");
             if (!key.matches("[A-Za-z0-9_-]{6,20}")) continue;
-            if (v.optBoolean("official")) return key;
-            if (any == null) any = key;
+            int rank = (v.optBoolean("official") ? 0 : 3) + trailerNameRank(v.optString("name", ""));
+            if (rank < bestRank) {
+                best = key;
+                bestRank = rank;
+            }
         }
-        return any;
+        return best;
+    }
+
+    /** 0 for "Official Trailer", 2 for a special cut (Extended, Annotated, Footnotes, Teaser), else 1. */
+    static int trailerNameRank(String name) {
+        String n = name.toLowerCase(Locale.ROOT);
+        if (n.matches(".*\\b(extended|annotated|footnotes?|teaser)\\b.*")) return 2;
+        return n.contains("official trailer") ? 0 : 1;
     }
 }
