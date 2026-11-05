@@ -70,7 +70,7 @@
           <li><b>Android TV:</b> <span class="path">Settings › Device Preferences › About</span>, then press OK on <b>Build</b> 7 times.</li>
           <li><b>Google TV:</b> <span class="path">Settings › System › About</span>, then press OK on <b>Android TV OS build</b> 7 times.</li>
         </ul>
-        <p>The TV says <i>"You are now a developer"</i>. Go back one step and open <b>Developer options</b>. Turn on <b>USB debugging</b>, and <b>Network debugging</b> (or <b>ADB debugging</b>) if you see it.</p>
+        <p>The TV says <i>"You are now a developer"</i>. Leave debugging off for now: the installer tells you when to switch it on, after a question about what's plugged into the TV.</p>
         <p>Last, find the TV's address: <span class="path">Settings › Network &amp; Internet</span> › your network shows an <b>IP address</b>, like <code>192.168.1.50</code>. Write it down.</p>
       </section>
 
@@ -98,6 +98,7 @@
       <section>
         <h2><span class="num">5</span>Answer its questions</h2>
         <ul>
+          <li>It asks what's plugged into the TV's USB ports, then tells you to open <b>Developer options</b> and turn on <b>USB debugging</b>, and <b>Network debugging</b> (or <b>ADB debugging</b>) if you see it.</li>
           <li>It asks for the TV's address from step 2.</li>
           <li>Watch the TV: it asks <i>"Allow USB debugging?"</i>. Tick <b>Always allow from this computer</b>, then <b>OK</b>.</li>
           <li>It backs the TV up, installs the launcher and makes it the home screen. You may be asked to press <b>Home</b>, <b>Input</b> and <b>Settings</b> on the remote, to see that they work.</li>
@@ -118,7 +119,7 @@
             <div class="cmd"><code id="undo">cd $HOME\Downloads; powershell -ExecutionPolicy Bypass -File .\family-install.ps1 -Restore "$HOME\HomeTV\backups\&lt;your TV&gt;-&lt;date&gt;"</code><button data-copy="undo">Copy</button></div>
           </li>
           <li><b>If Windows won't let you download the file at all</b>, the person helping you may ask you to paste this into PowerShell instead:
-            <div class="cmd"><code id="fetch">cd $HOME\Downloads; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 'Tls12'; irm https://github.com/rebeccamcfadden/hometv-launcher/releases/latest/download/family-install.ps1 -OutFile family-install.ps1; powershell -ExecutionPolicy Bypass -File .\family-install.ps1</code><button data-copy="fetch">Copy</button></div>
+            <div class="cmd"><code id="fetch">cd $HOME\Downloads; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 'Tls12'; try { irm https://github.com/rebeccamcfadden/hometv-launcher/releases/latest/download/family-install.ps1 -OutFile family-install.ps1 -ErrorAction Stop; powershell -ExecutionPolicy Bypass -File .\family-install.ps1 } catch { "The download failed: $($_.Exception.Message)" }</code><button data-copy="fetch">Copy</button></div>
           </li>
         </ul>
       </section>
