@@ -291,6 +291,8 @@ export function searchScreen(): Screen {
   function collapse() {
     expanded = false;
     render();
+    // Back beside the keyboard, the results start from the top again, filter chips in view (F46 TV sweep).
+    results.scrollTop = 0;
     const s = app.top();
     app.focus(s?.memory?.get('kb') ?? keyboard.querySelector<HTMLElement>('[data-default]'));
   }

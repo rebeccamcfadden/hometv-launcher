@@ -318,7 +318,7 @@ final class SearchPage extends Screen {
     /** Coming back from a title or another tab: Recent searches, My list and the offers may have changed. */
     @Override
     void onShow() {
-        if (snap) scroll.scrollTo(0, 0);
+        if (snap) ScrollBox.toStart(scroll);
         render();
     }
 
@@ -530,7 +530,7 @@ final class SearchPage extends Screen {
     private void expand() {
         expanded = true;
         render(false);
-        scroll.scrollTo(0, 0);
+        ScrollBox.toStart(scroll);
         shell.focus(firstResult());
     }
 
@@ -554,6 +554,9 @@ final class SearchPage extends Screen {
         View remembered = memory.get(GROUP_KEYBOARD);
         expanded = false;
         render(false);
+        // Back beside the keyboard, the results start from the top again, filter chips in view (F46 TV sweep). A
+        // reveal's animation still running from the grid would scroll it back down, so it is stopped first.
+        ScrollBox.toStart(scroll);
         shell.focus(remembered != null && remembered.isAttachedToWindow() ? remembered : keyA);
     }
 
