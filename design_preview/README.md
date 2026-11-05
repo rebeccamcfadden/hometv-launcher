@@ -63,10 +63,9 @@ today, so every period can be reviewed without waiting for it.
 
 ## Figma
 
-File `7gFFvfdGdXJVLZnj18Zah4` (private; ask the owner for access). The page **Full design** holds the final designs
-only, as the app's flow from top to bottom: one row per step, its main screens on the left and detail to the right.
-Options not picked are on the pages named "Closed · …"; frames a later pick replaced are on "Closed · Superseded
-(from Full design)"; "parked" keeps early concepts. A page still being drawn has its own name ("Two regions").
+File `7gFFvfdGdXJVLZnj18Zah4` (private; ask the owner for access). The page **Full design** (`0:1`) holds the final
+designs only, as the app's flow from top to bottom: one row per step, its main screens on the left and detail to the
+right (F49, 2026-11-04).
 
 | Row on Full design | What it is |
 |---|---|
@@ -82,6 +81,18 @@ Options not picked are on the pages named "Closed · …"; frames a later pick r
 | 10 · Launcher settings | Sections on the left, the focused section's pane on the right |
 | 11 · Phone remote | The phone remote (F27) |
 | 12 · Loading, offline and errors | Skeletons, the offline pill, errors with Retry |
+
+The other pages:
+
+| Page | What it is |
+|---|---|
+| Two regions | Options still open, or picked but not built yet |
+| parked | Explore versions of Movies and TV Shows, title preview options A and B, earlier search concepts |
+| Closed · … | Option pages after the pick (Phone remote F27, Library cards F40, Smaller cards F46, Person page), each with a note at the top naming the pick |
+| Closed · Superseded (from Full design) | Frames that a later pick replaced on Full design, among them V1's lists-only Movies & TV Shows and the old Prices cards |
+
+When a design is finished (picked and its build merged, or the project lead says it's final), its frames move to Full
+design's matching row: moved, never copied or deleted, so node ids stay the same.
 
 The prototype goes further than Figma in places. These exist only here: the filters drawer,
 the Episodes, Cast & crew and More like this tabs, the Inputs and Wi-Fi dropdowns, the
