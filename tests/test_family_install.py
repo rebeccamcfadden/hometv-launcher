@@ -280,6 +280,15 @@ class StaticTest(unittest.TestCase):
         text = RELEASE.read_text(encoding="utf-8")
         self.assertIn('"$($list.Name)/config.json"', text)
 
+    def test_a_reinstall_asks_to_update_not_to_make_home(self):
+        # Questions print only without -NoPrompt, so the wording is checked here.
+        self.assertRegex(self.text, r"\$mode -eq 'reinstall'\) \{ 'Update the HomeTV Launcher on this TV now\?' \}")
+
+    def test_questions_drop_keys_typed_ahead(self):
+        for fn in ("Ask-YesNo", "Ask-Text", "Wait-Done"):
+            body = self.text.split(f"function {fn}(", 1)[1].split("\n}", 1)[0]
+            self.assertIn("Clear-TypedAhead", body, fn)
+
     def test_never_uninstalls(self):
         self.assertNotRegex(self.text, r"pm uninstall|'uninstall'|\buninstall-")
 
@@ -748,6 +757,18 @@ class FamilyInstallTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertEqual(self.disables(end), [TVLAUNCHER, "com.example.bloat1"])
 
+    def test_a_model_written_quoted_or_in_backticks_counts(self):
+        examples = self.base / "examples"
+        for name, header in {"quoted": '# A set (ro.product.model="Test TV", board x)\n',
+                             "spaced": '# A set (ro.product.model = "Test TV")\n',
+                             "ticks": "# A set (`ro.product.model` Test TV)\n"}.items():
+            (examples / name).mkdir(parents=True)
+            (examples / name / "debloat.txt").write_text(header + "com.example.x\n", encoding="utf-8")
+        proc, end = self.run_installer(self.tv(), "-ListsFrom", str(examples))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        for name in ("quoted", "spaced", "ticks"):
+            self.assertIn(f"  {name}", proc.stdout)
+
     def test_a_reinstall_with_a_list_records_home_for_restore(self):
         state = self.debloat_tv(disabled=[TVLAUNCHER], preferred=OURS)
         state["packages"] = state["packages"] + ["com.hometv.launcher"]
@@ -1077,10 +1098,62 @@ class FamilyInstallTest(unittest.TestCase):
     def test_repository_copy_suggests_from_lists_from(self):
         lists = self.base / "examples" / "test-tv-x"
         lists.mkdir(parents=True)
-        (lists / "debloat.txt").write_text("# TestCo Test TV\ncom.example.x\n", encoding="utf-8")
+        (lists / "debloat.txt").write_text("# TestCo Test TV (ro.product.model Test TV)\ncom.example.x\n", encoding="utf-8")
         proc, end = self.run_installer(self.tv(), "-ListsFrom", str(self.base / "examples"))
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertIn("  test-tv-x", proc.stdout)
+
+    def test_at_most_three_lists_best_match_first(self):
+        examples = self.base / "examples"
+        headers = {
+            # Its model is only mentioned, with no build of this TV: not offered.
+            "a-mention": "# Like the Test TV, but another set\n",
+            "b-declared": "# Some TV (ro.product.model Test TV), Android 9\n",
+            "c-same-software": "# Test TV (ro.product.model Test TV), Android 9, software TV05\n",
+            "d-declared": "# Other (ro.product.model Test TV)\n",
+            "e-declared": "# Other (ro.product.model Test TV)\n",
+            "f-build-only": "# Test TV on PPR1.180610.011\n",
+        }
+        for name, header in headers.items():
+            (examples / name).mkdir(parents=True)
+            (examples / name / "debloat.txt").write_text(header + "com.example.x\n", encoding="utf-8")
+        state = self.tv()
+        state["props"].update({"ro.build.display.id": "PPR1.180610.011 release-keys", "ro.build.version.incremental": "TV05"})
+        proc, end = self.run_installer(state, "-ListsFrom", str(examples))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        offered = [line.strip() for line in proc.stdout.split("best first:")[1].splitlines()[1:4]]
+        self.assertEqual(offered, ["c-same-software", "b-declared", "d-declared"])
+        self.assertNotIn("  a-mention", proc.stdout)
+
+    def offered_lists(self, headers, props):
+        examples = self.base / "examples"
+        for name, header in headers.items():
+            (examples / name).mkdir(parents=True)
+            (examples / name / "debloat.txt").write_text(header + "com.example.x\n", encoding="utf-8")
+        state = self.tv()
+        state["props"].update(props)
+        proc, end = self.run_installer(state, "-ListsFrom", str(examples))
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        return [line.strip() for line in proc.stdout.split("best first:")[1].splitlines()[1:4] if line.startswith("  ")]
+
+    def test_a_note_about_another_list_is_not_this_lists_software(self):
+        # As examples/tcl-beyondtv-pl (AP03) names the AP06 list it started from: an AP06 TV gets the AP06 list first.
+        offered = self.offered_lists({
+            "a-ap03": "# Test TV (ro.product.model Test TV, build PPR1.180610.011 AP03), Android TV 9.\n"
+                      "# Same platform as examples/b-ap06/ (build AP06), which was the starting point.\n",
+            "b-ap06": "# Test TV (ro.product.model Test TV), Android TV 9, build PPR1.180610.011 AP06\n",
+        }, {"ro.build.display.id": "PPR1.180610.011 release-keys", "ro.build.version.incremental": "AP06"})
+        self.assertEqual(offered, ["b-ap06", "a-ap03"])
+
+    def test_the_same_software_beats_any_number_of_weaker_matches(self):
+        # A numeric software version (Philips: incremental 200321) counts too.
+        weaker = "# Test TV (ro.product.model Test TV), device tv_dev, Android 9, build PPR1.180610.011 incremental 200715\n"
+        offered = self.offered_lists({
+            "a-weaker": weaker, "b-weaker": weaker, "c-weaker": weaker,
+            "d-same-software": "# A set (ro.product.model Test TV), incremental 200321\n",
+        }, {"ro.build.display.id": "PPR1.180610.011 release-keys", "ro.build.version.incremental": "200321",
+            "ro.product.device": "tv_dev"})
+        self.assertEqual(offered, ["d-same-software", "a-weaker", "b-weaker"])
 
     def test_stamped_copy_refuses_another_apk(self):
         script, release = self.stamped_copy("11" * 32)
