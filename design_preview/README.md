@@ -63,22 +63,40 @@ today, so every period can be reviewed without waiting for it.
 
 ## Figma
 
-File `7gFFvfdGdXJVLZnj18Zah4` (private; ask the owner for access). One page, laid out as a main column on the
-left and parked work on the right.
+File `7gFFvfdGdXJVLZnj18Zah4` (private; ask the owner for access). The page **Full design** (`0:1`) holds the final
+designs only, as the app's flow from top to bottom: one row per step, its main screens on the left and detail to the
+right (F49, 2026-11-04).
 
-| Section | What it is |
+| Row on Full design | What it is |
 |---|---|
-| 01 · Home | Home, resting and scrolled to Inputs / Shortcuts / Weather |
-| 02 · V1 — Lists-only Movies & TV Shows | The Movies and TV Shows pages for V1 |
-| 03 · Pick for me | Filter setup, then four recommendations |
-| 04 · Title preview | The original title card, superseded by 04b |
-| 04b · Title preview — Option C (chosen) | The title preview to build: Overview and Where to watch tabs |
-| 05 · Search | The full search mockup: empty, typing, results, no matches |
-| [Parked] … | Explore versions of Movies and TV Shows, title preview options A and B, earlier search concepts |
+| 01 · First run | The setup checklist, reusing the settings panes |
+| 02 · Home | Home, resting and scrolled to Inputs / Shortcuts / Weather |
+| 03 · Quick settings | The dropdown from the nav's Settings icon |
+| 04 · All Apps | No frame yet |
+| 05 · Movies & TV Shows | The library pages with option C cards (F46) |
+| 06 · Title preview | Option C: Overview and Where to watch with prices, the rent/buy dialog |
+| 07 · Search | Empty, typing, results and no matches (F46 C cards) |
+| 08 · Pick for me | Filter setup, then four picks (P1) |
+| 09 · Person page | Pick B: the person on the left, every title in a grid on the right (#157) |
+| 10 · Launcher settings | Sections on the left, the focused section's pane on the right |
+| 11 · Phone remote | The phone remote (F27) |
+| 12 · Loading, offline and errors | Skeletons, the offline pill, errors with Retry |
 
-The prototype goes further than Figma in places. These exist only here: the filters drawer, the rent/buy dialog,
-the Episodes, Cast & crew and More like this tabs, the Inputs, Wi-Fi and quick-settings dropdowns, the person
-page stub, the empty and no-match states of Movies and TV Shows, the focusable search bar on the full results,
+The other pages:
+
+| Page | What it is |
+|---|---|
+| Two regions | Options still open, or picked but not built yet |
+| parked | Explore versions of Movies and TV Shows, title preview options A and B, earlier search concepts |
+| Closed · … | Option pages after the pick (Phone remote F27, Library cards F40, Smaller cards F46, Person page), each with a note at the top naming the pick |
+| Closed · Superseded (from Full design) | Frames that a later pick replaced on Full design, among them V1's lists-only Movies & TV Shows and the old Prices cards |
+
+When a design is finished (picked and its build merged, or the project lead says it's final), its frames move to Full
+design's matching row: moved, never copied or deleted, so node ids stay the same.
+
+The prototype goes further than Figma in places. These exist only here: the filters drawer,
+the Episodes, Cast & crew and More like this tabs, the Inputs and Wi-Fi dropdowns, the
+empty and no-match states of Movies and TV Shows, the focusable search bar on the full results,
 the Seen icon (an eye, so it no longer matches My list's tick), and Phone notes' picker for a line TMDB didn't match
 exactly (TMDB's best three as posters with title and year, Search again to fix the text with Search's keyboard
 and look it up again, and None of these; drawn as the confirm dialog, with no design yet; the project lead,
@@ -86,7 +104,7 @@ and look it up again, and None of these; drawn as the confirm dialog, with no de
 
 ### V2 designs
 
-The V2 screens with no Figma frame yet were drawn as HTML mockups (rendered at 1920×1080) and the project lead chose
+The V2 screens that had no Figma frame then were drawn as HTML mockups (rendered at 1920×1080) and the project lead chose
 one option for each (2026-10-30). The prototype builds these:
 
 | Design | What it is | Here |
@@ -293,7 +311,7 @@ the one beside it when the change took the card off the page (a title removed fr
   scrolls with focus, and back on All lists it returns to its start.
   A list hidden while chosen falls back to All lists. Up from any chip, and Right from the last one, goes to
   **Pick for me**, so it comes before the nav and instead of the grid.
-- An eight-column grid of **C cards** (F46, Rebecca 2026-11-04 09:57, Figma "Smaller cards (F46)" option C, node
+- An eight-column grid of **C cards** (F46, Rebecca 2026-11-04 09:57, Figma "Closed · Smaller cards (F46)" option C, node
   232:931; the same card on every page with title cards): the title's TMDB poster, 195 × 293, radius 12
   (`src/data/posters.ts`; a title with none, or a poster that can't load, shows its landscape art cropped), and on its
   top-left corner the **service pill**: the service or store's name in words after a round icon, a dark tick on green
@@ -587,7 +605,7 @@ ever inside an APK. Never typed on the TV.
 
 #### Phone remote
 
-F27 with F39's Add to My list (Figma page "Phone remote (F27)", the project lead's picks of 2026-11-02: phone layout A,
+F27 with F39's Add to My list (Figma page "Closed · Phone remote (F27)", the project lead's picks of 2026-11-02: phone layout A,
 pane A, Home sign B, Add to My list C; plan and decisions in the rework's F27 notes). A phone on the home Wi-Fi drives
 this launcher: arrows, OK, Back, Home and typing, and adds titles to My list. The TV serves the page itself over HTTPS
 (a self-signed certificate made on the TV: each phone warns once), with the pairing code in the QR link's
