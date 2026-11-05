@@ -20,11 +20,13 @@ Node 20 or newer.
 cd design_preview
 npm install
 npm run dev      # http://localhost:5173
-npm run build    # type-checks, then writes dist/ (open it from any static host)
+npm run build    # type-checks, then writes dist/: the install guide at its root, this demo in dist/demo/
 ```
 
 Each merge to `main` that touches `design_preview/` also publishes the build to GitHub Pages
-(`.github/workflows/pages.yml`), at `https://<owner>.github.io/<repo>/`. It shows mock data only.
+(`.github/workflows/pages.yml`). The site's root is the family install guide (`guide/`, a static page that
+`guide/build.mjs` copies to `dist/`), and this demo is at `https://<owner>.github.io/<repo>/demo/`, with mock data
+only. The guide's "Try the demo" button links there, so older links to the root still reach it in one press.
 
 The 1920×1080 TV screen is scaled to fit the window. The keyboard stands in for the remote:
 

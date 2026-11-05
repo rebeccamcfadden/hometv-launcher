@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "build": "tsc --noEmit && vite build && node guide/build.mjs",
+    "preview": "vite preview --outDir dist"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

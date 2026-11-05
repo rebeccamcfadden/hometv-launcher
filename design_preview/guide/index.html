@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HomeTV Launcher · install it on your TV</title>
+    <meta name="description" content="A simple guide to putting the HomeTV Launcher on an Android TV or Google TV from a Windows laptop." />
+    <!--
+      The install guide at the site's root (Family install, the easiest path; Rebecca, 2026-11-04). Static, no build
+      step: design_preview/guide/build.mjs copies it to dist/, and the TV demo is built into dist/demo/. Plain words,
+      one step at a time. The download points at the latest release's stamped family-install.ps1.
+    -->
+    <style>
+      :root { --bg: #14110f; --card: #1f1a17; --line: #3a312b; --text: #f3ece6; --dim: #c2b5aa; --accent: #ec9a4b; --ok: #8fd9a8; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 18px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif; }
+      main { max-width: 760px; margin: 0 auto; padding: 28px 22px 64px; }
+      header h1 { font-size: 34px; line-height: 1.2; margin: 8px 0 6px; }
+      header p { color: var(--dim); margin: 0 0 18px; }
+      .hero { width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); display: block; margin: 6px 0 14px; }
+      .demo { display: inline-block; background: var(--accent); color: #1b120a; font-weight: 700; text-decoration: none;
+              padding: 14px 22px; border-radius: 999px; font-size: 19px; }
+      .demo:hover, .demo:focus { filter: brightness(1.08); }
+      .note { color: var(--dim); font-size: 16px; }
+      section { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 18px 0; }
+      section h2 { margin: 0 0 6px; font-size: 22px; }
+      .num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%;
+             background: var(--accent); color: #1b120a; font-weight: 700; margin-right: 10px; font-size: 17px; }
+      ol, ul { padding-left: 24px; margin: 8px 0; }
+      li { margin: 4px 0; }
+      .path { font-weight: 600; }
+      .cmd { display: flex; gap: 8px; align-items: stretch; margin: 10px 0; }
+      .cmd code { flex: 1; background: #0e0b09; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+                  font: 14px/1.45 Consolas, "SF Mono", monospace; word-break: break-all; color: #f6e7d8; }
+      .cmd button { background: #2b241f; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0 14px;
+                    font: 15px inherit; cursor: pointer; }
+      .download { display: inline-block; background: var(--ok); color: #0d1a12; font-weight: 700; text-decoration: none;
+                  padding: 12px 20px; border-radius: 12px; margin: 6px 0; }
+      .download[aria-disabled="true"] { background: #3a312b; color: var(--dim); pointer-events: none; }
+      details { margin-top: 10px; }
+      summary { cursor: pointer; font-weight: 600; color: var(--dim); }
+      footer { color: var(--dim); font-size: 15px; margin-top: 30px; }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Put the HomeTV Launcher on your TV</h1>
+        <p>A calm, simple home screen for Android TV and Google TV: your apps, the weather, and what's on where you already pay.</p>
+        <img class="hero" src="img/tv-home.jpg" alt="The HomeTV Launcher's home screen: a greeting, the time and a row of streaming apps over an autumn picture." width="1280" height="720" />
+        <p><a class="demo" href="./demo/">Try the demo in your browser</a></p>
+        <p class="note">The demo runs in your browser with sample data. Your keyboard's arrow keys and Enter stand in for the remote.</p>
+      </header>
+
+      <section>
+        <h2><span class="num">1</span>What you need</h2>
+        <ul>
+          <li>An <b>Android TV or Google TV</b> (Sony, TCL, Philips, Hisense, Xiaomi and most others). It does <b>not</b> work on Samsung, LG or Fire TV.</li>
+          <li>A <b>Windows laptop</b> on the same Wi-Fi as the TV.</li>
+          <li>The <b>TV remote</b>, and about <b>15 minutes</b>.</li>
+        </ul>
+        <p class="note">Nothing on the TV changes until you say yes. The installer saves a backup on your laptop first, and every step can be undone.</p>
+      </section>
+
+      <section>
+        <h2><span class="num">2</span>Get the TV ready</h2>
+        <p>With the remote, switch on <b>Developer options</b>. The menu names differ a little by TV:</p>
+        <ul>
+          <li><b>Android TV:</b> <span class="path">Settings › Device Preferences › About</span>, then press OK on <b>Build</b> 7 times.</li>
+          <li><b>Google TV:</b> <span class="path">Settings › System › About</span>, then press OK on <b>Android TV OS build</b> 7 times.</li>
+        </ul>
+        <p>The TV says <i>"You are now a developer"</i>. Leave debugging off for now: the installer tells you when to switch it on, after a question about what's plugged into the TV.</p>
+        <p>Last, find the TV's address: <span class="path">Settings › Network &amp; Internet</span> › your network shows an <b>IP address</b>, like <code>192.168.1.50</code>. Write it down.</p>
+      </section>
+
+      <section>
+        <h2><span class="num">3</span>Download the installer</h2>
+        <p><a class="download" id="download" aria-disabled="true" role="link" tabindex="-1">Download the installer</a></p>
+        <p class="note" id="download-note">Not available yet: the first release is on its way.</p>
+        <details>
+          <summary>Check the download (optional)</summary>
+          <p class="note">On the <a href="https://github.com/rebeccamcfadden/hometv-launcher/releases/latest">release page</a>, open <code>SHA256SUMS</code>. In PowerShell, <code>Get-FileHash .\family-install.ps1</code> must print the same code it lists for <code>family-install.ps1</code>.</p>
+        </details>
+      </section>
+
+      <section>
+        <h2><span class="num">4</span>Run it</h2>
+        <ol>
+          <li>Open your <b>Downloads</b> folder, right-click <b>family-install.ps1</b> and choose <b>Run with PowerShell</b>.</li>
+          <li>If a blue box says <i>"Windows protected your PC"</i>: choose <b>More info</b>, then <b>Run anyway</b>.</li>
+          <li>If the window closes at once, or says scripts are disabled: open <b>PowerShell</b> (Start, type PowerShell, Enter) and paste this line:
+            <div class="cmd"><code id="run">cd $HOME\Downloads; powershell -ExecutionPolicy Bypass -File .\family-install.ps1</code><button data-copy="run">Copy</button></div>
+          </li>
+        </ol>
+      </section>
+
+      <section>
+        <h2><span class="num">5</span>Answer its questions</h2>
+        <ul>
+          <li>It asks what's plugged into the TV's USB ports, then tells you to open <b>Developer options</b> and turn on <b>USB debugging</b>, and <b>Network debugging</b> (or <b>ADB debugging</b>) if you see it.</li>
+          <li>It asks for the TV's address from step 2.</li>
+          <li>Watch the TV: it asks <i>"Allow USB debugging?"</i>. Tick <b>Always allow from this computer</b>, then <b>OK</b>.</li>
+          <li>It backs the TV up, installs the launcher and makes it the home screen. You may be asked to press <b>Home</b>, <b>Input</b> and <b>Settings</b> on the remote, to see that they work.</li>
+          <li>The TV then opens <b>First run</b>: pick your weather, streaming services and apps with the remote.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2><span class="num">6</span>Switch debugging off again</h2>
+        <p>At the end the installer walks you through it: in Developer options, <b>Revoke USB debugging authorisations</b>, turn <b>USB debugging</b> and <b>Network debugging</b> off, and restart the TV. Once the TV is back on the home screen, the installer checks that it's really off.</p>
+      </section>
+
+      <section>
+        <h2>If something goes wrong</h2>
+        <ul>
+          <li>The installer stops with a plain message saying what was changed (usually nothing). Send the last lines in the window to the person helping you.</li>
+          <li><b>To undo it:</b> switch debugging on again and run, with your backup folder (the installer tells you where it is):
+            <div class="cmd"><code id="undo">cd $HOME\Downloads; powershell -ExecutionPolicy Bypass -File .\family-install.ps1 -Restore "$HOME\HomeTV\backups\&lt;your TV&gt;-&lt;date&gt;"</code><button data-copy="undo">Copy</button></div>
+          </li>
+          <li><b>If Windows won't let you download the file at all</b>, the person helping you may ask you to paste this into PowerShell instead:
+            <div class="cmd"><code id="fetch">cd $HOME\Downloads; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 'Tls12'; try { irm https://github.com/rebeccamcfadden/hometv-launcher/releases/latest/download/family-install.ps1 -OutFile family-install.ps1 -ErrorAction Stop; powershell -ExecutionPolicy Bypass -File .\family-install.ps1 } catch { "The download failed: $($_.Exception.Message)" }</code><button data-copy="fetch">Copy</button></div>
+          </li>
+        </ul>
+      </section>
+
+      <footer>
+        <p>Open source on <a href="https://github.com/rebeccamcfadden/hometv-launcher">GitHub</a>. No ads, no tracking. Built on <a href="https://github.com/Gathin23/cleanyourtv">cleanyourtv</a>.</p>
+      </footer>
+    </main>
+    <script>
+      for (const b of document.querySelectorAll('button[data-copy]')) {
+        b.addEventListener('click', async () => {
+          const text = document.getElementById(b.dataset.copy).textContent;
+          try { await navigator.clipboard.writeText(text); b.textContent = 'Copied'; } catch { b.textContent = 'Select it'; }
+          setTimeout(() => { b.textContent = 'Copy'; }, 1800);
+        });
+      }
+    </script>
+  </body>
+</html>
