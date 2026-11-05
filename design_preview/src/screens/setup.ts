@@ -54,9 +54,9 @@ const ALL_STEPS: Step[] = [
       eyebrow: 'Features',
       title: 'Choose what this TV does.',
       body: () =>
-        'TMDB account (Movies, TV Shows, Search and Pick for me), Price lookup and Weather start on; Phone notes and Phone remote start off, since each opens a port for phones. Each has its own row, set up next, with its own On/Off. One not set up when you finish is switched off.',
+        'On to start: TMDB account (the film and TV database behind Movies, TV Shows, Search and Pick for me), Price lookup and Weather. Off to start: Phone notes and Phone remote, since they let phones on your network reach the TV. You set up each one next; any you don’t set up is switched off when you finish.',
       // F34: each feature's On/Off is in its own section; Features there only shows them all.
-      note: 'Each one’s On/Off is in its own section of Launcher settings; Features there shows them all.',
+      note: 'You can switch each one on or off later in Launcher settings.',
     },
   },
   {
