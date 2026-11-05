@@ -63,22 +63,29 @@ today, so every period can be reviewed without waiting for it.
 
 ## Figma
 
-File `7gFFvfdGdXJVLZnj18Zah4` (private; ask the owner for access). One page, laid out as a main column on the
-left and parked work on the right.
+File `7gFFvfdGdXJVLZnj18Zah4` (private; ask the owner for access). The page **Full design** holds the final designs
+only, as the app's flow from top to bottom: one row per step, its main screens on the left and detail to the right.
+Options not picked are on the pages named "Closed · …"; frames a later pick replaced are on "Closed · Superseded
+(from Full design)"; "parked" keeps early concepts. A page still being drawn has its own name ("Two regions").
 
-| Section | What it is |
+| Row on Full design | What it is |
 |---|---|
-| 01 · Home | Home, resting and scrolled to Inputs / Shortcuts / Weather |
-| 02 · V1 — Lists-only Movies & TV Shows | The Movies and TV Shows pages for V1 |
-| 03 · Pick for me | Filter setup, then four recommendations |
-| 04 · Title preview | The original title card, superseded by 04b |
-| 04b · Title preview — Option C (chosen) | The title preview to build: Overview and Where to watch tabs |
-| 05 · Search | The full search mockup: empty, typing, results, no matches |
-| [Parked] … | Explore versions of Movies and TV Shows, title preview options A and B, earlier search concepts |
+| 01 · First run | The setup checklist, reusing the settings panes |
+| 02 · Home | Home, resting and scrolled to Inputs / Shortcuts / Weather |
+| 03 · Quick settings | The dropdown from the nav's Settings icon |
+| 04 · All Apps | No frame yet |
+| 05 · Movies & TV Shows | The library pages with option C cards (F46) |
+| 06 · Title preview | Option C: Overview and Where to watch with prices, the rent/buy dialog |
+| 07 · Search | Empty, typing, results and no matches (F46 C cards) |
+| 08 · Pick for me | Filter setup, then four picks (P1) |
+| 09 · Person page | Pick B: the person on the left, every title in a grid on the right (#157) |
+| 10 · Launcher settings | Sections on the left, the focused section's pane on the right |
+| 11 · Phone remote | The phone remote (F27) |
+| 12 · Loading, offline and errors | Skeletons, the offline pill, errors with Retry |
 
-The prototype goes further than Figma in places. These exist only here: the filters drawer, the rent/buy dialog,
-the Episodes, Cast & crew and More like this tabs, the Inputs, Wi-Fi and quick-settings dropdowns, the person
-page stub, the empty and no-match states of Movies and TV Shows, the focusable search bar on the full results,
+The prototype goes further than Figma in places. These exist only here: the filters drawer,
+the Episodes, Cast & crew and More like this tabs, the Inputs and Wi-Fi dropdowns, the
+empty and no-match states of Movies and TV Shows, the focusable search bar on the full results,
 the Seen icon (an eye, so it no longer matches My list's tick), and Phone notes' picker for a line TMDB didn't match
 exactly (TMDB's best three as posters with title and year, Search again to fix the text with Search's keyboard
 and look it up again, and None of these; drawn as the confirm dialog, with no design yet; the project lead,
