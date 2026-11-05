@@ -886,7 +886,8 @@ first and is off by default. Costs are rough: **S** about a day or less, **M** a
 ### Cards per row, square or wide
 
 - **Idea:** 3, 4 or 5 apps a row, and square or wide app cards.
-- **Now:** Home's app row has 7 tiles; All Apps has `columns` in `config.xml` (7). Cards are always wide banners.
+- **Now:** Home's app row has 7 tiles (`HomePage.APP_COLUMNS`) and All Apps 6 a row (`AllAppsPage.COLUMNS`), both
+  fixed in code; `config.xml`'s old `columns` is no longer read. Cards are always wide banners.
 - **Wanted:** a setting under Theme or Home row apps for the number a row and the card shape. Square cards need
   the app's icon when it has no square art.
 - **Cost:** S.
@@ -895,10 +896,10 @@ first and is off by default. Costs are rough: **S** about a day or less, **M** a
 
 - **Idea:** each input can get the household's own name, and HDMI ports with nothing plugged in can be hidden.
 - **Now:** the Inputs dropdown and Home's Inputs row list the HDMI ports under the TV's names, with CEC devices
-  named on their port ([docs/launcher.md](docs/launcher.md)). Inputs hidden in the TV's own settings are left out
-  (`TvInputs`).
-- **Wanted:** rename an input from its menu (the name saved on the TV), and a switch to hide ports where nothing is
-  connected. Off until set.
+  named on their port ([docs/launcher.md](docs/launcher.md)). A name given to a port or device in the TV's own
+  Settings › Inputs is already shown (`TvInputs`, `loadCustomLabel`), and inputs hidden there are left out.
+- **Wanted:** rename an input from the launcher's own menu, and a switch to hide ports where nothing is connected.
+  Off until set. Its design decides which name wins when the TV's Settings and the launcher both have one.
 - **Cost:** S-M. `TvInputs` already reads whether a port is connected (`getInputState`), but not every set reports
   it truthfully: check on the real TV first.
 
