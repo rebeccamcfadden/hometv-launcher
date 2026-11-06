@@ -256,8 +256,9 @@
     <string-array name="subscribed_services" translatable="false">
     </string-array>
 
-    <!-- The country whose services, stores, prices and TMDB lists show: SE (Sweden) or US. Empty (the default) is
-         SE. A region chosen on the TV wins over this. Can also be set with "region": "US" in a pushed config.json. -->
+    <!-- The country whose services, stores, prices and TMDB lists show: SE (Sweden) or US. Empty (the default):
+         First run suggests the TV's own country when it is one of these, else SE. A region chosen on the TV wins over
+         this. Can also be set with "region": "US" in a pushed config.json. -->
     <string name="region" translatable="false"></string>
 
     <!-- V2 Phase 3, the TMDB account (signing in is optional, from Launcher settings). The Movies and TV Shows chips

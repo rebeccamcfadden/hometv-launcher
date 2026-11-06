@@ -759,11 +759,13 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
         // Opened afresh, not rebuilt: what an earlier First run switched off as it ended starts on again (F34).
         boolean restored = done == null && FeaturePrefs.restoreFirstRunOff(this);
         if (restored) FirstRunPage.markRestored(this);
+        // Opened afresh with no region saved or configured: the TV's own country, when the launcher has it.
+        boolean regionGuessed = done == null && RegionChoice.suggest(this);
         firstRun = FirstRunPage.create(this, done, keyTab);
         FirstRunPage.markShown(this);
         shell.push(firstRun);
         // The launcher runs without them: rebuilt with them on, First run reopens over it as after any rebuild.
-        if (restored && !FeaturePrefs.live(this).same(Features.current())) recreate();
+        if (regionGuessed || (restored && !FeaturePrefs.live(this).same(Features.current()))) recreate();
     }
 
     /**
