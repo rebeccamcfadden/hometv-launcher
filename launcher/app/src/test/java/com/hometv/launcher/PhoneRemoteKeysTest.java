@@ -60,6 +60,15 @@ public class PhoneRemoteKeysTest {
         assertTrue(PhoneRemoteKeys.asksTmdb("ar"));
     }
 
+    @Test public void aPhoneIsNeverOfferedTheMockCataloguesTitlesOutsideAMockBuild() {
+        // TMDB's catalogue: searched, mock build or not.
+        assertTrue(PhoneRemoteKeys.searches(true, false));
+        assertTrue(PhoneRemoteKeys.searches(true, true));
+        // The mock catalogue (no key, or TMDB account switched off): only in a -PmockCatalogue=true build.
+        assertFalse(PhoneRemoteKeys.searches(false, false));
+        assertTrue(PhoneRemoteKeys.searches(false, true));
+    }
+
     @Test public void onlyTheFirstAnswerReachesThePhone() {
         List<String> got = new ArrayList<>();
         java.util.function.Consumer<String> answer = PhoneRemoteKeys.once(got::add);

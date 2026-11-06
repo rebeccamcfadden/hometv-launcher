@@ -261,6 +261,12 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
 
         @Override
         public void search(String query, java.util.function.Consumer<List<Title>> done) {
+            // No TMDB key, or TMDB account switched off: no catalogue to search, and never the mock one's titles (a
+            // -PmockCatalogue=true build aside).
+            if (!PhoneRemoteKeys.searches(data.catalog.isRemote(), BuildConfig.MOCK_CATALOGUE)) {
+                done.accept(java.util.Collections.emptyList());
+                return;
+            }
             List<Title> found = PhoneRemoteKeys.matching(data.catalog.all(), query);
             boolean remote = data.catalog.isRemote() && StateUi.online(MainActivity.this)
                     && TmdbGate.need(data.accounts) == TmdbGate.Need.NONE && PhoneRemoteKeys.asksTmdb(query);
@@ -698,7 +704,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
     }
 
     /**
-     * Movies, TV Shows or Search's "needs a TMDB key" on a release build without one (TmdbGate, F16): straight into
+     * Movies, TV Shows or Search's "needs a TMDB key" on a launcher without one (TmdbGate, F16): straight into
      * Launcher settings › API keys; Back returns to the page, rebuilt with the key once one was added.
      */
     void addKeyFromPage() {

@@ -57,6 +57,15 @@ final class PhoneRemoteKeys {
         return query != null && query.trim().length() >= TMDB_MIN;
     }
 
+    /**
+     * Whether a phone's search may answer at all: from TMDB's catalogue, or the mock one only in a -PmockCatalogue=true
+     * build. Without a key, or with TMDB account switched off, the launcher runs on the mock catalogue (Data.create),
+     * whose titles a phone must never be offered.
+     */
+    static boolean searches(boolean remoteCatalogue, boolean mockBuild) {
+        return remoteCatalogue || mockBuild;
+    }
+
     /** Passes on only the first answer: TMDB's or the fallback's, whichever comes first. Main thread. */
     static <T> java.util.function.Consumer<T> once(java.util.function.Consumer<T> done) {
         boolean[] given = {false};

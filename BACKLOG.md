@@ -16,7 +16,8 @@ milestones: [docs/rework.md](docs/rework.md).
   cleanyourtv-ui keeps them: search 1 hour, discover 3 hours, a title 12 hours, seasons and people a week; a stale
   copy is used when TMDB can't be reached, so what was seen once shows offline. Images come at the TMDB size nearest
   the box (w300 small cards, w780 library cards, w1280 the preview, w185 portraits) and are decoded at the size
-  shown into the 24 MB memory cache (`Art`). Without a token the build falls back to the mock catalogue, which needs
+  shown into the 24 MB memory cache (`Art`). Without a token, Movies, TV Shows and Search ask for a key; a build with
+  `-PmockCatalogue=true` (the emulator, tests) uses the mock catalogue instead, which needs
   no network; the 17 bundled JPEGs left the APK (1,612,551 B to 275,607 B) and its cards show the plain placeholder.
 - **Mock ids:** the 43 mock titles map to TMDB by `MockIds` (looked up once by name and year, 2026-10-30);
   "marvel-one-shots" has no single TMDB title and drops out. The household's stored ids move to TMDB ids
@@ -74,8 +75,8 @@ milestones: [docs/rework.md](docs/rework.md).
 - **Still to do:** TMDB's language following the TV's.
 
 ### Streaming availability and prices
-- **V1:** mock: which service has a title, "Included", and the rent and buy prices. Still so without a TMDB token
-  (the mock catalogue).
+- **V1:** mock: which service has a title, "Included", and the rent and buy prices. Still so in a build with
+  `-PmockCatalogue=true` (the mock catalogue).
 - **V2 Phase 2 (real):** with a TMDB token, a title's offers are where TMDB's watch providers (JustWatch data) say it
   streams, is free, or can be rented or bought in Sweden, asked with the title's details (`append_to_response=
   watch/providers`, kept 12 hours like them). Prices follow the project lead's policy (2026-10-30), never while Home

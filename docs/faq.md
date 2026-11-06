@@ -82,7 +82,7 @@ uses it.
 Yes, and only for content. The weather comes from Open-Meteo, with no key and no account. With a TMDB token in the
 build, the catalogue, artwork, availability and prices come from TMDB, Watchmode and Movie of the Night, and a themed
 backdrop is downloaded once from a CDN. Everything fetched is kept, so Home and what you have already seen still show
-while the TV is offline, and without a token the launcher builds with a mock catalogue that needs no network. There are
+while the TV is offline. Without a TMDB key, Movies, TV Shows and Search say they need one. There are
 no analytics and no telemetry. With Phone notes or Phone remote turned on, it also listens on the home network for
 your own phones, and only theirs. Details: [launcher.md](launcher.md).
 

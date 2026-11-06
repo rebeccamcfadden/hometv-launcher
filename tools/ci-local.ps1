@@ -18,7 +18,7 @@ Jobs:
             and fail on a ref; invalid input (exit 2) always fails.
   launcher  gradlew testReleaseUnitTest lintRelease assembleRelease (with the local build cache), 0 lint errors,
             release APK <= 1,048,576 B.
-Builds without launcher/tv.properties, as CI does (no keys: the mock catalogue).
+Builds without launcher/tv.properties, as CI does (no keys).
 #>
 param([int]$Pr, [string]$Ref, [switch]$NoPost)
 $ErrorActionPreference = 'Stop'

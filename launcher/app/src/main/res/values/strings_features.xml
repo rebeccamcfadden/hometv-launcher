@@ -46,7 +46,7 @@
     <string name="needs_tmdb_off">Titles, artwork, your lists and search come from TMDB, a free film and TV database. TMDB account is switched off on this TV: Turn on switches it on and signs in. Apps, inputs and the clock on Home work without it.</string>
     <string name="needs_tmdb_signed_out">Titles, artwork, your lists and search come from TMDB, a free film and TV database. Sign in once with your phone in Launcher settings › Account. Apps, inputs and the clock on Home work without it.</string>
     <string name="needs_tmdb_sign_in">Sign in</string>
-    <!-- F16: a release build (a family TV) with no TMDB key yet. -->
+    <!-- F16: a TV with no TMDB key yet (any build but -PmockCatalogue=true). -->
     <string name="needs_tmdb_key_title">%1$s needs a TMDB key</string>
     <string name="needs_tmdb_key_body">Titles, artwork and search come from TMDB, a free film and TV database, which needs a free key from this household. Add it once from a phone or laptop in Launcher settings \u203a API keys. Apps, inputs and the clock on Home work without it.</string>
 </resources>
