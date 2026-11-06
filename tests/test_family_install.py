@@ -289,6 +289,14 @@ class StaticTest(unittest.TestCase):
             body = self.text.split(f"function {fn}(", 1)[1].split("\n}", 1)[0]
             self.assertIn("Clear-TypedAhead", body, fn)
 
+    def test_enter_checks_debugging_again(self):
+        # Enter is the safe answer: stopping here leaves debugging on, so that takes a typed n.
+        self.assertRegex(self.text, r"\$NoPrompt -or -not \(Ask-YesNo '[^']*check again\?' \$true\)")
+
+    def test_install_keeps_raw_tool_output_off_screen(self):
+        install = self.text.split("Step 'Installing'", 1)[1].split("Step 'First run'", 1)[0]
+        self.assertNotRegex(install, r"Say \$(installed|out)\b")
+
     def test_never_uninstalls(self):
         self.assertNotRegex(self.text, r"pm uninstall|'uninstall'|\buninstall-")
 
