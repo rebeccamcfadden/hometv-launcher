@@ -38,7 +38,7 @@ No camera? Type the address the pane shows (`https://<tv>:8767/remote`) and then
   never closes it. Elsewhere the bar is dimmed and says why.
 - **My list:** while the TV shows a title (its preview, or a card with focus) a card names it, with **My list**. Tap it
   to add the title, again to take it off; the TV says "Added Arrival to My list · From Rebecca's phone". **Something
-  else? Search to add** searches the TV's catalogue from the phone: **+** adds, **✓** is already on it. Signed in to
+  else? Search to add to My list** searches the TV's catalogue from the phone: **+** adds, **✓** is already on it. Signed in to
   TMDB, My list follows the account's watchlist, as on the TV.
 - **Home** works even when another app is in front.
 
