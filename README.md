@@ -66,8 +66,9 @@ manufacturer's bloat (nothing is uninstalled, and one command puts it back), bui
 checks each step with screenshots from the TV. First, on the TV: Settings → Device Preferences → About → press OK on
 **Build** seven times → back → Developer options → **USB debugging** on (and Network/ADB debugging if you see it).
 
-Either way it needs Android 8.0 or newer. Fire TV keeps its own home screen (the debloat half still works), and
-Samsung Tizen and LG webOS are different systems: [supported TVs](docs/supported-tvs.md).
+Either way it needs Android 8.0 or newer. Fire TV keeps its own home screen, so the guide's installer stops on it;
+the coding-assistant method can still debloat it. Samsung Tizen and LG webOS are different systems:
+[supported TVs](docs/supported-tvs.md).
 
 ## Documentation
 
