@@ -54,18 +54,21 @@ through the internet. The phone remote (HTTPS on port 8767, or the next free one
 makes) listens only while Phone remote is on, and acts only for a phone that paired with the code the TV shows.
 ## Install
 
-On a computer on the same Wi-Fi as an Android TV or Google TV, with this repo cloned, paste [PROMPT.md](PROMPT.md) into
-Claude Code, [Codex](https://github.com/openai/codex), [Gemini CLI](https://github.com/google-gemini/gemini-cli) or
-another coding assistant with shell access, and fill in your TV model. It backs up the TV, disables the manufacturer's
-bloat (nothing is uninstalled, and one command puts it back), builds the launcher, makes it Home and checks each step
-with screenshots from the TV. About fifteen minutes.
+**The install guide (start here):** [rebeccamcfadden.github.io/hometv-launcher](https://rebeccamcfadden.github.io/hometv-launcher/)
+walks you through it from a Windows laptop on the same Wi-Fi as the TV: switch on Developer options, download one
+installer, answer its questions. It backs up the TV, installs the launcher, makes it Home and helps you switch
+debugging off again. About fifteen minutes, and every step can be undone.
 
-Before that, on the TV: Settings → Device Preferences → About → press OK on **Build** seven times → back → Developer
-options → **USB debugging** on (and Network/ADB debugging if you see it). Keep the TV on, and accept "Allow USB
-debugging?" when it appears.
+**Or with a coding assistant:** on any computer on the same Wi-Fi, with this repo cloned, paste [PROMPT.md](PROMPT.md)
+into Claude Code, [Codex](https://github.com/openai/codex), [Gemini CLI](https://github.com/google-gemini/gemini-cli)
+or another coding assistant with shell access, and fill in your TV model. It backs up the TV, disables the
+manufacturer's bloat (nothing is uninstalled, and one command puts it back), builds the launcher, makes it Home and
+checks each step with screenshots from the TV. First, on the TV: Settings → Device Preferences → About → press OK on
+**Build** seven times → back → Developer options → **USB debugging** on (and Network/ADB debugging if you see it).
 
-It needs Android 8.0 or newer. Fire TV keeps its own home screen (the debloat half still works), and Samsung Tizen and
-LG webOS are different systems: [supported TVs](docs/supported-tvs.md).
+Either way it needs Android 8.0 or newer. Fire TV keeps its own home screen, so the guide's installer stops on it;
+the coding-assistant method can still debloat it. Samsung Tizen and LG webOS are different systems:
+[supported TVs](docs/supported-tvs.md).
 
 ## Documentation
 
