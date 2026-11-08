@@ -32,7 +32,7 @@ Changes that rely on these belong in this fork, not upstream.
 [PROMPT.md](PROMPT.md) is the procedure. Its safety rules, in brief:
 
 - **Disable, never uninstall.** `pm disable-user --user 0`, one package per shell call. No
-  `pm uninstall`, no root, nothing flashed. Every step must be undone by `tools/restore.sh`.
+  `pm uninstall`, no root (on Android TV only, webOS and samsung are ok to root), nothing flashed. Every step must be undone by `tools/restore.sh`.
 - **Back up first.** Package list, disabled list, `getprop` and settings into `backup/` before the first
   change. `tools/disable.sh` also writes its own record in `~/.cleanyourtv/`; keep the list you applied.
 - **Leave alone what the TV needs to work:** the TV app and input services behind HDMI and the tuner,
@@ -52,7 +52,7 @@ Changes that rely on these belong in this fork, not upstream.
   network, disabling it takes the TV off Wi-Fi and ADB. `tools/disable.sh` and
   `launcher/build-and-install.sh` already enforce this. Use `FORCE_HOME=1` or `FORCE_SETUPWRAITH=1` only in
   the situation the script's own message describes, and only with the person's agreement.
-  - On a CVTE board (any `com.cvte.*` package), leave its stock launcher (`com.cvte.tv.launcher.*`) enabled
+    - On a CVTE board (any `com.cvte.*` package), leave its stock launcher (`com.cvte.tv.launcher.*`) enabled
     unless the `examples/` folder for that exact board disables it. Make the new launcher Home with
     `cmd package set-home-activity`, reboot once, and confirm Home and ADB come back before anything else.
     Don't enable a remote-key helper in the same pass: a JVC set hung on its boot animation with ADB gone
@@ -162,7 +162,7 @@ Never do these in a PR:
   serial numbers, Android IDs, MAC addresses or ADB keys. Use `<tv ip>` or `192.168.1.50` in docs.
 - **Don't edit `.github/workflows/`** in a normal PR. A PR whose main content is a new CI
   workflow that builds or publishes releases is closed.
-- **No root, no getting around app-store protection, no private builds** others cannot reproduce from this repo.
+- **No root for Android TV, no getting around app-store protection, no private builds** others cannot reproduce from this repo. Other OSs (samsung tizen, LG webOS are ok to root)
 - **No extras added to the PROMPT flow** beyond debloating and the launcher.
 - **Don't relax `minSdk`** (26). Beyond `INTERNET`, name and justify any new launcher permission in the PR.
 - **Blur or crop** Wi-Fi names, people's names and cities (the top bar, a theme's `greeting_name`) before a
