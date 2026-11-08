@@ -20,7 +20,7 @@ import java.security.SecureRandom;
 import java.util.Locale;
 
 /**
- * Phone notes' inbox on the home network (BACKLOG.md, Phone notes): a "Send to TV" Shortcut on a phone posts a note's
+ * Phone notes' inbox on the home network (docs/how-it-works.md, Phone notes): a "Send to TV" Shortcut on a phone posts a note's
  * text to {@code http://<tv>:<port>/notes} with the pairing code shown in Launcher settings, and the TV turns its
  * lines into titles on that person's TMDB list. Off unless note_inbox is on; plain HTTP on the home network, so the
  * code only lets a caller add titles to the household's lists.

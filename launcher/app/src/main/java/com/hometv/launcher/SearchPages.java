@@ -1,7 +1,7 @@
 package com.hometv.launcher;
 
 /**
- * Search past TMDB's first 20 results (BACKLOG.md, TMDB): when focus reaches the last row of the full results, the
+ * Search past TMDB's first 20 results (docs/how-it-works.md, Real catalogue): when focus reaches the last row of the full results, the
  * next page is asked for and merged in (Catalog.Found.merge), up to {@link #MAX_PAGES} pages, so the titles kept for a
  * search stay bounded on a 1 GB TV. Pure Java, tested on the JVM; SearchPage asks.
  */

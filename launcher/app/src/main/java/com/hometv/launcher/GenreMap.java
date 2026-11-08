@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.TreeSet;
 
 /**
- * TMDB's genres in the launcher's words (BACKLOG.md, Real catalogue). The screens use the prototype's short names
+ * TMDB's genres in the launcher's words (docs/how-it-works.md, Real catalogue). The screens use the prototype's short names
  * ("Sci-fi", not "Science Fiction"), and Pick for me's pairs and Search's Browse by genre are written in them, so
  * TMDB's ids are mapped onto that vocabulary. TMDB's combined TV genres split in two ("Sci-Fi &amp; Fantasy" is
  * Sci-fi and Fantasy). Pure Java, unit-tested (GenreMapTest).

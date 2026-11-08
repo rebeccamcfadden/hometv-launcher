@@ -86,7 +86,7 @@ final class SearchIndex {
 
         /**
          * Whether the page has results: a title, a person, or a genre typed well enough to list its titles. (The
-         * prototype counted a genre alone as no match; BACKLOG.md, Exact genre search.)
+         * prototype counted a genre alone as no match; docs/how-it-works.md, Real catalogue.)
          */
         boolean hasMatches() {
             return !titles.isEmpty() || !people.isEmpty() || !genreTitles.isEmpty();

@@ -1,7 +1,7 @@
 # Releases for family installs
 
 `tools/release.ps1` builds the launcher as a public APK, signs it with the release key and puts it on a draft GitHub
-Release, with a `version.json` and a `SHA256SUMS` file. Family and friends install from there (BACKLOG.md, Family
+Release, with a `version.json` and a `SHA256SUMS` file. Family and friends install from there (docs/how-it-works.md, Family
 install), and later their launcher updates itself from there. It runs on the project lead's Windows PC, never in CI.
 
 A public build has no keys in it: `-PpublicRelease=true` builds from `launcher/tv.properties.example` alone, and Gradle

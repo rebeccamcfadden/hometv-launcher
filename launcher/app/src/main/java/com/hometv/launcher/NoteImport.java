@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * One phone note onto its TMDB list (BACKLOG.md, Phone notes; docs/phone-notes.md). Blocking: run on the account's
+ * One phone note onto its TMDB list (docs/how-it-works.md, Phone notes; docs/phone-notes.md). Blocking: run on the account's
  * worker thread, so it never races a sync. In order: find the account's list with the note's name (as {@link ListRef}
  * matches names), or make a private one; read what it holds; look the note's new lines up ({@link NoteMatch}); add the
  * new titles in batches; take the ticked ones off the list and hand them to the household as Seen. Adding only. A

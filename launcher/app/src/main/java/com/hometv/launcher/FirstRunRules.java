@@ -181,7 +181,7 @@ final class FirstRunRules {
     }
 
     /**
-     * When a row counts as done (the project lead, 2026-10-31; BACKLOG.md, First run): as in the prototype, once its
+     * When a row counts as done (the project lead, 2026-10-31; docs/how-it-works.md, First run): as in the prototype, once its
      * pane was opened, whatever was chosen there. Kept across restarts ({@link #encode}).
      */
     static boolean done(String id, Set<String> opened) {
@@ -232,7 +232,7 @@ final class FirstRunRules {
     }
 
     /**
-     * Whether the checklist opens by itself on this start (the project lead, 2026-10-31; BACKLOG.md, First run): once,
+     * Whether the checklist opens by itself on this start (the project lead, 2026-10-31; docs/how-it-works.md, First run): once,
      * on the first start after a fresh install, never after an update; config.xml's first_run_checklist (or a pushed
      * config.json) set to false turns it off.
      */

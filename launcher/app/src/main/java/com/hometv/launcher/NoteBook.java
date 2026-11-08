@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Phone notes' state kept on the TV (BACKLOG.md, Phone notes): the notes waiting to be imported, the latest per list
+ * Phone notes' state kept on the TV (docs/how-it-works.md, Phone notes): the notes waiting to be imported, the latest per list
  * (a later send of the same list replaces the earlier one, as it holds every line anyway), and each list's last send
  * for Launcher settings (when, lines, added, the lines that matched nothing). A note waits until its import is done,
  * so one sent signed out, offline, or while TMDB refused a list call is imported later. Saved as JSON in the

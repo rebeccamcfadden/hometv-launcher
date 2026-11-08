@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Age ratings for the launcher's filters and the title preview (BACKLOG.md, Real catalogue). The screens speak the
+ * Age ratings for the launcher's filters and the title preview (docs/how-it-works.md, Real catalogue). The screens speak the
  * US scale the prototype uses (G … NC-17 for movies, TV-Y … TV-MA for shows), so a title's rating is TMDB's US
  * certification, tidied; a title without one has "" (not rated here). Sweden's own ratings (Btl, 7, 11, 15) are an
  * open question for the project lead. Pure Java, unit-tested (CertificationsTest).

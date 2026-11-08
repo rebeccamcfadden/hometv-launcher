@@ -1,7 +1,7 @@
 package com.hometv.launcher;
 
 /**
- * A signed-in TMDB account (BACKLOG.md, TMDB sign-in and watchlist sync): the v4 access token and account id, which
+ * A signed-in TMDB account (docs/how-it-works.md, TMDB sign-in and watchlist sync): the v4 access token and account id, which
  * read the lists and write the account's own lists, and the v3 session id and account number, which the watchlist
  * and favourite writes need. Both tokens are as good as a password: {@link TmdbSessionStore} keeps them in the
  * app's private settings, and {@link #toString()} never shows them.

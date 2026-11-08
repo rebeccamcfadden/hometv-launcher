@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-/** Phone notes' waiting notes and last sends (BACKLOG.md, Phone notes). */
+/** Phone notes' waiting notes and last sends (docs/how-it-works.md, Phone notes). */
 public class NoteBookTest {
     @Test
     public void theLatestNoteOfAListWins() {

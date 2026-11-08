@@ -33,7 +33,7 @@ const known = (a: boolean, b: boolean) => (a === b ? 0 : a ? -1 : 1);
 /**
  * Ranks for "Recently added" from the lists' ids, each oldest first, in chip order (0 is newest): every list's last
  * title before any list's second-to-last, the earlier chip's first; a title on two lists takes its better place. No
- * list says when a title was added, so its place on the list stands in (BACKLOG.md).
+ * list says when a title was added, so its place on the list stands in (docs/how-it-works.md, Library, filters and sort).
  */
 export function recentRanks(orders: string[][]): Map<string, number> {
   const best = new Map<string, [number, number]>();

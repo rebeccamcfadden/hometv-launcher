@@ -39,7 +39,7 @@ final class WikidataIds {
     static final String SVT_PLAY = "P6817";
     static final String ITUNES_MOVIE = "P6398";
     static final String ITUNES_SEASON = "P6381";
-    // The US's (BACKLOG.md, Title deep links): Hulu, Peacock, Paramount+, Tubi and Fandango at Home.
+    // The US's (docs/how-it-works.md, Title deep links): Hulu, Peacock, Paramount+, Tubi and Fandango at Home.
     static final String HULU_MOVIE = "P6466";
     static final String HULU_SERIES = "P6467";
     static final String PEACOCK = "P11815";

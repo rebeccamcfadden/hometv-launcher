@@ -58,7 +58,7 @@ def tmdbToken = tvProps.getProperty('tmdb_api_key', '').trim()
 if (tmdbToken && !(tmdbToken ==~ /[A-Za-z0-9._\-]+/)) {
     throw new GradleException("${tvPropsFile.name}: tmdb_api_key has characters a TMDB token never has")
 }
-// Optional price keys (BACKLOG.md, Streaming availability and prices): without them the source is skipped. Any
+// Optional price keys (docs/how-it-works.md, Streaming availability and prices): without them the source is skipped. Any
 // printable ASCII but a space, a double quote or a backslash, so a key can't break the generated Java string; the
 // message never prints the value.
 def priceKey = { String key ->

@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Signing in to TMDB on the TV (BACKLOG.md, TMDB sign-in and watchlist sync), as a state machine with no threads or
+ * Signing in to TMDB on the TV (docs/how-it-works.md, TMDB sign-in and watchlist sync), as a state machine with no threads or
  * clock of its own, so it is unit-tested (SignInFlowTest). The sign-in screen asks {@link #due} for the next call,
  * sends it off the main thread, and hands back the answer to {@link #onReply} or the error to {@link #onError}; it
  * asks again at {@link #nextAt}.

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * A place for Home's weather, chosen on the TV in Launcher settings (BACKLOG.md, Weather location on the TV), and
+ * A place for Home's weather, chosen on the TV in Launcher settings (docs/how-it-works.md, Weather location on the TV), and
  * Open-Meteo's place search that finds it (no key; the only thing sent is what was typed). Adapted from the weather
  * add-on's Forecast.search, copied rather than shared: the launcher never depends on an add-on. Pure Java so the
  * parsing is tested on the JVM.

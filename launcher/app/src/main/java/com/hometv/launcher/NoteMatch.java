@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Turns a phone note's lines into titles on a list (BACKLOG.md, Phone notes). Each line is looked up once: its answer,
+ * Turns a phone note's lines into titles on a list (docs/how-it-works.md, Phone notes). Each line is looked up once: its answer,
  * a title id or "not found", is kept per list ({@link Memory}), so sending the same note again only looks up the new
  * lines, and a title taken off the list on the TV is not put back. Adding only: a line gone from the note takes
  * nothing off. A ticked line's title goes to Seen and comes off the list.

@@ -3,7 +3,7 @@ package com.hometv.launcher;
 import java.io.IOException;
 
 /**
- * The one thing the account code needs from the network (BACKLOG.md, TMDB sign-in and watchlist sync): send a
+ * The one thing the account code needs from the network (docs/how-it-works.md, TMDB sign-in and watchlist sync): send a
  * {@link Call} and get its {@link Reply}. Stage 2 binds it to the catalogue's HTTP client; the tests use a fake. A
  * call names which token goes in its Authorization header ({@link Auth}) instead of holding it, so a call can be
  * logged or shown in a test failure without leaking a token. Account calls are never cached on disk: the answers

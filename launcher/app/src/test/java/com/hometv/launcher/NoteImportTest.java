@@ -23,7 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** A phone note onto its TMDB list (BACKLOG.md, Phone notes), against a fake TMDB like AccountSyncTest's. */
+/** A phone note onto its TMDB list (docs/how-it-works.md, Phone notes), against a fake TMDB like AccountSyncTest's. */
 public class NoteImportTest {
     private static final TmdbSession SESSION = new TmdbSession("at", "obj", "sid", 548, "lead");
 

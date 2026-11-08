@@ -1,7 +1,7 @@
 # Family installer
 
 `tools/family-install.ps1` puts the HomeTV Launcher on the Android TV of family or friends from their Windows laptop,
-with no Python, JDK or Android SDK, while the project lead helps on a call (BACKLOG.md, Family install step 4). It
+with no Python, JDK or Android SDK, while the project lead helps on a call (docs/how-it-works.md, Family install step 4). It
 uses Google's own `adb`, so it can pair with Wireless debugging, which `tools/tv.py` cannot.
 
 It works on Android TV and Google TV sets and boxes running Android 8 or newer. It cannot work on Samsung (Tizen), LG

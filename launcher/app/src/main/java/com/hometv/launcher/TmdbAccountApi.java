@@ -9,7 +9,7 @@ import java.net.URLEncoder;
 import java.util.List;
 
 /**
- * The TMDB account calls (BACKLOG.md, TMDB sign-in and watchlist sync), built but not sent: {@link AccountHttp}
+ * The TMDB account calls (docs/how-it-works.md, TMDB sign-in and watchlist sync), built but not sent: {@link AccountHttp}
  * sends them. Sign-in is TMDB's v4 flow, whose access token reads the watchlist and favourites and reads and writes
  * the account's lists (movies and shows, private ones too); that token is then turned into a v3 session id, which
  * the watchlist and favourite writes still need (TMDB has no v4 call for them). Docs:

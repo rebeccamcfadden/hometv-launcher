@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
  * order of) last, in A–Z. A–Z leaves out a leading "The", "A" or "An", accents and case. Pure Java, unit-tested.
  *
  * <p>No list says when a title was added to it: the TV keeps My list in the order titles were added, TMDB returns the
- * watchlist oldest first and a list in its own order. So "Recently added" reads each list from its end (BACKLOG.md,
- * From M4): the last title on a list counts as its newest, and across lists (All lists) each list's last titles come
+ * watchlist oldest first and a list in its own order. So "Recently added" reads each list from its end (docs/how-it-works.md,
+ * Library, filters and sort): the last title on a list counts as its newest, and across lists (All lists) each list's last titles come
  * first, in chip order, then each list's second-to-last, and so on.
  */
 enum LibrarySort {

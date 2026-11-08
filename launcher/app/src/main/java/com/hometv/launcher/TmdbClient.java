@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * TMDB over HTTPS with a disk cache (BACKLOG.md, Real catalogue). Every answer is kept in the app's cache folder for
+ * TMDB over HTTPS with a disk cache (docs/how-it-works.md, Real catalogue). Every answer is kept in the app's cache folder for
  * as long as {@link TmdbApi#ttl} says; a fresh copy is used without asking TMDB, and a stale one when TMDB can't be
  * reached, so what was seen once still shows offline. Images (from image.tmdb.org, which needs no token) are kept a
  * week the same way. The token goes in the Authorization header only, never in a URL, a log or the cache. Blocking:

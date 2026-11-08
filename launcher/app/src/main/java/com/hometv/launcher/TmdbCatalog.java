@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 /**
- * The real catalogue, from TMDB (BACKLOG.md, Real catalogue; {@link Catalog} says how it answers). It starts from
+ * The real catalogue, from TMDB (docs/how-it-works.md, Real catalogue; {@link Catalog} says how it answers). It starts from
  * the mock catalogue's titles on TMDB ({@link MockIds}), as stubs with a name and a year, and fills them in from the
  * disk cache or the network a couple of seconds after Home is up, never on the main thread and never holding Home
  * up. Titles met on the way (search hits, recommendations, a person's titles) join what it knows. A detailed title's

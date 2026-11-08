@@ -1,5 +1,5 @@
 <#
-Builds, signs and uploads a HomeTV Launcher release for family installs (BACKLOG.md, Family install step 3). Read
+Builds, signs and uploads a HomeTV Launcher release for family installs (docs/how-it-works.md, Family install step 3). Read
 tools/release.md first: the release key is made once, and every family TV's updates depend on it.
 
   tools\release.ps1 -NewKey     # once: make the release key outside the repo and write its digest to tools\release-cert.txt

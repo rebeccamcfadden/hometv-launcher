@@ -3,7 +3,7 @@ package com.hometv.launcher;
 import java.util.Locale;
 
 /**
- * Phone notes' words that need no Android (BACKLOG.md, Phone notes; design_preview/README.md, Phone notes and Import
+ * Phone notes' words that need no Android (docs/how-it-works.md, Phone notes; design_preview/README.md, Phone notes and Import
  * pill): what the import pill says, and Launcher settings' value for the section. The sentences themselves are string
  * resources handed in as {@link Texts}, so the tests format the same English the TV shows. Pure Java, unit-tested
  * (NoteWordsTest).

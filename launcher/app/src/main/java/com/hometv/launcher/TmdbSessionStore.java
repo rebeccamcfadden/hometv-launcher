@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 /**
- * Where the signed-in TMDB account is kept (BACKLOG.md, TMDB sign-in and watchlist sync): the SharedPreferences file
+ * Where the signed-in TMDB account is kept (docs/how-it-works.md, TMDB sign-in and watchlist sync): the SharedPreferences file
  * "tmdb_account", private to the app. The manifest has allowBackup="false", so it never leaves the TV in a backup;
  * nothing here logs, and the tokens never go into the disk cache, a URL that is logged or a screenshot. Clearing the
  * app's data or signing out removes it. Not encrypted: Android TV 9 has no hardware-backed store worth the code for a

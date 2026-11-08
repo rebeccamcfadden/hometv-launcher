@@ -24,7 +24,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Loads TMDB's artwork and portraits into ImageViews (BACKLOG.md, Real catalogue), decoded at the size they are
+ * Loads TMDB's artwork and portraits into ImageViews (docs/how-it-works.md, Real catalogue), decoded at the size they are
  * shown: the image at the TMDB size nearest the box ({@link TmdbApi#backdrop}, {@link TmdbApi#profile}), from the
  * disk cache or the network ({@link TmdbClient#image}), off the main thread on three low-priority threads, sampled
  * down and at 16 bits per pixel, and kept in a memory cache of up to 24 MB (an eighth of the heap on a small TV).

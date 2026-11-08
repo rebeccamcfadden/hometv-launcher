@@ -3,7 +3,7 @@ package com.hometv.launcher;
 import java.util.Locale;
 
 /**
- * The country whose services, stores, prices and TMDB lists the launcher shows (BACKLOG.md, Two regions, and Family
+ * The country whose services, stores, prices and TMDB lists the launcher shows (docs/how-it-works.md, Two regions, and Family
  * install step 2). One region at a time; Sweden unless a TV is set to another, so no TV's default changes.
  *
  * <p>{@link #code} is how TMDB ({@code region}, {@code watch_region}) and Watchmode ({@code regions}) name it,

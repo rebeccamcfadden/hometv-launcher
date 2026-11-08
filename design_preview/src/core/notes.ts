@@ -1,7 +1,7 @@
 import { net } from './net';
 import { featureOn, setFeature, settings } from './settings';
 
-// Phone notes (BACKLOG.md, Phone notes): each phone shares a note to a "Send to TV" Shortcut, which posts its text to
+// Phone notes (docs/how-it-works.md, Phone notes): each phone shares a note to a "Send to TV" Shortcut, which posts its text to
 // the TV over the home network with a pairing code. The TV looks each new line up on TMDB and adds it to that
 // person's TMDB list. Mocked here: the dev bar's Jump menu "sends" a note, and the import runs on a timer.
 

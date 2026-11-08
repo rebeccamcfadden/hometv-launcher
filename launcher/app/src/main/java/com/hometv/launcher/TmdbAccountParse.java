@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Reads TMDB's answers to {@link TmdbAccountApi}'s calls (BACKLOG.md, TMDB sign-in and watchlist sync). An answer
+ * Reads TMDB's answers to {@link TmdbAccountApi}'s calls (docs/how-it-works.md, TMDB sign-in and watchlist sync). An answer
  * that is not a success becomes a {@link Failure} that says what to do about it, from TMDB's status codes
  * (developer.themoviedb.org/docs/errors). Pure Java, unit-tested (TmdbAccountParseTest).
  */

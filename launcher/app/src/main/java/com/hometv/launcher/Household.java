@@ -13,7 +13,7 @@ import java.util.Set;
 /**
  * The household's state stored on the TV (docs/rework.md, Watchlists): {@link HouseholdState} kept as one JSON
  * string in the SharedPreferences file "household". Every change is saved at once (apply, off the main thread) and
- * tells the listeners. A fresh install starts with empty lists (BACKLOG.md, Household seed).
+ * tells the listeners. A fresh install starts with empty lists (docs/how-it-works.md, Household seed).
  *
  * <p>V2 Phase 3: a change to My list, Favorites or Seen is also told to the {@link Recorder} ({@link Accounts}, which
  * queues it for the TMDB account), and {@link #applySynced} takes what a sync merged. The lists after My list are the
