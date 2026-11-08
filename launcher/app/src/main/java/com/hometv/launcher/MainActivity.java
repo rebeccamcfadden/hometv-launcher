@@ -620,7 +620,7 @@ public class MainActivity extends Activity implements NavBar.Host, Shell.Pages, 
                 Menus.network(this, s, vpnApp, this::start, saved, this::connectWifi)));
     }
 
-    /** OK on a saved network: ask Android to switch, or open Wi-Fi settings where the TV refuses (BACKLOG.md). */
+    /** OK on a saved network: ask Android to switch, or open Wi-Fi settings where the TV refuses (docs/how-it-works.md, Wi-Fi networks). */
     private void connectWifi(SavedNetworks.Net net) {
         if (WifiNetworks.connect(this, net.id)) {
             shell.toast(getString(R.string.wifi_switching, net.ssid));

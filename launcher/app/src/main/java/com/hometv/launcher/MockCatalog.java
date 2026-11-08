@@ -24,7 +24,7 @@ import java.util.TreeSet;
 /**
  * The mock catalogue, ported verbatim from design_preview/src/data/catalog.ts: every title, offer, person and season,
  * in the same order and with the same helpers (sub, free, rent, buy, stores, seasons). Illustrative data only:
- * availability, prices and scores are made up (BACKLOG.md, Real catalogue). Pure Java, so it is unit-tested.
+ * availability, prices and scores are made up (docs/how-it-works.md, Real catalogue). Pure Java, so it is unit-tested.
  */
 final class MockCatalog implements Catalog {
 

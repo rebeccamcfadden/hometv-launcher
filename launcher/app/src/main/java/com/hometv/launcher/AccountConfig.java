@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * The TMDB account's settings (BACKLOG.md, TMDB sign-in and watchlist sync): which TMDB lists show as chips, which is
+ * The TMDB account's settings (docs/how-it-works.md, TMDB sign-in and watchlist sync): which TMDB lists show as chips, which is
  * Seen, and whether the launcher may make the Seen list. config.xml's tmdb_shown_lists (or the older
  * tmdb_household_list and tmdb_friends_list), tmdb_seen_list and create_seen_list, overlaid by a pushed config.json
  * like every other key. Kept apart from {@link Config} so the account code stays in its own files. {@link #of} is pure

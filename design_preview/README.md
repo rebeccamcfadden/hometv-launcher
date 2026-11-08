@@ -391,7 +391,7 @@ the one beside it when the change took the card off the page (a title removed fr
   result or the bar, never to the hidden keyboard.
 - **No matches:** "No matches for “qzxv”", a tip, and Recently viewed. In this prototype an exact genre search
   ("drama", or Browse by genre → Drama) shows No matches too. The launcher, with the real catalogue, lists the
-  genre's titles instead, the ones it knows first and then TMDB's most popular ([BACKLOG.md](../BACKLOG.md), Real
+  genre's titles instead, the ones it knows first and then TMDB's most popular ([docs/how-it-works.md](../docs/how-it-works.md), Real
   catalogue).
 - **Back and Backspace:** on the full results they collapse to the keyboard; with the keyboard showing they go
   Home. Only the on-screen ⌫ key deletes. Leaving Search for another tab clears it (see Focus).

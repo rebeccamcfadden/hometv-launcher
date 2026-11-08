@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * One HTTPS GET, the only network the price sources and the Wikidata lookup need. Kept this small so the parsing and
  * request building stay pure and tested with fixtures, and Stage 2 binds it to the catalogue's client and disk cache
- * (BACKLOG.md, Streaming availability and prices). Blocking: call it from a background thread.
+ * (docs/how-it-works.md, Streaming availability and prices). Blocking: call it from a background thread.
  */
 interface HttpGet {
     /**

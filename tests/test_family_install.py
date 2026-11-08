@@ -1,4 +1,4 @@
-"""tools/family-install.ps1, the family installer, against fake TVs (BACKLOG.md, Family install step 4).
+"""tools/family-install.ps1, the family installer, against fake TVs (docs/how-it-works.md, Family install step 4).
 
 The installer is a third copy of launcher/build-and-install.sh's Home guard, run by people who cannot rescue a TV
 over ADB, so the order that guard depends on is tested here the way tests/test_home_guard.py tests the disable

@@ -215,7 +215,7 @@ public class SearchIndexTest {
 
     @Test
     public void anExactGenreListsItsTitles() {
-        // BACKLOG.md, Exact genre search: "drama" used to show No matches.
+        // docs/how-it-works.md, Real catalogue: "drama" used to show No matches.
         SearchIndex.Results r = INDEX.search("drama");
         assertTrue(r.hasMatches());
         assertEquals("Drama", SearchIndex.strongGenre(r));

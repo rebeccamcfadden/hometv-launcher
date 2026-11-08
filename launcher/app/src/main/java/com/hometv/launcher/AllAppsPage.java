@@ -16,7 +16,7 @@ import java.util.Set;
  * All Apps, pushed from Home's Shortcuts (docs/rework.md, decided 2026-10-29): a plain working grid of every app with a
  * TV entry point, plus phone apps that have none, sorted by name. OK opens an app; hold-OK adds it to Home's row or
  * takes it off, moves it into or out of TV Utilities, or opens App info. Styled from the tokens until it is designed
- * (BACKLOG.md, All Apps).
+ * (BACKLOG.md, From M2).
  *
  * F35 (b, Rebecca 2026-11-02: on for every TV, no switch): the grid ends with a TV Utilities folder tile holding the
  * apps the TV came with that aren't watch apps (TvUtilities); OK opens it as this same page with only those apps, and

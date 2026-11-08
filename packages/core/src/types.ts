@@ -37,7 +37,7 @@ export interface Offer {
   /** Subscription and free offers: the picture quality, e.g. "4K · HDR". */
   quality?: string;
   /**
-   * Two or more regions (BACKLOG.md › Two regions): the country the offer is in; Sweden when unset (the mock's own
+   * Two or more regions (docs/how-it-works.md › Two regions): the country the offer is in; Sweden when unset (the mock's own
    * offers). Prices are in its currency: kronor in Sweden, dollars in the US.
    */
   region?: 'se' | 'us';

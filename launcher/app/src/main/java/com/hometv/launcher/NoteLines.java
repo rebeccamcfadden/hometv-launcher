@@ -10,7 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A phone note's lines as titles to look up (BACKLOG.md, Phone notes): the text Apple Notes or Google Keep hands a
+ * A phone note's lines as titles to look up (docs/how-it-works.md, Phone notes): the text Apple Notes or Google Keep hands a
  * "Send to TV" Shortcut, one title a line. Checkboxes (Keep's ☐ and ☑, Markdown's [ ] and [x], ✓ and ✅),
  * bullets and numbering are taken off; a ticked or struck-through line means watched. A note's own title is skipped:
  * its first line, when the lines under it are a checklist or bullets and it isn't, or when it reads like a list's

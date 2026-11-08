@@ -41,7 +41,7 @@ final class AppMarks {
         put(new Mark("YouTube", 700, 28), "com.google.android.youtube.tv");
         put(new Mark("prime video", 700, 29), "com.amazon.amazonvideo.livingroom");
         put(new Mark("Disney+", 500, 34), "com.disney.disneyplus");
-        // HBO Max is its current name (BACKLOG; the prototype and the app's label say so too).
+        // HBO Max is its current name (docs/how-it-works.md, Choosing the household's services; the prototype and the app's label say so too).
         put(new Mark("HBO Max", 800, 31), "com.wbd.stream", "com.hbo.hbonow");
         put(new Mark("Apple TV", 500, 29), "com.apple.atve.androidtv.appletv");
         put(new Mark("Spotify", 700, 30), "com.spotify.tv.android");

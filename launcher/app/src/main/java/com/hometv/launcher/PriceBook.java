@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Each TMDB title's prices and the services' own ids for it (BACKLOG.md, Streaming availability and prices; Title
+ * Each TMDB title's prices and the services' own ids for it (docs/how-it-works.md, Streaming availability and prices; Title
  * deep links), looked up when a title preview opens, or in the background for the household's titles
  * ({@link TmdbCatalog} asks), and only while Home is showing ({@link #setActive}). One low-priority thread runs a
  * {@link PriceLookup} per title, previews first ({@link PriceQueue}: a preview moves its title's waiting background

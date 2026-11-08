@@ -37,7 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
- * In-app updates on the TV (BACKLOG.md, Family install step 5; the rules are {@link UpdateRules}). A public release
+ * In-app updates on the TV (docs/how-it-works.md, Family install step 5; the rules are {@link UpdateRules}). A public release
  * build checks once a day while Home shows: it reads the latest release's version.json, and when a newer version is out
  * About says so and Home shows one notice for it. Nothing is downloaded until the person presses Install (the project
  * lead, 2026-11-02). Then the APK goes into the app's cache and is kept only when its SHA-256 and its one signer are the

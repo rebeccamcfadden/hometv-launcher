@@ -16,7 +16,7 @@ import java.util.Set;
  * of title ids), recent searches (up to 4, newest first, lower case, no repeats) and recently viewed titles (up to
  * 10, newest first). Pure Java with its own small JSON reader and writer, so it is unit-tested on the JVM;
  * {@link Household} keeps it in SharedPreferences. A fresh household starts with empty lists ({@link #defaults});
- * the prototype's mock seed is {@link #seed} (BACKLOG.md).
+ * the prototype's mock seed is {@link #seed} (docs/how-it-works.md, Household seed).
  */
 final class HouseholdState {
     static final int MAX_RECENT = 4;
@@ -44,7 +44,7 @@ final class HouseholdState {
     }
 
     /**
-     * A fresh household (BACKLOG.md, Household seed; docs/rework.md, Accounts, 2026-10-30): everything starts empty,
+     * A fresh household (docs/how-it-works.md, Household seed; docs/rework.md, Accounts, 2026-10-30): everything starts empty,
      * My list, Seen, Favorites, recent searches and recently viewed. A TV with saved lists keeps them.
      */
     static HouseholdState defaults(Catalog catalog) {
@@ -90,7 +90,7 @@ final class HouseholdState {
     /**
      * Reads what {@link #toJson()} wrote. A key that is missing or not a list of strings keeps its default, as the
      * prototype's {@code {...defaults(), ...saved}} does; anything unreadable gives the defaults. Title ids stored
-     * from the mock catalogue move to the catalogue's own (BACKLOG.md, Real catalogue).
+     * from the mock catalogue move to the catalogue's own (docs/how-it-works.md, Real catalogue).
      */
     static HouseholdState fromJson(String json, Catalog catalog) {
         HouseholdState s = defaults(catalog);

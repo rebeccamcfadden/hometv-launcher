@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Phone notes (BACKLOG.md, Phone notes): Launcher settings' section and pane, the import pill, and the inbox's
+<!-- Phone notes (docs/how-it-works.md, Phone notes): Launcher settings' section and pane, the import pill, and the inbox's
      answer to a phone. -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="settings_notes">Phone notes</string>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- V2 Phase 2, real availability and prices (BACKLOG.md, Streaming availability and prices). English only. -->
+<!-- V2 Phase 2, real availability and prices (docs/how-it-works.md, Streaming availability and prices). English only. -->
 <resources>
     <!-- Design 07-prices A: the green tag on the Where to watch card of the cheapest store. The cards' lines, the
          credit and the rent/buy dialog's words are worked out in PriceCards, where they are unit-tested. -->

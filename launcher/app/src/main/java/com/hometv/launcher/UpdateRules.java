@@ -12,7 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * In-app updates (BACKLOG.md, Family install step 5), the rules without Android: which release a launcher from
+ * In-app updates (docs/how-it-works.md, Family install step 5), the rules without Android: which release a launcher from
  * tools/release.ps1 may take, where its files are, when to check, and what About says. Only a public release build
  * checks ({@code BuildConfig.PUBLIC_RELEASE}), or a debug build given a test feed ({@code -PupdateFeed}); every other
  * build updates from the computer it was built on. Nothing is downloaded until the person presses Install.

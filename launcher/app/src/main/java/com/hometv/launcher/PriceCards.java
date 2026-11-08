@@ -23,7 +23,7 @@ import java.util.Set;
  * {@link PreviewRules}, so it is unit-tested on the JVM (PriceCardsTest).
  *
  * <p>Ticks: a store's rent and buy offers count only when the household ticked the store. Launcher settings has no
- * store ticks yet, so callers pass null for "every store" (BACKLOG.md, Streaming availability and prices).
+ * store ticks yet, so callers pass null for "every store" (docs/how-it-works.md, Streaming availability and prices).
  */
 final class PriceCards {
     private PriceCards() {}

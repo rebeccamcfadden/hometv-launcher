@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Phone notes on this TV (BACKLOG.md, Phone notes; docs/phone-notes.md): the switch, the pairing code, the inbox that
+ * Phone notes on this TV (docs/how-it-works.md, Phone notes; docs/phone-notes.md): the switch, the pairing code, the inbox that
  * listens while it is on ({@link NoteInbox}), the notes waiting to be imported and each list's last send
  * ({@link NoteBook}), and what the import pill shows. One for the process, like the account's worker: MainActivity is
  * rebuilt whenever Launcher settings change, and the inbox must not be opened twice. The imports themselves run on the

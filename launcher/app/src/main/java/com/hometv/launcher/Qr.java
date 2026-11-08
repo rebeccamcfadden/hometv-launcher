@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
- * A QR code for the TMDB sign-in link (BACKLOG.md, TMDB sign-in and watchlist sync): the text as UTF-8 in byte mode,
+ * A QR code for the TMDB sign-in link (docs/how-it-works.md, TMDB sign-in and watchlist sync): the text as UTF-8 in byte mode,
  * versions 1 to 40, the smallest version that fits, the error correction raised while the version stays the same,
  * and the mask with the lowest penalty, exactly as Project Nayuki's encoder chooses them (QrTest compares its output
  * with his). Pure Java; the screen that shows it draws {@link #dark} as squares with a light border of 4 modules.

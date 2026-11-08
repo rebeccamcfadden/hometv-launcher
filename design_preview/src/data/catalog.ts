@@ -327,7 +327,7 @@ export const TITLES: Title[] = [
     art: 'fallout.jpg', offers: [sub('viaplay')], seasons: seasons([10, 14], 43), next: { season: 1, episode: 1 } }),
 ];
 
-// Two regions (BACKLOG.md › Two regions, Rebecca 2026-11-04): what a handful of titles have in the US, in dollars, so
+// Two regions (docs/how-it-works.md › Two regions, Rebecca 2026-11-04): what a handful of titles have in the US, in dollars, so
 // the flags, the merged Where to watch cards and the region chips have something to show. Shown only when the US is one
 // of several regions (Launcher settings › Region › Also show); the mock's own offers above are Sweden's.
 const us = (o: Offer): Offer => ({ ...o, region: 'us' });

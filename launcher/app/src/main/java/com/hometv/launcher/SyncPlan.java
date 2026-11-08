@@ -1,7 +1,7 @@
 package com.hometv.launcher;
 
 /**
- * When {@link Accounts} talks to TMDB about the lists (BACKLOG.md, TMDB sign-in and watchlist sync): only while Home
+ * When {@link Accounts} talks to TMDB about the lists (docs/how-it-works.md, TMDB sign-in and watchlist sync): only while Home
  * is on screen, never on a timer of its own. A full sync (read every list, merge, send the queue) right after
  * signing in and when Home shows if the last one is {@link #STALE} old; otherwise showing Home only sends what is
  * queued. A change on the TV is sent {@link #DEBOUNCE} after the last of a quick run of changes. Signed out, the shown

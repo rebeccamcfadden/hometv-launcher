@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * The mock catalogue's titles on TMDB (BACKLOG.md, Real catalogue): each prototype id with its TMDB id, and TMDB's
+ * The mock catalogue's titles on TMDB (docs/how-it-works.md, Real catalogue): each prototype id with its TMDB id, and TMDB's
  * name and year for it, looked up once by name and year (2026-10-30) and kept here. The household's seed and any
  * ids stored before the real catalogue (My list, Seen, Favorites, Recently viewed) move to TMDB ids through it, and
  * the mock offers and watchlists stay on these titles until real availability arrives. "marvel-one-shots" has no

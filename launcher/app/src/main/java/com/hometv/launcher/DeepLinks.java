@@ -31,7 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Links that open a title inside a service's TV app rather than on its home screen (BACKLOG.md, Title deep links),
+ * Links that open a title inside a service's TV app rather than on its home screen (docs/how-it-works.md, Title deep links),
  * built from the ids {@link WikidataIds} found. Stage 2 sends each as an ACTION_VIEW intent limited to the service's
  * package (Netflix also wants the extra {@code source=30}) and falls back to opening the app when nothing takes it.
  * Wikidata has ids for Netflix, Disney+, Apple TV, HBO Max, Prime Video and SVT Play, and in the US for Hulu, Peacock,

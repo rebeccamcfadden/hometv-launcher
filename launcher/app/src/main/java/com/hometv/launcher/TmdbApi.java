@@ -5,7 +5,7 @@ import java.net.URLEncoder;
 import java.util.Locale;
 
 /**
- * The TMDB requests the catalogue makes (BACKLOG.md, Real catalogue): their v3 paths, how long each answer stays
+ * The TMDB requests the catalogue makes (docs/how-it-works.md, Real catalogue): their v3 paths, how long each answer stays
  * good on disk, and the image URLs at the sizes the screens show. English (en-US) everywhere; the region
  * ({@link Region}) picks the country of Discover's release dates and of the availability read from a title's answer,
  * which holds every country, so a title's path is the same in every region.
@@ -19,7 +19,7 @@ final class TmdbApi {
     static final String LANGUAGE = "en-US";
 
     static final long MINUTE = 60_000L, HOUR = 60 * MINUTE, DAY = 24 * HOUR;
-    /** How long an answer stays fresh, after cleanyourtv-ui's Tmdb.ttl (BACKLOG.md, Findings). */
+    /** How long an answer stays fresh, after cleanyourtv-ui's Tmdb.ttl (docs/how-it-works.md, Real catalogue). */
     static final long TTL_SEARCH = HOUR, TTL_LIST = 3 * HOUR, TTL_TITLE = 12 * HOUR, TTL_WEEK = 7 * DAY;
 
     /**

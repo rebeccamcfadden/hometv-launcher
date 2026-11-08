@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * The TMDB account on this TV (BACKLOG.md, TMDB sign-in and watchlist sync; docs/rework.md, Accounts, 2026-10-30):
+ * The TMDB account on this TV (docs/how-it-works.md, TMDB sign-in and watchlist sync; docs/rework.md, Accounts, 2026-10-30):
  * signing in by QR code ({@link SignInFlow}), keeping My list, Favorites and Seen in step with the account
  * ({@link AccountSync}), and reading the TMDB lists shown as chips, by name: chosen on the TV ({@link ListChoices}) or
  * set in config.xml ({@link AccountConfig}); the title menu puts a title on one of them or takes it off

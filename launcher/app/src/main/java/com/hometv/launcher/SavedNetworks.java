@@ -11,7 +11,7 @@ import java.util.Set;
  * The saved Wi-Fi networks the Wi-Fi dropdown offers to switch to (design_preview/src/screens/dropdown.ts, wifiMenu:
  * the current network in the header, the other saved ones below it). Chosen without Android so it is tested on the
  * JVM; WifiNetworks reads them from the TV. Up to Android 9 a normal app may list the networks saved in the TV's
- * settings and ask to connect to one; from Android 10 it may do neither for an app targeting it (BACKLOG.md, Wi-Fi
+ * settings and ask to connect to one; from Android 10 it may do neither for an app targeting it (docs/how-it-works.md, Wi-Fi
  * networks), so the dropdown keeps opening Wi-Fi settings there.
  */
 final class SavedNetworks {

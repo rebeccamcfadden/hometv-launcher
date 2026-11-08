@@ -1,5 +1,5 @@
 <#
-Installs the HomeTV Launcher on an Android TV from a Windows laptop, for family and friends (BACKLOG.md, Family
+Installs the HomeTV Launcher on an Android TV from a Windows laptop, for family and friends (docs/how-it-works.md, Family
 install step 4). Read tools/family-install.md first.
 
   powershell -ExecutionPolicy Bypass -File family-install.ps1                   # install, from a release's copy

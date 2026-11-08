@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Merges one list as TMDB has it now with the TV's copy and the changes still queued on the TV (BACKLOG.md, TMDB
+ * Merges one list as TMDB has it now with the TV's copy and the changes still queued on the TV (docs/how-it-works.md, TMDB
  * sign-in and watchlist sync). Last writer wins for each title:
  * <ul>
  *   <li>A title with no queued change takes TMDB's state (added on the phone: it appears; removed: it goes).</li>

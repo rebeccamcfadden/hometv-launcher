@@ -12,7 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Turns TMDB's answers into the launcher's titles, seasons and people (BACKLOG.md, Real catalogue): a list item
+ * Turns TMDB's answers into the launcher's titles, seasons and people (docs/how-it-works.md, Real catalogue): a list item
  * becomes a summary title, a details page a detailed one (runtime or seasons, US rating, cast and crew, trailer), a
  * season its episodes, a person their best-known titles. Missing fields give empty values, never an exception.
  * A details page's offers come from its watch providers in the region ({@link #availability}), without prices; the

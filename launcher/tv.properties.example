@@ -22,7 +22,7 @@ temperature_unit=C
 # (Launcher settings › API keys) replaces this one, as it does the price keys below.
 #tmdb_api_key=
 
-# Optional rent and buy prices (BACKLOG.md, Streaming availability and prices). Without a key the launcher shows where
+# Optional rent and buy prices (docs/how-it-works.md, Streaming availability and prices). Without a key the launcher shows where
 # a title can be rented or bought, and prices only from Apple's keyless iTunes lookup. Each key is a free plan, for
 # non-commercial use with attribution in the launcher; the launcher stops below each quota (no paid plans).
 # Watchmode, https://api.watchmode.com (free plan: 2,500 credits a month; the launcher stops at 2,300):

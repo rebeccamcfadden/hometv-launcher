@@ -1,7 +1,7 @@
 package com.hometv.launcher;
 
 /**
- * What a fresh household starts with and what happens to the TV's lists at a sign-in (BACKLOG.md, Household seed;
+ * What a fresh household starts with and what happens to the TV's lists at a sign-in (docs/how-it-works.md, Household seed;
  * docs/rework.md, Accounts, 2026-10-30). Pure Java, unit-tested (SeedPolicyTest).
  *
  * <ul>

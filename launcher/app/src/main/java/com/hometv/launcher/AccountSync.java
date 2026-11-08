@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * One sync of the household's lists with the TMDB account (BACKLOG.md, TMDB sign-in and watchlist sync). Blocking:
+ * One sync of the household's lists with the TMDB account (docs/how-it-works.md, TMDB sign-in and watchlist sync). Blocking:
  * run it off the main thread, never while Home waits on it. In order: find the TMDB list behind Seen (and make a
  * private Seen list if the account has none and that is allowed); read every list and merge the writable ones with the
  * TV's copy ({@link ListMerge}); read the lists shown as chips, each with its TMDB name; then send the queued changes

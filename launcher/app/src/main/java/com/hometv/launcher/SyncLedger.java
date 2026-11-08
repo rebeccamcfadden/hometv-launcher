@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * What the TV knows about the account's lists between syncs (BACKLOG.md, TMDB sign-in and watchlist sync), kept as
+ * What the TV knows about the account's lists between syncs (docs/how-it-works.md, TMDB sign-in and watchlist sync), kept as
  * JSON beside the household's state: whose account it is, each list as it was last read from TMDB (the base a merge
  * compares with) and when, the TMDB list number found for Seen, and the queue of changes made
  * on the TV that TMDB has not taken yet. A change waits there while offline and is retried with a growing delay
