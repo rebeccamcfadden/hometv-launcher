@@ -131,7 +131,7 @@ class MinSdkGuardTest(unittest.TestCase):
         env = {k: v for k, v in os.environ.items()
                if k not in ("STOCK_LAUNCHER", "INPUT_KEY_SERVICE", "HOME_KEY_SERVICE")}
         env.update(TV_HOST="192.168.1.50", FAKE_TV_STATE=str(self.state_path),
-                   HOME=str(self.home), JAVA_HOME=str(self.base / "java"),
+                   HOME=str(self.home), USERPROFILE=str(self.home), JAVA_HOME=str(self.base / "java"),
                    ANDROID_HOME=str(self.base / "android-sdk"))
         result = subprocess.run(
             ["bash", str(self.launcher / "build-and-install.sh")],

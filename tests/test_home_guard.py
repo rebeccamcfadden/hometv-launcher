@@ -112,6 +112,18 @@ if __name__ == "__main__":
 
 
 class HomeGuardTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # On Windows, disable.ps1 runs tools/venv/Scripts/python.exe: that has to be a real program, or Windows
+        # stops each run with an "Unsupported 16-Bit Application" dialog. Make one venv per class and copy it in.
+        cls.win_venv = None
+        if os.name == "nt" and PWSH:
+            tmp = tempfile.TemporaryDirectory()
+            cls.addClassCleanup(tmp.cleanup)
+            cls.win_venv = Path(tmp.name) / "venv"
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(cls.win_venv)],
+                           check=True, timeout=120)
+
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
@@ -125,8 +137,12 @@ class HomeGuardTest(unittest.TestCase):
         # The scripts call the tools venv's Python. Run the real interpreter, which imports the fake
         # tv.py for the transport and the real recovery.py for the logic. disable.ps1 asks for the
         # Windows path, which PowerShell resolves to tools/venv/Scripts/python.exe here too.
-        for client in (self.tools / "venv" / "bin" / "python",
-                       self.tools / "venv" / "Scripts" / "python.exe"):
+        if self.win_venv:
+            shutil.copytree(self.win_venv, self.tools / "venv")
+        clients = [self.tools / "venv" / "bin" / "python"]
+        if not self.win_venv:
+            clients.append(self.tools / "venv" / "Scripts" / "python.exe")
+        for client in clients:
             client.parent.mkdir(parents=True, exist_ok=True)
             client.write_text(f'#!/bin/sh\nexec "{sys.executable}" "$@"\n')
             client.chmod(0o755)
@@ -155,7 +171,7 @@ class HomeGuardTest(unittest.TestCase):
         self.state_path.write_text(json.dumps(state))
 
     def disable(self, entry, extra_env=None, list_path=None):
-        env = dict(os.environ, TV_HOST="192.168.1.50", HOME=str(self.home),
+        env = dict(os.environ, TV_HOST="192.168.1.50", HOME=str(self.home), USERPROFILE=str(self.home),
                    FAKE_TV_STATE=str(self.state_path), **(extra_env or {}))
         if entry == "sh":
             argv = ["bash", str(self.tools / "disable.sh"), str(list_path or self.list_path)]

@@ -74,7 +74,10 @@ function PyFailures($rev) {
     if (Test-Path $cache) { return Get-Content $cache }
     $d = Tree $rev
     Push-Location $d
-    $out = & $py -m unittest discover -s tests 2>&1
+    # SetErrorMode is inherited by every program the tests start: a stand-in that isn't a real program then fails
+    # quietly instead of stopping the run with Windows' "Unsupported 16-Bit Application" dialog.
+    $run = "import ctypes, unittest; ctypes.windll.kernel32.SetErrorMode(0x8003); unittest.main(module=None, argv=['unittest', 'discover', '-s', 'tests'])"
+    $out = & $py -c $run 2>&1
     Pop-Location
     $fails = $out | Select-String '^(FAIL|ERROR): ' | ForEach-Object { $_.Line } | Sort-Object -Unique
     # No "Ran N tests" line means unittest never ran the suite (an import or discovery error): never a pass.
