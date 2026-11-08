@@ -21,9 +21,6 @@ Built: [docs/how-it-works.md](docs/how-it-works.md#real-catalogue).
 ### Streaming availability and prices
 Built: [docs/how-it-works.md](docs/how-it-works.md#streaming-availability-and-prices).
 - **Mock:** the mock catalogue (`-PmockCatalogue=true`) still has made-up services, rent and buy prices.
-- **Store ticks (mock):** Launcher settings can't tick stores yet for the price logic, so `Data.stores()` returns null
-  and every store counts. When the pane stores the ticks, `Data.stores()` returns them, and the Overview's "Rent from …
-  elsewhere" and Pick for me should go through `PriceCards.ticked` too.
 - **Still missing:** Viaplay's store has no price from any source. Shows are rarely priced (Apple's TV search finds no
   Swedish seasons). Prices are a week old at most, not live. Titles from recommendations and searches show no
   availability on their cards until their details load.
@@ -35,8 +32,7 @@ Built: [docs/how-it-works.md](docs/how-it-works.md#two-regions) (one region at a
 
 ### TMDB sign-in and watchlist sync
 Built: [docs/how-it-works.md](docs/how-it-works.md#tmdb-sign-in-and-watchlist-sync).
-- **Still to come:** the sign-in and first-run designs (the Account page is temporary), and whether a first run asks to
-  sign in.
+- **Still to come:** whether a first run asks to sign in.
 - **Not seen yet:** a real approval (the project lead approves one on the TV), so the session, the account's name,
   making the Seen list, the import bar and the sync against a real account are unchecked. The emulator checked the
   code and QR, TMDB's "not approved yet" answer, polling stopping while hidden, offline, expiry and New code.
@@ -192,7 +188,7 @@ Built: [docs/how-it-works.md](docs/how-it-works.md#themes).
   remembered between visits.
 
 ## From V1 follow-ups
-- **Back from an app (F26):** not restored: a person page, Pick for me, and the preview's tab and season.
+- **Back from an app (F26):** not restored: a person page, and a preview's tab and season (it reopens on Overview, or on More like this if it was there). Everything else on the page, its choices and the previews over it come back.
 - **Jank:** ideas that showed no gain within noise (fewer full-screen fills, reading apps and inputs after the first
   frame; return to Home p50 79 against 97 ms needs more runs) wait for a `tools/trace.py` run showing the TV is
   fill-rate bound.

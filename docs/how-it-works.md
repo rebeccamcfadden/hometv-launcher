@@ -77,8 +77,7 @@ milestones are in [docs/rework.md](rework.md).
   either. A change shows once Home is rebuilt.
 
 ### TMDB sign-in and watchlist sync
-- Signing in is optional, from Launcher settings › Account, on a temporary page (`AccountPage`) until the Figma
-  design is chosen. TMDB's v4 flow: a QR code for `themoviedb.org/auth/access`, polled every 5 s for at most 15
+- Signing in is optional, from Launcher settings › Account, in the Account pane (`AccountSection`, design r2-account) and First run's Sign in tab. TMDB's v4 flow: a QR code for `themoviedb.org/auth/access`, polled every 5 s for at most 15
   minutes, then the access token is turned into a v3 session, because watchlist and favourite writes exist only in v3.
 - My list follows the watchlist, Favorites the favourites, and Seen a private TMDB list named "Seen" that the launcher
   makes when the account has none (`docs/rework.md`, Accounts, 2026-10-30). Sync is both ways: in full after signing
@@ -96,7 +95,7 @@ milestones are in [docs/rework.md](rework.md).
   scope line and prices, and is marked "No chip: in All lists".
 - `tmdb_shown_lists` in `config.xml` or a pushed `config.json` overrides the choice (numbers, links or names). The older
   `tmdb_household_list` and `tmdb_friends_list` still work when it is empty.
-- The TV only reads these lists and keeps the last copy of each for offline. A TV that never had an account and sets no
+- A title's menu adds it to or takes it off a shown list on TMDB (`Accounts.setOnShownList`): it shows on the TV at once, then is sent after any queued sync; if TMDB refuses or the TV is offline the list's copy rolls back and nothing is queued. Only while signed in. Otherwise the TV only reads these lists and keeps the last copy of each for offline. A TV that never had an account and sets no
   list keeps the mock Household and Friends; with an account, only the shown lists.
 - A fresh mock still uses TMDB ids (`MockIds`, `MockOverlay`) and the mock's next episode for the "Up next" badge.
 
@@ -221,9 +220,7 @@ milestones are in [docs/rework.md](rework.md).
   `first_run_checklist` in config.xml or config.json is an opt-out. The intent action
   `com.hometv.launcher.action.FIRST_RUN` opens it any time for adb. No Settings row and no "Set up again".
 - A row is done once its panel was entered (as in the prototype); done steps are kept across restarts.
-- **Features step** (F14, 2026-11-01/02; F34): every feature but Phone notes starts on (it opens a port), each with its
-  setup as a tab. When First run ends, every feature whose setup isn't finished is switched off and a toast names
-  them. "Set up" means: TMDB signed in; Phone notes signed in and listening; Price lookup's Watchmode key works;
+- **Features step** (F14, 2026-11-01/02; F34): every feature but Phone notes and Phone remote starts on (they open a port; `Features.Feature.REMOTE` defaults off), each with its setup as a tab. When First run ends, every feature whose setup isn't finished is switched off and a toast names them (`FirstRunRules.endSwitchesOff`): Start always does, but Back or Home before any step was entered switches nothing off and the checklist shows again at the next start. "Set up" means: TMDB signed in; Phone notes signed in and listening; Price lookup's Watchmode key works;
   Weather always. Every off state has **Turn on** (2026-11-02), which switches the feature on and enters its setup.
 - TMDB account and Phone notes rebuild the launcher before their setup, as does a theme change; the rebuild reopens
   First run on the same panel.
@@ -327,7 +324,7 @@ project lead helps on a call (planned 2026-11-01, [docs/rework.md](rework.md), F
 
 ### Performance notes
 - V1 Home measured 47 % janky frames; V2's on the TCL (2026-11-02) is 1 to 4 %, response p50 20 ms, cold start about
-  900 ms. Measure with `tools/bench.py` ([perf-ab](workflows/perf-ab.md)). One PSS reading moves up to 15 MB with
+  900 ms (these benches ran before the key sequence was corrected, so their Left and Right moves were partly on the row below the apps). Measure with `tools/bench.py` ([perf-ab](workflows/perf-ab.md)). One PSS reading moves up to 15 MB with
   garbage collection, so `bench.py` reports the median of three (#96).
 - Tried with no gain within noise (kept in case a `tools/trace.py` run shows the TV is fill-rate bound): fewer
   full-screen fills, and reading the apps and inputs after the first frame.
