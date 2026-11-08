@@ -56,7 +56,7 @@ class AdbKeyPermissionsTest(unittest.TestCase):
 
         # HOME points at the empty tree, so the stock ~/.android/adbkey branch cannot be taken and the
         # user's real adb key is never read or touched by this test.
-        env = dict(os.environ, TV_HOST="127.0.0.1", HOME=str(tmp),
+        env = dict(os.environ, TV_HOST="127.0.0.1", HOME=str(tmp), USERPROFILE=str(tmp),
                    PYTHONPATH=os.pathsep.join([str(tmp / "stub"), str(tools)]))
         result = subprocess.run([sys.executable, "-c", "import tv; tv.get_signer()"],
                                 cwd=tmp, env=env, capture_output=True, text=True, timeout=60)

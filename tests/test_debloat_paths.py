@@ -65,7 +65,7 @@ class DebloatPathsTest(unittest.TestCase):
         # No TV_HOST, so recovery.py looks for a record that cannot exist: that is the fallback these
         # tests exercise. HOME is isolated so a record from a real run cannot answer instead.
         env = {k: v for k, v in os.environ.items() if k != "TV_HOST"}
-        env.update(CAPTURE=str(capture), HOME=str(home))
+        env.update(CAPTURE=str(capture), HOME=str(home), USERPROFILE=str(home))
         # The fake tv.py reads its stdin, so an inherited terminal would leave it waiting.
         result = subprocess.run(
             ["bash", str(script_path), argument], cwd=cwd, env=env,

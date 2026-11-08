@@ -105,6 +105,18 @@ if __name__ == "__main__":
 
 
 class EmptyListTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # On Windows, disable.ps1 runs tools/venv/Scripts/python.exe: that has to be a real program, or Windows
+        # stops each run with an "Unsupported 16-Bit Application" dialog. Make one venv per class and copy it in.
+        cls.win_venv = None
+        if os.name == "nt" and PWSH:
+            tmp = tempfile.TemporaryDirectory()
+            cls.addClassCleanup(tmp.cleanup)
+            cls.win_venv = Path(tmp.name) / "venv"
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(cls.win_venv)],
+                           check=True, timeout=120)
+
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
@@ -117,8 +129,12 @@ class EmptyListTest(unittest.TestCase):
         (self.tools / "tv.py").write_text(FAKE_TV)
         # The scripts call the tools venv's Python: run the real interpreter, which imports the fake
         # tv.py for the transport and the real recovery.py for the record.
-        for client in (self.tools / "venv" / "bin" / "python",
-                       self.tools / "venv" / "Scripts" / "python.exe"):
+        if self.win_venv:
+            shutil.copytree(self.win_venv, self.tools / "venv")
+        clients = [self.tools / "venv" / "bin" / "python"]
+        if not self.win_venv:
+            clients.append(self.tools / "venv" / "Scripts" / "python.exe")
+        for client in clients:
             client.parent.mkdir(parents=True, exist_ok=True)
             client.write_text(f'#!/bin/sh\nexec "{sys.executable}" "$@"\n')
             client.chmod(0o755)
@@ -147,7 +163,7 @@ class EmptyListTest(unittest.TestCase):
         return state
 
     def disable(self, entry):
-        env = dict(os.environ, TV_HOST="192.168.1.50", HOME=str(self.home),
+        env = dict(os.environ, TV_HOST="192.168.1.50", HOME=str(self.home), USERPROFILE=str(self.home),
                    FAKE_TV_STATE=str(self.state_path))
         if entry == "sh":
             argv = ["bash", str(self.tools / "disable.sh"), str(self.list_path)]

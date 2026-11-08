@@ -74,7 +74,20 @@ function PyFailures($rev) {
     if (Test-Path $cache) { return Get-Content $cache }
     $d = Tree $rev
     Push-Location $d
-    $out = & $py -m unittest discover -s tests 2>&1
+    # SetErrorMode is inherited by every program the tests start: a stand-in that isn't a real program then fails
+    # quietly instead of stopping the run with Windows' "Unsupported 16-Bit Application" dialog.
+    $run = "import ctypes, unittest; ctypes.windll.kernel32.SetErrorMode(0x8003); unittest.main(module=None, argv=['unittest', 'discover', '-s', 'tests'])"
+    # A throwaway home too: a test that forgets to set USERPROFILE (Path.home() on Windows) or HOME, such as an older
+    # base's, then writes its recovery records there instead of into the maintainer's own profile.
+    $prof = Join-Path $env:TEMP "cytv-ci-home-$($rev.Substring(0,8))"
+    New-Item -ItemType Directory -Force $prof | Out-Null
+    $savedProfile, $savedHome = $env:USERPROFILE, $env:HOME
+    $env:USERPROFILE = $prof; $env:HOME = $prof
+    try { $out = & $py -c $run 2>&1 }
+    finally {
+        $env:USERPROFILE, $env:HOME = $savedProfile, $savedHome
+        Remove-Item -Recurse -Force $prof -ErrorAction SilentlyContinue
+    }
     Pop-Location
     $fails = $out | Select-String '^(FAIL|ERROR): ' | ForEach-Object { $_.Line } | Sort-Object -Unique
     # No "Ran N tests" line means unittest never ran the suite (an import or discovery error): never a pass.
